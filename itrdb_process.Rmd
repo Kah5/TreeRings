@@ -1,0 +1,250 @@
+---
+title: "Tree Ring Plotting"
+author: "Kelly Heilman"
+date: "Monday, May 04, 2015"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+I read in data from Pulaski Woods
+```{r}
+library(dplR)
+filename_list <- c("in001.rwl","ia001.rwl", "il011.rwl", "il013.rwl","ia005.rwl", "ia002.rwl", "mo004.rwl", "il010.rwl", "ia023.rwl", "ia012.rwl", "ia003.rwl", "il009.rwl", "mo002.rwl", "mo007.rwl", "il014.rwl", "ia004.rwl","ia015.rwl", "mn022.rwl", "ia026.rwl", "ia030.rwl", "il008.rwl", "ia021.rwl", "il001.rwl", "ia024.rwl", "mo018.rwl", "wi006.rwl", "mo050.rwl", "mi016.rwl", "mo015.rwl")
+destfile=filename_list
+
+#tried l_ply first, but this loops seems to work better
+for(i in 1:length(filename_list)){
+ download.file(filename_list[i], url=paste0('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/treering/measurements/northamerica/usa/', filename_list[i]), method="auto", quiet = FALSE, mode = "w",cacheOK = TRUE)
+}
+
+filenames <- list.files("C:/Users/Kelly/Documents/TreeRings", pattern="*.rwl", full.names=FALSE)
+myDir <- "C:/Users/Kelly/Documents/TreeRings" 
+
+data_names <- gsub("[.]rwl", "", filenames) 
+
+for(i in 1:length(filenames)) assign(data_names[i], read.rwl(file.path(myDir, filenames[i])))
+```
+Detrend the rwl data
+```{r}
+obj<- list(data_names)
+#trying to detrend all the data
+
+#make plots of each detrending and spline
+pdf("detrending_splines.pdf")
+for(i in 1:length(data_names)) {
+  nam <- paste0(data_names[i], ".rwi")
+  assign(nam, detrend(rwl=get(data_names[i]), y.name = colnames(get(data_names[i])), make.plot = TRUE,method = "Spline" ))}
+dev.off()
+
+```
+
+Make site level chronologies and plot these rwi over time
+```{r}
+#make a list of detrended objects
+rwis <- objects(pattern="*.rwi")
+
+#create chronologies for the detrended objects
+for(i in 1:length(rwis)) {
+  nam <- paste0(rwis[i], ".chron")
+  assign(nam, chron(x=get(rwis[i]), prefix = substr(colnames(get(rwis[i]))[1],1,3)))}
+
+
+
+chrons<- objects(pattern="*.rwi.chron")
+pdf("individual.chron.plots.pdf")
+for(i in 1:length(chrons)){
+plot(get(chrons[i]),xlab="Year",ylab="RWI", main=chrons[i])
+}
+dev.off()
+```
+
+
+Are these RWI trends correlated to zonal index?
+```{r}
+sites<- read.csv("itrdb_locs.csv", header=TRUE, stringsAsFactors=FALSE)
+
+#create a column in sites that matches the names of our chronologies
+sites$chron.code <- paste0(sites$ITRDB.code, ".rwi.chron") 
+
+
+zonal.index <- read.csv("C:/Users/Kelly/Documents/Undergrad_projects/clim-analysis/geopthgt1980_2013.csv")
+zonal.index$years<- 1977:2013
+
+zonal.index <- zonal.index[3:nrow(zonal.index),]
+
+for(i in 1:length(chrons)){
+  nam <- paste0(chrons[i], ".mod")
+  assign(nam, merge(get(chrons[i]),zonal.index, by.x="row.names", by.y="years"))
+}
+
+
+#merges<- objects(pattern="*.rwi.chron.mod")
+#for(i in 1:length(merges)){
+#name<- unlist(strsplit(merges[i],split='.', fixed=TRUE))[1]
+#merges[i]$id <- name
+#}
+
+
+files<- rbind.fill(ia001.rwi.chron.mod,ia002.rwi.chron.mod,ia003.rwi.chron.mod,ia004.rwi.chron.mod,ia005.rwi.chron.mod ,ia012.rwi.chron.mod, ia015.rwi.chron.mod,ia021.rwi.chron.mod, ia023.rwi.chron.mod,ia024.rwi.chron.mod , ia026.rwi.chron.mod,ia030.rwi.chron.mod,il001.rwi.chron.mod, il008.rwi.chron.mod, il009.rwi.chron.mod ,il010.rwi.chron.mod ,il011.rwi.chron.mod,il013.rwi.chron.mod,il014.rwi.chron.mod,in001.rwi.chron.mod,    
+ mn022.rwi.chron.mod , mo002.rwi.chron.mod ,mo004.rwi.chron.mod, mo007.rwi.chron.mod,mo015.rwi.chron.mod, mo018.rwi.chron.mod    
+,mo050.rwi.chron.mod,wi006.rwi.chron.mod )    
+
+IA <- c("BKBstd", "NEGstd", "LKSstd", "GEOstd", "PKPstd", "783std", "782std", "788std", "648std", "464std", "649std", "WPHstd")
+IL <- c("SAWstd", "STRstd","KANstd", "LNSstd", "FXRstd", "FCLstd", "GCYstd")
+IN <-c("PW1std")
+MN <-c("SBOstd")
+MO <-c("K1Astd", "K3Astd", "K4Astd", "WEGstd", "RORstd", "CRNstd")
+WI <-c("PlPstd")
+
+df.new<-melt(files, id=c("Row.names", "samp.depth", "X", "east.zonal.index", "hemispheric.zonal.index", "west.zonal.index"))
+data.frame(df.new)
+ia.trues <- df.new$variable %in% IA
+il.trues <- df.new$variable %in% IL
+in.trues <- df.new$variable %in% IN
+mn.trues <- df.new$variable %in% MN
+mo.trues <- df.new$variable %in% MO
+wi.trues <- df.new$variable %in% WI
+
+#create new column by group
+df.new$group<-"NA"
+
+df.new[ia.trues,]$group <- "IA"
+df.new[il.trues,]$group <- "IL"
+df.new[in.trues,]$group <- "IN"
+df.new[mn.trues,]$group <- "MN"
+df.new[mo.trues,]$group <- "MO"
+df.new[wi.trues,]$group <- "WI"
+
+lats.data <- read.csv("itrdb_locs.csv")
+
+data.locs<-merge(df.new, lats.data, by.x ="variable", by.y="chroncd")
+
+plot.E.zonal <- ggplot(data.locs, aes( east.zonal.index, value))+
+  geom_point(aes(color=group, size=3))
+
+plot.lat <- ggplot(data.locs, aes(lat, value))+
+  geom_point(aes(color=group, size=3))
+
+plot.long <- ggplot(data.locs, aes(lon, value))+
+  geom_point(aes(color=lat, size=3))
+      
+```
+There does not appear to be a strong trend in correlation of ring width and zonal index data
+
+
+
+Are there latitudinal/longitudinal gradients in the data?
+```{r}
+#download the worldclim data
+library(raster)
+tmin12 = getData('worldclim', var='tmin', res=0.5, lon=-90, lat=42)
+tmax12 = getData('worldclim', var='tmax', res=0.5, lon=-90, lat=42)
+precip12 = getData('worldclim', var='prec', res=0.5, lon=-90, lat=42)
+tmean12 = getData('worldclim', var='tmean', res=0.5, lon=-90, lat=42)
+
+tmin12 = getData('worldclim', var='tmin', res=0.5, lon=-94, lat=42)
+tmax12 = getData('worldclim', var='tmax', res=0.5, lon=-94, lat=42)
+precip13 = getData('worldclim', var='prec', res=0.5, lon=-94, lat=42)
+tmean12 = getData('worldclim', var='tmean', res=0.5, lon=-94, lat=42)
+
+locs <- read.csv("itrdb_locs.csv")
+coordinates(locs) <-~lon+lat
+proj4string(locs)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
+
+
+precip6 <- raster(paste0(getwd(), "/wc0.5/prec6_13.bil"))
+precip6.2<- raster(paste0(getwd(), "/wc0.5/prec6_12.bil"))
+list.ras <- mixedsort(list.files(paste0(getwd(), "/wc0.5/", sep = ""), full.names = T, 
+    pattern = ".bil"))
+precips<-list.ras[1:24]  # I
+odds<-c(1,3,5,7,9,11,13,15,17,19,21,23)
+evens<-c(2,4,6,8,10,12,14,16,18,20,22,24)
+
+precip12<- stack(precips[odds])
+precip13<- stack(precips[evens])
+
+precip1<- merge(raster(precips[1]), raster(precips[2])) #merges the two rasters together into 1
+precip2<- merge(raster(precips[3]), raster(precips[4])) 
+precip3<- merge(raster(precips[5]), raster(precips[6])) 
+precip4<- merge(raster(precips[7]), raster(precips[8])) 
+precip5<- merge(raster(precips[9]), raster(precips[10])) 
+precip6<- merge(raster(precips[11]), raster(precips[12])) 
+precip7<- merge(raster(precips[13]), raster(precips[14])) 
+precip8<- merge(raster(precips[15]), raster(precips[16])) 
+precip9<- merge(raster(precips[17]), raster(precips[18])) 
+precip10<- merge(raster(precips[19]), raster(precips[20])) 
+precip11<- merge(raster(precips[21]), raster(precips[22])) 
+precip12<- merge(raster(precips[23]), raster(precips[24])) 
+
+list.all<- c(precip1, precip2, precip3, precip4, precip5, precip6, precip7, precip8, precip9, precip10, precip11, precip12)
+prec.all<-stack(list.all)
+prec.all
+proj4string(prec.all)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
+
+X11(width=11)
+plot(precip.us)
+plot(locs, add=TRUE)
+
+##extract by lat long
+prec1 <- extract(prec.all, locs)
+data.frame(locs)
+
+colnames(prec1) <- c("prec1", "prec2", "prec3","prec4", 'prec5',"prec6", "prec7", "prec8", "prec9", "prec10", "prec11", "prec12")
+#paste to the locs
+
+locs <- data.frame(locs, prec1)
+
+
+files<- rbind.fill(ia001.rwi.chron.mod,ia002.rwi.chron.mod,ia003.rwi.chron.mod,ia004.rwi.chron.mod,ia005.rwi.chron.mod ,ia012.rwi.chron.mod, ia015.rwi.chron.mod,ia021.rwi.chron.mod, ia023.rwi.chron.mod,ia024.rwi.chron.mod , ia026.rwi.chron.mod,ia030.rwi.chron.mod,il001.rwi.chron.mod, il008.rwi.chron.mod, il009.rwi.chron.mod ,il010.rwi.chron.mod ,il011.rwi.chron.mod,il013.rwi.chron.mod,il014.rwi.chron.mod,in001.rwi.chron.mod,    
+ mn022.rwi.chron.mod , mo002.rwi.chron.mod ,mo004.rwi.chron.mod, mo007.rwi.chron.mod,mo015.rwi.chron.mod, mo018.rwi.chron.mod    
+,mo050.rwi.chron.mod,wi006.rwi.chron.mod )   
+
+df.new<-melt(files, id=c("Row.names", "samp.depth", "X", "east.zonal.index", "hemispheric.zonal.index", "west.zonal.index"))
+
+data.pr<-merge(df.new, locs, by.x ="variable", by.y="chroncd")
+plot.pr <- ggplot(data.pr, aes(east.zonal.index, value))+
+  geom_point(aes(color=prec1, size=3))
+
+
+#these data are the average annual values, but we want yearly
+```
+
+```{r}
+library(ncdf4)
+inputfile="C:/Users/Kelly/Documents/TreeRings/precip.mon.total.v6.nc"
+p<-nc_open(inputfile)
+h<-inputfile
+pr<-brick(h,lvar=3, varname="precip")
+
+
+locs <- read.csv("itrdb_locs.csv")
+locs$long<-locs$lon+360
+coordinates(locs) <-~long+lat
+proj4string(locs)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
+
+pr.data <- extract(pr, locs)
+#pr.data now has all the months from 1901-2011
+
+#now need to sum every 12 values to get the total preciptiation each year
+pr.data.1<-as.data.frame(pr.data)
+pr.data.1[29, 1:1320]<- group
+pr.df<-t(pr.data.1)
+pr.df<-data.frame(pr.df)
+#using ddply, could not get colwise to work
+ddply(pr.data, c("year"), mean)
+ddply(pr.df, ~ year, summarize, numcolwise(sum))
+
+#but using data.table to sum by year works
+dt <- data.table(pr.df)
+yearly.precip<-dt[,lapply(.SD, sum) ,by = year]
+#convert back to data.frame
+yearly.precip<-data.frame(yearly.precip)
+colnames(yearly.precip)<-c("year", as.character(codes))
+
+yr.data<-t(yearly.precip)
+yr.data.no.yr<- data.frame(yr.data[2:29,])
+
+locs.pr <- merge(data.frame(locs), yr.data.no.yr, by.x='chroncd', by.y=0)
+```
