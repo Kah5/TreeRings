@@ -245,6 +245,64 @@ colnames(yearly.precip)<-c("year", as.character(codes))
 
 yr.data<-t(yearly.precip)
 yr.data.no.yr<- data.frame(yr.data[2:29,])
+yr.data.no.yr$chroncd<- locs$chroncd
+yr.data.no.yr$site<-locs$ITRDB.code
 
-locs.pr <- merge(data.frame(locs), yr.data.no.yr, by.x='chroncd', by.y=0)
+locs.pr <- merge(data.frame(locs), data.frame(yr.data.no.yr), by='chroncd')
+
+## it is probably best to create a function to merge the chron to each site and plot
+locs.pr.t<-t(locs.pr)
+colnames(locs.pr.t)<-locs.pr$site
+locs.pr.t<-locs.pr.t[7:117,]
+locs.pr.t<-data.frame(locs.pr.t)
+locs.pr.t$year<- as.character(1901:2011)
+
+#this function merges the chron and the prcip datat
+merge.chrons<- function(location.rwi.chron){
+newobj <- merge(data.frame(locs.pr.t), data.frame(location.rwi.chron), by.x='year', by.y=0)
+return(newobj)
+}
+
+#ia001.m
+ia001.m<-merge.chrons(ia001.rwi.chron)
+plot(as.numeric(as.vector(ia001.m$ia001)), ia001.m$BKBstd) 
+lm1<-lm(ia001.m$BKBstd ~ as.numeric(as.vector(ia001.m$ia001)))
+abline(lm1)
+
+ia002.m<-merge.chrons(ia002.rwi.chron)
+plot(as.numeric(as.vector(ia002.m$ia002)), ia002.m$NEGstd) 
+lm2<-lm(ia002.m$NEGstd ~ as.numeric(as.vector(ia002.m$ia002)))
+abline(lm2)
+
+#ia003.m
+ia003.m<-merge.chrons(ia003.rwi.chron)
+plot(as.numeric(as.vector(ia003.m$ia003)), ia003.m$LKSstd) 
+lm3<-lm(ia003.m$LKSstd ~ as.numeric(as.vector(ia003.m$ia003)))
+abline(lm3)
+
+#need to find a way to automate this
+il009.m<-merge.chrons(il009.rwi.chron)
+plot(as.numeric(as.vector(il009.m$il009)), il009.m$KANstd) 
+lm4<-lm(il009.m$KANstd ~ as.numeric(as.vector(il009.m$il009)))
+abline(lm4)
+
+#create a function to plot 
+fileNames <- c(ia001.rwi.chron, ia002.rwi.chron)
+names <-c("ia001", "ia002")
+
+
+for (i in fileNames){
+  nam <- paste0("newobj.",names[i])
+  nam<-c()
+   nam[i] <- merge(data.frame(locs.pr.t), data.frame(fileNames[i]), by.x='year', by.y=0)
+    mypath[i] <- file.path("C:/Users/Kelly/Documents/TreeRings","SAVEHERE",paste("mymerge_", names[i], ".csv", sep = ","))
+ 
+    
+}
+
+ia001.pr<-merge(data.frame(locs.pr.t), data.frame(ia001.rwi.chron), by.x='year', by.y=0)
+plot(ia001.pr$ia001,ia001.pr$BKBstd)
+
+#unique.code<- unique(locs.pr$chroncd)
+#plot(ia002.rwi.chron$,locs.pr[locs.pr$site=="ia002",7:ncol(locs.pr)])
 ```
