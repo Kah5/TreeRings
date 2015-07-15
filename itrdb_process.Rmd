@@ -5,27 +5,34 @@ date: "Monday, May 04, 2015"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-I read in data from Pulaski Woods
+I read in data from White oaks across the prairie peninsula from ITRDB
 ```{r}
 library(dplR)
-filename_list <- c("in001.rwl","ia001.rwl", "il011.rwl", "il013.rwl","ia005.rwl", "ia002.rwl", "mo004.rwl", "il010.rwl", "ia023.rwl", "ia012.rwl", "ia003.rwl", "il009.rwl", "mo002.rwl", "mo007.rwl", "il014.rwl", "ia004.rwl","ia015.rwl", "mn022.rwl", "ia026.rwl", "ia030.rwl", "il008.rwl", "ia021.rwl", "il001.rwl", "ia024.rwl", "mo018.rwl", "wi006.rwl", "mo050.rwl", "mi016.rwl", "mo015.rwl")
+filename_list <- c("in001.rwl", "in002.rwl",
+             "ia001.rwl","ia002.rwl", "ia003.rwl",
+                   "ia004.rwl","ia005.rwl","ia006.rwl", 
+                   "ia012.rwl", "ia015.rwl","ia016.rwl", "ia018.rwl","ia020.rwl","ia021.rwl", "ia023.rwl", "ia024.rwl","ia025.rwl","ia026.rwl","ia027.rwl", "ia032.rwl", "ia033.rwl","ia034.rwl","il001.rwl", "il002.rwl","il008.rwl","il009.rwl","il010.rwl", "il011.rwl","il012.rwl","il013.rwl", "il014.rwl","ar002.rwl","ar009.rwl","ar013.rwl", "ar014.rwl","ar015.rwl","ar018.rwl","ar059.rwl","ar062.rwl", "mo004.rwl","mo002.rwl", "mo007.rwl","mn022.rwl", "mn023.rwl","mn028.rwl","mn029.rwl","mn030.rwl","mn016.rwl","oh001.rwl","oh002.rwl", 'oh003.rwl',"oh006.rwl", "mi005.rwl", "mi013.rwl", "mi018.rwl",
+"ky002.rwl", "ky004.rwl", "ks012.rwl",
+"wi006.rwl","wi008.rwl", "wi009.rwl","wi010.rwl","tn005.rwl","tn008.rwl","tn017.rwl","tn020.rwl","tn021.rwl","sd003.rwl", "sd006.rwl", "sd007.rwl", "sd009.rwl", "sd010.rwl", "sd011.rwl", "sd013.rwl", "sd014.rwl", "sd015.rwl", "sd018.rwl", "sd019.rwl","sd020.rwl","sd021.rwl","sd022.rwl","sd023.rwl","sd024.rwl")
 destfile=filename_list
 
 #tried l_ply first, but this loops seems to work better
-###already downloaded these files
-#for(i in 1:length(filename_list)){
-# download.file(filename_list[i], url=paste0('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/treering/measurements/northamerica/usa/', filename_list[i]), method="auto", quiet = FALSE, mode = "w",cacheOK = TRUE)
-#}
+###already downloaded these files, so they are commented out:
 
-filenames <- list.files("C:/Users/Kelly/Documents/TreeRings", pattern="*.rwl", full.names=FALSE)
+for(i in 1:length(filename_list)){
+ download.file(filename_list[i], url=paste0('ftp://ftp.ncdc.noaa.gov/pub/data/paleo/treering/measurements/northamerica/usa/', filename_list[i]), method="auto", quiet = FALSE, mode = "w",cacheOK = TRUE)
+}
+
+#filenames <- list.files("C:/Users/Kelly/Documents/TreeRings", pattern="*.rwl", full.names=FALSE)
+#filenames<-filenames[2:93]
+filenames<- filename_list
 myDir <- "C:/Users/Kelly/Documents/TreeRings" 
 
 data_names <- gsub("[.]rwl", "", filenames) 
 
 for(i in 1:length(filenames)) assign(data_names[i], read.rwl(file.path(myDir, filenames[i])))
+
 ```
 Detrend the rwl data
 ```{r}
@@ -51,8 +58,7 @@ for(i in 1:length(rwis)) {
   nam <- paste0(rwis[i], ".chron")
   assign(nam, chron(x=get(rwis[i]), prefix = substr(colnames(get(rwis[i]))[1],1,3)))}
 
-
-
+#plot each chronology
 chrons<- objects(pattern="*.rwi.chron")
 pdf("individual.chron.plots.pdf")
 for(i in 1:length(chrons)){
@@ -60,7 +66,8 @@ plot(get(chrons[i]),xlab="Year",ylab="RWI", main=chrons[i])
 }
 dev.off()
 ```
-
+########
+left of here on round 2 with a larger number of itrdb sites
 
 Are these RWI trends correlated to zonal index?
 ```{r}
@@ -74,7 +81,6 @@ sites<- read.csv("itrdb_locs.csv", header=TRUE, stringsAsFactors=FALSE)
 #create a column in sites that matches the names of our chronologies
 sites$chron.code <- paste0(sites$ITRDB.code, ".rwi.chron") 
 
-
 zonal.index <- read.csv("C:/Users/Kelly/Documents/Undergrad_projects/clim-analysis/geopthgt1980_2013.csv")
 zonal.index$years<- 1977:2013
 
@@ -84,14 +90,6 @@ for(i in 1:length(chrons)){
   nam <- paste0(chrons[i], ".mod")
   assign(nam, merge(get(chrons[i]),zonal.index, by.x="row.names", by.y="years"))
 }
-
-
-#merges<- objects(pattern="*.rwi.chron.mod")
-#for(i in 1:length(merges)){
-#name<- unlist(strsplit(merges[i],split='.', fixed=TRUE))[1]
-#merges[i]$id <- name
-#}
-
 
 files<- rbind.fill(ia001.rwi.chron.mod,ia002.rwi.chron.mod,ia003.rwi.chron.mod,ia004.rwi.chron.mod,ia005.rwi.chron.mod ,ia012.rwi.chron.mod, ia015.rwi.chron.mod,ia021.rwi.chron.mod, ia023.rwi.chron.mod,ia024.rwi.chron.mod , ia026.rwi.chron.mod,ia030.rwi.chron.mod,il001.rwi.chron.mod, il008.rwi.chron.mod, il009.rwi.chron.mod ,il010.rwi.chron.mod ,il011.rwi.chron.mod,il013.rwi.chron.mod,il014.rwi.chron.mod,in001.rwi.chron.mod,mn022.rwi.chron.mod , mo002.rwi.chron.mod ,mo004.rwi.chron.mod, mo007.rwi.chron.mod,mo015.rwi.chron.mod,mo018.rwi.chron.mod, mo050.rwi.chron.mod, wi006.rwi.chron.mod )    
 
@@ -137,86 +135,16 @@ plot.long <- ggplot(data.locs, aes(lon, value))+
 ```
 There does not appear to be a strong trend in correlation of ring width and zonal index data
 
-
-
 Are there latitudinal/longitudinal gradients in the data?
+Extract precipitation data and sum for each year to get annual precipitation
 ```{r}
-#download the worldclim data
+#download NOAA data, save in directory
 library(raster)
-tmin12 = getData('worldclim', var='tmin', res=0.5, lon=-90, lat=42)
-tmax12 = getData('worldclim', var='tmax', res=0.5, lon=-90, lat=42)
-precip12 = getData('worldclim', var='prec', res=0.5, lon=-90, lat=42)
-tmean12 = getData('worldclim', var='tmean', res=0.5, lon=-90, lat=42)
-
-tmin12 = getData('worldclim', var='tmin', res=0.5, lon=-94, lat=42)
-tmax12 = getData('worldclim', var='tmax', res=0.5, lon=-94, lat=42)
-precip13 = getData('worldclim', var='prec', res=0.5, lon=-94, lat=42)
-tmean12 = getData('worldclim', var='tmean', res=0.5, lon=-94, lat=42)
 
 locs <- read.csv("itrdb_locs.csv")
 coordinates(locs) <-~lon+lat
 proj4string(locs)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
 
-
-precip6 <- raster(paste0(getwd(), "/wc0.5/prec6_13.bil"))
-precip6.2<- raster(paste0(getwd(), "/wc0.5/prec6_12.bil"))
-list.ras <- mixedsort(list.files(paste0(getwd(), "/wc0.5/", sep = ""), full.names = T, 
-    pattern = ".bil"))
-precips<-list.ras[1:24]  # I
-odds<-c(1,3,5,7,9,11,13,15,17,19,21,23)
-evens<-c(2,4,6,8,10,12,14,16,18,20,22,24)
-
-precip12<- stack(precips[odds])
-precip13<- stack(precips[evens])
-
-precip1<- merge(raster(precips[1]), raster(precips[2])) #merges the two rasters together into 1
-precip2<- merge(raster(precips[3]), raster(precips[4])) 
-precip3<- merge(raster(precips[5]), raster(precips[6])) 
-precip4<- merge(raster(precips[7]), raster(precips[8])) 
-precip5<- merge(raster(precips[9]), raster(precips[10])) 
-precip6<- merge(raster(precips[11]), raster(precips[12])) 
-precip7<- merge(raster(precips[13]), raster(precips[14])) 
-precip8<- merge(raster(precips[15]), raster(precips[16])) 
-precip9<- merge(raster(precips[17]), raster(precips[18])) 
-precip10<- merge(raster(precips[19]), raster(precips[20])) 
-precip11<- merge(raster(precips[21]), raster(precips[22])) 
-precip12<- merge(raster(precips[23]), raster(precips[24])) 
-
-list.all<- c(precip1, precip2, precip3, precip4, precip5, precip6, precip7, precip8, precip9, precip10, precip11, precip12)
-prec.all<-stack(list.all)
-prec.all
-proj4string(prec.all)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
-
-#X11(width=11)
-#plot(precip.us)
-#plot(locs, add=TRUE)
-
-##extract by lat long
-prec1 <- extract(prec.all, locs)
-data.frame(locs)
-
-colnames(prec1) <- c("prec1", "prec2", "prec3","prec4", 'prec5',"prec6", "prec7", "prec8", "prec9", "prec10", "prec11", "prec12")
-#paste to the locs
-
-locs <- data.frame(locs, prec1)
-
-
-files<- rbind.fill(ia001.rwi.chron.mod,ia002.rwi.chron.mod,ia003.rwi.chron.mod,ia004.rwi.chron.mod,ia005.rwi.chron.mod ,ia012.rwi.chron.mod, ia015.rwi.chron.mod,ia021.rwi.chron.mod, ia023.rwi.chron.mod,ia024.rwi.chron.mod , ia026.rwi.chron.mod,ia030.rwi.chron.mod,il001.rwi.chron.mod, il008.rwi.chron.mod, il009.rwi.chron.mod ,il010.rwi.chron.mod ,il011.rwi.chron.mod,il013.rwi.chron.mod,il014.rwi.chron.mod,in001.rwi.chron.mod,    
- mn022.rwi.chron.mod , mo002.rwi.chron.mod ,mo004.rwi.chron.mod, mo007.rwi.chron.mod,mo015.rwi.chron.mod, mo018.rwi.chron.mod    
-,mo050.rwi.chron.mod,wi006.rwi.chron.mod )   
-
-df.new<-melt(files, id=c("Row.names", "samp.depth", "X", "east.zonal.index", "hemispheric.zonal.index", "west.zonal.index"))
-
-data.pr<-merge(df.new, locs, by.x ="variable", by.y="chroncd")
-plot.pr <- ggplot(data.pr, aes(east.zonal.index, value))+
-  geom_point(aes(color=prec1, size=3))
-
-
-#these data are the average annual values, but we want yearly
-```
-
-Extract precipitation data and sum for each year to get annual precipitation
-```{r}
 library(ncdf4)
 library(raster)
 inputfile="C:/Users/Kelly/Documents/TreeRings/precip.mon.total.v6.nc"
@@ -239,8 +167,8 @@ coordinates(locs.soil)<- ~lon+lat
 proj4string(locs)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
 proj4string(locs.soil)<- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
 
-
-
+#these soil layers will be used much later
+#clay raster
 clay <- raster("soils_data/clay_rast1.tif")
 
 #sand raster
@@ -427,6 +355,7 @@ melt.rwi.temp<- function(location.rwi) {data.frame(melt(merge(data.frame(locs.te
 ```
 This section plots correlation coefficients with latitude & longitude
 ```{r}
+#get all the corr.precip objects and put in a dataframe
 corr.precips <- ls(pattern = '\\corr.precip$')
 names<- corr.precips
 for(i in 1:length(corr.precips)){
@@ -438,401 +367,119 @@ pr.corr<- data.frame(corr=dat,
           chroncd=unlist(chroncd), 
           stringsAsFactors=FALSE)
 
-```
-This section generates plots of annual precipitation vs. annual rwi for each site. Right now it is messy because I could not figure out how to use lapply to apply it over a loop without generating a strange list. This is a huge chunk of code...
-```{r}
-##################################
+#do the same for temperature data
+corr.temps <- ls(pattern = '\\corr.temp$')
+names<- corr.temps
+dat.t<- dat
+chroncd.t<- chroncd
+for(i in 1:length(corr.temps)){
+  dat.t[i] <- get(corr.temps[[i]])
+  chroncd.t[i] <- strsplit(names[i], ".corr.temp", 6)
+  }
 
-pdf("precip_RWI_reg.pdf")
-#ia001.m
-ia001.m<-merge.chrons(ia001.rwi.chron)
-par(mfrow=c(1,2))
-plot(as.numeric(as.vector(ia001.m$ia001)), ia001.m$BKBstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "chronology vs. precip ia001, BKBstd", ylim=c(0,2)) 
-lm1<-lm(ia001.m$BKBstd ~ as.numeric(as.vector(ia001.m$ia001)))
-abline(lm1)
-#plot rwi of each tree
-melted <- melt.rwi(ia001.rwi)
-plot(as.numeric(as.vector(melted$ia001)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia001))))
-#correlation for chron
-ia001.c<- cor(as.numeric(as.vector(ia001.m$ia001)), ia001.m$BKBstd)
+temp.corr<- data.frame(corr=dat.t,
+          chroncd=unlist(chroncd.t), 
+          stringsAsFactors=FALSE)
 
-#ia002.m
-ia002.m<-merge.chrons(ia002.rwi.chron)
-plot(as.numeric(as.vector(ia002.m$ia002)), ia002.m$NEGstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia002, NEGstd",ylim=c(0,2)) 
-lm2<-lm(ia002.m$NEGstd ~ as.numeric(as.vector(ia002.m$ia002)))
-abline(lm2)
-#plot rwi of each tree
-melted <- melt.rwi(ia002.rwi)
-plot(as.numeric(as.vector(melted$ia002)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia002))))
-#correlation for chron
-ia002.c <- cor(as.numeric(as.vector(ia002.m$ia002)), ia002.m$NEGstd)
 
-#ia003.m
-ia003.m<-merge.chrons(ia003.rwi.chron)
-plot(as.numeric(as.vector(ia003.m$ia003)), ia003.m$LKSstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia003, LKSstd",ylim=c(0,2)) 
-lm3<-lm(ia003.m$LKSstd ~ as.numeric(as.vector(ia003.m$ia003)))
-abline(lm3)
-#plot rwi of each tree
-melted <- melt.rwi(ia003.rwi)
-plot(as.numeric(as.vector(melted$ia003)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia003))))
-#correlation for chron
-ia003.c <- cor(as.numeric(as.vector(ia003.m$ia003)), ia003.m$LKSstd)
-
-#ia004.m
-ia004.m<-merge.chrons(ia004.rwi.chron)
-plot(as.numeric(as.vector(ia004.m$ia004)), ia004.m$GEOstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia004, GEOstd",ylim=c(0,2)) 
-lm4<-lm(ia004.m$GEOstd ~ as.numeric(as.vector(ia004.m$ia004)))
-abline(lm4)
-#plot rwi of each tree
-melted <- melt.rwi(ia004.rwi)
-plot(as.numeric(as.vector(melted$ia004)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI")
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia004))))
-#correlation for chron
-ia004.c <- cor(as.numeric(as.vector(ia004.m$ia004)), ia004.m$GEOstd)
-
-#ia005.m
-ia005.m<-merge.chrons(ia005.rwi.chron)
-plot(as.numeric(as.vector(ia005.m$ia005)), ia005.m$PKPstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia005, PKPstd",ylim=c(0,2)) 
-lm5<-lm(ia005.m$PKPstd ~ as.numeric(as.vector(ia005.m$ia005)))
-abline(lm5)
-#plot rwi of each tree
-melted <- melt.rwi(ia005.rwi)
-plot(as.numeric(as.vector(melted$ia005)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI")
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia005))))
-#correlation for chron
-ia005.c <- cor(as.numeric(as.vector(ia005.m$ia005)), ia005.m$PKPstd)
-
-#ia012.m
-ia012.m<-merge.chrons(ia012.rwi.chron)
-plot(as.numeric(as.vector(ia012.m$ia012)), ia012.m$X783std, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia012, 783std",ylim=c(0,2)) 
-lm6<-lm(ia012.m$X783std ~ as.numeric(as.vector(ia012.m$ia012)))
-abline(lm6)
-#plot rwi of each tree
-melted <- melt.rwi(ia012.rwi)
-plot(as.numeric(as.vector(melted$ia012)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia012))))
-#correlation for chron
-ia012.c <- cor(as.numeric(as.vector(ia012.m$ia012)), ia012.m$X783std)
-
-#ia015.m
-ia015.m<-merge.chrons(ia015.rwi.chron)
-plot(as.numeric(as.vector(ia015.m$ia015)), ia015.m$X782std, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia015, 782std",ylim=c(0,2)) 
-lm7<-lm(ia015.m$X782std ~ as.numeric(as.vector(ia015.m$ia015)))
-abline(lm7)
-ia015.c <- cor(as.numeric(as.vector(ia015.m$ia015)), ia015.m$X782std)
-#plot rwi of each tree
-melted <- melt.rwi(ia015.rwi)
-plot(as.numeric(as.vector(melted$ia015)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia015))))
-
-#ia021.m
-ia021.m<-merge.chrons(ia021.rwi.chron)
-plot(as.numeric(as.vector(ia021.m$ia021)), ia021.m$X788std, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia021, 788std",ylim=c(0,2)) 
-lm8<-lm(ia021.m$X788std ~ as.numeric(as.vector(ia021.m$ia021)))
-abline(lm8)
-#plot rwi of each tree
-melted <- melt.rwi(ia021.rwi)
-plot(as.numeric(as.vector(melted$ia021)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia021))))
-#correlation
-ia021.c <- cor(as.numeric(as.vector(ia021.m$ia021)), ia021.m$X788std)
-
-#ia023.m
-ia023.m<-merge.chrons(ia023.rwi.chron)
-plot(as.numeric(as.vector(ia023.m$ia023)), ia023.m$X648std, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia023, 648std",ylim=c(0,2)) 
-lm9<-lm(ia023.m$X648std ~ as.numeric(as.vector(ia023.m$ia023)))
-abline(lm9)
-#all rwis 
-melted <- melt.rwi(ia023.rwi)
-plot(as.numeric(as.vector(melted$ia023)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia023))))
-#correlation
-ia023.c <- cor(as.numeric(as.vector(ia023.m$ia023)), ia023.m$X648std)
-
-#ia024.m
-ia024.m<-merge.chrons(ia024.rwi.chron)
-plot(as.numeric(as.vector(ia024.m$ia024)), ia024.m$X464std, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia024, 464std",ylim=c(0,2)) 
-lm10<-lm(ia024.m$X464std ~ as.numeric(as.vector(ia024.m$ia024)))
-abline(lm10)
-#all rwis
-melted <- melt.rwi(ia024.rwi)
-plot(as.numeric(as.vector(melted$ia024)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia024))))
-#correlation
-ia024.c <- cor(as.numeric(as.vector(ia024.m$ia024)), ia024.m$X464std)
-
-#ia026.m
-ia026.m<-merge.chrons(ia026.rwi.chron)
-plot(as.numeric(as.vector(ia026.m$ia026)), ia026.m$X649std, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia026, 649std",ylim=c(0,2)) 
-lm11<-lm(ia026.m$X649std ~ as.numeric(as.vector(ia026.m$ia026)))
-abline(lm11)
-#all rwis
-melted <- melt.rwi(ia026.rwi)
-plot(as.numeric(as.vector(melted$ia026)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia026))))
-#correlation
-ia026.c <- cor(as.numeric(as.vector(ia026.m$ia026)), ia026.m$X649std)
-
-#ia030.m
-ia030.m<-merge.chrons(ia030.rwi.chron)
-plot(as.numeric(as.vector(ia030.m$ia030)), ia030.m$WPHstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "ia030, WPHstd",ylim=c(0,2)) 
-lm12<-lm(ia030.m$WPHstd ~ as.numeric(as.vector(ia030.m$ia030)))
-abline(lm12)
-#all rwis
-melted <- melt.rwi(ia030.rwi)
-plot(as.numeric(as.vector(melted$ia030)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$ia030))))
-#correlation
-ia030.c <- cor(as.numeric(as.vector(ia030.m$ia030)), ia030.m$WPHstd)
-
-#il001.m
-il001.m<-merge.chrons(il001.rwi.chron)
-plot(as.numeric(as.vector(il001.m$il001)), il001.m$SAWstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il001, SAWstd",ylim=c(0,2)) 
-lm13<-lm(il001.m$SAWstd ~ as.numeric(as.vector(il001.m$il001)))
-abline(lm13)
-#all rwis
-melted <- melt.rwi(il001.rwi)
-plot(as.numeric(as.vector(melted$il001)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il001))))
-#correlation
-il001.c <- cor(as.numeric(as.vector(il001.m$il001)), il001.m$SAWstd)
-
-#il008.m
-il008.m<-merge.chrons(il008.rwi.chron)
-plot(as.numeric(as.vector(il008.m$il008)), il008.m$STRstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il008, STRstd",ylim=c(0,2)) 
-lm14<-lm(il008.m$STRstd ~ as.numeric(as.vector(il008.m$il008)))
-abline(lm14)
-#il008.m
-melted <- melt.rwi(il008.rwi)
-plot(as.numeric(as.vector(melted$il008)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il008))))
-#correlation
-il008.c <- cor(as.numeric(as.vector(il008.m$il008)), il008.m$STRstd)
-
-#il009.m
-il009.m<-merge.chrons(il009.rwi.chron)
-plot(as.numeric(as.vector(il009.m$il009)), il009.m$KANstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il009, KANstd",ylim=c(0,2)) 
-lm15<-lm(il009.m$KANstd ~ as.numeric(as.vector(il009.m$il009)))
-abline(lm15)
-#all rwis
-melted <- melt.rwi(il009.rwi)
-plot(as.numeric(as.vector(melted$il009)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il009))))
-#correlation
-il009.c <- cor(as.numeric(as.vector(il009.m$il009)), il009.m$KANstd)
-
-#il010
-il010.m<-merge.chrons(il010.rwi.chron)
-plot(as.numeric(as.vector(il010.m$il010)), il010.m$LNSstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il010, LNSstd",ylim=c(0,2)) 
-lm16<-lm(il010.m$LNSstd ~ as.numeric(as.vector(il010.m$il010)))
-abline(lm16)
-#all rwis
-melted <- melt.rwi(il010.rwi)
-plot(as.numeric(as.vector(melted$il010)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il010))))
-#correlation
-il010.c <- cor(as.numeric(as.vector(il010.m$il010)), il010.m$LNSstd)
-
-#il011
-il011.m<-merge.chrons(il011.rwi.chron)
-plot(as.numeric(as.vector(il011.m$il011)), il011.m$FXRstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il011, FXRstd",ylim=c(0,2)) 
-lm17<-lm(il011.m$FXRstd ~ as.numeric(as.vector(il011.m$il011)))
-abline(lm17)
-#all rwis
-melted <- melt.rwi(il011.rwi)
-plot(as.numeric(as.vector(melted$il011)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il011))))
-#correlation
-il011.c <- cor(as.numeric(as.vector(il011.m$il011)), il011.m$FXRstd)
-
-#il013
-il013.m<-merge.chrons(il013.rwi.chron)
-plot(as.numeric(as.vector(il013.m$il013)), il013.m$FCLstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il013, FCLstd",ylim=c(0,2)) 
-lm18<-lm(il013.m$FCLstd ~ as.numeric(as.vector(il013.m$il013)))
-abline(lm18)
-#all rwis
-melted <- melt.rwi(il013.rwi)
-plot(as.numeric(as.vector(melted$il013)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il013))))
-#correlation
-il013.c <- cor(as.numeric(as.vector(il013.m$il013)), il013.m$FCLstd)
-
-#il014
-il014.m<-merge.chrons(il014.rwi.chron)
-plot(as.numeric(as.vector(il014.m$il014)), il014.m$GCYstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "il014, GCYstd",ylim=c(0,2)) 
-lm19<-lm(il014.m$GCYstd ~ as.numeric(as.vector(il014.m$il014)))
-abline(lm19)
-#all rwis
-melted <- melt.rwi(il014.rwi)
-plot(as.numeric(as.vector(melted$il014)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$il014))))
-#correlation
-il014.c <- cor(as.numeric(as.vector(il014.m$il014)), il014.m$GCYstd)
-
-#in001
-in001.m<-merge.chrons(in001.rwi.chron)
-plot(as.numeric(as.vector(in001.m$in001)), in001.m$PW1std, xlab= "annual precip. (mm)", ylab= "RWI", main = "in001, PW1std",ylim=c(0,2)) 
-lm20<-lm(in001.m$PW1std ~ as.numeric(as.vector(in001.m$in001)))
-abline(lm20)
-#all rwis
-melted <- melt.rwi(in001.rwi)
-plot(as.numeric(as.vector(melted$in001)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$in001))))
-#correlation
-in001.c <- cor(as.numeric(as.vector(in001.m$in001)), in001.m$PW1std)
-
-#mn022
-mn022.m<-merge.chrons(mn022.rwi.chron)
-plot(as.numeric(as.vector(mn022.m$mn022)), mn022.m$SBOstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mn022, K1Astd",ylim=c(0,2)) 
-lm22<-lm(mn022.m$SBOstd ~ as.numeric(as.vector(mn022.m$mn022)))
-abline(lm22)
-#all rwis
-melted <- melt.rwi(mn022.rwi)
-plot(as.numeric(as.vector(melted$mn022)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mn022))))
-#correlation
-mn022.c <- cor(as.numeric(as.vector(mn022.m$mn022)), mn022.m$SBOstd)
-
-#mo002
-mo002.m<-merge.chrons(mo002.rwi.chron)
-plot(as.numeric(as.vector(mo002.m$mo002)), mo002.m$K1Astd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mo002, K1Astd",ylim=c(0,2)) 
-lm22<-lm(mo002.m$K1Astd ~ as.numeric(as.vector(mo002.m$mo002)))
-abline(lm22)
-#all rwis
-melted <- melt.rwi(mo002.rwi)
-plot(as.numeric(as.vector(melted$mo002)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mo002))))
-#correlation
-mo002.c <- cor(as.numeric(as.vector(mo002.m$mo002)), mo002.m$K1Astd)
-
-#mo004
-mo004.m<-merge.chrons(mo004.rwi.chron)
-plot(as.numeric(as.vector(mo004.m$mo004)), mo004.m$K3Astd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mo004, K3Astd",ylim=c(0,2)) 
-lm23<-lm(mo004.m$K3Astd ~ as.numeric(as.vector(mo004.m$mo004)))
-abline(lm23)
-#all rwis
-melted <- melt.rwi(mo004.rwi)
-plot(as.numeric(as.vector(melted$mo004)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mo004))))
-#correlation
-mo004.c <- cor(as.numeric(as.vector(mo004.m$mo004)), mo004.m$K3Astd)
-
-#mo007
-mo007.m<-merge.chrons(mo007.rwi.chron)
-plot(as.numeric(as.vector(mo007.m$mo007)), mo007.m$K4Astd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mo007, K4Astd",ylim=c(0,2)) 
-lm24<-lm(mo007.m$K4Astd ~ as.numeric(as.vector(mo007.m$mo007)))
-abline(lm24)
-#all rwis
-melted <- melt.rwi(mo007.rwi)
-plot(as.numeric(as.vector(melted$mo007)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mo007))))
-#correlation
-mo007.c <- cor(as.numeric(as.vector(mo007.m$mo007)), mo007.m$K4Astd)
-
-#mo015
-mo015.m<-merge.chrons(mo015.rwi.chron)
-plot(as.numeric(as.vector(mo015.m$mo015)), mo015.m$WEGstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mo015, WEGstd",ylim=c(0,2)) 
-lm25<-lm(mo015.m$WEGstd ~ as.numeric(as.vector(mo015.m$mo015)))
-abline(lm25)
-#all rwis
-melted <- melt.rwi(mo015.rwi)
-plot(as.numeric(as.vector(melted$mo015)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mo015))))
-#correlation
-mo015.c <- cor(as.numeric(as.vector(mo015.m$mo015)), mo015.m$WEGstd)
-
-#mo018
-mo018.m<-merge.chrons(mo018.rwi.chron)
-plot(as.numeric(as.vector(mo018.m$mo018)), mo018.m$RORstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mo018, RORstd",ylim=c(0,2)) 
-lm26<-lm(mo018.m$RORstd ~ as.numeric(as.vector(mo018.m$mo018)))
-abline(lm26)
-#all rwis
-melted <- melt.rwi(mo018.rwi)
-plot(as.numeric(as.vector(melted$mo018)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mo018))))
-#correlation
-mo018.c <- cor(as.numeric(as.vector(mo018.m$mo018)), mo018.m$RORstd)
-
-#mo050
-mo050.m<-merge.chrons(mo050.rwi.chron)
-plot(as.numeric(as.vector(mo050.m$mo050)), mo050.m$CRNstd, xlab= "annual precip. (mm)", ylab= "RWI", main = "mo050, CRNstd",ylim=c(0,2)) 
-lm27<-lm(mo050.m$CRNstd ~ as.numeric(as.vector(mo050.m$mo050)))
-abline(lm27)
-#all rwis
-melted <- melt.rwi(mo050.rwi)
-plot(as.numeric(as.vector(melted$mo050)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI")
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$mo050))))
-#correlation
-mo050.c <- cor(as.numeric(as.vector(mo050.m$mo050)), mo050.m$CRNstd)
-
-#pleasant prairie wisconsin
-wi006.m<-merge.chrons(wi006.rwi.chron)
-plot(as.numeric(as.vector(wi006.m$wi006)), wi006.m$PlPstd,, xlab= "annual precip. (mm)", ylab= "RWI", main = "wi006, PlPstd",ylim=c(0,2)) 
-lm28<-lm(wi006.m$PlPstd ~ as.numeric(as.vector(wi006.m$wi006)))
-abline(lm28)
-#all rwis
-melted <- melt.rwi(wi006.rwi)
-plot(as.numeric(as.vector(melted$wi006)), melted$year.1, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI",ylim=c(0,2))
-abline(lm(melted$year.1 ~ as.numeric(as.vector(melted$wi006))))
-#correlation
-wi006.c <- cor(as.numeric(as.vector(wi006.m$wi006)), wi006.m$PlPstd)
-
-dev.off()
-```
-Plot the correlation coefficient by latitude
-```{r}
-#created a dataframe with correlation coefficients
-corrs <- data.frame(prcorrs= c(ia001.c, ia002.c, ia003.c, ia004.c, ia005.c, ia012.c, ia015.c, ia023.c, ia024.c, ia026.c, ia030.c, il001.c, il008.c, il009.c, il010.c, il011.c, il013.c, il014.c, in001.c,mn022.c, mo002.c, mo004.c, mo007.c, mo018.c, mo050.c, wi006.c), ITRDB.code = c( 'ia001', 'ia002', 'ia003', 'ia004', 'ia005', 'ia012', 'ia015', 'ia023', 'ia024', 'ia026', 'ia030', 'il001', 'il008', 'il009', 'il010', 'il011', 'il013', 'il014', 'in001','mn022', 'mo002', 'mo004', 'mo007', 'mo018', 'mo050', 'wi006'))
-#combine corrs with locs to get latlong coordinates
-
-prcorr.df <- merge(corrs, locs, by="ITRDB.code")
+#merge temp.corr and pr.corr dfs with location df to get lat long values
+prcorr.df <- merge(pr.corr, locs, by="chroncd")
+tempcorr.df <- merge(temp.corr, locs, by="chroncd")
 
 pdf("outputs/correlation_lat_lon.pdf")
 #plot the relationship with latitude
-plot(prcorr.df$lat, prcorr.df$prcorrs, pch=15, xlab="latitude", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Latitudes")
-lm.copr <- lm(prcorr.df$prcorrs ~ prcorr.df$lat)
+plot(prcorr.df$lat, prcorr.df$corr, pch=15, xlab="latitude", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Latitudes")
+lm.copr <- lm(prcorr.df$corr ~ prcorr.df$lat)
 abline(lm.copr)
+
+plot(tempcorr.df$lat, tempcorr.df$corr, pch=15, xlab="latitude", ylab="Correlation coefficient (RWI vs. Mean Temperature)", main="Temperature Correlation coefficient of tree ring width index across Latitudes")
+lm.cotemp <- lm(tempcorr.df$corr ~ tempcorr.df$lat)
+abline(lm.cotemp)
+
+library(rgdal)
+#make the precipitation data spatial and plot on the map
+coordinates(prcorr.df)<-~long+lat
+proj4string(prcorr.df) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
+prcorr.NAD83 <- spTransform(prcorr.df, CRS("+proj=longlat +datum=NAD83"))
+prcorr.df <- data.frame(prcorr.NAD83)
+
+#make the temperature data spatial and plot on map
+coordinates(tempcorr.df)<-~long+lat
+proj4string(tempcorr.df) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +towgs84=0,0,0"
+tempcorr.NAD83 <- spTransform(tempcorr.df, CRS("+proj=longlat +datum=NAD83"))
+tempcorr.df <- data.frame(tempcorr.NAD83)
+
+#load in map outline of states 
+library(maps)
+#load us map data
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c( "indiana", "illinois", "missouri", "iowa", "wisconsin", "minnesota"  ) )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-states
+#mapdata<-spTransform(states, CRS("+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+mapdata<-data.frame(mapdata) #ggplot needs it in a data.frame
+
+
+#plot the precipitation points on the map
+p <-ggplot() +geom_polygon(data=mapdata, aes(x=long, y=lat, group = group))
+p <- p + geom_point( data=prcorr.df, aes(x=lon, y=lat, color = corr, size = corr)) +
+  scale_colour_gradient(low = "red") + 
+  labs(x="easting", y="northing", title="Correlation coefficient of tree ring width index to Annual precipitaiton ") 
+p
+
+#plot the temp points on map
+t <-ggplot() +geom_polygon(data=mapdata, aes(x=long, y=lat, group = group))
+t <- t + geom_point( data=tempcorr.df, aes(x=lon, y=lat, color = corr, size = abs(corr))) +
+  scale_colour_gradient(low = "red") + 
+  labs(x="easting", y="northing", title="Correlation coefficient of tree ring width index to Mean annual temperature ") 
+t
+dev.off()
+
+```
+
+How does soil type play into these trends?
+```{r}
 
 #lat.plot<-ggplot(prcorr.df,aes(lat, prcorrs))+geom_point(col="blue") + stat_smooth(method="lm", se=FALSE)+ labs(x="latitude", y="Correlation coefficient (RWI vs. Annual Precip)", title="Precip Correlation coefficient of tree ring width index across Latitudes") 
 
 #long.plot<-ggplot(prcorr.df,aes(lon, prcorrs))+geom_point(col="blue") + stat_smooth(method="lm", se=FALSE)+ scale_y_continuous(limits = c(0, 0.5))+labs(x="longitude", y="Correlation coefficient (RWI vs. Annual Precip)", title="Precip Correlation coefficient of tree ring width index across Longitudes") 
-
+pdf("outputs/soil_correlation.pdf")
 #plot the relationship with longitude
-plot(prcorr.df$lon, prcorr.df$prcorrs, pch= 15,xlab="longitude", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Longitudes")
-lm.coprlon <- lm(prcorr.df$prcorrs ~ prcorr.df$lon)
+plot(prcorr.df$lon, prcorr.df$corr, pch= 15,xlab="longitude", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Longitudes")
+
+lm.coprlon <- lm(prcorr.df$corr ~ prcorr.df$lon)
 abline(lm.coprlon)
 
 #sand is not significant
-plot(prcorr.df$sand, prcorr.df$prcorrs, pch=15, xlab="% sand", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Sand gradients")
-lm.sand <- lm(prcorr.df$prcorrs ~ prcorr.df$sand)
+plot(prcorr.df$sand, prcorr.df$corr, pch=15, xlab="% sand", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Sand gradients")
+lm.sand <- lm(prcorr.df$corr ~ prcorr.df$sand)
 abline(lm.sand)
 
 #silt is not significant
-plot(prcorr.df$silt, prcorr.df$prcorrs, pch=15, xlab="% silt", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Silt gradients")
-lm.silt <- lm(prcorr.df$prcorrs ~ prcorr.df$silt)
+plot(prcorr.df$silt, prcorr.df$corr, pch=15, xlab="% silt", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across Silt gradients")
+lm.silt <- lm(prcorr.df$corr ~ prcorr.df$silt)
 abline(lm.silt)
 
 #clay is not significant
-plot(prcorr.df$clay, prcorr.df$prcorrs, pch=15, xlab="% clay", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across clay gradients")
-lm.clay <- lm(prcorr.df$prcorrs ~ prcorr.df$clay)
+plot(prcorr.df$clay, prcorr.df$corr, pch=15, xlab="% clay", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across clay gradients")
+lm.clay <- lm(prcorr.df$corr ~ prcorr.df$clay)
 abline(lm.clay)
 
 #awc is not significant
-plot(prcorr.df$awc, prcorr.df$prcorrs, pch=15, xlab="AWC", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across awc gradients")
-lm.awc <- lm(prcorr.df$prcorrs ~ prcorr.df$awc)
+plot(prcorr.df$awc, prcorr.df$corr, pch=15, xlab="AWC", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across awc gradients")
+lm.awc <- lm(prcorr.df$corr ~ prcorr.df$awc)
 abline(lm.awc)
 
-#ksat not significant
-plot(prcorr.df$ksat, prcorr.df$prcorrs, pch=15, xlab="ksat", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across ksat gradients")
-lm.ksat<- lm(prcorr.df$prcorrs ~ prcorr.df$ksat)
+#ksat not significant (p = 0.1911)
+plot(prcorr.df$ksat, prcorr.df$corr, pch=15, xlab="ksat", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across ksat gradients")
+lm.ksat<- lm(prcorr.df$corr ~ prcorr.df$ksat)
 abline(lm.ksat)
 
-#elev not significant
-plot(prcorr.df$elev, prcorr.df$prcorrs, pch=15, xlab="elev", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across elev gradients")
-lm.elev<- lm(prcorr.df$prcorrs ~ prcorr.df$elev)
+#elev not significant (p = 0.614)
+plot(prcorr.df$elev, prcorr.df$corr, pch=15, xlab="elev", ylab="Correlation coefficient (RWI vs. Annual Precip)", main="Precip Correlation coefficient of tree ring width index across elev gradients")
+lm.elev<- lm(prcorr.df$corr ~ prcorr.df$elev)
 abline(lm.elev)
 
 
@@ -847,53 +494,17 @@ library(maps)
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c( "indiana", "illinois", "missouri", "iowa", "wisconsin", "minnesota"  ) )
 coordinates(states)<-~long+lat
-class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-states
-#mapdata<-spTransform(states, CRS("+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
 mapdata<-data.frame(mapdata)
 
-#plot(mapdata)
-
-#plot the points on the map
+#plot the points on the map with silt as color
 p <-ggplot() +geom_polygon(data=mapdata, aes(x=long, y=lat, group = group))
-p <- p + geom_point( data=prcorr.df, aes(x=lon, y=lat, color = ksat, size = prcorrs)) +
+p <- p + geom_point( data=prcorr.df, aes(x=lon, y=lat, color = silt, size = corr)) +
   scale_colour_gradient(low = "red") + 
   labs(x="easting", y="northing", title="Correlation coefficient of tree ring width index to Annual precipitaiton ") 
 p
 
 dev.off()
 
-```
-Now for temperature data
-```{r}
-mo004.m<-merge.chrons.t(mo004.rwi.chron)
-plot(as.numeric(as.vector(mo004.m$K3Astd.x)), mo004.m$K3Astd.y, xlab= "Average Annual Temperature", ylab= "RWI", main = "mo004, K3Astd") 
-lm23<-lm(mo004.m$K3Astd.y ~ as.numeric(as.vector(mo004.m$K3Astd.x)))
-abline(lm23)
-#all rwis
-melted <- melt.rwi.temp(mo004.rwi)
-plot(as.numeric(as.vector(melted$K3Astd)), melted$value, main= "all RWI vs. precip", xlab = "annual precip. (mm)", ylab="RWI")
-abline(lm(melted$value ~ as.numeric(as.vector(melted$K3Astd))))
-#correlation
-mo004.tc <- cor(as.numeric(as.vector(mo004.m$K3Astd.x)), mo004.m$K3Astd.y)
-```
-extra stuff
-```{r}
-fileNames <- c(ia001.rwi.chron, ia002.rwi.chron)
-names <-c("ia001", "ia002")
-for (i in fileNames){
-  nam <- paste0("newobj.",names[i])
-  nam<-c()
-   nam[i] <- merge(data.frame(locs.pr.t), data.frame(fileNames[i]), by.x='year', by.y=0)
-    mypath[i] <- file.path("C:/Users/Kelly/Documents/TreeRings","SAVEHERE",paste("mymerge_", names[i], ".csv", sep = ","))
- 
-    
-}
-
-ia001.pr<-merge(data.frame(locs.pr.t), data.frame(ia001.rwi.chron), by.x='year', by.y=0)
-plot(ia001.pr$ia001,ia001.pr$BKBstd)
-
-#unique.code<- unique(locs.pr$chroncd)
-#plot(ia002.rwi.chron$,locs.pr[locs.pr$site=="ia002",7:ncol(locs.pr)])
 ```
