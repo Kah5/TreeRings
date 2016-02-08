@@ -1,5 +1,8 @@
 #Correlating ring widths to precip in Illinois
 library(dplR)
+library(reshape2)
+library(ggplot2)
+library(plyr)
 
 
 #read in whole ring width file for site
@@ -9,8 +12,8 @@ Hickory <- read.tucson ("./cofecha/HICall.rwl", header = T)
 
 
 
-site <- Bonanza
-site.code <- "BON"
+site <- Hickory
+site.code <- "HIC"
 
 ##################################################
 #################################################
@@ -54,13 +57,13 @@ MNpdsi.df[MNpdsi.df == -9999]<- NA
 
 
 
-library(plyr)
+
 total.p <- aggregate(PCP~Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
 total.p
 
 precip <- dcast(total.p, Year  ~ Month)
 
-library(ggplot2)
+
 #create violin plot of monthly precip
 ggplot(total.p, aes(x = factor(Month), y = PCP))+ geom_violin(fill = "orange") +
   geom_point( colour= "blue")
@@ -85,7 +88,7 @@ mean.t
 
 temp <- dcast(mean.t, Year  ~ Month)
 
-library(ggplot2)
+
 #create violin plot of monthly precip
 ggplot(mean.t, aes(x = factor(Month), y = TMAX))+ geom_violin(fill = "orange") +
   geom_point( colour= "blue")
@@ -109,7 +112,7 @@ min.t
 
 temp.min <- dcast(min.t, Year  ~ Month)
 
-library(ggplot2)
+
 #create violin plot of monthly minimum temperature
 ggplot(min.t, aes(x = factor(Month), y = TMIN))+ geom_violin(fill = "orange") +
   geom_point( colour= "blue")
@@ -135,7 +138,7 @@ pdsi
 
 drought <- dcast(pdsi, Year  ~ Month)
 
-library(ggplot2)
+
 #create violin plot of monthly precip
 ggplot(pdsi, aes(x = factor(Month), y = PDSI))+ geom_violin(fill = "orange") +
   geom_point( colour= "blue")
@@ -182,8 +185,18 @@ HIC1424 <- detrend.series(site[,5], y.name = "HIC1424", method = "Spline",
 HIC1896 <- detrend.series(site[,6], y.name = "HIC1896", method = "Spline",
                           verbose= TRUE)
 
-
-
+HIC1699 <- detrend.series(site[,7], y.name = "HIC1699", method = "Spline",
+                          verbose= TRUE)
+HIC1895 <- detrend.series(site[,8], y.name = "HIC1895", method = "Spline",
+                          verbose= TRUE)
+HIC1984 <- detrend.series(site[,9], y.name = "HIC1984", method = "Spline",
+                          verbose= TRUE)
+HIC1891 <- detrend.series(site[,10], y.name = "HIC1891", method = "Spline",
+                          verbose= TRUE)
+HIC1892 <- detrend.series(site[,11], y.name = "HIC1892", method = "Spline",
+                         verbose= TRUE)
+HICfrag <- detrend.series(site[,12], y.name = "HICfrag", method = "Spline",
+                         verbose= TRUE)
 #for bonanza prairie #bonanaza has 12 variables
 BON411a <- detrend.series(Bonanza[,1],y.name = "BON411a", method = "Spline",
                           verbose= TRUE)
@@ -212,7 +225,8 @@ BON1411a <- detrend.series(Bonanza[,11],y.name = "BON1411a", method = "Spline",
 #if statement that determines site detrending to use for corrplots
 if(site.code == "HIC"){
 all.detrended <- data.frame(Year = as.numeric(row.names(site)),HIC1180, HIC1349, HIC1396,
-                            HIC1398, HIC1424, HIC1896)}else{
+                            HIC1398, HIC1424, HIC1896, HIC1699, HIC1895, 
+                            HIC1984, HIC1891, HIC1892, HICfrag)}else{
 all.detrended <- data.frame(Year = as.numeric(row.names(site)),BON411a, BON511a, BON611a, BON711a, 
                             BON811a, BON911a, BON1011a, BON1111a, BON1211a,BON1311a, BON1411a)
                             }
@@ -289,8 +303,8 @@ levelplot(M)
 corrplot(M, type = "upper", method = "circle")
 
 if(site.code == "HIC"){
-M2 <- M[8:31,2:7]
-M.tmax2 <- M.tmax[8:31,2:7] ##reduce size of matrix to exclude correlations of the same variables
+M2 <- M[14:37,2:13]
+M.tmax2 <- M.tmax[14:37,2:13] ##reduce size of matrix to exclude correlations of the same variables
 }else{M2 <- M[13:nrow(M),2:12]
 M.tmax2 <- M.tmax[13:nrow(M.tmax),2:12] }
 
