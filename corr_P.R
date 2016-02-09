@@ -9,13 +9,20 @@ library(plyr)
 
 #read in whole ring width file for site
 Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
-Hickory <- read.tucson ("./cofecha/HICall.rwl", header = T)
+#for EW
+#Bonanza <- read.tucson("./cofecha/BON/BONallEW.rwl", header = T)
+#for LW
+#Bonanza <- read.tucson("./cofecha/BON/BONallLW.rwl")
+
+#Hickory1 <- read.tucson ("./cofecha/HICall.rwl", header = T)
+#for EW
+#Hickory <- read.tucson("./cofecha/HICallEW.rwl", header = T)
+#for LW
+Hickory <- read.tucson("./cofecha/HICallLW.rwl", header = T)
 
 
-
-
-site <- Hickory
-site.code <- "HIC"
+site <- Bonanza
+site.code <- "BON"
 
 ##################################################
 #################################################
@@ -236,27 +243,31 @@ HICfrag <- detrend.series(site[,12], y.name = "HICfrag", method = "Spline",
 
 HICcrn <- site.code.crn$HICstd
 #for bonanza prairie #bonanaza has 12 variables
-BON411a <- detrend.series(Bonanza[,1],y.name = "BON411a", method = "Spline",
+BON111a <- detrend.series(Bonanza[,1],y.name = "BON111a", method = "Spline",
                           verbose= TRUE)
-BON511a <- detrend.series(Bonanza[,2],y.name = "BON511a", method = "Spline",
+BON411a <- detrend.series(Bonanza[,2],y.name = "BON411a", method = "Spline",
                           verbose= TRUE)
-BON611a <- detrend.series(Bonanza[,3],y.name = "BON611a", method = "Spline",
+BON511a <- detrend.series(Bonanza[,3],y.name = "BON511a", method = "Spline",
                           verbose= TRUE)
-BON711a <- detrend.series(Bonanza[,4],y.name = "BON711a", method = "Spline",
+BON611a <- detrend.series(Bonanza[,4],y.name = "BON611a", method = "Spline",
                           verbose= TRUE)
-BON811a <- detrend.series(Bonanza[,5],y.name = "BON811a", method = "Spline",
+BON711a <- detrend.series(Bonanza[,5],y.name = "BON711a", method = "Spline",
                           verbose= TRUE)
-BON911a <- detrend.series(Bonanza[,6],y.name = "BON911a", method = "Spline",
+BON811a <- detrend.series(Bonanza[,6],y.name = "BON811a", method = "Spline",
                           verbose= TRUE)
-BON1011a <- detrend.series(Bonanza[,7],y.name = "BON1011a", method = "Spline",
+BON911a <- detrend.series(Bonanza[,7],y.name = "BON911a", method = "Spline",
                           verbose= TRUE)
-BON1111a <- detrend.series(Bonanza[,8],y.name = "BON1111a", method = "Spline",
+BON1011a <- detrend.series(Bonanza[,8],y.name = "BON1011a", method = "Spline",
                           verbose= TRUE)
-BON1211a <- detrend.series(Bonanza[,9],y.name = "BON1211a", method = "Spline",
+BON1111a <- detrend.series(Bonanza[,9],y.name = "BON1111a", method = "Spline",
                           verbose= TRUE)
-BON1311a <- detrend.series(Bonanza[,10],y.name = "BON1311a", method = "Spline",
+BON1211a <- detrend.series(Bonanza[,10],y.name = "BON1211a", method = "Spline",
                           verbose= TRUE)
-BON1411a <- detrend.series(Bonanza[,11],y.name = "BON1411a", method = "Spline",
+BON1311a <- detrend.series(Bonanza[,11],y.name = "BON1311a", method = "Spline",
+                          verbose= TRUE)
+BON1411a <- detrend.series(Bonanza[,12],y.name = "BON1411a", method = "Spline",
+                          verbose= TRUE)
+BON1502 <- detrend.series(Bonanza[,13],y.name = "BONNew E", method = "Spline",
                           verbose= TRUE)
 BONcrn <- site.code.crn$BONstd
 
@@ -265,9 +276,9 @@ if(site.code == "HIC"){
 all.detrended <- data.frame(Year = as.numeric(row.names(site)),HIC1180, HIC1349, HIC1396,
                             HIC1398, HIC1424, HIC1896, HIC1699, HIC1895, 
                             HIC1984, HIC1891, HIC1892, HICfrag, HICcrn)}else{
-all.detrended <- data.frame(Year = as.numeric(row.names(site)),BON411a, BON511a, BON611a, BON711a, 
+all.detrended <- data.frame(Year = as.numeric(row.names(site)),BON111a,BON411a, BON511a, BON611a, BON711a, 
                             BON811a, BON911a, BON1011a, BON1111a, BON1211a,BON1311a, BON1411a,
-                            BONcrn)
+                            BON1502, BONcrn)
                             }
 
 #renaming and reformatting climate variables
@@ -284,7 +295,7 @@ tmax.p <- data.frame(Year = temp[2:121,1],
 colnames(tmax.p) <- c("Year", "pJan", "pFeb", "pMar", "pApr",
                       "pMay", "pJun", "pJul", "pAug", "pSep", 
                       "pOct", "pNov", "pDec")
-full.tmax <- merge(tmax.p, temp, by = "Year")
+full.tmax <- merge( temp,tmax.p, by = "Year")
 
 tmax.series<- merge(all.detrended,full.tmax, by = "Year")
 
@@ -310,65 +321,61 @@ full.precip <- merge(precip.p, precip, by = "Year")
 pr.series<- merge(all.detrended,full.precip, by = "Year")
 
 M <- cor(pr.series, use = "pairwise.complete.obs")
-
-#create function to calculate p values for correlation matrix
-cor.prob <- function (X, dfr = nrow(X) - 2) {
-  R <- cor(X, use="pairwise.complete.obs")
-  above <- row(R) < col(R)
-  r2 <- R[above]^2
-  Fstat <- r2 * dfr/(1 - r2)
-  R[above] <- 1 - pf(Fstat, 1, dfr)
-  R[row(R) == col(R)] <- NA
-  R
-}
-
-## Use this to dump the cor.prob output to a 4 column matrix
-## with row/column indices, correlation, and p-value.
-## See StackOverflow question: http://goo.gl/fCUcQ
-flattenSquareMatrix <- function(m) {
-  if( (class(m) != "matrix") | (nrow(m) != ncol(m))) stop("Must be a square matrix.") 
-  if(!identical(rownames(m), colnames(m))) stop("Row and column names must be equal.")
-  ut <- upper.tri(m)
-  data.frame(i = rownames(m)[row(m)[ut]],
-             j = rownames(m)[col(m)[ut]],
-             cor=t(m)[ut],
-             p=m[ut])
-}
-p.values <- flattenSquareMatrix(cor.prob(pr.series))
-
+  
 
 library(lattice)
 levelplot(M)
 corrplot(M, type = "upper", method = "circle")
 
+
 if(site.code == "HIC"){
 M2 <- M[15:37,2:14]
 M.tmax2 <- M.tmax[15:37,2:14] ##reduce size of matrix to exclude correlations of the same variables
-}else{M2 <- M[14:nrow(M),2:13]
-M.tmax2 <- M.tmax[14:nrow(M.tmax),2:13] }
+}else{M2 <- M[16:nrow(M),2:15]
+M.tmax2 <- M.tmax[16:nrow(M.tmax),2:15] }
 
 
 corrplot(M2, method = "color", sig.level=0.05)
 levelplot(M2 ,main=list('Precipitation',side=1,line=0.5))
 
-z.m <- melt(M2)
+###easy corrplot for plotting only significant values
+cor.mtest <- function(mat, conf.level = 0.95) {
+  mat <- as.matrix(mat)
+  n <- ncol(mat)
+  p.mat <- lowCI.mat <- uppCI.mat <- matrix(NA, n, n)
+  diag(p.mat) <- 0
+  diag(lowCI.mat) <- diag(uppCI.mat) <- 1
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      tmp <- cor.test(mat[, i], mat[, j], conf.level = conf.level)
+      p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+      lowCI.mat[i, j] <- lowCI.mat[j, i] <- tmp$conf.int[1]
+      uppCI.mat[i, j] <- uppCI.mat[j, i] <- tmp$conf.int[2]
+    }
+  }
+  return(list(p.mat, lowCI.mat, uppCI.mat))
+}
 
-#a ggplot way of visualizing
-precip.corrplot<- ggplot(z.m, aes(Var1, Var2, fill = value)) + geom_tile() + 
-  scale_fill_gradient(low = "red",  high = "blue")+
-  ylab("Tree Series") + xlab("Precpitation") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+res1 <- cor.mtest(pr.series, 0.95)
+res2 <- cor.mtest(pr.series, 0.99)
+rest1 <- cor.mtest(tmax.series, 0.95)
+## specialized the insignificant value according to the significant level
+if(site.code == "HIC"){
+precip.corrplot <-corrplot(M[2:14,15:ncol(M), drop=FALSE], p.mat = res1[[1]], insig="blank", method = "square",
+         title="Precipitation")
+tmax.corrplot <- corrplot(M.tmax[1:14,15:ncol(M.tmax), drop = FALSE], p.mat = rest1[[1]], insig="blank", method = "square",
+                          title = "Max Temperature")
+}else{
 
-##correlation for tmax
-#
+precip.corrplot <- corrplot(M[2:15,16:ncol(M), drop=FALSE], p.mat = res1[[1]], insig="blank", method = "square",
+           title= "Precipitation")
+tmax.corrplot <- corrplot(M.tmax[2:15,16:ncol(M.tmax), drop = FALSE], p.mat = rest1[[1]], insig="blank", method = "square",
+                          title = "Max Temperature")
+}
 
-z.mt <- melt(M.tmax2)
 
-#a ggplot way of visualizing
-tmax.corrplot<- ggplot(z.mt, aes(Var1, Var2, fill = value)) + geom_tile() + 
-  scale_fill_gradient(low = "red",  high = "blue")+
-  ylab("Tree Serires") + xlab("Max. temperature") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
 
 pdf(paste0(site.code,"_summary_feb3.pdf"))
 plot(site, plot.type= "spag")
@@ -390,4 +397,16 @@ precip.corrplot
 levelplot(M2,main=list('Precipitation',side=1,line=0.5),scales=list(x=list(rot=90)))
 tmax.corrplot
 levelplot(M.tmax2, ,main=list('Max. Temperature',side=1,line=0.5),scales=list(x=list(rot=90)))
+if(site.code == "HIC"){
+  corrplot(M[2:14,15:ncol(M), drop=FALSE], p.mat = res1[[1]], insig="blank", method = "square",
+                             title="Precipitation", outline = TRUE)
+  corrplot(M.tmax[1:14,15:ncol(M.tmax), drop = FALSE], p.mat = rest1[[1]], insig="blank", method = "square",
+                            title = "Max Temperature", outline = TRUE)
+}else{
+  
+  corrplot(M[2:15,16:ncol(M), drop=FALSE], p.mat = res1[[1]], insig="blank", method = "square",
+                              title= "Precipitation", outline = TRUE)
+  corrplot(M.tmax[2:15,16:ncol(M.tmax), drop = FALSE], p.mat = rest1[[1]], insig="blank", method = "square",
+                            title = "Max Temperature")
+}
 dev.off()
