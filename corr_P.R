@@ -1,4 +1,6 @@
 #Correlating ring widths to precip in Illinois
+rm(list=ls())
+
 library(dplR)
 library(reshape2)
 library(ggplot2)
@@ -18,7 +20,13 @@ site.code <- "HIC"
 ##################################################
 #################################################
 ################################################
-################################################3
+################################################
+site.code.rwi <- detrend(rwl = site, method = "ModNegExp")
+#create chronology of sites
+site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
+site.cron.plot<- crn.plot(site.code.crn, add.spline = TRUE)
+site.code.stats <- rwl.stats(site)
+site.code.crn$Year <- rownames(site.code.crn)
 
 
 
@@ -32,7 +40,7 @@ MNcd.clim <- read.csv("WestCenMNcd.csv")
   MNcd.clim <- read.csv("IL_cd.csv")
 }
 
-
+MNcd.clim$PCP <- MNcd.clim$PCP*25.54
 
 keeps <- c("Year", "Month",  "PCP")
 keepst <- c("Year", "Month",  "TMAX")
@@ -55,20 +63,48 @@ MNpdsi.df[MNpdsi.df == -9999]<- NA
 #for precipitation
 
 
-
-
-
-total.p <- aggregate(PCP~Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
 total.p
 
 precip <- dcast(total.p, Year  ~ Month)
 
-
+annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
+annual.t <- aggregate(TAVG ~ Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm=T)
+par(mfrow=c(2,1))
+plot(annual.p, type = "l")
+plot(annual.t, type = "l")
+dev.off()
 #create violin plot of monthly precip
 ggplot(total.p, aes(x = factor(Month), y = PCP))+ geom_violin(fill = "orange") +
   geom_point( colour= "blue")
 
-site.code.crn$Year <- rownames(site.code.crn)
+prmeans <- aggregate(PCP ~ Month, data = MNp.df, FUN=mean, na.rm = T) 
+tmean <- aggregate(TAVG ~ Month, data = MNcd.clim, FUN = mean, na.rm = T)
+
+
+
+#plot mean monthly precipitation & Temperature
+pdf(paste0(site.code, "mean.climate.pdf"))
+op <- par(mar=c(5, 4, 4, 6) + 0.1)
+b.plot <- barplot(height = prmeans$PCP, names.arg = prmeans$Month,
+                  xlab="Month", ylab="Mean Precipitation (mm)")
+bar.x <- b.plot[prmeans$Month]
+
+par(new = TRUE)
+plot(x = bar.x, y = tmean$TAVG, xlab = "", ylab = "", pch = 16,
+     ylim = c(0, 100),
+     axes = FALSE, col = "red")
+par(new = TRUE)
+plot(x = bar.x, y = tmean$TAVG, xlab = "", ylab = "", type = "l",
+     ylim = c(0, 100),
+     axes = FALSE, col = "red")
+axis(4, col = "red", col.axis = "red")
+mtext("Temperature (degF)", side = 4, line=3, cex = par("cex.lab"), col = "red")
+dev.off()
+
+#plot annual precip
+
+
 
 
 record.MN <- merge(precip, site.code.crn, by = "Year")
@@ -197,6 +233,8 @@ HIC1892 <- detrend.series(site[,11], y.name = "HIC1892", method = "Spline",
                          verbose= TRUE)
 HICfrag <- detrend.series(site[,12], y.name = "HICfrag", method = "Spline",
                          verbose= TRUE)
+
+HICcrn <- site.code.crn$HICstd
 #for bonanza prairie #bonanaza has 12 variables
 BON411a <- detrend.series(Bonanza[,1],y.name = "BON411a", method = "Spline",
                           verbose= TRUE)
@@ -220,15 +258,16 @@ BON1311a <- detrend.series(Bonanza[,10],y.name = "BON1311a", method = "Spline",
                           verbose= TRUE)
 BON1411a <- detrend.series(Bonanza[,11],y.name = "BON1411a", method = "Spline",
                           verbose= TRUE)
-
+BONcrn <- site.code.crn$BONstd
 
 #if statement that determines site detrending to use for corrplots
 if(site.code == "HIC"){
 all.detrended <- data.frame(Year = as.numeric(row.names(site)),HIC1180, HIC1349, HIC1396,
                             HIC1398, HIC1424, HIC1896, HIC1699, HIC1895, 
-                            HIC1984, HIC1891, HIC1892, HICfrag)}else{
+                            HIC1984, HIC1891, HIC1892, HICfrag, HICcrn)}else{
 all.detrended <- data.frame(Year = as.numeric(row.names(site)),BON411a, BON511a, BON611a, BON711a, 
-                            BON811a, BON911a, BON1011a, BON1111a, BON1211a,BON1311a, BON1411a)
+                            BON811a, BON911a, BON1011a, BON1111a, BON1211a,BON1311a, BON1411a,
+                            BONcrn)
                             }
 
 #renaming and reformatting climate variables
@@ -303,13 +342,13 @@ levelplot(M)
 corrplot(M, type = "upper", method = "circle")
 
 if(site.code == "HIC"){
-M2 <- M[14:37,2:13]
-M.tmax2 <- M.tmax[14:37,2:13] ##reduce size of matrix to exclude correlations of the same variables
-}else{M2 <- M[13:nrow(M),2:12]
-M.tmax2 <- M.tmax[13:nrow(M.tmax),2:12] }
+M2 <- M[15:37,2:14]
+M.tmax2 <- M.tmax[15:37,2:14] ##reduce size of matrix to exclude correlations of the same variables
+}else{M2 <- M[14:nrow(M),2:13]
+M.tmax2 <- M.tmax[14:nrow(M.tmax),2:13] }
 
 
-corrplot(M2, method = "color")
+corrplot(M2, method = "color", sig.level=0.05)
 levelplot(M2 ,main=list('Precipitation',side=1,line=0.5))
 
 z.m <- melt(M2)
