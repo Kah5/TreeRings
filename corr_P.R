@@ -6,33 +6,35 @@ library(reshape2)
 library(ggplot2)
 library(plyr)
 
-
+wood <- "WW"
 #read in whole ring width file for site
-Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
+#Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
 #for EW
-#Bonanza <- read.tucson("./cofecha/BON/BONallEW.rwl", header = T)
-#for LW
-#Bonanza <- read.tucson("./cofecha/BON/BONallLW.rwl")
+if(wood == "EW"){
+  Bonanza <- read.tucson("./cofecha/BON/BONallEW.rwl", header = T)
+  Hickory <- read.tucson("./cofecha/HICallEW.rwl", header = T)
+}else{if(wood == "LW"){
+  Bonanza <- read.tucson("./cofecha/BON/BONallLW.rwl")
+  Hickory <- read.tucson("./cofecha/HICallLW.rwl", header = T)
+}else{
+  Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
+  Hickory <- read.tucson ("./cofecha/HICall.rwl", header = T)
+}}
 
-#Hickory1 <- read.tucson ("./cofecha/HICall.rwl", header = T)
-#for EW
-#Hickory <- read.tucson("./cofecha/HICallEW.rwl", header = T)
-#for LW
-Hickory <- read.tucson("./cofecha/HICallLW.rwl", header = T)
-
-
-site <- Bonanza
-site.code <- "BON"
+#change site
+site <- Hickory
+site.code <- "HIC"
 
 ##################################################
 #################################################
 ################################################
 ################################################
-site.code.rwi <- detrend(rwl = site, method = "ModNegExp")
+site.code.rwi <- detrend(rwl = site, method = "Spline")
 #create chronology of sites
 site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
 site.cron.plot<- crn.plot(site.code.crn, add.spline = TRUE)
-site.code.stats <- rwl.stats(site)
+site.code.stats <- rwi.stats(site)
+
 site.code.crn$Year <- rownames(site.code.crn)
 
 
@@ -121,6 +123,8 @@ site.code.Pprev <- cor(record.MN[1:120,2:13], record.MN[2:121,14], use = "pairwi
 site.code.Pcors
 site.code.Pprev
 
+precip <- rbind(site.code.Pcors, site.code.Pprev)
+write.csv(precip, paste0(site.code, "-", wood, "Precipcor.csv"))
 #plot the correlations by month 
 barplot(t(site.code.Pcors),ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with Precip."))
 barplot(t(site.code.Pprev), ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year Precip"))
@@ -145,6 +149,9 @@ temp.MN <- merge(temp, site.code.crn, by = "Year")
 site.code.Tcors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
 site.code.Tmaxprev<- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
 
+temps <- rbind(site.code.Tcors, site.code.Tmaxprev)
+write.csv(temps, paste0(site.code, "-", wood, "tmaxcor.csv"))
+
 #plot the correlations by month 
 barplot(t(site.code.Tcors), ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with Maximum Temperature"))
 barplot(t(site.code.Tmaxprev), ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year Maximum Temperature"))
@@ -168,6 +175,10 @@ temp.MN <- merge(temp.min, site.code.crn, by = "Year")
 #correlate the chronology with temperature
 site.code.Tmincors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
 site.code.Tminprev <- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
+
+tmin <- rbind(site.code.Tmincors, site.code.Tminprev)
+write.csv(tmin, paste0(site.code, "-", wood, "tmincor.csv"))
+
 
 #plot the correlations by month 
 site.codetmin.p <- barplot(t(site.code.Tmincors), ylim= c(-0.25, 0.5), main = paste(site.code, "Correlation with Minimum Temperature"))
@@ -194,6 +205,10 @@ pdsi.MN <- merge(drought, site.code.crn, by = "Year")
 #correlate the chronology with temperature
 site.code.PDSIcors <- cor(pdsi.MN[,2:13], pdsi.MN[,14], use = "pairwise.complete.obs")
 site.code.PDSIprev <- cor(pdsi.MN[1:120,2:13], pdsi.MN[2:121,14], use = "pairwise.complete.obs")
+
+pdsis <- rbind(site.code.PDSIcors, site.code.PDSIprev)
+write.csv(pdsis, paste0(site.code, "-", wood, "PDSIcor.csv"))
+
 
 #plot the correlations by month 
 PDSI.b<- barplot(t(site.code.PDSIcors),ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with PDSI"))
@@ -377,7 +392,7 @@ tmax.corrplot <- corrplot(M.tmax[2:15,16:ncol(M.tmax), drop = FALSE], p.mat = re
 
 
 
-pdf(paste0(site.code,"_summary_feb3.pdf"))
+pdf(paste0(site.code,wood,"_summary_feb3.pdf"))
 plot(site, plot.type= "spag")
 crn.plot(site.code.crn, add.spline = TRUE)
 #plot the correlations by month 
@@ -398,15 +413,97 @@ levelplot(M2,main=list('Precipitation',side=1,line=0.5),scales=list(x=list(rot=9
 tmax.corrplot
 levelplot(M.tmax2, ,main=list('Max. Temperature',side=1,line=0.5),scales=list(x=list(rot=90)))
 if(site.code == "HIC"){
+  corrplot(M[2:14,15:ncol(M), drop=FALSE], method = "square",
+           title="Precipitation")
   corrplot(M[2:14,15:ncol(M), drop=FALSE], p.mat = res1[[1]], insig="blank", method = "square",
-                             title="Precipitation", outline = TRUE)
+                             title="Precipitation")
+  corrplot(M.tmax[1:14,15:ncol(M.tmax), drop = FALSE], method = "square",
+           title = "Max Temperature")
   corrplot(M.tmax[1:14,15:ncol(M.tmax), drop = FALSE], p.mat = rest1[[1]], insig="blank", method = "square",
-                            title = "Max Temperature", outline = TRUE)
+                            title = "Max Temperature")
 }else{
-  
+  corrplot(M[2:15,16:ncol(M), drop=FALSE], method = "square",
+           title= "Precipitation")
   corrplot(M[2:15,16:ncol(M), drop=FALSE], p.mat = res1[[1]], insig="blank", method = "square",
-                              title= "Precipitation", outline = TRUE)
+                              title= "Precipitation")
+  corrplot(M.tmax[2:15,16:ncol(M.tmax), drop = FALSE], method = "square",
+           title = "Max Temperature")
   corrplot(M.tmax[2:15,16:ncol(M.tmax), drop = FALSE], p.mat = rest1[[1]], insig="blank", method = "square",
                             title = "Max Temperature")
 }
+
+def.par <- par(no.readonly=TRUE)
+eps.cut <- 0.75 # An arbitrary EPS cutoff for demonstration
+## Plot the chronology showing a potential cutoff year
+## based on EPS. Running stats on the rwi with a window.
+site.code.ids<- read.ids(site.code.rwi, stc = c(3, 2, 3))
+#site.code.ids$tree <- 1:12
+foo <- rwi.stats.running(site.code.rwi, site.code.ids,
+                         window.length = 15)
+yrs <- as.numeric(rownames(site.code.crn))
+
+bar <- data.frame(yrs = c(min(yrs), foo$mid.year, max(yrs)),
+                  eps = c(NA, foo$eps, NA),
+                  rbar = c(NA, foo$rbar.tot, NA))
+par(mar = c(2, 2, 2, 2), mgp = c(1.1, 0.1, 0), tcl = 0.25,
+    mfcol = c(2, 1), xaxs='i')
+plot(yrs, site.code.crn[, 1], type = "n", xlab = "Year",
+     ylab = "RWI", axes=FALSE)
+#cutoff <- max(bar$yrs[bar$eps < eps.cut], na.rm = TRUE)
+#xx <- c(500, 500, cutoff, cutoff)
+#yy <- c(-1, 3, 3, -1)
+#polygon(xx, yy, col = "grey80")
+abline(h = 1, lwd = 1.5)
+lines(yrs, site.code.crn[, 1], col = "grey50")
+lines(yrs, ffcsaps(site.code.crn[, 1], nyrs = 32), col = "red",
+      lwd = 2)
+axis(1); axis(2); axis(3);
+box()
+#par(new = TRUE)
+## Add EPS
+plot(bar$yrs, bar$eps, type = "b", xlab = "", ylab = "", 
+     axes = FALSE, ylim = c(0.5, 0.95),pch = 20, col = "blue")
+axis(4, at = pretty(c(0.5,0.95)), col ="blue")
+mtext("EPS", side = 4, line = 1.1)
+par(new = TRUE)
+plot(bar$yrs, bar$rbar, type = "b", ylim= c(0,1),
+     xlab = "Years",axes = FALSE, ylab = "Rbar", pch = 20, col = "forestgreen")
+
+box()
+
 dev.off()
+
+
+
+corstarsl <- function(x){ 
+  require(Hmisc) 
+  x <- as.matrix(x) 
+  R <- rcorr(x)$r 
+  p <- rcorr(x)$P 
+  
+  ## define notions for significance levels; spacing is important.
+  mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
+  
+  ## trunctuate the matrix that holds the correlations to two decimal
+  R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1] 
+  
+  ## build a new matrix that includes the correlations with their apropriate stars 
+  Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x)) 
+  diag(Rnew) <- paste(diag(R), " ", sep="") 
+  rownames(Rnew) <- colnames(x) 
+  colnames(Rnew) <- paste(colnames(x), "", sep="") 
+  
+  ## remove upper triangle
+  Rnew <- as.matrix(Rnew)
+  Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+  Rnew <- as.data.frame(Rnew) 
+  
+  ## remove last column and return the matrix (which is now a data frame)
+  Rnew <- cbind(Rnew[1:length(Rnew)-1])
+  return(Rnew) 
+}
+
+
+
+
+
