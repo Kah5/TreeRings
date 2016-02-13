@@ -52,6 +52,7 @@ MNcd.clim <- read.csv("WestCenMNcd.csv")
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54
 
 keeps <- c("Year", "Month",  "PCP")
+keepstavg <- c("Year", "Month", "TAVG")
 keepst <- c("Year", "Month",  "TMAX")
 keepstmin <- c("Year", "Month",  "TMIN")
 keepspdsi <- c("Year", "Month",  "PDSI")
@@ -66,6 +67,10 @@ MNt.df[MNt.df == -9999]<- NA
 #for tmin
 MNtmin.df<- MNcd.clim[,keepstmin]
 MNtmin.df[MNtmin.df == -9999]<- NA
+
+#for tavg
+MNtavg.df <- MNcd.clim[,keepstavg]
+MNtavg.df[MNtavg.df == -9999]<- NA
 
 MNpdsi.df<- MNcd.clim[,keepspdsi]
 MNpdsi.df[MNpdsi.df == -9999]<- NA
@@ -149,7 +154,7 @@ temp.MN <- merge(temp, site.code.crn, by = "Year")
 site.code.Tcors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
 site.code.Tmaxprev<- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
 
-temps <- rbind(site.code.Tcors, site.code.Tmaxprev)
+temps <- rbind(site.code.Tmaxprev, site.code.Tcors)
 write.csv(temps, paste0(site.code, "-", wood, "tmaxcor.csv"))
 
 #plot the correlations by month 
@@ -176,7 +181,7 @@ temp.MN <- merge(temp.min, site.code.crn, by = "Year")
 site.code.Tmincors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
 site.code.Tminprev <- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
 
-tmin <- rbind(site.code.Tmincors, site.code.Tminprev)
+tmin <- rbind( site.code.Tminprev, site.code.Tmincors)
 write.csv(tmin, paste0(site.code, "-", wood, "tmincor.csv"))
 
 
@@ -184,6 +189,31 @@ write.csv(tmin, paste0(site.code, "-", wood, "tmincor.csv"))
 site.codetmin.p <- barplot(t(site.code.Tmincors), ylim= c(-0.25, 0.5), main = paste(site.code, "Correlation with Minimum Temperature"))
 site.codetminprev.p<- barplot(t(site.code.Tminprev),ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year Minimum Temperature"))
 
+
+
+#average temperature
+#now with Tmin
+avg.t <- aggregate(TAVG~Year + Month, data=MNtavg.df, FUN=sum, na.rm = T) 
+avg.t
+
+temp.avg <- dcast(avg.t, Year  ~ Month)
+
+
+#create violin plot of monthly minimum temperature
+ggplot(avg.t, aes(x = factor(Month), y = TAVG))+ geom_violin(fill = "orange") +
+  geom_point( colour= "blue")
+
+site.code.crn$Year <- rownames(site.code.crn)
+
+
+temp.MN <- merge(temp.avg, site.code.crn, by = "Year")
+
+#correlate the chronology with temperature
+site.code.Tavgcors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
+site.code.Tavgprev <- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
+
+tavg <- rbind(site.code.Tavgprev, site.code.Tavgcors )
+write.csv(tavg, paste0(site.code, "-", wood, "tavgcor.csv"))
 
 
 ##now with PDSI
