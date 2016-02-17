@@ -39,25 +39,39 @@ tavgcors<- data.frame(HIC = HICtavg$V1,
                       BON = BONtavg$V1,
                       months = months)
 
+#function to calculate the critical value for peasron correlation coeff
+#n is the sample size and alpha is the critical p value 
+critical.r <- function(n, alpha=0.05){
+  df <- n- 2
+  critical.t <- qt(alpha/2, df, lower.tail = F)
+  critical.r <- sqrt((critical.t^2)/((critical.t^2)+ df))
+  return(critical.r)
+}
+
 # afunction to plot correlations of growth to climate in a barplot
-make.barplot <- function(x){
+make.barplot <- function(x,y){
 x <- as.matrix(x[,1:2])
-months <- c("Jan", "Feb","Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-            "pJan", "pFeb","pMar", "pApr", "pMay", "pJun",
-            "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+months <- c("pJan", "pFeb","pMar", "pApr", "pMay", "pJun",
+            "pJul", "pAug", "pSep", "pOct", "pNov", "pDec",
+            "Jan", "Feb","Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 row.names(x)<- months
 colours <- c("brown1", "darkblue")
-barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2)
-legend("bottomleft", c("HICKORY GROVE", "BONANZA PRAIRIE"),cex=1.3, bty="n", fill = colours )
+barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y))
+legend("topleft", c("HICKORY GROVE", "BONANZA PRAIRIE"),cex=1.3, bty="n", fill = colours )
+abline(h = critical.r(120))
+abline(h = critical.r(120)*-1)
+barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
 box()
 }
-make.barplot(prcors)
-make.barplot(tavgcors)
-make.barplot(tmincors)
-make.barplot(tmaxcors)
-make.barplot(pdsicors)
 
+pdf("site.compare.pdf")
+make.barplot(prcors, "Precipitation")
+make.barplot(tavgcors, "Temperature")
+make.barplot(tmincors, "Max. Temperature")
+make.barplot(tmaxcors, "Min. Temperature")
+make.barplot(pdsicors, "PDSI")
+dev.off()
 
 
 
