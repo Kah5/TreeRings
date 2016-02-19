@@ -22,8 +22,8 @@ if(wood == "EW"){
 }}
 
 #change site
-site <- Hickory
-site.code <- "HIC"
+site <- Bonanza
+site.code <- "BON"
 
 ##################################################
 #################################################
@@ -80,6 +80,10 @@ MNpdsi.df[MNpdsi.df == -9999]<- NA
 total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
 total.p
 
+pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
+plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
+
+
 precip <- dcast(total.p, Year  ~ Month)
 
 annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
@@ -99,6 +103,8 @@ tmean <- aggregate(TAVG ~ Month, data = MNcd.clim, FUN = mean, na.rm = T)
 
 #plot mean monthly precipitation & Temperature
 pdf(paste0(site.code, "mean.climate.pdf"))
+plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
+
 op <- par(mar=c(5, 4, 4, 6) + 0.1)
 b.plot <- barplot(height = prmeans$PCP, names.arg = prmeans$Month,
                   xlab="Month", ylab="Mean Precipitation (mm)")
@@ -236,7 +242,7 @@ pdsi.MN <- merge(drought, site.code.crn, by = "Year")
 site.code.PDSIcors <- cor(pdsi.MN[,2:13], pdsi.MN[,14], use = "pairwise.complete.obs")
 site.code.PDSIprev <- cor(pdsi.MN[1:120,2:13], pdsi.MN[2:121,14], use = "pairwise.complete.obs")
 
-pdsis <- rbind(site.code.PDSIcors, site.code.PDSIprev)
+pdsis <- rbind(site.code.PDSIprev,site.code.PDSIcors)
 write.csv(pdsis, paste0(site.code, "-", wood, "PDSIcor.csv"))
 
 
