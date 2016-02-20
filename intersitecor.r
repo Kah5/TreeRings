@@ -148,8 +148,8 @@ par(mfrow = c(2,1))
 make.barplotHIC(prcors, paste0(wood,"-HIC Precipitation"))
 make.barplotBON(prcors, paste0(wood,"-BON Precipitation"))
                 
-make.barplotHIC(tavgcors, paste0(wood, "-HIC Precipitation"))
-make.barplotBON(tavgcors, paste0(wood, "-BON Precipitation"))
+make.barplotHIC(tavgcors, paste0(wood, "-HIC Avg. Temperature"))
+make.barplotBON(tavgcors, paste0(wood, "-BON Avg. Temperature"))
 
 make.barplotHIC(tmincors, paste0(wood,"-HIC Max. Temperature"))
 make.barplotBON(tmincors, paste0(wood,"-BON Max. Temperature"))
