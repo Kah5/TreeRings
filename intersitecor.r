@@ -119,7 +119,7 @@ make.barplotHIC <- function(x,y){
   row.names(x)<- months
   colours <- c("brown1")
   barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y))
-  legend("topleft", c("HICKORY GROVE"),cex=1.3, bty="n", fill = colours )
+  legend("bottomleft", c("HICKORY GROVE"),cex=1.3, bty="n", fill = colours )
   abline(h = critical.r(120))
   abline(h = critical.r(120)*-1)
   barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
@@ -135,7 +135,7 @@ make.barplotBON <- function(x,y){
   row.names(x)<- months
   colours <- c("darkblue")
   barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y))
-  legend("topleft", c("Bonanza Prairie"),cex=1.3, bty="n", fill = colours )
+  legend("bottomleft", c("Bonanza Prairie"),cex=1.3, bty="n", fill = colours )
   abline(h = critical.r(120))
   abline(h = critical.r(120)*-1)
   barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
