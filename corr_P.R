@@ -13,17 +13,22 @@ wood <- "WW"
 if(wood == "EW"){
   Bonanza <- read.tucson("./cofecha/BON/BONallEW.rwl", header = T)
   Hickory <- read.tucson("./cofecha/HICallEW.rwl", header = T)
+  Glacial <- read.tucson("./cofecha/GLAew.rwl")
 }else{if(wood == "LW"){
   Bonanza <- read.tucson("./cofecha/BON/BONallLW.rwl")
   Hickory <- read.tucson("./cofecha/HICallLW.rwl", header = T)
+  Glacial <- read.tucson("./cofecha/GLAlw.rwl")
 }else{
   Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
-  Hickory <- read.tucson ("./cofecha/HICall.rwl", header = T)
+  Hickory <- read.tucson ("./cofecha/HICall3.rwl", header = T)
+  Glacial <- read.tucson("./cofecha/GLA.rwl")
+  Sand <- read.tucson("./il001.rwl", header = T)
+  Pulaski <- read.tucson("./in001.rwl", header = T)
 }}
 
 #change site
-site <- Bonanza
-site.code <- "BON"
+site <- Hickory
+site.code <- "HIC"
 
 ##################################################
 #################################################
@@ -32,14 +37,40 @@ site.code <- "BON"
 site.code.rwi <- detrend(rwl = site, method = "Spline")
 #create chronology of sites
 site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
+#write chronology to text 
+crn.trend <- chron(site, prefix= paste(site.code))
+write.csv(site.code.crn, paste0(site.code, "-crn.csv"))
 site.cron.plot<- crn.plot(site.code.crn, add.spline = TRUE)
 site.code.stats <- rwi.stats(site)
 
 site.code.crn$Year <- rownames(site.code.crn)
+site.code.crn$freq <- 12
+monthlys<- site.code.crn[rep(rownames(site.code.crn),
+                  site.code.crn$freq),]
+write.csv(monthlys, paste0(site.code, "monthly-crn.csv"))
 
 
+#now looking at the runoff rank for the state of indiana:
+runoff <- read.csv("IL_runoff_rank.txt")
+cfs <- read.table("Algonquin_ILmonthly.txt", header = T)
+yrs <- 1901:2015
+runoff.cor <- cor(runoff$runoff_mmd, site.code.crn[site.code.crn$Year %in% yrs,1])
+pct.cor <- cor(runoff$percentile, site.code.crn[site.code.crn$Year %in% yrs,1])
 
+cfs.yr <- aggregate(mean_va ~ year_nu + month_nu, data = cfs, FUN = sum)
 
+#create monthly column for all 
+cfs.mo <- dcast(cfs.yr, year_nu ~ month_nu)
+
+yrs.2 <- 1915: 2009 # years over which we have cfs streamflow data
+cfs.cor <- cor(cfs.mo[,2:13], site.code.crn[site.code.crn$Year %in% yrs.2,1], use = "pairwise.complete")
+
+barplot(t(cfs.cor))
+
+write.csv(cfs.cor, paste0(site.code, "-", wood, "cfs.cor.csv"))
+
+plot(cfs.yr$mean_va, site.code.crn[site.code.crn$Year %in% yrs.2,1])
+plot(cfs.yr$year_nu, cfs.yr$mean_va, type = "l")
 
 ###########################################################
 #now using climate division data from west central minnesota
@@ -147,7 +178,7 @@ mean.t
 temp <- dcast(mean.t, Year  ~ Month)
 
 
-#create violin plot of monthly precip
+#create violin plot of monthly Tmax
 ggplot(mean.t, aes(x = factor(Month), y = TMAX))+ geom_violin(fill = "orange") +
   geom_point( colour= "blue")
 
@@ -251,9 +282,10 @@ PDSI.b<- barplot(t(site.code.PDSIcors),ylim = c(-0.25, 0.5), main = paste(site.c
 pdsi.prev <- barplot(t(site.code.PDSIprev),ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year PDSI"))
 
 
+
 ##########
 #looking at individual tree response to climate variables
-#############
+###########
 #first need to individually detrend  
 #for hickory grove
 ser <- names(site)
