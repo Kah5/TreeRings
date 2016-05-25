@@ -21,14 +21,15 @@ if(wood == "EW"){
 }else{
   Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
   Hickory <- read.tucson ("./cofecha/HICall3.rwl", header = T)
-  Glacial <- read.tucson("./cofecha/GLA.rwl")
+  Glacial <- read.tucson("./cofecha/GLA.rwl", header =F)
+  StCroix <- read.tucson("./cofecha/STCww.rwl")
   Sand <- read.tucson("./il001.rwl", header = T)
   Pulaski <- read.tucson("./in001.rwl", header = T)
 }}
 
 #change site
-site <- Glacial
-site.code <- "GLA"
+site <- StCroix
+site.code <- "STC"
 
 ##################################################
 #################################################
@@ -38,7 +39,9 @@ site.code.rwi <- detrend(rwl = site, method = "Spline")
 #create chronology of sites
 site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
 #write chronology to text 
-crn.trend <- chron(site, prefix= paste(site.code))
+crn.trend <- chron(site, prefix= paste(site.code), prewhiten = TRUE)
+crn.prewhiten <- chron(site,prefix= paste(site.code), prewhiten = TRUE ) #also has residuals
+
 write.csv(site.code.crn, paste0(site.code, "-crn.csv"))
 site.cron.plot<- crn.plot(site.code.crn, add.spline = TRUE)
 site.code.stats <- rwi.stats(site)
@@ -48,6 +51,8 @@ site.code.crn$freq <- 12
 monthlys<- site.code.crn[rep(rownames(site.code.crn),
                   site.code.crn$freq),]
 write.csv(monthlys, paste0(site.code, "monthly-crn.csv"))
+
+
 
 
 #now looking at the runoff rank for the state of indiana:
@@ -75,8 +80,11 @@ write.csv(cfs.cor, paste0(site.code, "-", wood, "cfs.cor.csv"))
 #now using climate division data from west central minnesota
 if(site.code == "BON"){
 MNcd.clim <- read.csv("WestCenMNcd.csv")
-} else{
+} else{ if(site.code == "HIC"){
   MNcd.clim <- read.csv("IL_cd.csv")
+}else{
+  MNcd.clim <- read.csv("STC_climate_CDODiv2087457050855.csv")
+}
 }
 
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54
@@ -118,9 +126,13 @@ precip <- dcast(total.p, Year  ~ Month)
 
 annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
 annual.t <- aggregate(TAVG ~ Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm=T)
+annual.mint <- aggregate(TMIN ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
+
 par(mfrow=c(2,1))
 plot(annual.p, type = "l")
 plot(annual.t, type = "l")
+plot(annual.mint, type = "l")
+tmin.lm <- lm(annual.mint$TMIN ~ annual.mint$Year)
 dev.off()
 #create violin plot of monthly precip
 ggplot(total.p, aes(x = factor(Month), y = PCP))+ geom_violin(fill = "orange") +
