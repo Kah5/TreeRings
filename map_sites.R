@@ -26,7 +26,7 @@ priority <- rbind(priority, IL.MCCD)
 #need to clean this up
 
 precip.1900<- read.table("./data/precip_2014/precip.1900")
-precip.1901<- read.table("./data/precip_2014/precip.1901")
+TRUEprecip.1901<- read.table("./data/precip_2014/precip.1901")
 precip.1902<- read.table("./data/precip_2014/precip.1902")
 precip.1903<- read.table("./data/precip_2014/precip.1903")
 precip.1904<- read.table("./data/precip_2014/precip.1904")
@@ -41,6 +41,10 @@ precip.2010<- read.table("./data/precip_2014/precip.2010")
 Lat <- precip.1900[,2]
 Long <- precip.1900[,1]
 
+coordinates(precip.1900) <- ~V1 + V2
+gridded(precip.1900) <- TRUE
+te <- stack(precip.1900)
+
 p.1900<- rowSums(precip.1900[,3:14], na.rm = TRUE)
 p.1901<- rowSums(precip.1901[,3:14], na.rm = TRUE)
 p.1902<- rowSums(precip.1902[,3:14], na.rm = TRUE)
@@ -52,6 +56,7 @@ p.1907<- rowSums(precip.1907[,3:14], na.rm = TRUE)
 p.1908<- rowSums(precip.1908[,3:14], na.rm = TRUE)
 p.1909<- rowSums(precip.1909[,3:14], na.rm = TRUE)
 p.1910<- rowSums(precip.1910[,3:14], na.rm = TRUE)
+
 
 avg.p<- rowMeans(data.frame(p.1900,
                             p.1901, 

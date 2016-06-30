@@ -8,16 +8,19 @@ HICpew<- read.csv("HIC-EWPrecipcor.csv")
 BONpew <- read.csv("BON-EWPrecipcor.csv")
 GLApew <- read.csv("GLA-EWPrecipcor.csv")
 STCpew <- read.csv("STC-EWPrecipcor.csv")
+TOWew <- read.csv('TOW-EWPrecipcor.csv')
 
 HICtmaxew <- read.csv("HIC-EWtmaxcor.csv")
 BONtmaxew <- read.csv("BON-EWtmaxcor.csv")
 GLAtmaxew <- read.csv("GLA-EWtmaxcor.csv")
 STCtmaxew <- read.csv("STC-EWtmaxcor.csv")
+TOWtmaxew <- read.csv("TOW-EWtmaxcor.csv")
 
 HICtminew <- read.csv("HIC-EWtmincor.csv")
 BONtminew <- read.csv("BON-EWtmincor.csv")
 GLAtminew <- read.csv("GLA-EWtmincor.csv")
 STCtminew <- read.csv("STC-EWtmincor.csv")
+TOWtminew <- read.csv("TOW-EWmincor.csv")
 
 HICtavgew <- read.csv("HIC-EWtavgcor.csv")
 BONtavgew <- read.csv("BON-EWtavgcor.csv")
@@ -28,6 +31,8 @@ HICpdsiew <- read.csv("HIC-EWpdsicor.csv")
 BONpdsiew <- read.csv("BON-EWpdsicor.csv")
 GLApdsiew <- read.csv("GLA-EWpdsicor.csv")
 STCpdsiew <- read.csv("STC-EWpdsicor.csv")
+TOWpdsiew <- read.csv("TOW-EWpdsicor.csv")
+
 
 HICcfsew <- read.csv("HIC-EWcfs.cor.csv")
 GLAcfsew <- read.csv("GLA-EWcfs.cor.csv")
@@ -38,28 +43,34 @@ GLAcfsew <- read.csv("GLA-EWcfs.cor.csv")
   BONplw <- read.csv("BON-LWPrecipcor.csv")
   GLAplw <- read.csv("GLA-LWPrecipcor.csv")
   STCplw <- read.csv("STC-LWPrecipcor.csv")
+  TOWplw <- read.csv("TOW-LWPrecipcor.csv")
   
   
   HICtmaxlw <- read.csv("HIC-LWtmaxcor.csv")
   BONtmaxlw <- read.csv("BON-LWtmaxcor.csv")
   GLAtmaxlw <- read.csv("GLA-LWtmaxcor.csv")
   STCtmaxlw <- read.csv("STC-LWtmaxcor.csv")
+  TOWtmaxlw <- read.csv("TOW-LWtmaxcor.csv")
   
   HICtminlw <- read.csv("HIC-LWtmincor.csv")
   BONtminlw <- read.csv("BON-LWtmincor.csv")
   GLAtminlw <- read.csv("GLA-LWtmincor.csv")
   STCtminlw <- read.csv("STC-LWtmincor.csv")
+  TOWtminlw <- read.csv("TOW-LWtmincor.csv")
   
   
   HICtavglw <- read.csv("HIC-LWtavgcor.csv")
   BONtavglw <- read.csv("BON-LWtavgcor.csv")
   GLAtavglw <- read.csv("GLA-LWtavgcor.csv")
   STCtavglw <- read.csv("STC-LWtavgcor.csv")
+  TOWtavglw <- read.csv("TOW-LWtavgcor.csv")
+  
   
   HICpdsilw <- read.csv("HIC-LWpdsicor.csv")
   BONpdsilw <- read.csv("BON-LWpdsicor.csv")
   GLApdsilw <- read.csv("GLA-LWpdsicor.csv")
   STCpdsilw <- read.csv("STC-LWpdsicor.csv")
+  TOWpdsilw <- read.csv("TOW-LWpdsicor.csv")
   
   HICcfslw <- read.csv("HIC-LWcfs.cor.csv")
   GLAcfslw <- read.csv("GLA-LWcfs.cor.csv")
@@ -71,6 +82,7 @@ SANtmax <- read.csv("SAN-WWtmaxcor.csv")
 PULtmax <- read.csv("PUL-WWtmaxcor.csv")
 GLAtmax <- read.csv("GLA-WWtmaxcor.csv")
 STCtmax <- read.csv("STC-WWtmaxcor.csv")
+TOWtmax <- read.csv("TOW-WWtmaxcor.csv")
 
 HICp<- read.csv("HIC-WWPrecipcor.csv")
 BONp <- read.csv("BON-WWPrecipcor.csv")
@@ -78,6 +90,7 @@ SANp <- read.csv("SAN-WWPrecipcor.csv")
 PULp <- read.csv("PUL-WWPrecipcor.csv")
 GLAp <- read.csv("GLA-WWPrecipcor.csv")
 STCp <- read.csv("STC-WWPrecipcor.csv")
+TOWp <- read.csv("TOW-WWPrecipcor.csv")
 
 HICtmin <- read.csv("HIC-WWtmincor.csv")
 BONtmin <- read.csv("BON-WWtmincor.csv")
@@ -85,6 +98,7 @@ SANtmin <- read.csv("SAN-WWtmincor.csv")
 PULtmin <- read.csv("PUL-WWtmincor.csv")
 GLAtmin <- read.csv("GLA-WWtmincor.csv")
 STCtmin <- read.csv("STC-WWtmincor.csv")
+TOWtmin <- read.csv("TOW-WWtmincor.csv")
 
 HICtavg <- read.csv("HIC-WWtavgcor.csv")
 BONtavg <- read.csv("BON-WWtavgcor.csv")
@@ -92,6 +106,7 @@ SANtavg <- read.csv("SAN-WWtavgcor.csv")
 PULtavg <- read.csv("PUL-WWtavgcor.csv")
 GLAtavg <- read.csv("GLA-WWtavgcor.csv")
 STCtavg <- read.csv("STC-WWtavgcor.csv")
+TOWtavg <- read.csv("TOW-WWtavgcor.csv")
 
 HICpdsi <- read.csv("HIC-WWpdsicor.csv")
 BONpdsi <- read.csv("BON-WWpdsicor.csv")
@@ -99,6 +114,7 @@ SANpdsi <- read.csv("SAN-WWPDSIcor.csv")
 PULpdsi <- read.csv("PUL-WWPDSIcor.csv")
 GLApdsi <- read.csv("GLA-WWPDSIcor.csv")
 STCpdsi <- read.csv("STC-WWPDSIcor.csv")
+TOWpdsi <- read.csv("TOW-WWPDSIcor.csv")
 
 HICcfs <- read.csv("HIC-WWcfs.cor.csv")
 GLAcfs <- read.csv("GLA-WWcfs.cor.csv")
@@ -122,6 +138,10 @@ prcors<- data.frame(HIC = HICp$V1,
           STC = STCp$V1,
           STCew = STCpew$V1,
           STClw = STCplw$V1,
+          TOW = TOWp$V1,
+          TOWew = TOWpew$V1,
+          TOWlw = TOWplw$V1,
+          
           #SAN = SANp$V1,
           #PUL = PULp$V1,
            months = months)
@@ -138,6 +158,9 @@ tmincors<- data.frame(HIC = HICtmin$V1,
                     STC = STCtmin$V1,
                     STCew = STCtminew$V1,
                     STClw = STCtminlw$V1,
+                    TOW = TOWtmin$V1,
+                    TOWew = TOWtminew$V1,
+                    TOWlw = TOWtminlw$V1,
                     #SAN = SANtmin$V1,
                     #PUL= PULtmin$V1,
                     months = months)
@@ -154,6 +177,9 @@ tmaxcors<- data.frame(HIC = HICtmax$V1,
                       STC = STCtmax$V1,
                       STCew = STCtmaxew$V1,
                       STClw = STCtmaxlw$V1,
+                      TOW = TOWtmax$V1,
+                      TOWew = TOWtmaxew$V1,
+                      TPWlw = TOWtmaxlw$V1,
                       #SAN = SANtmax$V1,
                       #PUL = PULtmax$V1,
                       months = months)
@@ -170,6 +196,10 @@ pdsicors<- data.frame(HIC = HICpdsi$V1,
                       STC = STCpdsi$V1,
                       STCew = STCpdsiew$V1,
                       STClw = STCpdsilw$V1,
+                      TOW = TOWpdsi$V1,
+                      TOWew = TOWpdsiew$V1,
+                      TOWlw = TOWpdsilw$V1,
+                      
                       #SAN = SANpdsi$V1,
                       #PUL = PULpdsi$V1,
                       months = months)
@@ -187,6 +217,9 @@ tavgcors<- data.frame(HIC = HICtavg$V1,
                       STC = STCtavg$V1,
                       STCew = STCtavgew$V1,
                       STClw = STCtavglw$V1,
+                      TOW = TOWtavg$V1,
+                      TOWew = TOWtavgew$V1,
+                      TOWlw = TOWtavglw$V1,
                       #SAN = SANtavg$V1,
                       #PUL = PULtavg$V1,
                       months = months)
