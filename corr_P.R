@@ -11,28 +11,31 @@ wood <- "EW"
 #Bonanza <L- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
 #for EW
 if(wood == "EW"){
-  Bonanza <- read.tucson("./cofecha/BON/BONallEW.rwl", header = T)
-  Hickory <- read.tucson("./cofecha/HICallEW.rwl", header = T)
-  Glacial <- read.tucson("./cofecha/GLAew.rwl")
+  Bonanza <- read.tucson("./cofecha/BONew.rwl", header = T)
+  Hickory <- read.tucson("./cofecha/HICew.rwl", header = F)
+  #Glacial <- read.tucson("./cofecha/GLAew.rwl")
   Townsend <- read.tucson('./cofecha/tow/TOWew.rwl', header = T)
+  Pleasant <- read.tucson('./cofecha/PLEew.rwl', header = T)
 }else{if(wood == "LW"){
-  Bonanza <- read.tucson("./cofecha/BON/BONallLW.rwl")
-  Hickory <- read.tucson("./cofecha/HICallLW.rwl", header = T)
-  Glacial <- read.tucson("./cofecha/GLAlw.rwl")
+  Bonanza <- read.tucson("./cofecha/BONlw.rwl")
+  Hickory <- read.tucson("./cofecha/HIClw.rwl", header = F)
+  #Glacial <- read.tucson("./cofecha/GLAlw.rwl")
   Townsend <- read.tucson('./cofecha/tow/TOWlw.rwl', header = T)
+  Pleasant <- read.tucson('./cofecha/PLElw.rwl', header = T)
 }else{
-  Bonanza <- read.tucson("./cofecha/BON_out/BONall.rwl", header = T)
-  Hickory <- read.tucson ("./cofecha/HICall3.rwl", header = T)
-  Glacial <- read.tucson("./cofecha/GLA.rwl", header =F)
-  StCroix <- read.tucson("./cofecha/STCww.rwl")
-  Sand <- read.tucson("./il001.rwl", header = T)
-  Pulaski <- read.tucson("./in001.rwl", header = T)
-  Townsend <- read.tucson('./cofecha/tow/TOWlw.rwl', header = T)
+  Bonanza <- read.tucson("./cofecha/BONww.rwl", header = T)
+  Hickory <- read.tucson ("./cofecha/HICww.rwl", header = F)
+  #Glacial <- read.tucson("./cofecha/GLA.rwl", header =F)
+  #StCroix <- read.tucson("./cofecha/STCww.rwl")
+  #Sand <- read.tucson("./il001.rwl", header = T)
+  #Pulaski <- read.tucson("./in001.rwl", header = T)
+  Townsend <- read.tucson('./cofecha/tow/TOWww.rwl', header = T)
+  Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = T)
 }}
 
 #change site
-site <- Townsend
-site.code <- "TOW"
+site <- Pleasant
+site.code <- "PLE"
 
 ##################################################
 #################################################
@@ -82,12 +85,14 @@ write.csv(cfs.cor, paste0(site.code, "-", wood, "cfs.cor.csv"))
 ###########################################################
 #now using climate division data from west central minnesota
 if(site.code == "BON"){
-MNcd.clim <- read.csv("WestCenMNcd.csv")
+MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 } else{ if(site.code == "HIC"){
-  MNcd.clim <- read.csv("IL_cd.csv")
+  MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
 }else{ if(site.code == "STC"){
   MNcd.clim <- read.csv("STC_climate_CDODiv2087457050855.csv")
-}else 
+}else { if(site.code == 'PLE'){
+  MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
+}}
   MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
 }
 
