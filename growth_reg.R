@@ -1,0 +1,218 @@
+library(lme4)
+library(dplR)
+#molten.full comes from climate_growth_reg.R
+
+#let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
+
+
+# conduct f-test to see if the relationship pre-1950 is same as post 1950
+#for Hickory Grove
+yr <- 1895:1950
+yr.post <- 1950:2014
+
+
+plot.pre.post <- function(x, Climate, xlab, Site){
+yr <- 1895:1950
+yr.post <- 1950:2014
+x$class <- '9999'
+x[x$Year %in% yr,]$class <- 'Pre-1950'
+x[x$Year %in% yr.post,]$class <- 'Post-1950'
+#create dummy variable
+x$group <- 0
+x[x$Year %in% yr,]$group <- 1
+
+#if the dummy variable is significant, then the two slopes are different
+print(summary( lm(value ~ Climate:group, data = x)))
+
+
+# Extend the regression lines beyond the domain of the data
+ggplot(x, aes(x=Climate, y=value, color=class)) + geom_point(shape=1) +
+  scale_colour_hue(l=50) + # Use a slightly darker palette than normal
+  geom_smooth(method=lm,   # Add linear regression lines
+              se=TRUE,    # add shaded confidence region
+              fullrange=TRUE)+# Extend regression lines
+  ylab('Detrended Ring width Index') +
+  xlab( xlab ) +
+  ggtitle(Site)
+
+}
+
+
+pdf("outputs/pre_post_month_plots.pdf")
+plot.pre.post(molten.HIC, molten.HIC$JJA.p, 'Summer Precipitation (mm)', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$JJA.p, 'Summer Precipitation (mm)', "Bonanza Prairie, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$JJA.p, 'Summer Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
+plot.pre.post(molten.TOW, molten.TOW$JJA.p, 'Summer Precipitation (mm)', "Townsend Woods, MN") #not significant
+
+plot.pre.post(molten.HIC, molten.HIC$MAY.p, 'May Precipitation (mm)', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$MAY.p, 'May Precipitation (mm)', "Bonanza Prairie, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$MAY.p, 'May Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
+plot.pre.post(molten.TOW, molten.TOW$MAY.p, 'May Precipitation (mm)', "Townsend Woods, MN") #not significant
+
+plot.pre.post(molten.HIC, molten.HIC$JUNTmin, 'June Minimum Temperature', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$JUNTmin, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$JUNTmin, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
+plot.pre.post(molten.TOW, molten.TOW$JUNTmin, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
+
+plot.pre.post(molten.HIC, molten.HIC$JUNTavg, 'June Minimum Temperature', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$JUNTavg, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$JUNTavg, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
+plot.pre.post(molten.TOW, molten.TOW$JUNTavg, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
+
+
+plot.pre.post(molten.TOW, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #not significant
+plot.pre.post(molten.TOW, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #not significant
+plot.pre.post(molten.TOW, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
+plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
+dev.off()
+
+
+
+plot.pre.post(molten.HIC, molten.HIC$JULTavg, 'July Average Temperature (DegF)', "Hickory Grove, IL") #significant
+
+
+
+
+pdf("outputs/pre_post_1950_plots.pdf")
+plot.pre.post(molten.HIC, molten.HIC$PDSI, 'PDSI', "Hickory Grove, IL") #significant
+plot.pre.post(molten.HIC, molten.HIC$PCP, "Annual Precipitation", "Hickory Grove, IL") #sig
+plot.pre.post(molten.HIC, molten.HIC$TMIN/10, "Mean Minimum Temperature", "Hickory Grove, IL") #sig
+plot.pre.post(molten.HIC, molten.HIC$TAVG/10, "Mean Temperature", "Hickory Grove, IL") #sig
+plot.pre.post(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie, MN") #sig *
+plot.pre.post(molten.BON, molten.BON$PCP, "Annual Precipitation", "Bonanza Prairie, MN") #sig 
+plot.pre.post(molten.BON, molten.BON$TMIN, "Mean Minimum Temperature", "Bonanza Prairie, MN") #sig
+plot.pre.post(molten.BON, molten.BON$TAVG, "Mean Temperature", "Bonanza Prairie, MN") #***
+plot.pre.post(molten.PLE, molten.PLE$PDSI, "PDSI", "Pleasant Valley Conservancy, WI") #**
+plot.pre.post(molten.PLE, molten.PLE$PCP, "Annual Precipitation", "Pleasant Valley Conservancy, WI") #***
+plot.pre.post(molten.PLE, molten.PLE$TMIN,"Mean Minimum", "Pleasant Valley Conservancy, WI")#***
+plot.pre.post(molten.PLE, molten.PLE$TAVG,"Mean Temperature","Pleasant Valley Conservancy, WI")#***
+plot.pre.post(molten.TOW, molten.TOW$PDSI, "PDSI", "Townsend Woods, MN") #**
+plot.pre.post(molten.TOW, molten.TOW$PCP, "Annual Precipitaiton", "Townsend Woods, MN") #not signficant
+plot.pre.post(molten.TOW, molten.TOW$TMIN, "Minimum Temperature", "Townsend Woods, MN") #not significant
+plot.pre.post(molten.TOW, molten.TOW$TAVG, "Average Temperature" ,"Townsend Woods, MN") #not significant
+dev.off()
+
+
+
+
+
+
+#plot theses
+plot(molten.HIC[molten.HIC$Year== 1895:1950,]$PDSI, molten.HIC[molten.HIC$Year== 1895:1950,]$value)
+abline(preHIClm)
+points(molten.HIC[molten.HIC$Year== 1951:2014,]$PDSI, molten.HIC[molten.HIC$Year== 1951:2014,]$value, col = 'red')
+abline(postHIClm, col = 'red')
+
+var.test( lm(value ~ PDSI, data = molten.BON[molten.BON$Year %in% yr,]),
+          lm(value ~ PDSI, data = molten.BON[molten.BON$Year %in% yr.post,]))
+#F = 1.5127, num df = 222, denom df = 190, p-value = 0.003411
+
+var.test( lm(value ~ PDSI, data = molten.PLE[molten.PLE$Year %in% yr,]),
+          lm(value ~ PDSI, data = molten.PLE[molten.PLE$Year %in% yr.post,]))
+# F = 0.82271, num df = 166, denom df = 126, p-value = 0.2389
+
+var.test( lm(value ~ PDSI, data = molten.TOW[molten.TOW$Year %in% yr,]),
+          lm(value ~ PDSI, data = molten.TOW[molten.TOW$Year %in% yr,]))
+
+# F = 1.7999, num df = 173, denom df = 190, p-value = 8.101e-05
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MLexamp.6 <- lmer(value ~ Year + PCP + TAVG +(1| Year)+ (1 | Site ), data = molten.full)
+
+
+
+#want a mixed effect model that treats climate data as fixed effects
+#growth ~ B0 +B1*precip + B2* Temp + bsite + btree + E
+model.re.lmer<-lmer(value ~ PDSI + (1| Site) , data = molten.full)
+
+# If you want to see the equations for all the sites in this model:
+coef(model.re.lmer)
+
+# If you want to see the averaged (over all trees) equation:
+fixef(model.re.lmer)
+se.fixef(model.re.lmer)
+
+# If you want to see the intercept shift away from the averaged intercept for each state:
+ranef(model.re.lmer)
+se.ranef(model.re.lmer)
+# note: standard errors are all the same because the samples sizes are the same for each state.
+
+
+  # make a CI plot of the intercepts
+mean<-unlist(ranef(model.re.lmer)$Site)
+sd<-unlist(se.ranef(model.re.lmer)$Site)
+
+xlabels=rownames(ranef(model.re.lmer)$Site)
+#xlabels=subset(molten.full ,year==2000, select="Site")
+#par(mfrow=c(1,2))
+
+#errbar(xlabels, mean, yplus=mean+1.96*sd, yminus=mean-1.96*sd, ylim=c(-5,5))	# this comes out of the Hmisc pkg
+
+errbar(xlabels, mean[1:4], yplus=mean[1:4]+1.96*sd[1:4], yminus=mean[1:4]-1.96*sd[1:4], ylim=c(-1,1))	# this comes out of the Hmisc pkg
+#errbar(xlabels$Site[26:50], mean[26:50], yplus=mean[26:50]+1.96*sd[26:50], yminus=mean[26:50]-1.96*sd[26:50], ylim=c(-10,10))
+
+
+
+model1<-"
+model{
+
+#Likelihood
+  for( i in 1:n)
+    {
+      value[i]~dnorm(mu[i], tau)
+      mu[i]<-b0+b1*Year[i]
+    }
+
+#priors
+b0~dnorm(0,.01)
+b1~dnorm(0,.01)
+tau<-pow(sd, -2)
+sd~dunif(0,100)
+#bayesian p-values for the regression coefficient using the step() function
+#step() is an indicator fuction an evaluates to 1 if the argument is greater than 0, 0 otherwise
+p1<-step(b1-1)
+p2<-1-p1
+
+}"
+
+dat<-list(value=molten$value, Year = molten$Year,n=length(molten$Year))
+
+#quick summary
+lapply(dat, summary)
+
+library(rjags)
+mod<-jags.model(file=textConnection(model1), data=dat, n.chains=2, n.adapt=1000)
+
+jags.samples(model= mod,variable.names=c("b0", "b1", "p1", "p2", "sd"), n.iter=1000 )
+
+
+
+summary(lm(dat$value~dat$Year, family=gaussian))
+
+
+samps<-coda.samples(mod, variable.names=c("b0", "b1", "sd"), n.iter=1000)
+
+#Numerical summary of each parameter:
+summary(samps)
+densityplot.mcmc(samps)
+densplot(samps)
+#OLSexamp <- lm(extro ~ open + agree + social, data = lmm.data)
+#summary(OLSexamp)
+
