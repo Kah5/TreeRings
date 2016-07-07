@@ -385,7 +385,7 @@ make.barplotTOW(tavgcors, 'Townsend woods Avg. Temperature')
 make.barplotHIC(tmincors, "HIC Min. Temperature")
 make.barplotBON(tmincors, "BON Min. Temperature")
 make.barplotPLE(tmincors, "PLE Min. Temperature")
-make.barplotTOW(tmincors, 'Townsend woods Avg. Temperature')
+make.barplotTOW(tmincors, 'Townsend woods MIN. Temperature')
 
 make.barplotHIC(tmaxcors, "HIC Max. Temperature")
 make.barplotBON(tmaxcors, "BON Max. Temperature")
