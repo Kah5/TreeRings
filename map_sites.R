@@ -21,12 +21,19 @@ IL.MCCD <- data.frame(IL.MCCD)
 IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
 priority <- rbind(priority, IL.MCCD)
 
+
+#for NAPC, create a map with just these tree cores:
+priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
+priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
+priority <- data.frame(priority)
+priority$Names <- c('Pleasant Valley', "Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+
 #use avg.alb from extract_PT.R
 #getting gridded climate data
 #need to clean this up
 
 precip.1900<- read.table("./data/precip_2014/precip.1900")
-TRUEprecip.1901<- read.table("./data/precip_2014/precip.1901")
+precip.1901<- read.table("./data/precip_2014/precip.1901")
 precip.1902<- read.table("./data/precip_2014/precip.1902")
 precip.1903<- read.table("./data/precip_2014/precip.1903")
 precip.1904<- read.table("./data/precip_2014/precip.1904")
@@ -72,7 +79,7 @@ avg.p<- rowMeans(data.frame(p.1900,
 
 averages <- data.frame(Lat = Lat, 
                        Long = Long, 
-                       avg = avg.p)
+                       avg = avg.p*10)
 
 coordinates(averages) <- ~Long + Lat
 gridded(averages) <- TRUE
@@ -85,7 +92,7 @@ avg.alb <- projectRaster(avg.rast, crs='+init=epsg:3175')
 
 #map out 
 all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin" ) )
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin") )
 coordinates(states)<-~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
@@ -102,14 +109,19 @@ mapdata<-data.frame(mapdata)
 
 sites.map <- ggplot()+ geom_raster(data=test.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
-  scale_fill_gradientn(colours = rainbow(4), name ="MAP 1900-1910 (cm) ")
-sites.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
+  scale_fill_gradientn(colours = rainbow(4), name ="MAP 1900-1910 (mm) ")
+sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
 
-#pdf("core_sites_2016.pdf")              
+sites.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+                  fontface = 'bold', color = 'white',
+                  box.padding = unit(0.25, "lines"),
+                  point.padding = unit(1.0, "lines"))
+
+pdf("outputs/NAPC_sites_2015.pdf")              
 sites.map
 
-#dev.off()
+dev.off()
 
 
 
@@ -174,7 +186,7 @@ class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 
-test.t<- crop(avg.t.alb, extent(mapdata))
+test.t<- crop(avg.t.alb, mapdata)
 test.t.df <- as.data.frame(test.t, xy = TRUE)
 
 
@@ -183,9 +195,12 @@ test.t.df <- as.data.frame(test.t, xy = TRUE)
 sites.t.map <- ggplot()+ geom_raster(data=test.t.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Temp. (DegC) ")
-sites.t.map <- sites.t.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-sites.t.map <- sites.t.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
-
+sites.t.map <- sites.t.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
+sites.t.map <- sites.t.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+                  fontface = 'bold', color = 'white',
+                  box.padding = unit(0.25, "lines"),
+                  point.padding = unit(1.0, "lines"))
 
 
 #################################################
@@ -260,9 +275,12 @@ test.e.df <- as.data.frame(test.e, xy = TRUE)
 sites.e.map <- ggplot()+ geom_raster(data=test.e.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Apr-Sept \n Potential Evaporation ")
-sites.e.map <- sites.e.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-sites.e.map <- sites.e.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
-sites.e.map
+sites.e.map <- sites.e.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
+sites.e.map <- sites.e.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+                  fontface = 'bold', color = 'white',
+                  box.padding = unit(0.25, "lines"),
+                  point.padding = unit(1.0, "lines"))
 
 #################################################
 #now map for actual evaporation from GHCN data
@@ -336,10 +354,12 @@ test.et.df <- as.data.frame(test.et, xy = TRUE)
 sites.et.map <- ggplot()+ geom_raster(data=test.et.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Apr.-Sept.\n actual et ")
-sites.et.map <- sites.et.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-sites.et.map <- sites.et.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
-sites.et.map
-
+sites.et.map <- sites.et.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
+sites.et.map <- sites.et.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+                  fontface = 'bold', color = 'white',
+                  box.padding = unit(0.25, "lines"),
+                  point.padding = unit(1.0, "lines"))
 
 #now calculet precip. - potential evaporation
 PET.1900<- precip.1900[,3:14]-Eo150.1900[,3:14]
@@ -406,13 +426,16 @@ test.pet.df <- as.data.frame(test.pet, xy = TRUE)
 sites.pet.map <- ggplot()+ geom_raster(data=test.pet.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Apr.-Sept.\n Precip- PET ")
-sites.pet.map <- sites.pet.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description))+geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code))
-sites.pet.map <- sites.pet.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "Black", fill = NA)
-sites.pet.map
+sites.pet.map <- sites.pet.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
+sites.pet.map <- sites.pet.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+                  fontface = 'bold', color = 'white',
+                  box.padding = unit(0.25, "lines"),
+                  point.padding = unit(1.0, "lines"))
 
 
 
-pdf("outputs/core_sites_2016.pdf")              
+pdf("outputs/NAPC_sites_2016.pdf")              
 sites.map
 sites.t.map
 sites.e.map
@@ -420,4 +443,4 @@ sites.et.map
 sites.pet.map
 dev.off()
 
-write.csv(priority, "outputs/priority_sites.csv")
+#write.csv(priority, "outputs/priority_sites.csv")

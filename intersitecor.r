@@ -259,27 +259,35 @@ critical.r <- function(n, alpha=0.05){
 
 # afunction to plot correlations of growth to climate in a barplot
 make.barplot <- function(x,y){
-x <- as.matrix(x[,c("HIC", "PUL")])
-months <- c("pJan", "pFeb","pMar", "pApr", "pMay", "pJun",
-            "pJul", "pAug", "pSep", "pOct", "pNov", "pDec",
+x <- as.matrix(x[,c("HIC", "PLE", "BON","TOW")])
+months <- c(#"pJan", "pFeb","pMar", "pApr", "pMay", "pJun",
+            #"pJul", "pAug", "pSep", "pOct", "pNov", "pDec",
             "Jan", "Feb","Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 row.names(x)<- months
-colours <- c("brown1", "darkblue")
+colours <- c("brown1", "darkblue", "forestgreen", "black")
 barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y))
-legend("topleft", c("HICKORY GROVE", "PULASKI"),cex=1.3, bty="n", fill = colours )
+legend("topleft", c("Hickory Grove", "Pleasant Valley", "Bonanza Prairie", "Townsend Woods"),cex=1.3, bty="n", fill = colours )
 abline(h = critical.r(120))
 abline(h = critical.r(120)*-1)
-barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
+barplot(t(x),ylim= c(-0.5, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
 box()
 }
 
-pdf(paste0(wood, "-PUL-HIC-site.compare.pdf"))
-make.barplot(prcors, paste0(wood, "-Precipitation"))
-make.barplot(tavgcors, paste0(wood,"-Temperature"))
-make.barplot(tmincors, paste0(wood,"Max. Temperature"))
-make.barplot(tmaxcors, paste0(wood,"Min. Temperature"))
-make.barplot(pdsicors, paste0(wood,"PDSI"))
+current <- c("Jan", "Feb","Mar", "Apr", "May", "Jun",
+             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+pr.current<- prcors[prcors$months %in% current,]
+tavg.current <- tavgcors[tavgcors$months %in% current, ]
+tmax.current <- tmaxcors[tmaxcors$months %in% current, ]
+tmin.current <- tmincors[tmincors$months %in% current, ]
+pdsi.current <- pdsicors[pdsicors$months %in% current, ]
+
+pdf("outputs/site.compare.pdf")
+make.barplot(pr.current, paste0(wood, "-Precipitation"))
+make.barplot(tavg.current, paste0(wood,"-Temperature"))
+make.barplot(tmin.current, paste0(wood,"MIN. Temperature"))
+make.barplot(tmax.current, paste0(wood,"MAX. Temperature"))
+make.barplot(pdsi.current, paste0(wood,"PDSI"))
 dev.off()
 
 
