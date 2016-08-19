@@ -1,5 +1,6 @@
 library(lme4)
 library(dplR)
+library(ggplot2)
 #molten.full comes from climate_growth_reg.R
 
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
@@ -43,27 +44,40 @@ plot.pre.post(molten.HIC, molten.HIC$JJA.p, 'Summer Precipitation (mm)', "Hickor
 plot.pre.post(molten.BON, molten.BON$JJA.p, 'Summer Precipitation (mm)', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$JJA.p, 'Summer Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$JJA.p, 'Summer Precipitation (mm)', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$JJA.p, 'Summer Precipitation (mm)', "St.Croix Savanna, MN") #not significant
 
 plot.pre.post(molten.HIC, molten.HIC$MAY.p, 'May Precipitation (mm)', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$MAY.p, 'May Precipitation (mm)', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$MAY.p, 'May Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$MAY.p, 'May Precipitation (mm)', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$MAY.p, 'May Precipitation (mm)', "St.Croix Savanna, MN") #not significant
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTmin, 'June Minimum Temperature', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$JUNTmin, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$JUNTmin, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$JUNTmin, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$JUNTmin, 'June Minimum Temperature', "St.Croix Savanna, MN") #not significant
+
+plot.pre.post(molten.HIC, molten.HIC$JUNTmax, 'June Maximum Temperature', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$JUNTmax, 'June Maximum Temperature', "Bonanza Prairie, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$JUNTmax, 'June Maximum Temperature', "Pleasant Valley Conservancy, WI") #significant
+plot.pre.post(molten.TOW, molten.TOW$JUNTmax, 'June Maximum Temperature', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$JUNTmax, 'June Maximum Temperature', "St.Croix Savanna, MN") #not significant
+
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTavg, 'June Minimum Temperature', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$JUNTavg, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$JUNTavg, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$JUNTavg, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$JUNTavg, 'June Minimum Temperature', "St.Croix Savanna, MN") #not significant
 
 
-plot.pre.post(molten.TOW, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #not significant
-plot.pre.post(molten.TOW, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #not significant
-plot.pre.post(molten.TOW, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
+plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #not significant
+plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #not significant
+plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
 plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
+
 dev.off()
 
 
@@ -94,8 +108,58 @@ dev.off()
 
 
 
+#dataset from http://scrippsco2.ucsd.edu/data/atmospheric_co2
+#CO2 <- read.csv('data/merged_ice_core_yearly.csv')
+
+CO2 <- read.csv('data/spline_merged_ice_core_yearly2.csv', header = TRUE)
+
+#colnames(CO2) <- c('YearCE', 'ppm', 'Year')
+
+compare.CO2<- function(CO2, x){
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  x$class <- '9999'
+  x[x$Year %in% yr,]$class <- 'Pre-1950'
+  x[x$Year %in% yr.post,]$class <- 'Post-1950'
+  #create dummy variable
+  x$group <- 0
+  x[x$Year %in% yr,]$group <- 1
+  
+CO2.m <- merge(x, CO2, by = 'Year')
+print(summary( lm(value ~ ppm:group, data = CO2.m)))
 
 
+# Extend the regression lines beyond the domain of the data
+ggplot(CO2.m, aes(x=ppm, y=value, color = class)) + geom_point(shape=1) +
+  scale_colour_hue(l=50) + # Use a slightly darker palette than normal
+  geom_smooth(method=lm,   # Add linear regression lines
+              se=TRUE,    # add shaded confidence region
+              fullrange=FALSE)+# Extend regression lines
+  ylab('Detrended Ring width Index') +
+  xlab( 'ppm') +
+  ggtitle('CO2 vs growth')
+}
+
+compare.CO2(CO2, molten.BON)
+compare.CO2(CO2, molten.HIC)
+compare.CO2(CO2, molten.TOW)
+compare.CO2(CO2, molten.PLE)
+compare.CO2(CO2, molten.STC)
+
+
+
+compare.CO2.PDSI<- function(CO2, x){
+  CO2.m <- merge(x, CO2, by = 'Year')
+  plot(CO2.m$PDSI, CO2.m$ppm)
+}
+
+
+
+compare.CO2.PDSI(CO2, molten.BON)
+compare.CO2.PDSI(CO2, molten.HIC)
+compare.CO2.PDSI(CO2, molten.TOW)
+compare.CO2.PDSI(CO2, molten.PLE)
+compare.CO2.PDSI(CO2, molten.STC)
 
 #plot theses
 plot(molten.HIC[molten.HIC$Year== 1895:1950,]$PDSI, molten.HIC[molten.HIC$Year== 1895:1950,]$value)

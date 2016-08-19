@@ -7,31 +7,31 @@ if(wood == "EW"){
 HICpew<- read.csv("HIC-EWPrecipcor.csv")
 BONpew <- read.csv("BON-EWPrecipcor.csv")
 GLApew <- read.csv("GLA-EWPrecipcor.csv")
-PLEpew <- read.csv("PLE-EWPrecipcor.csv")
+STCpew <- read.csv("STC-EWPrecipcor.csv")
 TOWpew <- read.csv('TOW-EWPrecipcor.csv')
 
 HICtmaxew <- read.csv("HIC-EWtmaxcor.csv")
 BONtmaxew <- read.csv("BON-EWtmaxcor.csv")
 GLAtmaxew <- read.csv("GLA-EWtmaxcor.csv")
-PLEtmaxew <- read.csv("PLE-EWtmaxcor.csv")
+STCtmaxew <- read.csv("STC-EWtmaxcor.csv")
 TOWtmaxew <- read.csv("TOW-EWtmaxcor.csv")
 
 HICtminew <- read.csv("HIC-EWtmincor.csv")
 BONtminew <- read.csv("BON-EWtmincor.csv")
 GLAtminew <- read.csv("GLA-EWtmincor.csv")
-PLEtminew <- read.csv("PLE-EWtmincor.csv")
+STCtminew <- read.csv("STC-EWtmincor.csv")
 TOWtminew <- read.csv("TOW-EWtmincor.csv")
 
 HICtavgew <- read.csv("HIC-EWtavgcor.csv")
 BONtavgew <- read.csv("BON-EWtavgcor.csv")
 GLAtavgew <- read.csv("GLA-EWtavgcor.csv")
-PLEtavgew <- read.csv("PLE-EWtavgcor.csv")
+STCtavgew <- read.csv("STC-EWtavgcor.csv")
 TOWtavgew <- read.csv('TOW-EWtavgcor.csv')
 
 HICpdsiew <- read.csv("HIC-EWpdsicor.csv")
 BONpdsiew <- read.csv("BON-EWpdsicor.csv")
 GLApdsiew <- read.csv("GLA-EWpdsicor.csv")
-PLEpdsiew <- read.csv("PLE-EWpdsicor.csv")
+STCpdsiew <- read.csv("STC-EWpdsicor.csv")
 TOWpdsiew <- read.csv("TOW-EWpdsicor.csv")
 
 
@@ -43,34 +43,34 @@ GLAcfsew <- read.csv("GLA-EWcfs.cor.csv")
   HICplw<- read.csv("HIC-LWPrecipcor.csv")
   BONplw <- read.csv("BON-LWPrecipcor.csv")
   GLAplw <- read.csv("GLA-LWPrecipcor.csv")
-  PLEplw <- read.csv("PLE-LWPrecipcor.csv")
+  STCplw <- read.csv("STC-LWPrecipcor.csv")
   TOWplw <- read.csv("TOW-LWPrecipcor.csv")
   
   
   HICtmaxlw <- read.csv("HIC-LWtmaxcor.csv")
   BONtmaxlw <- read.csv("BON-LWtmaxcor.csv")
   GLAtmaxlw <- read.csv("GLA-LWtmaxcor.csv")
-  PLEtmaxlw <- read.csv("PLE-LWtmaxcor.csv")
+  STCtmaxlw <- read.csv("STC-LWtmaxcor.csv")
   TOWtmaxlw <- read.csv("TOW-LWtmaxcor.csv")
   
   HICtminlw <- read.csv("HIC-LWtmincor.csv")
   BONtminlw <- read.csv("BON-LWtmincor.csv")
   GLAtminlw <- read.csv("GLA-LWtmincor.csv")
-  PLEtminlw <- read.csv("PLE-LWtmincor.csv")
+  STCtminlw <- read.csv("STC-LWtmincor.csv")
   TOWtminlw <- read.csv("TOW-LWtmincor.csv")
   
   
   HICtavglw <- read.csv("HIC-LWtavgcor.csv")
   BONtavglw <- read.csv("BON-LWtavgcor.csv")
   GLAtavglw <- read.csv("GLA-LWtavgcor.csv")
-  PLEtavglw <- read.csv("PLE-LWtavgcor.csv")
+  STCtavglw <- read.csv("STC-LWtavgcor.csv")
   TOWtavglw <- read.csv("TOW-LWtavgcor.csv")
   
   
   HICpdsilw <- read.csv("HIC-LWpdsicor.csv")
   BONpdsilw <- read.csv("BON-LWpdsicor.csv")
   GLApdsilw <- read.csv("GLA-LWpdsicor.csv")
-  PLEpdsilw <- read.csv("PLE-LWpdsicor.csv")
+  STCpdsilw <- read.csv("STC-LWpdsicor.csv")
   TOWpdsilw <- read.csv("TOW-LWpdsicor.csv")
   
   HICcfslw <- read.csv("HIC-LWcfs.cor.csv")
@@ -82,7 +82,7 @@ BONtmax <- read.csv("BON-WWtmaxcor.csv")
 SANtmax <- read.csv("SAN-WWtmaxcor.csv")
 PULtmax <- read.csv("PUL-WWtmaxcor.csv")
 GLAtmax <- read.csv("GLA-WWtmaxcor.csv")
-PLEtmax <- read.csv("PLE-WWtmaxcor.csv")
+STCtmax <- read.csv("STC-WWtmaxcor.csv")
 TOWtmax <- read.csv("TOW-WWtmaxcor.csv")
 
 HICp<- read.csv("HIC-WWPrecipcor.csv")
@@ -90,7 +90,7 @@ BONp <- read.csv("BON-WWPrecipcor.csv")
 SANp <- read.csv("SAN-WWPrecipcor.csv")
 PULp <- read.csv("PUL-WWPrecipcor.csv")
 GLAp <- read.csv("GLA-WWPrecipcor.csv")
-PLEp <- read.csv("PLE-WWPrecipcor.csv")
+STCp <- read.csv("STC-WWPrecipcor.csv")
 TOWp <- read.csv("TOW-WWPrecipcor.csv")
 
 HICtmin <- read.csv("HIC-WWtmincor.csv")
@@ -98,7 +98,7 @@ BONtmin <- read.csv("BON-WWtmincor.csv")
 SANtmin <- read.csv("SAN-WWtmincor.csv")
 PULtmin <- read.csv("PUL-WWtmincor.csv")
 GLAtmin <- read.csv("GLA-WWtmincor.csv")
-PLEtmin <- read.csv("PLE-WWtmincor.csv")
+STCtmin <- read.csv("STC-WWtmincor.csv")
 TOWtmin <- read.csv("TOW-WWtmincor.csv")
 
 HICtavg <- read.csv("HIC-WWtavgcor.csv")
@@ -106,7 +106,7 @@ BONtavg <- read.csv("BON-WWtavgcor.csv")
 SANtavg <- read.csv("SAN-WWtavgcor.csv")
 PULtavg <- read.csv("PUL-WWtavgcor.csv")
 GLAtavg <- read.csv("GLA-WWtavgcor.csv")
-PLEtavg <- read.csv("PLE-WWtavgcor.csv")
+STCtavg <- read.csv("STC-WWtavgcor.csv")
 TOWtavg <- read.csv("TOW-WWtavgcor.csv")
 
 HICpdsi <- read.csv("HIC-WWpdsicor.csv")
@@ -114,7 +114,7 @@ BONpdsi <- read.csv("BON-WWpdsicor.csv")
 SANpdsi <- read.csv("SAN-WWPDSIcor.csv")
 PULpdsi <- read.csv("PUL-WWPDSIcor.csv")
 GLApdsi <- read.csv("GLA-WWPDSIcor.csv")
-PLEpdsi <- read.csv("PLE-WWPDSIcor.csv")
+STCpdsi <- read.csv("STC-WWPDSIcor.csv")
 TOWpdsi <- read.csv("TOW-WWPDSIcor.csv")
 
 HICcfs <- read.csv("HIC-WWcfs.cor.csv")
@@ -136,7 +136,7 @@ prcors<- data.frame(HIC = HICp$V1,
           #GLA = GLAp$V1,
           #GLAew = GLApew$V1,
           #GLAlw = GLAplw$V1,
-          PLE = PLEp$V1,
+          STC = STCp$V1,
           PLEew = PLEpew$V1,
           PLElw = PLEplw$V1,
           TOW = TOWp$V1,
@@ -156,7 +156,7 @@ tmincors<- data.frame(HIC = HICtmin$V1,
                     #GLA = GLAtmin$V1,
                     #GLAew = GLAtminew$V1,
                     #GLAlw = GLAtminlw$V1,
-                    PLE = PLEtmin$V1,
+                    STC = STCtmin$V1,
                     PLEew = PLEtminew$V1,
                     PLElw = PLEtminlw$V1,
                     TOW = TOWtmin$V1,
@@ -175,7 +175,7 @@ tmaxcors<- data.frame(HIC = HICtmax$V1,
                       #GLA = GLAtmax$V1,
                       #GLAew = GLAtmaxew$V1,
                       #GLAlw = GLAtmaxlw$V1,
-                      PLE = PLEtmax$V1,
+                      STC = STCtmax$V1,
                       PLEew = PLEtmaxew$V1,
                       PLElw = PLEtmaxlw$V1,
                       TOW = TOWtmax$V1,
@@ -194,7 +194,7 @@ pdsicors<- data.frame(HIC = HICpdsi$V1,
                       #GLA = GLApdsi$V1,
                       #GLAew = GLApdsiew$V1,
                       #GLAlw = GLApdsilw$V1,
-                      PLE = PLEpdsi$V1,
+                      STC = STCpdsi$V1,
                       PLEew = PLEpdsiew$V1,
                       PLElw = PLEpdsilw$V1,
                       TOW = TOWpdsi$V1,
@@ -215,7 +215,7 @@ tavgcors<- data.frame(HIC = HICtavg$V1,
                       #GLA = GLAtavg$V1,
                       #GLAew = GLAtavgew$V1,
                       #GLAlw = GLAtavglw$V1,
-                      PLE = PLEtavg$V1,
+                      STC = STCtavg$V1,
                       PLEew = PLEtavgew$V1,
                       PLElw = PLEtavglw$V1,
                       TOW = TOWtavg$V1,
@@ -249,7 +249,7 @@ cfscors<- data.frame(HIC = HICcfs$V1,
 
 
 #function to calculate the critical value for peasron correlation coeff
-#n is the sample size and alpha is the critical p value 
+#n is the samSTC size and alpha is the critical p value 
 critical.r <- function(n, alpha=0.05){
   df <- n- 2
   critical.t <- qt(alpha/2, df, lower.tail = F)
@@ -259,18 +259,18 @@ critical.r <- function(n, alpha=0.05){
 
 # afunction to plot correlations of growth to climate in a barplot
 make.barplot <- function(x,y){
-x <- as.matrix(x[,c("HIC", "PLE", "BON","TOW")])
+x <- as.matrix(x[,c("HIC", "STC", "BON","TOW")])
 months <- c(#"pJan", "pFeb","pMar", "pApr", "pMay", "pJun",
             #"pJul", "pAug", "pSep", "pOct", "pNov", "pDec",
             "Jan", "Feb","Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 row.names(x)<- months
 colours <- c("brown1", "darkblue", "forestgreen", "black")
-barplot(t(x),ylim= c(-0.4, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y))
-legend("topleft", c("Hickory Grove", "Pleasant Valley", "Bonanza Prairie", "Townsend Woods"),cex=1.3, bty="n", fill = colours )
+barplot(t(x),ylim= c(-0.45, 0.58), beside = TRUE, col = colours, las = 2, main = paste(y))
+legend("bottomleft", c("Hickory Grove", "St. Croix Savanna", "Bonanza Prairie", "Townsend Woods"),cex=1.3, bty="n", fill = colours )
 abline(h = critical.r(120))
 abline(h = critical.r(120)*-1)
-barplot(t(x),ylim= c(-0.5, 0.5), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
+barplot(t(x),ylim= c(-0.45, 0.58), beside = TRUE, col = colours, las = 2, main = paste(y), add = T)
 box()
 }
 
@@ -283,11 +283,11 @@ tmin.current <- tmincors[tmincors$months %in% current, ]
 pdsi.current <- pdsicors[pdsicors$months %in% current, ]
 
 pdf("outputs/site.compare.pdf")
-make.barplot(pr.current, paste0(wood, "-Precipitation"))
-make.barplot(tavg.current, paste0(wood,"-Temperature"))
-make.barplot(tmin.current, paste0(wood,"MIN. Temperature"))
-make.barplot(tmax.current, paste0(wood,"MAX. Temperature"))
-make.barplot(pdsi.current, paste0(wood,"PDSI"))
+make.barplot(pr.current, "Precipitation")
+make.barplot(tavg.current, " Avg. Temperature")
+make.barplot(tmin.current, "Min. Temperature")
+make.barplot(tmax.current, "Max. Temperature")
+make.barplot(pdsi.current, "PDSI")
 dev.off()
 
 
@@ -357,7 +357,7 @@ make.barplotGLA <- function(x,y){
   box()
 }
 
-make.barplotPLE <- function(x,y){
+make.barplotSTC <- function(x,y){
   x <- as.matrix(x[,c(8,9,7)])
   months <- c("pJan", "pFeb","pMar", "pApr", "pMay", "pJun",
               "pJul", "pAug", "pSep", "pOct", "pNov", "pDec",
@@ -382,27 +382,27 @@ make.barplotPLE <- function(x,y){
 pdf("all-wood-sites.pdf")
 make.barplotHIC(prcors, "Hickory Grove, IL Precipitation")
 make.barplotBON(prcors, "Bonanza Prairie, MN Precipitation")
-make.barplotPLE(prcors, "Pleasant Valley precipiation")
+make.barplotSTC(prcors, "STCasant Valley precipiation")
 make.barplotTOW(prcors, 'Townsend woods MN Precipiation')
 
 make.barplotHIC(tavgcors, "HIC Avg. Temperature")
 make.barplotBON(tavgcors, "BON Avg. Temperature")
-make.barplotPLE(tavgcors, "PLE Avg. Temperature")
+make.barplotSTC(tavgcors, "STC Avg. Temperature")
 make.barplotTOW(tavgcors, 'Townsend woods Avg. Temperature')
 
 make.barplotHIC(tmincors, "HIC Min. Temperature")
 make.barplotBON(tmincors, "BON Min. Temperature")
-make.barplotPLE(tmincors, "PLE Min. Temperature")
+make.barplotSTC(tmincors, "STC Min. Temperature")
 make.barplotTOW(tmincors, 'Townsend woods MIN. Temperature')
 
 make.barplotHIC(tmaxcors, "HIC Max. Temperature")
 make.barplotBON(tmaxcors, "BON Max. Temperature")
-make.barplotPLE(tmaxcors, "PLE Max. Temperature")
+make.barplotSTC(tmaxcors, "STC Max. Temperature")
 make.barplotTOW(tmaxcors, 'Townsend woods Max. Temperature')
 
 make.barplotHIC(pdsicors, "HIC PDSI")
 make.barplotBON(pdsicors, "BON PDSI")
-make.barplotPLE(pdsicors, "PLE PDSI")
+make.barplotSTC(pdsicors, "STC PDSI")
 make.barplotTOW(pdsicors, 'Townsend woods Avg. Temperature')
 
 dev.off()
