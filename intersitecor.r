@@ -2,7 +2,7 @@
 #note there are several issues with this code and which sets of data it graphs
 #need to update the EW and LW rwl's so that they match the whole wood rwl
 
-if(wood == "EW"){
+
 #EW
 HICpew<- read.csv("HIC-EWPrecipcor.csv")
 BONpew <- read.csv("BON-EWPrecipcor.csv")
@@ -39,7 +39,7 @@ HICcfsew <- read.csv("HIC-EWcfs.cor.csv")
 GLAcfsew <- read.csv("GLA-EWcfs.cor.csv")
 
 
-}else{if(wood == "LW"){
+#late wood files
   HICplw<- read.csv("HIC-LWPrecipcor.csv")
   BONplw <- read.csv("BON-LWPrecipcor.csv")
   GLAplw <- read.csv("GLA-LWPrecipcor.csv")
@@ -75,8 +75,8 @@ GLAcfsew <- read.csv("GLA-EWcfs.cor.csv")
   
   HICcfslw <- read.csv("HIC-LWcfs.cor.csv")
   GLAcfslw <- read.csv("GLA-LWcfs.cor.csv")
-}else{
-#WW
+
+#Whole wood files
 HICtmax <- read.csv("HIC-WWtmaxcor.csv")
 BONtmax <- read.csv("BON-WWtmaxcor.csv")
 SANtmax <- read.csv("SAN-WWtmaxcor.csv")
@@ -119,7 +119,7 @@ TOWpdsi <- read.csv("TOW-WWPDSIcor.csv")
 
 HICcfs <- read.csv("HIC-WWcfs.cor.csv")
 GLAcfs <- read.csv("GLA-WWcfs.cor.csv")
-}}
+
 
 
 months <- c("pJan", "pFeb","pMar", "pApr", "pMay", "pJun",

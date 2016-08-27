@@ -1,6 +1,10 @@
 library(lme4)
 library(dplR)
-#read in rwl & add site + year codes
+#####################################
+#read in rwl & add site + year codes#
+#####################################
+
+#Hickory Grove
 Hickory <- read.tucson ("./cofecha/HICww.rwl")
 HIC.stats <- rwi.stats(Hickory)
 #detrend 
@@ -11,8 +15,35 @@ Hickory <- chron(Hickory.rwi)
 Hickory$Year <- 1850:2015
 Hickory$Site <- 'Hickory Grove'
 
+#Sandwich--south of Hickory grove *ed cook record from 1980's
+#note there are two records--one for Quercus macrocarpa (il002) and one for Quercus alba (il001)
+#here we use il002
+Sandwich <- read.tucson ("data/il002.rwl")
+SAN.stats <- rwi.stats(Sandwich)
+#detrend 
+Sandwich.rwi <- detrend(rwl = Sandwich, method = "ModNegExp")
+Sandwich <- chron(Sandwich.rwi)            
 
 
+Sandwich$Year <- 1752:1980
+Sandwich$Site <- 'Sandwich'
+
+
+#Dubois de Souix record--north of bonanaza
+Desoix <- read.tucson ("data/mn029.rwl")
+DES.stats <- rwi.stats(Desoix)
+#detrend 
+Desoix.rwi <- detrend(rwl = Desoix, method = "ModNegExp")
+Desoix <- chron(Desoix.rwi)            
+
+
+Desoix$Year <- 1877:2010
+Desoix$Site <- 'Bois de soix'
+
+
+
+
+#Bonanza prairie
 Bonanza <- read.tucson("./cofecha/BONww.rwl")
 BON.stats <- rwi.stats(Bonanza)
 #detrend
@@ -22,7 +53,7 @@ Bonanza <- chron(Bonanza.rwi)
 Bonanza$Year <- 1818:2015
 Bonanza$Site <- "Bonanza Prairie"
 
-
+#Pleasant valley Conservancy record
 Pleasant <- read.tucson('./cofecha/PLEww.rwl')
 PLE.stats <- rwi.stats(Pleasant)
 #detrend
@@ -31,6 +62,8 @@ Pleasant <- chron (Pleasant.rwi)
 Pleasant$Year <- 1768:2015
 Pleasant$Site <- "Pleasant Valley Conservancy"
 
+
+#townsend woods
 Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
 TOW.stats <- rwi.stats(Townsend)
 #detrend
@@ -39,7 +72,23 @@ Townsend <- chron(Townsend.rwi)
 Townsend$Year <- 1880: 2015
 Townsend$Site <- 'Townsend Woods'
 
-#read in hickory grove climate
+
+# wolfsfield woods ***note this is an Acer Saccharim record # Comparing townsend woods
+Wolfsfield <- read.tucson('data/mn018.rwl')
+WOL.stats <- rwi.stats(Wolfsfield)
+#detrend
+Wolfsfield.rwi <- detrend(rwl = Wolfsfield, method = "ModNegExp")
+Wolfsfield <- chron(Wolfsfield.rwi)
+Wolfsfield$Year <- 1820:1983
+Wolfsfield$Site <- 'Wolfsfield Woods'
+
+
+################################################
+#Merge chronologies with local climate datasets#
+################################################
+
+
+#read in hickory grove climate (also climate for Sandwich site)
 MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54
 
@@ -90,10 +139,11 @@ annuals <- data.frame(Year = annual.p$Year,
 annuals.HIC <- merge(annuals, Hickory[c('Year', 'xxxstd', 'Site')], by = "Year")
 molten.HIC <- melt(annuals.HIC, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI"))
 
-
+annuals.SAN <- merge(annuals, Sandwich[c('Year', "xxxstd", 'Site')], by = "Year")
+molten.SAN <- melt(annuals.SAN, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI"))
 
 ###########################
-#read in Bonanza climate
+#read in Bonanza climate (also climate for desoix)
 MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54
 
@@ -140,10 +190,12 @@ annuals <- data.frame(Year = annual.p$Year,
                       TAVG = annual.t$TAVG,
                       PDSI = annual.pdsi$PDSI)
 
-#merge annuals with hickory
+#merge annuals with Bonanza
 annuals.BON <- merge(annuals, Bonanza[c('Year', 'xxxstd', 'Site')], by = 'Year')
 molten.BON <- melt(annuals.BON, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI"))
 
+annuals.DES <- merge(annuals, Desoix[c('Year', "xxxstd", 'Site')], by = "Year")
+molten.DES <- melt(annuals.DES, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI"))
 
 ##############################
 #read in Pleasant valley conservancy climate

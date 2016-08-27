@@ -1,7 +1,10 @@
 library(lme4)
 library(dplR)
 library(ggplot2)
-#molten.full comes from climate_growth_reg.R
+
+
+
+#molten.full comes from climate_growth_reg_chron.R
 
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
 
@@ -45,31 +48,44 @@ plot.pre.post(molten.BON, molten.BON$JJA.p, 'Summer Precipitation (mm)', "Bonanz
 plot.pre.post(molten.PLE, molten.PLE$JJA.p, 'Summer Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$JJA.p, 'Summer Precipitation (mm)', "Townsend Woods, MN") #not significant
 plot.pre.post(molten.STC, molten.STC$JJA.p, 'Summer Precipitation (mm)', "St.Croix Savanna, MN") #not significant
+plot.pre.post(molten.DES, molten.DES$JJA.p, 'Summer Precipitation (mm)', "Bois de Soix, MN") #significant
+plot.pre.post(molten.SAN, molten.SAN$JJA.p, 'Summer Precipitation (mm)', "Sandwich, IL") #significant
+
 
 plot.pre.post(molten.HIC, molten.HIC$MAY.p, 'May Precipitation (mm)', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$MAY.p, 'May Precipitation (mm)', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$MAY.p, 'May Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$MAY.p, 'May Precipitation (mm)', "Townsend Woods, MN") #not significant
 plot.pre.post(molten.STC, molten.STC$MAY.p, 'May Precipitation (mm)', "St.Croix Savanna, MN") #not significant
+plot.pre.post(molten.DES, molten.DES$MAY.p, 'May Precipitation (mm)', "Bois de Soix, MN") #significant
+plot.pre.post(molten.SAN, molten.SAN$MAY.p, 'May Precipitation (mm)', "Sandwich, IL") #significant
+
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTmin, 'June Minimum Temperature', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$JUNTmin, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$JUNTmin, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$JUNTmin, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
 plot.pre.post(molten.STC, molten.STC$JUNTmin, 'June Minimum Temperature', "St.Croix Savanna, MN") #not significant
+plot.pre.post(molten.DES, molten.DES$JUNTmin, 'June Minimum Temperature', "Bois de Soix, MN") #significant
+plot.pre.post(molten.SAN, molten.SAN$JUNTmin, 'June Minimum Temperature', "Sandwich, IL") #significant
+
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTmax, 'June Maximum Temperature', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$JUNTmax, 'June Maximum Temperature', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$JUNTmax, 'June Maximum Temperature', "Pleasant Valley Conservancy, WI") #significant
 plot.pre.post(molten.TOW, molten.TOW$JUNTmax, 'June Maximum Temperature', "Townsend Woods, MN") #not significant
 plot.pre.post(molten.STC, molten.STC$JUNTmax, 'June Maximum Temperature', "St.Croix Savanna, MN") #not significant
+plot.pre.post(molten.DES, molten.DES$JUNTmax, 'June Maximum Temperature', "Bois de Soix, MN") #significant
+plot.pre.post(molten.SAN, molten.SAN$JUNTmax, 'June Maximum Temperature', "Sandwich, IL") #significant
 
 
-plot.pre.post(molten.HIC, molten.HIC$JUNTavg, 'June Minimum Temperature', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$JUNTavg, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$JUNTavg, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
-plot.pre.post(molten.TOW, molten.TOW$JUNTavg, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$JUNTavg, 'June Minimum Temperature', "St.Croix Savanna, MN") #not significant
+plot.pre.post(molten.HIC, molten.HIC$JUNTavg, 'June Average Temperature', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$JUNTavg, 'June Average Temperature', "Bonanza Prairie, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$JUNTavg, 'June Average Temperature', "Pleasant Valley Conservancy, WI") #significant
+plot.pre.post(molten.TOW, molten.TOW$JUNTavg, 'June Average Temperature', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.STC, molten.STC$JUNTavg, 'June Average Temperature', "St.Croix Savanna, MN") #not significant
+plot.pre.post(molten.DES, molten.DES$JUNTavg, 'June Average Temperature', "Bois de Soix, MN") #significant
+plot.pre.post(molten.SAN, molten.SAN$JUNTavg, 'June Average Temperature', "Sandwich, IL") #significant
 
 
 plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #not significant
@@ -77,6 +93,8 @@ plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN
 plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
 plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
 plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
+plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
+plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
 
 dev.off()
 
@@ -126,13 +144,13 @@ compare.CO2<- function(CO2, x){
   x[x$Year %in% yr,]$group <- 1
   
 CO2.m <- merge(x, CO2, by = 'Year')
-print(summary( lm(value ~ ppm:group, data = CO2.m)))
+print(summary( lm(value ~ ppm, data = CO2.m)))
 
 
 # Extend the regression lines beyond the domain of the data
-ggplot(CO2.m, aes(x=ppm, y=value, color = class)) + geom_point(shape=1) +
+ggplot(CO2.m, aes(x=ppm, y=value)) + geom_point(shape=1) +
   scale_colour_hue(l=50) + # Use a slightly darker palette than normal
-  geom_smooth(method=lm,   # Add linear regression lines
+  geom_smooth(method=loess,   # Add linear regression lines
               se=TRUE,    # add shaded confidence region
               fullrange=FALSE)+# Extend regression lines
   ylab('Detrended Ring width Index') +

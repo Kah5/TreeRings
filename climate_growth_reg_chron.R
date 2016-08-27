@@ -1,15 +1,42 @@
 library(lme4)
 library(dplR)
+library(reshape2)
 #read in rwl & add site + year codes
 Hickory <- read.tucson ("./cofecha/HICww.rwl")
 HIC.stats <- rwi.stats(Hickory)
 #detrend 
 Hickory.rwi <- detrend(rwl = Hickory, method = "ModNegExp")
 Hickory <- chron(Hickory.rwi)            
-
+plot(Hickory)
 
 Hickory$Year <- 1850:2015
 Hickory$Site <- 'Hickory Grove'
+
+#Sandwich--south of Hickory grove *ed cook record from 1980's
+#note there are two records--one for Quercus macrocarpa (il002) and one for Quercus alba (il001)
+#here we use il002
+Sandwich <- read.tucson ("data/il002.rwl")
+SAN.stats <- rwi.stats(Sandwich)
+#detrend 
+Sandwich.rwi <- detrend(rwl = Sandwich, method = "ModNegExp")
+Sandwich <- chron(Sandwich.rwi)            
+
+
+Sandwich$Year <- 1752:1980
+Sandwich$Site <- 'Sandwich'
+
+
+#Dubois de Souix record--north of bonanaza
+Desoix <- read.tucson ("data/mn029.rwl")
+DES.stats <- rwi.stats(Desoix)
+#detrend 
+Desoix.rwi <- detrend(rwl = Desoix, method = "ModNegExp")
+Desoix <- chron(Desoix.rwi)            
+
+
+Desoix$Year <- 1877:2010
+Desoix$Site <- 'Bois de soix'
+
 
 
 
@@ -28,8 +55,21 @@ PLE.stats <- rwi.stats(Pleasant)
 #detrend
 Pleasant.rwi <- detrend(rwl = Pleasant, method = "ModNegExp")
 Pleasant <- chron (Pleasant.rwi)
+
+#sample figures for NAPC conference
+pdf('outputs/chron_NAPC_fig.pdf')
+plot(Pleasant$Year, Pleasant$xxxstd, type = 'l', col = 'black', xlab = 'Year',ylab = "Detrended Ring Width Index", cex = 5)
+abline(a= 1, b = 0)
+
+plot(Pleasant$Year, Pleasant$xxxstd, type = 'l', col = 'black', xlab = 'Year',ylab = "Detrended Ring Width Index", cex = 5)
+abline(a= 1, b = 0)
+rect(1895,0, 1950,3, col = rgb(0.3,0.5,0.5,1/4))
+rect(1950,0, 2014,3, col = rgb(0.9,0.1,0.1,1/4))
+dev.off()
+
 Pleasant$Year <- 1768:2015
 Pleasant$Site <- "Pleasant Valley Conservancy"
+
 
 Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
 TOW.stats <- rwi.stats(Townsend)
@@ -38,6 +78,14 @@ Townsend.rwi <- detrend(rwl = Townsend, method = "ModNegExp")
 Townsend <- chron(Townsend.rwi)
 Townsend$Year <- 1880: 2015
 Townsend$Site <- 'Townsend Woods'
+
+StCroix <- read.tucson('./cofecha/STCww.rwl')
+STC.stats <- rwi.stats(StCroix)
+#detrend
+STC.rwi <- detrend(rwl = StCroix, method = "ModNegExp")
+StCroix <- chron(STC.rwi)
+StCroix$Year <- 1879: 2015
+StCroix$Site <- 'St. Croix Savanna'
 
 #read in hickory grove climate
 MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
@@ -83,6 +131,14 @@ jun.tavg <- tavg.m[tavg.m$Month == 6,]
 tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
 jun.tmin <- tmin.m[tmin.m$Month == 6, ]
 
+tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+
+
+
+
+#pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
+#plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
 
 
 #precip <- dcast(total.p, Year  ~ Month)
@@ -90,7 +146,7 @@ annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
 annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1440,], FUN = 'mean', na.rm=T)
 annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1440,], FUN = 'mean', na.rm = T)
 annual.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
-annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1440,], FUN = 'sum', na.rm = T)
+annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
 jul.pdsi <- annual.pdsi.m[annual.pdsi.m$Month == 7,] 
 
 annuals <- data.frame(Year = annual.p$Year, 
@@ -102,13 +158,17 @@ annuals <- data.frame(Year = annual.p$Year,
                       JJA.p = jja.p[1:120,]$PCP,
                       JUNTmin = jun.tmin[1:120,]$TMIN,
                       JUNTavg = jun.tavg[1:120,]$TAVG, 
+                      JUNTmax = jun.tmax[1:120,]$TMAX,
                       Jul.pdsi = jul.pdsi[1:120,]$PDSI)
 
 #merge annuals with hickory
 annuals.HIC <- merge(annuals, Hickory[c('Year', 'xxxstd', 'Site')], by = "Year")
 molten.HIC <- melt(annuals.HIC, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
-                                       "JUNTmin","JUNTavg", "Jul.pdsi"))
+                                       "JUNTmin","JUNTavg", 'JUNTmax',"Jul.pdsi"))
 
+annuals.SAN <- merge(annuals, Sandwich[c('Year', "xxxstd", 'Site')], by = "Year")
+molten.SAN <- melt(annuals.SAN, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
+                                       "JUNTmin","JUNTavg","JUNTmax", "Jul.pdsi"))
 
 
 ###########################
@@ -156,6 +216,9 @@ jun.tavg <- tavg.m[tavg.m$Month == 6,]
 tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
 jun.tmin <- tmin.m[tmin.m$Month == 6, ]
 
+tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+
 
 
 
@@ -180,11 +243,15 @@ annuals <- data.frame(Year = annual.p$Year,
                       JJA.p = jja.p[1:120,]$PCP,
                       JUNTmin = jun.tmin[1:120,]$TMIN,
                       JUNTavg = jun.tavg[1:120,]$TAVG, 
+                      JUNTmax = jun.tmax[1:120,]$TMAX,
                       Jul.pdsi = jul.pdsi[1:120,]$PDSI)
 #merge annuals with hickory
 annuals.BON <- merge(annuals, Bonanza[c('Year', 'xxxstd', 'Site')], by = 'Year')
 molten.BON <- melt(annuals.BON, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
-                                       "JUNTmin","JUNTavg", "Jul.pdsi"))
+                                       "JUNTmin","JUNTavg","JUNTmax", "Jul.pdsi"))
+annuals.DES <- merge(annuals, Desoix[c('Year', "xxxstd", 'Site')], by = "Year")
+molten.DES <- melt(annuals.DES, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
+                                       "JUNTmin","JUNTavg","JUNTmax", "Jul.pdsi"))
 
 
 ##############################
@@ -233,6 +300,9 @@ jun.tavg <- tavg.m[tavg.m$Month == 6,]
 tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
 jun.tmin <- tmin.m[tmin.m$Month == 6, ]
 
+tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+
 
 
 
@@ -257,11 +327,12 @@ annuals <- data.frame(Year = annual.p$Year,
                       JJA.p = jja.p[1:120,]$PCP,
                       JUNTmin = jun.tmin[1:120,]$TMIN,
                       JUNTavg = jun.tavg[1:120,]$TAVG, 
+                      JUNTmax = jun.tmax[1:120,]$TMAX,
                       Jul.pdsi = jul.pdsi[1:120,]$PDSI)
 #merge annuals with hickory
 annuals.PLE <- merge(annuals, Pleasant[c('Year', 'xxxstd', 'Site')], by = 'Year')
 molten.PLE <- melt(annuals.PLE, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
-                                       "JUNTmin","JUNTavg", "Jul.pdsi"))
+                                       "JUNTmin","JUNTavg", "JUNTmax","Jul.pdsi"))
 
 #now merge all the molten frames together
 
@@ -272,6 +343,88 @@ molten.full <- rbind(molten.HIC, molten.BON, molten.PLE)
 ##############################
 #read in Townsend climate
 ################################
+MNcd.clim <- read.csv("data/CDODiv2154347072867.csv")
+
+MNcd.clim$PCP <- MNcd.clim$PCP*25.54
+
+keeps <- c("Year", "Month",  "PCP")
+keepstavg <- c("Year", "Month", "TAVG")
+keepst <- c("Year", "Month",  "TMAX")
+keepstmin <- c("Year", "Month",  "TMIN")
+keepspdsi <- c("Year", "Month",  "PDSI")
+#create a dataset for Precip
+MNp.df <- MNcd.clim[,keeps]
+MNp.df[MNp.df == -9999]<- NA
+
+#for tmax
+MNt.df <- MNcd.clim[,keepst]
+MNt.df[MNt.df == -9999]<- NA
+
+#for tmin
+MNtmin.df<- MNcd.clim[,keepstmin]
+MNtmin.df[MNtmin.df == -9999]<- NA
+
+#for tavg
+MNtavg.df <- MNcd.clim[,keepstavg]
+MNtavg.df[MNtavg.df == -9999]<- NA
+
+MNpdsi.df<- MNcd.clim[,keepspdsi]
+MNpdsi.df[MNpdsi.df == -9999]<- NA
+#for precipitation
+
+
+total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+months <- 6:9
+MNpjja.df <- MNp.df[MNp.df$Month %in% months,]
+jja.p <- aggregate(PCP ~ Year, data = MNpjja.df, FUN = sum, na.rm = T)
+
+total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+may.p <- total.p[total.p$Month == 5, ]
+
+tavg.m <- aggregate(TAVG ~ Year + Month, data=MNtavg.df, FUN=sum, na.rm = T) 
+jun.tavg <- tavg.m[tavg.m$Month == 6,]
+
+tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
+jun.tmin <- tmin.m[tmin.m$Month == 6, ]
+
+tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+
+
+
+
+#pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
+#plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
+
+
+#precip <- dcast(total.p, Year  ~ Month)
+annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
+annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1440,], FUN = 'mean', na.rm=T)
+annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1440,], FUN = 'mean', na.rm = T)
+annual.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
+annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
+jul.pdsi <- annual.pdsi.m[annual.pdsi.m$Month == 7,] 
+
+annuals <- data.frame(Year = annual.p$Year, 
+                      PCP = annual.p$PCP,
+                      TMIN = annual.mint$TMIN,
+                      TAVG = annual.t$TAVG,
+                      PDSI = annual.pdsi$PDSI,
+                      MAY.p = may.p[1:120,]$PCP,
+                      JJA.p = jja.p[1:120,]$PCP,
+                      JUNTmin = jun.tmin[1:120,]$TMIN,
+                      JUNTavg = jun.tavg[1:120,]$TAVG, 
+                      JUNTmax = jun.tmax[1:120,]$TMAX,
+                      Jul.pdsi = jul.pdsi[1:120,]$PDSI)
+
+#merge annuals with hickory
+annuals.TOW <- merge(annuals, Townsend[c('Year', 'xxxstd', 'Site')], by = 'Year')
+molten.TOW <- melt(annuals.TOW, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
+                                       "JUNTmin","JUNTavg", "JUNTmax","Jul.pdsi"))
+########################
+##read in STC climate
+##############################
+
 MNcd.clim <- read.csv("data/CDODiv2154347072867.csv")
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54
 
@@ -315,6 +468,9 @@ jun.tavg <- tavg.m[tavg.m$Month == 6,]
 tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
 jun.tmin <- tmin.m[tmin.m$Month == 6, ]
 
+tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+
 
 
 
@@ -339,15 +495,16 @@ annuals <- data.frame(Year = annual.p$Year,
                       JJA.p = jja.p[1:120,]$PCP,
                       JUNTmin = jun.tmin[1:120,]$TMIN,
                       JUNTavg = jun.tavg[1:120,]$TAVG, 
+                      JUNTmax = jun.tmax[1:120,]$TMAX,
                       Jul.pdsi = jul.pdsi[1:120,]$PDSI)
 
-#merge annuals with hickory
-annuals.TOW <- merge(annuals, Townsend[c('Year', 'xxxstd', 'Site')], by = 'Year')
-molten.TOW <- melt(annuals.TOW, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
-                                       "JUNTmin","JUNTavg", "Jul.pdsi"))
-
-
+#merge annuals with stcroix
+annuals.STC <- merge(annuals, StCroix[c('Year', 'xxxstd', 'Site')], by = 'Year')
+molten.STC <- melt(annuals.STC, id = c('Year','Site', 'PCP', "TMIN", "TAVG","PDSI","MAY.p","JJA.p", 
+                                       "JUNTmin","JUNTavg","JUNTmax","Jul.pdsi"))
+################3
 #now merge all the molten frames together
 
-molten.full <- rbind(molten.HIC, molten.BON, molten.PLE, molten.TOW)
+molten.full <- rbind(molten.HIC, molten.BON, molten.STC, #molten.PLE,
+                     molten.TOW)
 
