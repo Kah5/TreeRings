@@ -1,7 +1,7 @@
 library(lme4)
 library(dplR)
 library(ggplot2)
-
+library(treeclim)
 
 
 #molten.full comes from climate_growth_reg_chron.R
@@ -50,6 +50,7 @@ plot.pre.post(molten.TOW, molten.TOW$JJA.p, 'Summer Precipitation (mm)', "Townse
 plot.pre.post(molten.STC, molten.STC$JJA.p, 'Summer Precipitation (mm)', "St.Croix Savanna, MN") #not significant
 plot.pre.post(molten.DES, molten.DES$JJA.p, 'Summer Precipitation (mm)', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$JJA.p, 'Summer Precipitation (mm)', "Sandwich, IL") #significant
+plot.pre.post(molten.PLP, molten.PLP$JJA.p, 'Summer Precipitation (mm)', "Pleasant Prarie, WI") #significant
 
 
 plot.pre.post(molten.HIC, molten.HIC$MAY.p, 'May Precipitation (mm)', "Hickory Grove, IL") #significant
@@ -59,6 +60,7 @@ plot.pre.post(molten.TOW, molten.TOW$MAY.p, 'May Precipitation (mm)', "Townsend 
 plot.pre.post(molten.STC, molten.STC$MAY.p, 'May Precipitation (mm)', "St.Croix Savanna, MN") #not significant
 plot.pre.post(molten.DES, molten.DES$MAY.p, 'May Precipitation (mm)', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$MAY.p, 'May Precipitation (mm)', "Sandwich, IL") #significant
+plot.pre.post(molten.PLP, molten.PLP$MAY.p, 'May Precipitation (mm)', "Pleasant Prarie, WI") #significant
 
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTmin, 'June Minimum Temperature', "Hickory Grove, IL") #significant
@@ -68,6 +70,7 @@ plot.pre.post(molten.TOW, molten.TOW$JUNTmin, 'June Minimum Temperature', "Towns
 plot.pre.post(molten.STC, molten.STC$JUNTmin, 'June Minimum Temperature', "St.Croix Savanna, MN") #not significant
 plot.pre.post(molten.DES, molten.DES$JUNTmin, 'June Minimum Temperature', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$JUNTmin, 'June Minimum Temperature', "Sandwich, IL") #significant
+plot.pre.post(molten.PLP, molten.PLP$JUNTmin, 'June Minimum Temperature', "Pleasant Prarie, WI") #significant
 
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTmax, 'June Maximum Temperature', "Hickory Grove, IL") #significant
@@ -77,6 +80,7 @@ plot.pre.post(molten.TOW, molten.TOW$JUNTmax, 'June Maximum Temperature', "Towns
 plot.pre.post(molten.STC, molten.STC$JUNTmax, 'June Maximum Temperature', "St.Croix Savanna, MN") #not significant
 plot.pre.post(molten.DES, molten.DES$JUNTmax, 'June Maximum Temperature', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$JUNTmax, 'June Maximum Temperature', "Sandwich, IL") #significant
+plot.pre.post(molten.PLP, molten.PLP$JUNTmax, 'June Maximum Temperature', "Pleasant Prarie, WI") #significant
 
 
 plot.pre.post(molten.HIC, molten.HIC$JUNTavg, 'June Average Temperature', "Hickory Grove, IL") #significant
@@ -86,6 +90,7 @@ plot.pre.post(molten.TOW, molten.TOW$JUNTavg, 'June Average Temperature', "Towns
 plot.pre.post(molten.STC, molten.STC$JUNTavg, 'June Average Temperature', "St.Croix Savanna, MN") #not significant
 plot.pre.post(molten.DES, molten.DES$JUNTavg, 'June Average Temperature', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$JUNTavg, 'June Average Temperature', "Sandwich, IL") #significant
+plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleasant Prarie, WI") #significant
 
 
 plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #not significant
@@ -95,6 +100,7 @@ plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN"
 plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
 plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
+plot.pre.post(molten.PLP, molten.PLP$Jul.pdsi, 'July PDSI', "Pleasant Prarie, WI") #significant
 
 dev.off()
 
@@ -123,6 +129,20 @@ plot.pre.post(molten.TOW, molten.TOW$PCP, "Annual Precipitaiton", "Townsend Wood
 plot.pre.post(molten.TOW, molten.TOW$TMIN, "Minimum Temperature", "Townsend Woods, MN") #not significant
 plot.pre.post(molten.TOW, molten.TOW$TAVG, "Average Temperature" ,"Townsend Woods, MN") #not significant
 dev.off()
+
+
+
+
+
+#treeclim package
+
+
+
+
+
+
+
+
 
 
 
@@ -163,7 +183,8 @@ compare.CO2(CO2, molten.HIC)
 compare.CO2(CO2, molten.TOW)
 compare.CO2(CO2, molten.PLE)
 compare.CO2(CO2, molten.STC)
-
+compare.CO2(CO2, molten.SAN)
+compare.CO2(CO2, molten.DES)
 
 
 compare.CO2.PDSI<- function(CO2, x){
