@@ -209,9 +209,9 @@ molten.DES <- merge.clim.chron(MNwc.clim, Desoix)
 molten.PLE <- merge.clim.chron(WIsc.clim, Pleasant)
 molten.TOW <- merge.clim.chron(MNse.clim, Townsend)
 
-
-#using the treeclim R pacakge to calculate moving correlations
-
+###############################################################
+#using the treeclim R pacakge to calculate moving correlations#
+###############################################################
 clim.cor<- function(climate, chron, site.name){
 
 PREC <- climate[,c('Year', 'Month', 'PCP')]
@@ -243,17 +243,17 @@ PDSI <- PDSI[1:1452,]
 pdf(paste0('outputs/correlations/PDSI_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, PDSI, dynamic = 'static', win_size = 35, win_offset = 5)
 
-print(plot(hic.pdsi.moving))
+print(plot(hic.pdsi.static))
 #g_test(hic.pdsi.moving)
 #traceplot(hic.pdsi.moving)
 #plot(skills(hic.pdsi.moving))
 
 hic.pdsi.moving <- dcc(chron, PDSI, dynamic = 'moving', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
 dev.off()
 
 #TAVG
@@ -264,17 +264,15 @@ TAVG <- TAVG[1:1452,]
 pdf(paste0('outputs/correlations/TAVG_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, TAVG, dynamic = 'static', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
+print(plot(hic.pdsi.static))
+
 
 hic.pdsi.moving <- dcc(chron, TAVG, dynamic = 'moving', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+dev.off()
 
 
 #TMAX
@@ -282,21 +280,18 @@ TMAX <- climate[,c('Year', 'Month', 'TMAX')]
 
 TMAX <- TMAX[1:1452,]
 
-
+pdf(paste0('outputs/correlations/TMAX_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, TMAX, dynamic = 'static', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
-dev.off()
-pdf(paste0('outputs/correlations/TMAX_', site.name,'dynamic.pdf'))
+print(plot(hic.pdsi.static))
+
+
 hic.pdsi.moving <- dcc(chron, TMAX, dynamic = 'moving', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
 dev.off()
 
 #TMIN
@@ -307,22 +302,28 @@ TMIN <- TMIN[1:1452,]
 pdf(paste0('outputs/correlations/TMIN_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, TMIN, dynamic = 'static', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
+print(plot(hic.pdsi.static))
+
 
 hic.pdsi.moving <- dcc(chron, TMIN, dynamic = 'moving', win_size = 35, win_offset = 5)
 
-plot(hic.pdsi.moving)
-g_test(hic.pdsi.moving)
-traceplot(hic.pdsi.moving)
-plot(skills(hic.pdsi.moving))
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
 dev.off()
-
+dev.off()
 }
 
 clim.cor(IL.clim, Hickory, 'Hickory_Grove_')
+clim.cor(IL.clim, Sandwich, 'Sandwich_')
+clim.cor(WIse.clim, PleasantPrairie, 'Pleasant_Prairie_')
+clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
+clim.cor(MNwc.clim, Desoix, 'Desoix_')
+clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
+clim.cor(MNse.clim, Townsend, 'Townsend_woods_')
+
+
 ########################
 ##read in STC climate
 ##############################
