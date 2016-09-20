@@ -42,7 +42,7 @@ Sandwich$Site <- 'Sandwich'
 
 #Dubois de Souix record--north of bonanaza
 Desoix <- read.tucson ("data/mn029.rwl")
-DES.stats <- rwi.stats(Desoix)
+DES.stats <- rwl.stats(Desoix)
 #detrend 
 Desoix.rwi <- detrend(rwl = Desoix, method = "ModNegExp")
 Desoix <- chron(Desoix.rwi)            
@@ -331,18 +331,20 @@ clim.cor(MNse.clim, StCroix, 'StCroix_savanna_')
 ###############################################################
 #looking at age related correlation trends
 ###############################################################
-df.list<- list(rwi= as.list(Hickory.rwi), age = HIC.stats$year, record = colnames(Hickory.rwi), year = rownames(Hickory.rwi))
-ages <- t(HIC.stats$year)
+#create a general function that makes two age related plots
+age.trends <- function(rwl, stats, bkpt_yr){
+df.list<- list(rwi= as.list(rwl), age = stats$year, record = colnames(rwl), year = rownames(rwl))
+ages <- t(stats$year)
 
-#repeat to have the same number as in the Hickory.rwi
-ages <- ages[rep(seq_len(nrow(ages)), each=nrow(Hickory)),]
+#repeat to have the same number as in the rwl
+ages <- ages[rep(seq_len(nrow(ages)), each=nrow(rwl)),]
 
-df.list$means <- lapply(df.list$rwi, mean, na.rm=TRUE)
-plot(df.list$age,df.list$means)
+#df.list$means <- lapply(df.list$rwi, mean, na.rm=TRUE)
+#plot(df.list$age,df.list$means)
 
 #need to calculate tree age in each year, but this isnt righ 
 
-df.list$yearssince2015 <- 2015-as.numeric(df.list$year)
+df.list$yearssince2015 <- max(stats$last)-as.numeric(df.list$year)
 
 #to find age for the for a given tree in df.list
 calcyears<- function(x){
@@ -352,19 +354,20 @@ rev(testage)
 }
 
 
-
 treeages <- apply(ages, FUN = calcyears, MARGIN = 2 )
-pre1890 <- complete.cases(treeages['1890',]) # finds columns that are NA's in 1890
-indexpre1890 <- colnames(treeages[,pre1890])
 
-colnames(treeages) <- colnames(Hickory)
-rownames(treeages) <- rownames(Hickory)
+colnames(treeages) <- colnames(rwl)
+rownames(treeages) <- rownames(rwl)
+
+pre1900 <- complete.cases(treeages[bkpt_yr,]) # finds columns that are NA's in 1890
+indexpre1900 <- colnames(treeages[,pre1900])
+
 ages.melt <- melt(treeages)
 colnames(ages.melt)<- c('year', 'variable', 'age')
-ages.melt$class <- ages.melt$variable %in% indexpre1890
+ages.melt$class <- ages.melt$variable %in% indexpre1900
 
-Hickory$year <- rownames(Hickory)
-rwi.melt <- melt(Hickory)
+rwl$year <- rownames(rwl)
+rwi.melt <- melt(rwl)
 colnames(rwi.melt) <- c('year', 'variable','rwi')
   
 df.new <- merge(rwi.melt, ages.melt, by = c('year', 'variable'))
@@ -379,14 +382,14 @@ arrows(mean.rwi.age$age, mean.rwi.age$rwi-std$rwi, mean.rwi.age$age, mean.rwi.ag
 ggplot(data = mean.rwi.age, aes(x = age, y = rwi)) + geom_point()
 
 mean.rwi.class <- aggregate(rwi ~ age + class ,df.new, mean, na.rm = TRUE )
-mean.rwi.class[mean.rwi.class$class == FALSE,]$class <- 'post1890'
-mean.rwi.class[mean.rwi.class$class == TRUE,]$class <- 'pre1890'
+mean.rwi.class[mean.rwi.class$class == FALSE,]$class <- 'post1900'
+mean.rwi.class[mean.rwi.class$class == TRUE,]$class <- 'pre1900'
 
 ggplot(data=mean.rwi.class, aes(x=age, y=rwi, colour=class)) + geom_point()
 
+}
 
-
-
+age.trends(Desoix, DES.stats, '1900')
 
 
 
