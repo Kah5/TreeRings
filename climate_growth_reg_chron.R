@@ -4,9 +4,10 @@ library(reshape2)
 #read in rwl & add site + year codes
 Hickory <- read.tucson ("./cofecha/HICww.rwl")
 plot(Hickory)
-HIC.stats <- rwi.stats(Hickory)
+HIC.stats <- rwl.stats(Hickory)
 #detrend 
 Hickory.rwi <- detrend(rwl = Hickory, method = "Spline")
+
 Hickory <- chron(Hickory.rwi)            
 plot(Hickory)
 
@@ -333,6 +334,8 @@ clim.cor(MNse.clim, StCroix, 'StCroix_savanna_')
 df.list<- list(rwi= as.list(Hickory.rwi), age = HIC.stats$year, record = colnames(Hickory.rwi), year = rownames(Hickory.rwi))
 ages <- t(HIC.stats$year)
 
+#repeat to have the same number as in the Hickory.rwi
+ages <- ages[rep(seq_len(nrow(ages)), each=nrow(Hickory)),]
 
 df.list$means <- lapply(df.list$rwi, mean, na.rm=TRUE)
 plot(df.list$age,df.list$means)
@@ -340,6 +343,7 @@ plot(df.list$age,df.list$means)
 #need to calculate tree age in each year, but this isnt righ 
 
 df.list$yearssince2015 <- 2015-as.numeric(df.list$year)
+
 #to find age for the for a given tree in df.list
 calcyears<- function(x){
 testage <- x-rev(df.list$yearssince2015)
@@ -347,8 +351,53 @@ testage[testage < 0] <- NA
 rev(testage)
 }
 
-calcyears(df.list$age[1])
-df.list$treeages<- lapply(df.list$age, calcyears)
+
+calcyears(ages[1])
+treeages <- apply(ages, FUN = calcyears, MARGIN = 2 )
+pre1890 <- complete.cases(treeages['1890',]) # finds columns that are NA's in 1890
+indexpre1890 <- colnames(treeages[,pre1890])
+
+colnames(treeages) <- colnames(Hickory)
+rownames(treeages) <- rownames(Hickory)
+ages.melt <- melt(treeages)
+colnames(ages.melt)<- c('year', 'variable', 'age')
+ages.melt$class <- ages.melt$variable %in% indexpre1890
+
+Hickory$year <- rownames(Hickory)
+rwi.melt <- melt(Hickory)
+colnames(rwi.melt) <- c('year', 'variable','rwi')
+  
+df.new <- merge(rwi.melt, ages.melt, by = c('year', 'variable'))
+
+summary(dcast(df.new, rwi~., mean,var.value = age, na.rm=TRUE))
+
+mean.rwi.age <- aggregate(rwi ~ age ,df.new, mean, na.rm = TRUE )
+plot(mean.rwi.age, ylim = c(0, 4))
+
+
+std <- aggregate(rwi ~ age, df.new, sd, na.rm = TRUE)
+
+arrows(mean.rwi.age$age, mean.rwi.age$rwi-std$rwi, mean.rwi.age$age, mean.rwi.age$rwi+std$rwi, length=0.05, angle=90, code=3)
+
+
+mean.rwi.class <- aggregate(rwi ~ age + class ,df.new, mean, na.rm = TRUE )
+mean.rwi.class[mean.rwi.class$class == FALSE,]$class <- 'post1890'
+mean.rwi.class[mean.rwi.class$class == TRUE,]$class <- 'pre1890'
+
+ggplot(data=mean.rwi.class, aes(x=age, y=rwi, colour=class)) + geom_point()
+
+
+
+
+
+
+
+
+
+
+
+
+#find age dependant trends in correlation with climate
 df.list$PCP <- IL.clim$PCP
 plot(rev(testage), df.list$rwi$HICa397)
 
