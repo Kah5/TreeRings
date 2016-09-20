@@ -352,7 +352,7 @@ rev(testage)
 }
 
 
-calcyears(ages[1])
+
 treeages <- apply(ages, FUN = calcyears, MARGIN = 2 )
 pre1890 <- complete.cases(treeages['1890',]) # finds columns that are NA's in 1890
 indexpre1890 <- colnames(treeages[,pre1890])
@@ -373,12 +373,10 @@ summary(dcast(df.new, rwi~., mean,var.value = age, na.rm=TRUE))
 
 mean.rwi.age <- aggregate(rwi ~ age ,df.new, mean, na.rm = TRUE )
 plot(mean.rwi.age, ylim = c(0, 4))
-
-
 std <- aggregate(rwi ~ age, df.new, sd, na.rm = TRUE)
-
 arrows(mean.rwi.age$age, mean.rwi.age$rwi-std$rwi, mean.rwi.age$age, mean.rwi.age$rwi+std$rwi, length=0.05, angle=90, code=3)
 
+ggplot(data = mean.rwi.age, aes(x = age, y = rwi)) + geom_point()
 
 mean.rwi.class <- aggregate(rwi ~ age + class ,df.new, mean, na.rm = TRUE )
 mean.rwi.class[mean.rwi.class$class == FALSE,]$class <- 'post1890'
