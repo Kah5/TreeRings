@@ -54,7 +54,7 @@ Desoix$Site <- 'Bois de soix'
 
 #Yellow River record--iowa
 Yellow <- read.tucson ("data/ia029.rwl")
-Yellow.stats <- rwi.stats(Yellow)
+Yellow.stats <- rwl.stats(Yellow)
 plot(chron(Yellow))
 #detrend 
 Yellow.rwi <- detrend(rwl = Yellow, method = "Spline")
@@ -389,9 +389,39 @@ ggplot(data=mean.rwi.class, aes(x=age, y=rwi, colour=class)) + geom_point()
 
 }
 
+#need to read in data again: 
+Bonanza <- read.tucson("./cofecha/BONww.rwl")
+BON.stats <- rwl.stats(Bonanza)
+#detrend
+Bonanza.rwi <- detrend(rwl = Bonanza, method = "ModNegExp")
+
+StCroix <- read.tucson('./cofecha/STCww.rwl')
+STC.stats <- rwl.stats(StCroix)
+
+PleasantPrairie <- read.tucson('data/wi006.rwl')
+PLP.stats <- rwl.stats(PleasantPrairie)
+
+Pleasant <- read.tucson('./cofecha/PLEww.rwl')
+PLE.stats <- rwl.stats(Pleasant)
+
+Sandwich <- read.tucson ("data/il002.rwl")
+SAN.stats <- rwl.stats(Sandwich)
+
+Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
+TOW.stats <- rwl.stats(Townsend)
+
+Yellow <- read.tucson ("data/ia029.rwl")
+Yellow.stats <- rwl.stats(Yellow)
+
 age.trends(Desoix, DES.stats, '1900')
-
-
+age.trends(Hickory, HIC.stats, '1900')
+age.trends(Bonanza, BON.stats, '1900')
+age.trends(StCroix, STC.stats, '1900')
+age.trends(PleasantPrairie, PLP.stats, '1830')
+age.trends(Pleasant, PLE.stats, '1830')
+age.trends(Sandwich, SAN.stats, '1850')
+age.trends(Townsend, TOW.stats, '1900')
+age.trends(Yellow, Yellow.stats, '1800')
 
 
 
