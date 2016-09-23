@@ -8,7 +8,6 @@ library(treeclim)
 
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
 
-
 # conduct f-test to see if the relationship pre-1950 is same as post 1950
 #for Hickory Grove
 yr <- 1895:1950
@@ -27,7 +26,7 @@ x[x$Year %in% yr,]$group <- 1
 
 #if the dummy variable is significant, then the two slopes are different
 print(summary( lm(value ~ Climate:group, data = x)))
-
+#print(coef(lm(value ~ Climate:group, data = x))
 
 # Extend the regression lines beyond the domain of the data
 ggplot(x, aes(x=Climate, y=value, color=class)) + geom_point(shape=1) +

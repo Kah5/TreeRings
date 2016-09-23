@@ -9,25 +9,28 @@ library(ggplot2)
 library(rgdal)
 library(ggrepel)
 
-MN.priority <- readOGR("data/Fieldwork 2016.kml", layer = "Priority")
-IL.MCCD <- readOGR('data/Fieldwork 2016.kml', layer = "McHenry")
+MN.priority <- readOGR("data/priority.kml", layer = "Priority")
+#IL.MCCD <- readOGR('data/Fieldwork 2016.kml', layer = "McHenry")
 
 MN.priority <- spTransform(MN.priority, CRSobj = CRS('+init=epsg:3175'))
 priority <- data.frame(MN.priority)
 
-priority$code <- c('', "ITA", "GLN", "MAP", "LAW", "MSC", "UNC", "BJP", "AVH", "GLK")
-IL.MCCD <- spTransform(IL.MCCD, CRSobj = CRS('+init=epsg:3175'))
-IL.MCCD <- data.frame(IL.MCCD)
-IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
-priority <- rbind(priority, IL.MCCD)
+priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+#IL.MCCD <- spTransform(IL.MCCD, CRSobj = CRS('+init=epsg:3175'))
+#IL.MCCD <- data.frame(IL.MCCD)
+#IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
+#priority <- rbind(priority, IL.MCCD)
 
 
 #for NAPC, create a map with just these tree cores:
-priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
-priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
-priority <- data.frame(priority)
-priority$Names <- c('Pleasant Valley', "Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+#priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
+#priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
+#priority <- data.frame(priority)
+#priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+#priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+#places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
 
+#priority <- priority[priority$Names %in% places, ]
 #use avg.alb from extract_PT.R
 #getting gridded climate data
 #need to clean this up
@@ -52,6 +55,7 @@ coordinates(precip.1900) <- ~V1 + V2
 gridded(precip.1900) <- TRUE
 te <- stack(precip.1900)
 
+precip.1900<- read.table("./data/precip_2014/precip.1900")
 p.1900<- rowSums(precip.1900[,3:14], na.rm = TRUE)
 p.1901<- rowSums(precip.1901[,3:14], na.rm = TRUE)
 p.1902<- rowSums(precip.1902[,3:14], na.rm = TRUE)
@@ -87,17 +91,26 @@ avg.rast <- raster(averages)
 projection(avg.rast) <- CRS("+init=epsg:4326")
 
 avg.alb <- projectRaster(avg.rast, crs='+init=epsg:3175')
-#plot(avg.alb)
+plot(avg.alb)
 
 
 #map out 
 all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin") )
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
+                                             "north dakota", 'michigan', 'missouri', 'indiana') )
 coordinates(states)<-~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 
+library(raster)
+# use state bounds from gadm website:
+us = readRDS('data/USA_adm1.rds')
+
+
+states <- c("Illinois", "Minnesota", "Wisconsin")
+us <- spTransform(us, CRS('+init=epsg:3175 +proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
+us = us[match(toupper(states),toupper(us$NAME_1)),]
 
 test<- crop(avg.alb, extent(mapdata))
 test.df <- as.data.frame(test, xy = TRUE)
@@ -109,22 +122,29 @@ mapdata<-data.frame(mapdata)
 
 sites.map <- ggplot()+ geom_raster(data=test.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
-  scale_fill_gradientn(colours = rainbow(4), name ="MAP 1900-1910 (mm) ")
-sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
+  scale_fill_gradientn(colours = rev(rainbow(12)), name ="MAP 1900-1910 (mm) ")+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                     colour = "darkgrey", fill = NA)
 
-sites.map <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
-  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
-                  fontface = 'bold', color = 'white',
-                  box.padding = unit(0.25, "lines"),
-                  point.padding = unit(1.0, "lines"))
+sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority, aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(1.5, "lines"),
+                  point.padding = unit(1.5, "lines"))
 
-pdf("outputs/NAPC_sites_2015.pdf")              
+#pdf("outputs/NAPC_sites_2015_precip.pdf")              
 sites.map
+sites.map2
+#dev.off()
 
+png('outputs/precip_map.png')
+sites.map
 dev.off()
 
-
-
+png('outputs/precip_map_sites.png')
+sites.map2
+dev.off()
 
 #now map for temperature from GHCN data
 air_temp.1900<- read.table("./data/air_temp_2014/air_temp.1900")
@@ -180,7 +200,8 @@ avg.t.alb <- projectRaster(avg.t.rast, crs='+init=epsg:3175') # change to great 
 
 #create states again
 all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin" ) )
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
+                                             "north dakota", 'michigan', 'missouri', 'indiana', 'kentucky', 'nebraska', 'arkansas','kansas' ) )
 coordinates(states)<-~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
@@ -189,19 +210,33 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 test.t<- crop(avg.t.alb, mapdata)
 test.t.df <- as.data.frame(test.t, xy = TRUE)
 
-
+mapdata <- data.frame(mapdata)
 #make the map in GGPLOT
 
 sites.t.map <- ggplot()+ geom_raster(data=test.t.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
-  scale_fill_gradientn(colours = rainbow(4), name ="Mean Temp. (DegC) ")
-sites.t.map <- sites.t.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
-sites.t.map <- sites.t.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
-  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
-                  fontface = 'bold', color = 'white',
-                  box.padding = unit(0.25, "lines"),
-                  point.padding = unit(1.0, "lines"))
+  scale_fill_gradientn(colours = rev(rainbow(5)), name ="Mean Temp. (DegC) ")+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
 
+sites.t.map <- sites.t.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
+sites.t.map2 <- sites.t.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(1.5, "lines"),
+                  point.padding = unit(1.5, "lines"))
+
+#pdf('outputs/NAPC_sites_2015_temp.pdf')
+sites.t.map
+sites.t.map2
+#dev.off()
+
+png('outputs/temp_map.png')
+sites.t.map
+dev.off()
+
+png('outputs/temp_map_sites.png')
+sites.t.map2
+dev.off()
 
 #################################################
 #now map for potential evaporation from GHCN data
@@ -277,11 +312,11 @@ sites.e.map <- ggplot()+ geom_raster(data=test.e.df, aes(x=x, y=y, fill = avg))+
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Apr-Sept \n Potential Evaporation ")
 sites.e.map <- sites.e.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
 sites.e.map <- sites.e.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
-  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'white',
                   box.padding = unit(0.25, "lines"),
                   point.padding = unit(1.0, "lines"))
-
+sites.e.map
 #################################################
 #now map for actual evaporation from GHCN data
 #################################################
@@ -356,10 +391,11 @@ sites.et.map <- ggplot()+ geom_raster(data=test.et.df, aes(x=x, y=y, fill = avg)
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Apr.-Sept.\n actual et ")
 sites.et.map <- sites.et.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
 sites.et.map <- sites.et.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
-  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'white',
                   box.padding = unit(0.25, "lines"),
                   point.padding = unit(1.0, "lines"))
+sites.et.map
 
 #now calculet precip. - potential evaporation
 PET.1900<- precip.1900[,3:14]-Eo150.1900[,3:14]
@@ -428,14 +464,14 @@ sites.pet.map <- ggplot()+ geom_raster(data=test.pet.df, aes(x=x, y=y, fill = av
   scale_fill_gradientn(colours = rainbow(4), name ="Mean Apr.-Sept.\n Precip- PET ")
 sites.pet.map <- sites.pet.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)
 sites.pet.map <- sites.pet.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
-  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=Names),
+  geom_text_repel(data = priority,aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'white',
                   box.padding = unit(0.25, "lines"),
                   point.padding = unit(1.0, "lines"))
 
+sites.pet.map
 
-
-pdf("outputs/NAPC_sites_2016.pdf")              
+pdf("outputs/DDIG_sites_2016.pdf")              
 sites.map
 sites.t.map
 sites.e.map
