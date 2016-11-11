@@ -120,9 +120,21 @@ mapdata<-data.frame(mapdata)
 
 #make the map in GGPLOT
 
+cbPalette2 <- c('#d7191c',
+  '#fdae61',
+  '#ffffbf',
+  '#abd9e9',
+  '#2c7bb6')
+
+cbPalette <- c('#a6611a',
+  '#dfc27d',
+  '#80cdc1',
+  '#018571')
+
+
 sites.map <- ggplot()+ geom_raster(data=test.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="Tree Core Sites") + 
-  scale_fill_gradientn(colours = rev(rainbow(12)), name ="MAP 1900-1910 (mm) ")+
+  scale_fill_gradientn(colours = cbPalette2, name ="MAP 1900-1910 (mm) ")+
   coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
 sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
                                      colour = "darkgrey", fill = NA)

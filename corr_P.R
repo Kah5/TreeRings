@@ -38,14 +38,15 @@ if(wood == "EW"){
 }}
 
 #change site
-site <- Desouix
-site.code <- "W-R"
+site <- Hickory
+site.code <- "HIC"
 
 ##################################################
 #################################################
 ################################################
 ################################################
 site.code.rwi <- detrend(rwl = site, method = "Spline")
+plot(site)
 #create chronology of sites
 site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
 #write chronology to text 

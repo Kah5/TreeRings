@@ -26,14 +26,25 @@ x[x$Year %in% yr,]$group <- 1
 
 #if the dummy variable is significant, then the two slopes are different
 print(summary( lm(value ~ Climate:group, data = x)))
-#print(coef(lm(value ~ Climate:group, data = x))
-
+print(summary(lm(value ~ Climate:group, data = x)))
+print(summary(aov(value~Climate*class, data=x)))
+print(summary(lm(value~Climate/group-1, data=x)))
+print(summary(aov(value~Climate/group, data = x)))
 # Extend the regression lines beyond the domain of the data
-ggplot(x, aes(x=Climate, y=value, color=class)) + geom_point(shape=1) +
-  scale_colour_hue(l=50) + # Use a slightly darker palette than normal
+
+ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
+  scale_colour_hue(l=50) +
+  #+ylim(-1.0,1.0)
+  #+xlim(-4,4)# Use a slightly darker palette than normal
   geom_smooth(method=lm,   # Add linear regression lines
               se=TRUE,    # add shaded confidence region
-              fullrange=TRUE)+# Extend regression lines
+              fullrange=FALSE)+# Extend regression lines
+  
+  scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
+  xlim(-8, 8)+
+  ylim(0.5, 1.5) +
+  theme_bw()+
+  theme(text = element_text(size = 30))+
   ylab('Detrended Ring width Index') +
   xlab( xlab ) +
   ggtitle(Site)
@@ -91,11 +102,11 @@ plot.pre.post(molten.DES, molten.DES$JUNTavg, 'June Average Temperature', "Bois 
 plot.pre.post(molten.SAN, molten.SAN$JUNTavg, 'June Average Temperature', "Sandwich, IL") #significant
 plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleasant Prarie, WI") #significant
 
-
-plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #not significant
-plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #not significant
+pdf('outputs/pdsi_pre_post_plots.pdf')
+plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
+plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
-plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
+plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #significant
 plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
 plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
 plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
