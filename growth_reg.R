@@ -2,6 +2,14 @@ library(lme4)
 library(dplR)
 library(ggplot2)
 library(treeclim)
+library(sp)  # classes for spatial data
+library(raster)  # grids, rasters
+library(rasterVis)  # raster visualisation
+library(maptools)
+library(rgeos)
+library(ggplot2)
+library(rgdal)
+library(ggrepel)
 
 
 #molten.full comes from climate_growth_reg_chron.R
@@ -143,18 +151,42 @@ dev.off()
 
 
 
+#####################################
+#plot correlations against soil type#
+#####################################
 
-#treeclim package
-
-
-
-
-
-
-
-
+#read in soil rasters from gssurgo data
+library(raster)
+ksat <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif')
+ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
 
 
+
+
+priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
+priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
+priority <- data.frame(priority)
+priority$code <- c("PVC", "STC", "TOW", "HIC", "BON")
+priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+
+
+
+priority$ksat <- extract(ksat.alb, priority[,c("coords.x1", "coords.x2")])
+
+
+BON.pdsi <- read.csv("BON-WWPDSIcor.csv")
+HIC.pdsi <- read.csv("HIC-WWPDSIcor.csv")
+STC.pdsi <- read.csv("STC-WWPDSIcor.csv")
+TOW.pdsi <- read.csv("TOW-WWPDSIcor.csv")
+PLE.pdsi <- read.csv("PLE-WWPDSIcor.csv")
+
+priority$pdsiJul <- 0
+priority[priority$code %in% "BON", ]$pdsiJul <- BON.pdsi[19,2]
+priority[priority$code %in% "HIC", ]$pdsiJul <- HIC.pdsi[19,2]
+priority[priority$code %in% "STC", ]$pdsiJul <- STC.pdsi[19,2]
+priority[priority$code %in% "TOW", ]$pdsiJul <- TOW.pdsi[19,2]
+priority[priority$code %in% "PVC", ]$pdsiJul <- PLE.pdsi[19,2]
 
 #dataset from http://scrippsco2.ucsd.edu/data/atmospheric_co2
 #CO2 <- read.csv('data/merged_ice_core_yearly.csv')
