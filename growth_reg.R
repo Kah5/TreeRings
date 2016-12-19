@@ -153,14 +153,15 @@ dev.off()
 
 #####################################
 #plot correlations against soil type#
-#####################################
+#####################################'
 
 #read in soil rasters from gssurgo data
 library(raster)
 ksat <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif')
 ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
 
-
+awc <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif')
+awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
 
 
 priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
@@ -173,7 +174,7 @@ places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prai
 
 
 priority$ksat <- extract(ksat.alb, priority[,c("coords.x1", "coords.x2")])
-
+priority$awc <- extract(awc.alb, priority[,c("coords.x1", "coords.x2")])
 
 BON.pdsi <- read.csv("BON-WWPDSIcor.csv")
 HIC.pdsi <- read.csv("HIC-WWPDSIcor.csv")
@@ -187,6 +188,10 @@ priority[priority$code %in% "HIC", ]$pdsiJul <- HIC.pdsi[19,2]
 priority[priority$code %in% "STC", ]$pdsiJul <- STC.pdsi[19,2]
 priority[priority$code %in% "TOW", ]$pdsiJul <- TOW.pdsi[19,2]
 priority[priority$code %in% "PVC", ]$pdsiJul <- PLE.pdsi[19,2]
+
+plot(priority$ksat, priority$pdsiJul)
+plot(priority$awc, priority$pdsiJul)
+
 
 #dataset from http://scrippsco2.ucsd.edu/data/atmospheric_co2
 #CO2 <- read.csv('data/merged_ice_core_yearly.csv')

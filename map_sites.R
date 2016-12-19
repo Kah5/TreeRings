@@ -23,12 +23,49 @@ priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC"
 
 
 #for NAPC, create a map with just these tree cores:
-#priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
-#priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
-#priority <- data.frame(priority)
+priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
+priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
+priority <- data.frame(priority)
 #priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
-#priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
-#places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+
+#map against soils data
+library(raster)
+ksat <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif')
+ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
+
+awc <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif')
+awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
+#map out 
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
+                                             "north dakota", 'michigan', 'missouri', 'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata<-data.frame(mapdata)
+
+#make the map in GGPLOT
+
+cbPalette2 <- c('#d7191c',
+                '#fdae61',
+                '#ffffbf',
+                '#abd9e9',
+                '#2c7bb6')
+
+cbPalette <- c('#a6611a',
+               '#dfc27d',
+               '#80cdc1',
+               '#018571')
+
+#plot the points over soils data
+
+plot(awc.alb)
+plot(priority$coords.x1, priority$coords.x2, add = TRUE)
+plot(ksat.alb)
+plot(priority$coords.x1, prirority$coords.x2, add = TRUE)
 
 #priority <- priority[priority$Names %in% places, ]
 #use avg.alb from extract_PT.R
