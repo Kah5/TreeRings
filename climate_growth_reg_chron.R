@@ -4,292 +4,56 @@ library(reshape2)
 library(ggplot2)
 library(treeclim)
 
+
 #read in rwl & add site + year codes
+#read in records from my collections:
+Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
 Hickory <- read.tucson ("./cofecha/HICww.rwl")
-HIC.df <- data.frame(Hickory.rwi)
-HIC.df$yr <- row.names(HIC.df)
-
-#average cores between individuals
-individual<-substring(colnames(Hickory), first = 5, last = 7)
-avg.ind <- data.frame(sapply(paste0(unique(individual),'$'), function(x) rowMeans(Hickory.rwi[grep(x, names(Hickory))])))
-colnames(avg.ind) <- paste0('HIC',unique(individual))
-avg.ind$yr <- row.names(Hickory)
-em <- melt(avg.ind, id = "yr")
-
-X11(width = 12)
-ggplot(data = em, aes(x = yr, y = value, group = variable, colour = variable))+ geom_line()
-
-#reorder the rwi with mislabeling
-num<- substring(colnames(Townsend), first = 4, last = 4)
-cnum <- substring(colnames(Townsend), first = 5, last = 5)
-colnames(Townsend) <- paste0('TOW',  cnum, num, '11')
+Bonanza <- read.tucson("./cofecha/BONww.rwl")
+Pleasant <- read.tucson('./cofecha/PLEww.rwl')
+Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
+StCroix <- read.tucson('./cofecha/STCww.rwl')
+Coral <- read.tucson('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl')
+Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
+Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
 
 
-#create general function to average cores from the same tree
-#can average raw data or rwis using this function, but should probably use raw
-avg.individuals <- function (rw, code) {
-x.df <- data.frame(rw)
-x.df$yr <- row.names(x.df)
-
-#average cores between individuals
-individual<-substring(colnames(x.df), first = 5, last = 7)
-avg.ind <- data.frame(sapply(paste0(unique(individual),'$'), function(x) rowMeans(x.df[grep(x, names(rw))])))
-colnames(avg.ind) <- paste0(code,unique(individual))
-avg.ind$yr <- as.numeric(as.character(row.names(rw)))
-
-em <- melt(avg.ind, id = "yr")
-ggplot(data = em, aes(x = yr, y = value, group = variable, colour = variable))+ geom_line()
-
-}
-avg.individuals(Hickory, 'HIC')
-avg.individuals(Bonanza, 'BON')
-avg.individuals(Pleasant, 'PLE')
-avg.individuals(StCroix, 'STC')
-avg.individuals(Yellow, 'Yel')
-avg.individuals(Townsend, 'TOW')
-
-pdf('outputs/spagplots/HIC.pdf')
-plot(Hickory, plot.type = 'spag')
-dev.off()
-Hickory.bai <- chron(bai.out(Hickory))
-HIC.stats <- rwl.stats(Hickory)
-#detrend 
-Hickory.rwi <- detrend(rwl = Hickory, method = "ModNegExp")
-
-Hickory <- chron(Hickory.rwi)            
-plot(Hickory.rwi)
-
-yrs <- as.numeric(rownames(Hickory))
-dat <- Hickory[,1]
-
-#playing around with wavelet and red noise
-out.wave <- morlet(y1 = dat, x1 = yrs, p2 = 8, dj = 0.1,
-                     siglvl = 0.99)
-wavelet.plot(out.wave, useRaster=NA)
-
-
-redf.dat <- redfit(dat, nsim = 1000)
-par(tcl = 0.5, mar = rep(2.2, 4), mgp = c(1.1, 0.1, 0))
-plot(redf.dat[["freq"]], redf.dat[["gxxc"]],
-       ylim = range(redf.dat[["ci99"]], redf.dat[["gxxc"]]),
-       type = "n", ylab = "Spectrum (dB)", xlab = "Frequency (1/yr)",
-       axes = FALSE)
-grid()
-lines(redf.dat[["freq"]], redf.dat[["gxxc"]], col = "#1B9E77")
-lines(redf.dat[["freq"]], redf.dat[["ci99"]], col = "#D95F02")
-lines(redf.dat[["freq"]], redf.dat[["ci95"]], col = "#7570B3")
-lines(redf.dat[["freq"]], redf.dat[["ci90"]], col = "#E7298A")
-freqs <- pretty(redf.dat[["freq"]])
-pers <- round(1 / freqs, 2)
-axis(1, at = freqs, labels = TRUE)
-axis(3, at = freqs, labels = pers)
-mtext(text = "Period (yr)", side = 3, line = 1.1)
-axis(2); axis(4)
-legend("topright", c("dat", "CI99", "CI95", "CI90"), lwd = 2,
-         col = c("#1B9E77", "#D95F02", "#7570B3", "#E7298A"),
-         bg = "white")
-box()
-par(op)
-
-par(mar=rep(2.5,4),mgp=c(1.2,0.25,0),tcl=0.5,
-    xaxs="i",yaxs="i")
-plot(yrs,dat,type="n",xlab="Year",ylab="RWI",axes=FALSE)
-grid(col="black",lwd=0.5)
-abline(h=1)
-lines(yrs,dat,col="grey",lwd=1)
-
-my.cols <- c("#A6611A","#DFC27D","#80CDC1","#018571")
-lines(yrs,ffcsaps(dat,nyrs=256),col=my.cols[1],lwd=3)
-lines(yrs,ffcsaps(dat,nyrs=128),col=my.cols[2],lwd=2)
-lines(yrs,ffcsaps(dat,nyrs=64),col=my.cols[3],lwd=2)
-lines(yrs,ffcsaps(dat,nyrs=32),col=my.cols[4],lwd=2)
-legend("topright", c("dat", "256yrs", "128yrs", "64yrs", "32yrs"),
-         lwd = 2, col = c("grey",my.cols),bg = "white")
-axis(1);axis(2);axis(3);axis(4)
-box()
-par(op)
-
-
-
-Hickory.bai$Year <- 1850:2015
-Hickory.bai$Site <- 'Hickory Grove'
-
-Hickory$Year <- 1850:2015
-Hickory$Site <- 'Hickory Grove'
-
-#Pleasant prairie site from IRTDB--not to be confused with KH collected from pleasant valley conservancy
-PleasantPrairie <- read.tucson('data/wi006.rwl')
-
-
-pdf('outputs/spagplots/PleasantPrairie.pdf')
-plot(PleasantPrairie, plot.type = 'spag')
-dev.off()
-PLP.stats <- rwl.stats(PleasantPrairie)
-PP.bai <- chron(bai.out(PleasantPrairie))
-plot(chron(PleasantPrairie))
-#detrend 
-PleasantPrairie.rwi <- detrend(rwl = PleasantPrairie, method = "Spline")
-PleasantPrairie <- chron(PleasantPrairie.rwi)            
-plot(PleasantPrairie)
-
-PP.bai$Year <- 1807:2000
-PP.bai$Site <- 'Pleasant Prairie, WI'
-PleasantPrairie$Year <- 1807:2000
-PleasantPrairie$Site <- 'Pleasant Prairie, WI'
-
+#and some records from ITRDB:
+PleasantPrairie <- read.tucson('data/wi006.rwl')#Pleasant prairie site from IRTDB--not to be confused with KH collected from pleasant valley conservancy
 #Sandwich--south of Hickory grove *ed cook record from 1980's
 #note there are two records--one for Quercus macrocarpa (il002) and one for Quercus alba (il001)
 #here we use il002
 Sandwich <- read.tucson ("data/il002.rwl")
-pdf('outputs/spagplots/Sandwich.pdf')
-plot(Sandwich, plot.type = 'spag')
-dev.off()
-Sandwich.bai <- chron(bai.out(Sandwich))
-SAN.stats <- rwl.stats(Sandwich)
-#detrend 
-Sandwich.rwi <- detrend(rwl = Sandwich, method = "ModNegExp")
-Sandwich <- chron(Sandwich.rwi)            
+Desoix <- read.tucson ("data/mn029.rwl") #Dubois de Souix record--north of bonanaza
+Yellow <- read.tucson ("data/ia029.rwl") #itrdb
 
-Sandwich.bai$Year <- 1752:1980
-Sandwich.bai$Site <- 'Sandwich'
-Sandwich$Year <- 1752:1980
-Sandwich$Site <- 'Sandwich'
-
-
-#Dubois de Souix record--north of bonanaza
-Desoix <- read.tucson ("data/mn029.rwl")
-Desoix <- chron(bai.out(Desoix))
-DES.stats <- rwl.stats(Desoix)
-#detrend 
-Desoix.rwi <- detrend(rwl = Desoix, method = "ModNegExp")
-Desoix <- chron(Desoix.rwi)            
-
-Desoix.bai$Year <- 1877:2010
-Desoix.bai$Site <- 'Bois de soix'
-
-Desoix$Year <- 1877:2010
-Desoix$Site <- 'Bois de soix'
-
-
-#Yellow River record--iowa
-Yellow <- read.tucson ("data/ia029.rwl")
-Yellow.stats <- rwl.stats(Yellow)
-plot(chron(Yellow))
-#detrend 
-Yellow.rwi <- detrend(rwl = Yellow, method = "Spline")
-Yellow <- chron(Yellow.rwi)            
-plot(Yellow)
-
-Yellow.bai <- chron(bai.out(Yellow.rwi))
-Yellow.bai$Year <- 1650:1980
-Yellow.bai$Site <- 'Yellow River, IA'
-
-Yellow$Year <- 1650:1980
-Yellow$Site <- 'Yellow River, IA'
-
-
-
-Bonanza <- read.tucson("./cofecha/BONww.rwl")
-pdf('outputs/spagplots/Bonanza.pdf')
-plot(Bonanza, plot.type = 'spag')
-dev.off()
-BON.stats <- rwi.stats(Bonanza)
-#detrend
-Bonanza.rwi <- detrend(rwl = Bonanza, method = "ModNegExp")
-Bonanza <- chron(Bonanza.rwi)
-Bonanza.bai <- chron(bai.out(Bonanza.rwi))
-Bonanza.bai$Year <- 1818:2015
-Bonanza.bai$Site <- "Bonanza Prairie"
-Bonanza$Year <- 1818:2015
-Bonanza$Site <- "Bonanza Prairie"
-
-#record from glacial park, il
-Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
 read_detrend_rwl <- function(rwl, name){
-pdf(paste0('outputs/spagplots/',name,'.pdf'))
-plot(rwl, plot.type = 'spag')
-dev.off()
-stats <- rwi.stats(rwl)
-#detrend
-rwl.rwi <- detrend(rwl = rwl, method = "ModNegExp")
-rwl <- chron(rwl.rwi)
-#rwl.bai <- chron(bai.out(rwl.rwi))
-#rwl.bai$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
-#rwl.bai$Site <- name
-rwl$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
-rwl$Site <- name
-rwl
+  pdf(paste0('outputs/spagplots/',name,'.pdf'))
+  plot(rwl, plot.type = 'spag')
+  dev.off()
+  stats <- rwi.stats(rwl)
+  #detrend
+  rwl.rwi <- detrend(rwl = rwl, method = "ModNegExp")
+  rwl <- chron(rwl.rwi)
+  #rwl.bai <- chron(bai.out(rwl.rwi))
+  #rwl.bai$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
+  #rwl.bai$Site <- name
+  rwl$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
+  rwl$Site <- name
+  rwl
 }
 
 
-Glacial.crn<- read_detrend_rwl(Glacial, "Glacial")
+Glacial <- read_detrend_rwl(Glacial, "Glacial")
+Hickory <- read_detrend_rwl(Hickory, "Hickory")
+Bonanza <- read_detrend_rwl(Bonanza, "Bonanza")
+Pleasant <- read_detrend_rwl(Pleasant, "Pleasant")
+Townsend <- read_detrend_rwl(Townsend, "Townsend")
+StCroix <- read_detrend_rwl(StCroix, "StCroix")
+Coral <- read_detrend_rwl(Coral, "Coral")
+Uncas <- read_detrend_rwl(Uncas, "Uncas")
+Englund <- read_detrend_rwl(Englund, "Englund")
 
-
-Pleasant <- read.tucson('./cofecha/PLEww.rwl')
-pdf('outputs/spagplots/PleasantValley.pdf')
-plot(Pleasant, plot.type = 'spag')
-dev.off()
-PLE.stats <- rwi.stats(Pleasant)
-#detrend
-Pleasant.rwi <- detrend(rwl = Pleasant, method = "ModNegExp")
-Pleasant <- chron (Pleasant.rwi)
-
-#sample figures for NAPC conference
-pdf('outputs/chron_NAPC_fig.pdf')
-plot(Pleasant$Year, Pleasant$xxxstd, type = 'l', col = 'black', xlab = 'Year',ylab = "Detrended Ring Width Index", cex = 5)
-abline(a= 1, b = 0)
-
-plot(Pleasant$Year, Pleasant$xxxstd, type = 'l', col = 'black', xlab = 'Year',ylab = "Detrended Ring Width Index", cex = 5)
-abline(a= 1, b = 0)
-rect(1895,0, 1950,3, col = rgb(0.3,0.5,0.5,1/4))
-rect(1950,0, 2014,3, col = rgb(0.9,0.1,0.1,1/4))
-dev.off()
-Pleasant.bai <- chron(bai.out(Pleasant.rwi))
-Pleasant.bai$Year <- 1768:2015
-Pleasant.bai$Site <- "Pleasant Valley Conservancy"
-Pleasant$Year <- 1768:2015
-Pleasant$Site <- "Pleasant Valley Conservancy"
-
-
-Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
-pdf('outputs/spagplots/Townsend.pdf')
-plot(Townsend, plot.type = 'spag')
-dev.off()
-TOW.stats <- rwi.stats(Townsend)
-TOW.meta <- read.csv('data/TOW_metadata.csv')
-
-tellervo.names <- data.frame(colnames(Townsend))
-
-tellervo.names$meta <- strtrim(tellervo.names$colnames.Townsend., 4)
-colnames(tellervo.names) <- c('Tellervo_full', 'Tellervo')
-dbh.tow <-merge(tellervo.names, TOW.meta[,c('Tellervo', 'DBH..cm.')], by = 'Tellervo')
-dbh.tow <- dbh.tow[,2:3]
-colnames(dbh.tow) <- c('ID', "DBH")
-
-Townsend.bai <- chron(bai.out(Townsend.rwi))
-#detrend
-Townsend.rwi <- detrend(rwl = Townsend, method = "ModNegExp")
-Townsend <- chron(Townsend.rwi)
-
-Townsend.bai$Year <- 1880: 2015
-Townsend.bai$Site <- 'Townsend Woods'
-Townsend$Year <- 1880: 2015
-Townsend$Site <- 'Townsend Woods'
-
-StCroix <- read.tucson('./cofecha/STCww.rwl')
-pdf('outputs/spagplots/StCroix.pdf')
-plot(StCroix, plot.type = 'spag')
-dev.off()
-STC.stats <- rwi.stats(StCroix)
-#detrend
-STC.rwi <- detrend(rwl = StCroix, method = "ModNegExp")
-StCroix <- chron(STC.rwi)
-StCroix.bai <- chron(bai.out(STC.rwi))
-StCroix.bai$Year <- 1879: 2015
-StCroix.bai$Site <- 'St. Croix Savanna'
-
-StCroix$Year <- 1879: 2015
-StCroix$Site <- 'St. Croix Savanna'
 
 
 #############################################
@@ -300,36 +64,23 @@ StCroix$Site <- 'St. Croix Savanna'
 Bonanza$type <- 'Savanna'
 Hickory$type <- 'Savanna'
 StCroix$type <- 'Savanna'
-Sandwich$type <- 'Forest'
+#Sandwich$type <- 'Forest'
 Pleasant$type <- 'Savanna'
-PleasantPrairie$type <- 'Savanna'
+#PleasantPrairie$type <- 'Savanna'
 Townsend$type <- 'Forest'
+Glacial$type <- "Savanna"
+Coral$type <- "Forest"
+Uncas$type <- "Savanna"
+Englund$type <- "Forest"
 
 
 
 
-crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, PleasantPrairie, Townsend, Sandwich)
+crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, #PleasantPrairie, 
+              Townsend, Glacial, Coral, Uncas, Englund)
 X11(width = 14)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
-
-
-
-Bonanza.bai$type <- 'Savanna'
-Hickory.bai$type <- 'Savanna'
-StCroix.bai$type <- 'Savanna'
-Sandwich.bai$type <- 'Forest'
-Pleasant.bai$type <- 'Savanna'
-PP.bai$type <- 'Savanna'
-Townsend.bai$type <- 'Forest'
-
-
-
-
-bais <- rbind(Bonanza.bai, Hickory.bai, StCroix.bai, Pleasant.bai, Townsend.bai, Sandwich.bai,PP.bai)
-X11(width = 14)
-ggplot(bais, aes(x = Year,y=xxxstd, colour = Site)) + geom_point() + geom_smooth() +xlim(1900,2020)
-
-
+ggplot(crns, aes(x = Year,y=xxxstd, colour = type)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 
 
 
@@ -338,8 +89,8 @@ IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Gl
 WIse.clim <- read.csv("data/south_east_wi_climdiv.csv") #pleasant prairie 
 MNwc.clim <- read.csv("data/West_central_MN_nclimdiv.csv") #Bonanza praire, Duboix
 WIsc.clim <- read.csv("data/south_central_WI_climdiv.csv") #pleasant valley conservancy
-MNse.clim <- read.csv("data/CDODiv2154347072867.csv") #townsend woods 
-MNse.clim <- read.csv("data/CDODiv2154347072867.csv") #St. Croix savanna
+MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #townsend woods 
+MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #St. Croix savanna
 
 #this function merges relevant climate parameters with the rwi site chronologies
 merge.clim.chron <- function(MNcd.clim, chron){
@@ -423,13 +174,17 @@ melt(annuals.crn, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","J
 
 #create molten dataframes with climate and rwi chronologies
 molten.HIC <- merge.clim.chron(IL.clim, Hickory)
+molten.COR <- merge.clim.chron(IL.clim, Coral)
+molten.GLA <- merge.clim.chron(IL.clim, Glacial)
 molten.SAN <- merge.clim.chron(IL.clim, Sandwich)
 molten.PLP <- merge.clim.chron(WIse.clim, PleasantPrairie)
 molten.BON <- merge.clim.chron(MNwc.clim, Bonanza)
 molten.DES <- merge.clim.chron(MNwc.clim, Desoix)
 molten.PLE <- merge.clim.chron(WIsc.clim, Pleasant)
-molten.TOW <- merge.clim.chron(MNse.clim, Townsend)
-molten.STC <- merge.clim.chron(MNse.clim, StCroix)
+molten.TOW <- merge.clim.chron(MNec.clim, Townsend)
+molten.STC <- merge.clim.chron(MNec.clim, StCroix)
+molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
+molten.ENG <- merge.clim.chron(MNec.clim, Englund)
 
 ###############################################################
 #using the treeclim R pacakge to calculate moving correlations#
@@ -758,5 +513,5 @@ plot(df.list$annualclim$TMIN, df.list$rwi$HIC397)
 
 #want to plot all 
 molten.full <- rbind(molten.HIC, molten.BON, molten.STC, #molten.PLE,
-                     molten.TOW)
+                     molten.TOW, molten.ENG, molten.UNC, molten.COR, molten.GLA)
 

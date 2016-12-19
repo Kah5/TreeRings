@@ -1,4 +1,5 @@
-#Correlating ring widths to precip in Illinois
+#Correlating ring widths to climate factors across sites
+# Author: Kelly Heilman
 rm(list=ls())
 
 library(dplR)
@@ -26,7 +27,6 @@ if(wood == "EW"){
   Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
   Hickory <- read.tucson ("./cofecha/HICww.rwl", header = FALSE)
   PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
-  #Glacial <- read.tucson("./cofecha/GLA.rwl", header =F)
   StCroix <- read.tucson("./cofecha/STCww.rwl") #saint croix savanna, MN
   Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
   #Pulaski <- read.tucson("./in001.rwl", header = TRUE)
@@ -34,12 +34,16 @@ if(wood == "EW"){
   YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
   Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = TRUE) #Pleasant valley conservency
   Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza
-  
-}}
+  Coral <- read.tucson('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl')
+  Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
+  Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
+  Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
+  }}
 
-#change site
-site <- Hickory
-site.code <- "HIC"
+#change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
+site <- Englund
+site.code <- "ENG"
+
 
 ##################################################
 #################################################
@@ -67,41 +71,28 @@ write.csv(monthlys, paste0(site.code, "monthly-crn.csv"))
 
 
 
-#now looking at the runoff rank for the state of indiana:
-#runoff <- read.csv("IL_runoff_rank.txt")
-#cfs <- read.table("Algonquin_ILmonthly.txt", header = T)
-#yrs <- 1901:2015
-#runoff.cor <- cor(runoff$runoff_mmd, site.code.crn[site.code.crn$Year %in% yrs,1])
-#pct.cor <- cor(runoff$percentile, site.code.crn[site.code.crn$Year %in% yrs,1])
-
-#cfs.yr <- aggregate(mean_va ~ year_nu + month_nu, data = cfs, FUN = sum)
-
-#create monthly column for all 
-#cfs.mo <- dcast(cfs.yr, year_nu ~ month_nu)
-
-#yrs.2 <- 1915: 2009 # years over which we have cfs streamflow data
-#cfs.cor <- cor(cfs.mo[,2:13], site.code.crn[site.code.crn$Year %in% yrs.2,1], use = "pairwise.complete")
-
-#barplot(t(cfs.cor))
-
-#write.csv(cfs.cor, paste0(site.code, "-", wood, "cfs.cor.csv"))
-
-
 
 ##############################################################################################
 #now using climate division data from the respective climate division for each tree ring site#
 ##############################################################################################
+# need to add climate for additional sites as needed*******
 
 if(site.code == "BON"){
 MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 } else{ if(site.code == "HIC" ){
   MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+} else{ if(site.code == "GLA" ){
+  MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+} else{ if(site.code == "COR" ){
+    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
 } else{ if(site.code == "W-R" ){
   MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 } else{ if(site.code == 'SAW'){
   MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
 }else{ if(site.code == "STC"){
-  MNcd.clim <- read.csv("STC_climate_CDODiv2087457050855.csv")
+  MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+}else{ if(site.code == "ENG"){
+  MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 }else { if(site.code == 'PLE'){
   MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
 }else { if(site.code == 'YRF'){
@@ -113,7 +104,9 @@ MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 }
 }
 }
-
+}
+}
+}
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54 # convert to mm
 
 keeps <- c("Year", "Month",  "PCP")
