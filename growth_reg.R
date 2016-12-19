@@ -225,6 +225,7 @@ ggplot(CO2.m, aes(x=ppm, y=value)) + geom_point(shape=1) +
   ggtitle('CO2 vs growth')
 }
 
+pdf('outputs/CO2_growth_splines.pdf')
 compare.CO2(CO2, molten.BON)
 compare.CO2(CO2, molten.HIC)
 compare.CO2(CO2, molten.TOW)
@@ -232,6 +233,7 @@ compare.CO2(CO2, molten.PLE)
 compare.CO2(CO2, molten.STC)
 compare.CO2(CO2, molten.SAN)
 compare.CO2(CO2, molten.DES)
+dev.off()
 
 
 compare.CO2.PDSI<- function(CO2, x){
