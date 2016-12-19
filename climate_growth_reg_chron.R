@@ -203,6 +203,27 @@ Bonanza.bai$Site <- "Bonanza Prairie"
 Bonanza$Year <- 1818:2015
 Bonanza$Site <- "Bonanza Prairie"
 
+#record from glacial park, il
+Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
+read_detrend_rwl <- function(rwl, name){
+pdf(paste0('outputs/spagplots/',name,'.pdf'))
+plot(rwl, plot.type = 'spag')
+dev.off()
+stats <- rwi.stats(rwl)
+#detrend
+rwl.rwi <- detrend(rwl = rwl, method = "ModNegExp")
+rwl <- chron(rwl.rwi)
+#rwl.bai <- chron(bai.out(rwl.rwi))
+#rwl.bai$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
+#rwl.bai$Site <- name
+rwl$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
+rwl$Site <- name
+rwl
+}
+
+
+Glacial.crn<- read_detrend_rwl(Glacial, "Glacial")
+
 
 Pleasant <- read.tucson('./cofecha/PLEww.rwl')
 pdf('outputs/spagplots/PleasantValley.pdf')
