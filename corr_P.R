@@ -92,12 +92,18 @@ MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 }else{ if(site.code == "STC"){
   MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 }else{ if(site.code == "ENG"){
+  MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
+}else{ if(site.code == "TOW"){
+  MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
+}else{ if(site.code == "UNC"){
   MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 }else { if(site.code == 'PLE'){
   MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
 }else { if(site.code == 'YRF'){
   MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
   #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
+}
+}
 }
 }
 }
@@ -147,6 +153,7 @@ precip <- dcast(total.p, Year  ~ Month)
 annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
 annual.t <- aggregate(TAVG ~ Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm=T)
 annual.mint <- aggregate(TMIN ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
+write.csv(annual.p, paste0(site.code, '-annualP.csv'))
 
 par(mfrow=c(2,1))
 plot(annual.p, type = "l")
@@ -306,7 +313,6 @@ site.code.PDSIprev <- cor(pdsi.MN[1:120,2:13], pdsi.MN[2:121,14], use = "pairwis
 
 pdsis <- rbind(site.code.PDSIprev,site.code.PDSIcors)
 write.csv(pdsis, paste0(site.code, "-", wood, "PDSIcor.csv"))
-
 
 #plot the correlations by month 
 PDSI.b<- barplot(t(site.code.PDSIcors),ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with PDSI"))

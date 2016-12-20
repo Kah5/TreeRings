@@ -11,9 +11,10 @@ library(ggplot2)
 library(rgdal)
 library(ggrepel)
 library(reshape2)
+library(RColorBrewer)
 
-#read in growth crns and correlations
-site.code <- "COR"
+#read in growth crns and make individual barplot correlations for each site
+
 cor.barplot <- function(site.code){
 tavg <- read.csv(paste0(site.code, '-WWtavgcor.csv'))
 tmin <- read.csv(paste0(site.code, '-WWtmincor.csv'))
@@ -38,9 +39,10 @@ cors.melt$months <- factor(cors.melt$months, levels=full$months)
 cors.melt[order(cors.melt$months),]
 output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
   geom_bar(stat = 'identity', position = position_dodge()) + 
-  facet_grid(variable~., scales = "free_y")+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))
+  facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))
 output
 }
+pdf("outputs/site_barplots.pdf")
 cor.barplot("COR")
 cor.barplot('STC')
 cor.barplot('BON')
@@ -49,6 +51,68 @@ cor.barplot('TOW')
 cor.barplot('GLA')
 cor.barplot('ENG')
 cor.barplot('UNC')
+dev.off()
+
+#now make a barplot for each climate factors with the sites on it using the sites.barplot funciton
+
+#This is a set up tocolor code sites by their total mean annual precip
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON")
+precip <- matrix(NA ,nrow = length(sites), ncol = 2)
+for (i in 1:length(sites)){
+  precip[i,1] <- sites[i]
+  a <- read.csv(paste0(sites[i], "-annualP.csv"))
+  precip[i,2] <- mean(a$PCP)
+}
+precip <- precip[order(as.numeric(precip[,2])),]
+site.order <- rev(precip[,1])
+
+sites.barplot <- function(clim) {
+COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
+HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
+GLA <- read.csv(paste0('GLA-WW', clim, 'cor.csv'))
+STC <- read.csv(paste0('STC-WW', clim, 'cor.csv'))
+TOW <- read.csv(paste0('TOW-WW', clim, 'cor.csv'))
+ENG <- read.csv(paste0('ENG-WW', clim, 'cor.csv'))
+UNC <- read.csv(paste0('UNC-WW', clim, 'cor.csv'))
+BON <- read.csv(paste0('BON-WW', clim, 'cor.csv'))
+months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+            "pAug", "pSep", "pOct", "pNov", "pDec",
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+            "Aug", "Sep", "Oct", "Nov", "Dec")
+
+COR$months <- months
+colnames(COR) <- c('mono', 'COR', 'months')
+full <- COR
+full$HIC <- HIC$V1
+full$GLA <- GLA$V1
+full$STC <- STC$V1
+full$TOW <- TOW$V1
+full$ENG <- ENG$V1
+full$UNC <- UNC$V1
+full$BON <- BON$V1
+
+
+half <- full[13:24,]
+
+cors.melt <- melt(half, id.vars = c('months', 'mono'))
+cors.melt$months <- factor(cors.melt$months, levels=full$months)
+cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
+cors.melt[order(cors.melt$months),]
+output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
+  geom_bar(stat = 'identity', position = position_dodge(width = 0.6)) + 
+  #facet_grid(variable~.)+
+  scale_fill_manual(values = rev(brewer.pal(n=8, "RdBu")))+
+  theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
+output
+}
+sites.barplot('tavg')
+sites.barplot('tmax')
+sites.barplot('tmin')
+sites.barplot('Precip')
+sites.barplot('PDSI')
+
+
+
 #molten.full comes from climate_growth_reg_chron.R
 plot.cor.clim <- function(x, Climate, xlab, Site){
   yr <- 1895:1950
