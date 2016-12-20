@@ -10,9 +10,77 @@ library(rgeos)
 library(ggplot2)
 library(rgdal)
 library(ggrepel)
+library(reshape2)
 
+#read in growth crns and correlations
+site.code <- "COR"
+cor.barplot <- function(site.code){
+tavg <- read.csv(paste0(site.code, '-WWtavgcor.csv'))
+tmin <- read.csv(paste0(site.code, '-WWtmincor.csv'))
+tmax <- read.csv(paste0(site.code, '-WWtmaxcor.csv'))
+precip <- read.csv(paste0(site.code, '-WWPrecipcor.csv'))
+PDSI <- read.csv(paste0(site.code, '-WWPDSIcor.csv'))
 
+months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+            "pAug", "pSep", "pOct", "pNov", "pDec",
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+            "Aug", "Sep", "Oct", "Nov", "Dec")
+
+tavg$months <- months
+colnames(tavg) <- c('mono', 'tavg', 'months')
+full <- tavg
+full$tmin <- tmin$V1
+full$tmax <- tmax$V1
+full$precip <- precip$V1
+full$PDSI <- PDSI$V1
+cors.melt <- melt(full, id.vars = c('months', 'mono'))
+cors.melt$months <- factor(cors.melt$months, levels=full$months)
+cors.melt[order(cors.melt$months),]
+output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
+  geom_bar(stat = 'identity', position = position_dodge()) + 
+  facet_grid(variable~., scales = "free_y")+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))
+output
+}
+cor.barplot("COR")
+cor.barplot('STC')
+cor.barplot('BON')
+cor.barplot('HIC')
+cor.barplot('TOW')
+cor.barplot('GLA')
+cor.barplot('ENG')
+cor.barplot('UNC')
 #molten.full comes from climate_growth_reg_chron.R
+plot.cor.clim <- function(x, Climate, xlab, Site){
+  yr <- 1895:1950
+  x$class <- '9999'
+  x[x$Year %in% yr,]$class <- 'clim_record'
+  
+
+  #if the dummy variable is significant, then the two slopes are different
+  print(summary( cor( Climate, x$value)))
+  
+  # Extend the regression lines beyond the domain of the data
+  
+  ggplot(x, aes(x=Climate, y=value)) + geom_point(shape=1) +
+    scale_colour_hue(l=50) +
+    #+ylim(-1.0,1.0)
+    #+xlim(-4,4)# Use a slightly darker palette than normal
+    geom_smooth(method=lm,   # Add linear regression lines
+                se=TRUE,    # add shaded confidence region
+                fullrange=FALSE)+# Extend regression lines
+    
+    #scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
+    xlim(-8, 8)+
+    ylim(0.5, 1.5) +
+    theme_bw()+
+    theme(text = element_text(size = 30))+
+    ylab('Detrended Ring width Index') +
+    xlab( xlab ) +
+    ggtitle(Site)
+  
+}
+plot.cor.clim(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie")
+
 
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
 
@@ -116,9 +184,14 @@ plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN
 plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
 plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #significant
 plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
-plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
-plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
-plot.pre.post(molten.PLP, molten.PLP$Jul.pdsi, 'July PDSI', "Pleasant Prarie, WI") #significant
+plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") #significant
+plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
+plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
+plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
+
+#plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
+#plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
+#plot.pre.post(molten.PLP, molten.PLP$Jul.pdsi, 'July PDSI', "Pleasant Prarie, WI") #significant
 
 dev.off()
 
@@ -182,12 +255,15 @@ STC.pdsi <- read.csv("STC-WWPDSIcor.csv")
 TOW.pdsi <- read.csv("TOW-WWPDSIcor.csv")
 PLE.pdsi <- read.csv("PLE-WWPDSIcor.csv")
 
+
+
 priority$pdsiJul <- 0
 priority[priority$code %in% "BON", ]$pdsiJul <- BON.pdsi[19,2]
 priority[priority$code %in% "HIC", ]$pdsiJul <- HIC.pdsi[19,2]
 priority[priority$code %in% "STC", ]$pdsiJul <- STC.pdsi[19,2]
 priority[priority$code %in% "TOW", ]$pdsiJul <- TOW.pdsi[19,2]
 priority[priority$code %in% "PVC", ]$pdsiJul <- PLE.pdsi[19,2]
+
 
 plot(priority$ksat, priority$pdsiJul)
 plot(priority$awc, priority$pdsiJul)
