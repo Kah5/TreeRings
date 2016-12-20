@@ -111,15 +111,42 @@ sites.barplot('tmin')
 sites.barplot('Precip')
 sites.barplot('PDSI')
 
+#now plot the correlations against their mean annual precips:
+cor.v.clim <- function(clim, precip){
+month.coef <- matrix(NA, nrow = length(precip[,1]), ncol = 1)
+for(i in 1:length(precip[,1])){
+cors <- read.csv(paste0(precip[i,1], "-WW", clim, "cor.csv"))
+month.coef[i,] <- cors[18,]$V1
+}
+precip <- as.data.frame(precip, stringsAsfactors = FALSE)
+precip$cor <- as.vector(month.coef)
+colnames(precip) <- c('site', "MAP", "cor")
+precip$MAP <- as.numeric(as.character(precip$MAP))
 
+ggplot(precip, aes(MAP, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5)+theme_bw()+ggtitle(paste0(clim, "correlation with MAP"))
+
+}
+cor.v.clim("tavg", precip)
+cor.v.clim("Precip", precip)
+cor.v.clim("tmin", precip)
+cor.v.clim("tmax", precip)
+cor.v.clim("PDSI", precip)
+
+#can use the cor.v.clim function to plot correlations against soil characteristics
+#read in site xys
+locs <- read.csv("outputs/priority_sites_locs.csv")
+test <- merge(precip, locs, by.x = 'site', by.y = 'code')
+cor.v.clim("PDSI", test)
 
 #molten.full comes from climate_growth_reg_chron.R
+###################################################
+#compare climate coreelaitons c
 plot.cor.clim <- function(x, Climate, xlab, Site){
   yr <- 1895:1950
   x$class <- '9999'
   x[x$Year %in% yr,]$class <- 'clim_record'
   
-
+  
   #if the dummy variable is significant, then the two slopes are different
   print(summary( cor( Climate, x$value)))
   
@@ -144,8 +171,6 @@ plot.cor.clim <- function(x, Climate, xlab, Site){
   
 }
 plot.cor.clim(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie")
-
-
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
 
 # conduct f-test to see if the relationship pre-1950 is same as post 1950

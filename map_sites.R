@@ -20,15 +20,15 @@ priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC"
 #IL.MCCD <- data.frame(IL.MCCD)
 #IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
 #priority <- rbind(priority, IL.MCCD)
-
+write.csv(priority, "outputs/priority_sites_locs.csv")
 
 #for NAPC, create a map with just these tree cores:
-priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
-priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
-priority <- data.frame(priority)
+#priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
+#priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
+#priority <- data.frame(priority)
 #priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
-priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
-places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+#priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+#places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
 
 #map against soils data
 library(raster)
@@ -37,6 +37,9 @@ ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
 
 awc <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif')
 awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
+
+priority$ksat <- extract(ksat.alb, priority[,c("coords.x1","coords.x2")])
+priority$awc <- extract(awc.alb, priority[,c("coords.x1","coords.x2")])
 #map out 
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
