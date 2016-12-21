@@ -145,12 +145,13 @@ x$env <- pre$ksat
 ggplot(x, aes(env, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5)+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))
 
 }
+pdf("outputs/cor_coef_v_MAP.pdf")
 cor.v.clim("tavg", 18,precip, var = "MAP")
 cor.v.clim("Precip",18, precip = precip, var = "MAP")
 cor.v.clim("tmin", 18,precip, var = "MAP")
 cor.v.clim("tmax", 18,precip, var = "MAP")
 cor.v.clim("PDSI", 18,precip, var = "MAP")
-
+dev.off()
 #can use the cor.v.clim function to plot correlations against soil characteristics
 #read in site xys
 locs <- read.csv("outputs/priority_sites_locs.csv")
@@ -167,19 +168,23 @@ precip <- data.frame(precip)
 colnames(precip) <- c("site", "MAP")
 test <- merge(precip, locs, by.x = 'site', by.y = 'code')
 
-#plot correlation coefficients with July climate variables against kst
+#plot correlation coefficients with July climate variables against ksat
+pdf("output/cor_coef_v_ksat.pdf")
 cor.v.clim("PDSI", 18,test, var = "ksat")
 cor.v.clim("tavg", 18,test, var = 'ksat')
 cor.v.clim("tmin", 18,test, var = 'ksat')
 cor.v.clim("tmax", 18,test, var = 'ksat')
 cor.v.clim("Precip", 18,test, var = 'ksat')
+dev.off()
 
 #plot correlation coefficients with July climate variabes with awc
+pdf("output/cor_coef_v_awc.pdf")
 cor.v.clim("PDSI", 18,test, var = "awc")
 cor.v.clim("tavg", 18,test, var = 'awc')
 cor.v.clim("tmin", 18,test, var = 'awc')
 cor.v.clim("tmax", 18,test, var = 'awc')
 cor.v.clim("Precip", 18,test, var = 'awc')
+dev.off()
 
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
