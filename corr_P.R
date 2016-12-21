@@ -41,8 +41,8 @@ if(wood == "EW"){
   }}
 
 #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
-site <- Englund
-site.code <- "ENG"
+site <- Bonanza
+site.code <- "BON"
 
 
 ##################################################
@@ -153,7 +153,14 @@ precip <- dcast(total.p, Year  ~ Month)
 annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
 annual.t <- aggregate(TAVG ~ Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm=T)
 annual.mint <- aggregate(TMIN ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
+annual.maxt <- aggregate(TMAX ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
+annual.PDSI <- aggregate(PDSI ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
+
 write.csv(annual.p, paste0(site.code, '-annualP.csv'))
+write.csv(annual.t, paste0(site.code, '-annualtavg.csv'))
+write.csv(annual.mint, paste0(site.code, '-annualtmin.csv'))
+write.csv(annual.maxt, paste0(site.code, '-annualtmax.csv'))
+write.csv(annual.PDSI, paste0(site.code, '-annualPDSI.csv'))
 
 par(mfrow=c(2,1))
 plot(annual.p, type = "l")

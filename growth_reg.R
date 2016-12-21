@@ -66,6 +66,34 @@ for (i in 1:length(sites)){
 precip <- precip[order(as.numeric(precip[,2])),]
 site.order <- rev(precip[,1])
 
+tmax <- matrix(NA ,nrow = length(sites), ncol = 2)
+for (i in 1:length(sites)){
+  tmax[i,1] <- sites[i]
+  a <- read.csv(paste0(sites[i], "-annualtmax.csv"))
+  tmax[i,2] <- mean(a$TMAX)
+}
+tmax <- tmax[order(as.numeric(tmax[,2])),]
+site.order <- rev(tmax[,1])
+
+tmin <- matrix(NA ,nrow = length(sites), ncol = 2)
+for (i in 1:length(sites)){
+  tmin[i,1] <- sites[i]
+  a <- read.csv(paste0(sites[i], "-annualtmin.csv"))
+  tmin[i,2] <- mean(a$TMIN)
+}
+tmin <- tmin[order(as.numeric(tmin[,2])),]
+site.order <- rev(tmin[,1])
+
+PDSI <- matrix(NA ,nrow = length(sites), ncol = 2)
+for (i in 1:length(sites)){
+  PDSI[i,1] <- sites[i]
+  a <- read.csv(paste0(sites[i], "-annualPDSI.csv"))
+  PDSI[i,2] <- mean(a$PDSI)
+}
+PDSI <- PDSI[order(as.numeric(PDSI[,2])),]
+site.order <- rev(PDSI[,1])
+
+
 sites.barplot <- function(clim) {
 COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
 HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
@@ -99,20 +127,63 @@ cors.melt$months <- factor(cors.melt$months, levels=full$months)
 cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
 cors.melt[order(cors.melt$months),]
 output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
-  geom_bar(stat = 'identity', position = position_dodge(width = 0.6)) + 
+  geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
   #facet_grid(variable~.)+
   scale_fill_manual(values = rev(brewer.pal(n=8, "RdBu")))+
   theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
 output
 }
+pdf("outputs/barplots_clim_v_allsites.pdf", width = 15, height = 7)
 sites.barplot('tavg')
 sites.barplot('tmax')
 sites.barplot('tmin')
 sites.barplot('Precip')
 sites.barplot('PDSI')
+dev.off()
 
+#rank the correlations based on highest to lowest for each site
+highest.cor <- function(site, i){
+  precip <- read.csv(paste0(site,'-WW', 'Precip', 'cor.csv'))
+  tavg <- read.csv(paste0(site,'-WW', 'tavg', 'cor.csv'))
+  tmin <- read.csv(paste0(site,'-WW', 'tmin', 'cor.csv'))
+  tmax <- read.csv(paste0(site,'-WW', 'tmax', 'cor.csv'))
+  PDSI <- read.csv(paste0(site,'-WW', 'PDSI', 'cor.csv'))
+  
+  clim.cors <- cbind(precip, tavg[,2], tmin[,2], tmax[,2], PDSI[,2])
+  colnames(clim.cors) <- c("mono", "Precip", "tavg", "tmin", "tmax", "PDSI")
+  clim.cors$months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+                        "pAug", "pSep", "pOct", "pNov", "pDec",
+                        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                        "Aug", "Sep", "Oct", "Nov", "Dec")
+  
+  melted.cors <- melt(clim.cors, id.vars = c('mono', "months"))
+  reorded.cors <- melted.cors[rev(order(abs(melted.cors[, "value"]))),]
+  reorded.cors[i,]
+}
+highest.cor('HIC', 1)
+highest.cor('BON', 1)
+highest.cor('COR', 1)
+highest.cor('GLA', 1)
+highest.cor('STC', 1)
+highest.cor('ENG', 1)
+highest.cor('UNC', 1)
+highest.cor('TOW', 1)
+
+
+
+highest.cor('HIC', 2)
+highest.cor('BON', 2)
+highest.cor('COR', 2)
+highest.cor('GLA', 2)
+highest.cor('STC', 2)
+highest.cor('ENG', 2)
+highest.cor('UNC', 2)
+highest.cor('TOW', 2)
 #now plot the correlations against their mean annual precips:
 cor.v.clim <- function(clim,mono, pre,var){
+  locs <- read.csv("outputs/priority_sites_locs.csv")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON")
+
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
     precip[i,1] <- sites[i]
@@ -121,6 +192,9 @@ cor.v.clim <- function(clim,mono, pre,var){
   }
   precip <- precip[order(as.numeric(precip[,2])),]
   site.order <- rev(precip[,1])
+  precip <- data.frame(precip)
+  colnames(precip) <- c("site", "MAP")
+  precip <- merge(precip, locs, by.x = 'site', by.y = 'code')
 month.coef <- matrix(NA, nrow = length(precip[,1]), ncol = 1)
 for(i in 1:length(precip[,1])){
 cors <- read.csv(paste0(precip[i,1], "-WW", clim, "cor.csv"))
@@ -128,7 +202,7 @@ month.coef[i,] <- cors[mono,]$V1
 }
 x <- as.data.frame(precip)
 x$cor <- as.vector(month.coef)
-colnames(x) <- c('site', "MAP", "cor")
+colnames(x[,1:3]) <- c('site', "MAP", "cor")
 if(var %in% "MAP"){
   x$env <- as.numeric(as.character(x$MAP))
 }else{if (var %in% "awc"){
@@ -142,12 +216,12 @@ x$env <- pre$ksat
 }
 
 
-ggplot(x, aes(env, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5)+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))
+ggplot(x, aes(env, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))
 
 }
 pdf("outputs/cor_coef_v_MAP.pdf")
 cor.v.clim("tavg", 18,precip, var = "MAP")
-cor.v.clim("Precip",18, precip = precip, var = "MAP")
+cor.v.clim("Precip",18, precip, var = "MAP")
 cor.v.clim("tmin", 18,precip, var = "MAP")
 cor.v.clim("tmax", 18,precip, var = "MAP")
 cor.v.clim("PDSI", 18,precip, var = "MAP")
@@ -169,7 +243,7 @@ colnames(precip) <- c("site", "MAP")
 test <- merge(precip, locs, by.x = 'site', by.y = 'code')
 
 #plot correlation coefficients with July climate variables against ksat
-pdf("output/cor_coef_v_ksat.pdf")
+pdf("outputs/cor_coef_v_ksat.pdf")
 cor.v.clim("PDSI", 18,test, var = "ksat")
 cor.v.clim("tavg", 18,test, var = 'ksat')
 cor.v.clim("tmin", 18,test, var = 'ksat')
@@ -178,7 +252,7 @@ cor.v.clim("Precip", 18,test, var = 'ksat')
 dev.off()
 
 #plot correlation coefficients with July climate variabes with awc
-pdf("output/cor_coef_v_awc.pdf")
+pdf("outputs/cor_coef_v_awc.pdf")
 cor.v.clim("PDSI", 18,test, var = "awc")
 cor.v.clim("tavg", 18,test, var = 'awc')
 cor.v.clim("tmin", 18,test, var = 'awc')
