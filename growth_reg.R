@@ -112,31 +112,74 @@ sites.barplot('Precip')
 sites.barplot('PDSI')
 
 #now plot the correlations against their mean annual precips:
-cor.v.clim <- function(clim, precip){
+cor.v.clim <- function(clim, pre, var){
+  precip <- matrix(NA ,nrow = length(sites), ncol = 2)
+  for (i in 1:length(sites)){
+    precip[i,1] <- sites[i]
+    a <- read.csv(paste0(sites[i], "-annualP.csv"))
+    precip[i,2] <- mean(a$PCP)
+  }
+  precip <- precip[order(as.numeric(precip[,2])),]
+  site.order <- rev(precip[,1])
 month.coef <- matrix(NA, nrow = length(precip[,1]), ncol = 1)
 for(i in 1:length(precip[,1])){
 cors <- read.csv(paste0(precip[i,1], "-WW", clim, "cor.csv"))
 month.coef[i,] <- cors[18,]$V1
 }
-precip <- as.data.frame(precip, stringsAsfactors = FALSE)
-precip$cor <- as.vector(month.coef)
-colnames(precip) <- c('site', "MAP", "cor")
-precip$MAP <- as.numeric(as.character(precip$MAP))
+x <- as.data.frame(precip)
+x$cor <- as.vector(month.coef)
+colnames(x) <- c('site', "MAP", "cor")
+if(var %in% "MAP"){
+  x$env <- as.numeric(as.character(x$MAP))
+}else{if (var %in% "awc"){
+  x$env <- pre$awc
+}else{if (var %in% "ksat"){
+x$env <- pre$ksat
+}else{
+   precip$env <- 8888
+ }
+}
+}
 
-ggplot(precip, aes(MAP, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5)+theme_bw()+ggtitle(paste0(clim, "correlation with MAP"))
+
+ggplot(x, aes(env, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5)+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))
 
 }
-cor.v.clim("tavg", precip)
-cor.v.clim("Precip", precip)
-cor.v.clim("tmin", precip)
-cor.v.clim("tmax", precip)
-cor.v.clim("PDSI", precip)
+cor.v.clim("tavg", precip, var = "MAP")
+cor.v.clim("Precip", precip = precip, var = "MAP")
+cor.v.clim("tmin", precip, var = "MAP")
+cor.v.clim("tmax", precip, var = "MAP")
+cor.v.clim("PDSI", precip, var = "MAP")
 
 #can use the cor.v.clim function to plot correlations against soil characteristics
 #read in site xys
 locs <- read.csv("outputs/priority_sites_locs.csv")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON")
+precip <- matrix(NA ,nrow = length(sites), ncol = 2)
+for (i in 1:length(sites)){
+  precip[i,1] <- sites[i]
+  a <- read.csv(paste0(sites[i], "-annualP.csv"))
+  precip[i,2] <- mean(a$PCP)
+}
+precip <- precip[order(as.numeric(precip[,2])),]
+site.order <- rev(precip[,1])
+precip <- data.frame(precip)
+colnames(precip) <- c("site", "MAP")
 test <- merge(precip, locs, by.x = 'site', by.y = 'code')
-cor.v.clim("PDSI", test)
+
+#plot correlation coefficients with July climate variables against kst
+cor.v.clim("PDSI", test, var = "ksat")
+cor.v.clim("tavg", test, var = 'ksat')
+cor.v.clim("tmin", test, var = 'ksat')
+cor.v.clim("tmax", test, var = 'ksat')
+cor.v.clim("Precip", test, var = 'ksat')
+
+#plot correlation coefficients with July climate variabes with awc
+cor.v.clim("PDSI", test, var = "awc")
+cor.v.clim("tavg", test, var = 'awc')
+cor.v.clim("tmin", test, var = 'awc')
+cor.v.clim("tmax", test, var = 'awc')
+cor.v.clim("Precip", test, var = 'awc')
 
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
