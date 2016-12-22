@@ -51,12 +51,13 @@ cor.barplot('TOW')
 cor.barplot('GLA')
 cor.barplot('ENG')
 cor.barplot('UNC')
+cor.barplot('MOU')
 dev.off()
 
 #now make a barplot for each climate factors with the sites on it using the sites.barplot funciton
 
 #This is a set up tocolor code sites by their total mean annual precip
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
 precip <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   precip[i,1] <- sites[i]
@@ -103,6 +104,7 @@ TOW <- read.csv(paste0('TOW-WW', clim, 'cor.csv'))
 ENG <- read.csv(paste0('ENG-WW', clim, 'cor.csv'))
 UNC <- read.csv(paste0('UNC-WW', clim, 'cor.csv'))
 BON <- read.csv(paste0('BON-WW', clim, 'cor.csv'))
+MOU <- read.csv(paste0('MOU-WW', clim, 'cor.csv'))
 months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
             "pAug", "pSep", "pOct", "pNov", "pDec",
             "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -118,6 +120,7 @@ full$TOW <- TOW$V1
 full$ENG <- ENG$V1
 full$UNC <- UNC$V1
 full$BON <- BON$V1
+full$MOU <- MOU$V1
 
 
 half <- full[13:24,]
@@ -129,7 +132,7 @@ cors.melt[order(cors.melt$months),]
 output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
   #facet_grid(variable~.)+
-  scale_fill_manual(values = rev(brewer.pal(n=8, "RdBu")))+
+  scale_fill_manual(values = rev(brewer.pal(n=9, "RdBu")))+
   theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
 output
 }
@@ -168,6 +171,7 @@ highest.cor('STC', 1)
 highest.cor('ENG', 1)
 highest.cor('UNC', 1)
 highest.cor('TOW', 1)
+highest.cor('MOU', 1)
 
 
 
@@ -179,10 +183,13 @@ highest.cor('STC', 2)
 highest.cor('ENG', 2)
 highest.cor('UNC', 2)
 highest.cor('TOW', 2)
+highest.cor('MOU', 2)
+
+#need to add mou to the locations here
 #now plot the correlations against their mean annual precips:
 cor.v.clim <- function(clim,mono, pre,var){
   locs <- read.csv("outputs/priority_sites_locs.csv")
-  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
 
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
@@ -229,7 +236,7 @@ dev.off()
 #can use the cor.v.clim function to plot correlations against soil characteristics
 #read in site xys
 locs <- read.csv("outputs/priority_sites_locs.csv")
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
 precip <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   precip[i,1] <- sites[i]
