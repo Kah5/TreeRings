@@ -216,15 +216,19 @@ if(var %in% "MAP"){
   x$env <- pre$awc
 }else{if (var %in% "ksat"){
 x$env <- pre$ksat
+}else{if (var %in% "sand"){
+  x$env <- pre$sand
 }else{
    precip$env <- 8888
  }
 }
 }
+}
 
-
-ggplot(x, aes(env, cor, color = cor))+scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))
-
+ggplot(x, aes(env, cor, color = cor))+#geom_text_repel(aes(label = site))+
+  scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
+  xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))
+  
 }
 pdf("outputs/cor_coef_v_MAP.pdf")
 cor.v.clim("tavg", 18,precip, var = "MAP")
@@ -265,6 +269,14 @@ cor.v.clim("tavg", 18,test, var = 'awc')
 cor.v.clim("tmin", 18,test, var = 'awc')
 cor.v.clim("tmax", 18,test, var = 'awc')
 cor.v.clim("Precip", 18,test, var = 'awc')
+dev.off()
+
+pdf("outputs/cor_coef_v_sand.pdf")
+cor.v.clim("PDSI", 18,test, var = "sand")
+cor.v.clim("tavg", 18,test, var = 'sand')
+cor.v.clim("tmin", 18,test, var = 'sand')
+cor.v.clim("tmax", 18,test, var = 'sand')
+cor.v.clim("Precip", 18,test, var = 'sand')
 dev.off()
 
 #molten.full comes from climate_growth_reg_chron.R
