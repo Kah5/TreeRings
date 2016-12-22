@@ -20,7 +20,7 @@ priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC"
 #IL.MCCD <- data.frame(IL.MCCD)
 #IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
 #priority <- rbind(priority, IL.MCCD)
-write.csv(priority, "outputs/priority_sites_locs.csv")
+
 
 #for NAPC, create a map with just these tree cores:
 #priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
@@ -40,6 +40,8 @@ awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
 
 priority$ksat <- extract(ksat.alb, priority[,c("coords.x1","coords.x2")])
 priority$awc <- extract(awc.alb, priority[,c("coords.x1","coords.x2")])
+write.csv(priority, "outputs/priority_sites_locs.csv")
+
 #map out 
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
