@@ -12,16 +12,27 @@ library(ggrepel)
 MN.priority <- readOGR("data/priority.kml", layer = "Priority")
 #IL.MCCD <- readOGR('data/Fieldwork 2016.kml', layer = "McHenry")
 
-MN.priority <- spTransform(MN.priority, CRSobj = CRS('+init=epsg:3175'))
+MN.priority.alb <- spTransform(MN.priority, CRSobj = CRS('+init=epsg:3175'))
 priority <- data.frame(MN.priority)
+priority.lat <- data.frame(priority)
 
 priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+priority.lat$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+
 #IL.MCCD <- spTransform(IL.MCCD, CRSobj = CRS('+init=epsg:3175'))
 #IL.MCCD <- data.frame(IL.MCCD)
 #IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
 #priority <- rbind(priority, IL.MCCD)
+mound <- readOGR("data/Treecores.kml", layer= "2015sites")
+mound.lat <- mound
+mound <- spTransform(mound, CRSobj = CRS('+init=epsg:3175'))
+mound <- data.frame(mound)
+mound.lat <- data.frame(mound.lat)
+mound$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
+mound.lat$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
 
-
+priority<- rbind(priority,mound[2,]) # just add mound prairie to priority
+priority.lat <- rbind(priority.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")], mound.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")])
 #for NAPC, create a map with just these tree cores:
 #priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
 #priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
@@ -38,6 +49,10 @@ ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
 awc <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif')
 awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
 
+sand <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_sand1/8km_UMW_sand1.tif")
+sand.alb <- projectRaster(sand, crs = '+init=epsg:3175')
+
+priority$sand <- extract(sand.alb, priority[,c("coords.x1", "coords.x2")])
 priority$ksat <- extract(ksat.alb, priority[,c("coords.x1","coords.x2")])
 priority$awc <- extract(awc.alb, priority[,c("coords.x1","coords.x2")])
 write.csv(priority, "outputs/priority_sites_locs.csv")
@@ -278,6 +293,83 @@ sites.t.map2 <- sites.t.map + geom_point(data = priority, aes(x = coords.x1, y =
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
                   point.padding = unit(1.5, "lines"))
+
+#making natural earth maps (from simon gorings blog)
+
+library(raster)
+library(rgdal)
+library(ggplot2)
+library(reshape2)
+library(plyr)
+library(rgeos)
+
+#  Assuming you have a path 'Maps' that you store your spatial files in.  This
+#  is all downloaded from <a href="http://www.naturalearthdata.com/downloads/">http://www.naturalearthdata.com/downloads/</a> using the
+#  1:50m "Medium" scale data.
+
+nat.earth <- stack('data/NE2_50m_SR_W/NE2_50M_SR_W/NE2_50M_SR_W.tif')
+
+ne_lakes <- readOGR('data/ne_50m_lakes/ne_50m_lakes.shp',
+                    'ne_50m_lakes')
+
+ne_rivers <- readOGR('data/ne_50m_rivers_lake_centerlines/ne_50m_rivers_lake_centerlines.shp',
+                     'ne_50m_rivers_lake_centerlines')
+
+ne_coast <- readOGR('data/ne_50m_coastline/ne_50m_coastline.shp',
+                    'ne_50m_coastline')
+ne_states <- readOGR('data/ne_50m_admin_1_states_provinces_lakes/ne_50m_admin_1_states_provinces_lakes.shp',
+                     'ne_50m_admin_1_states_provinces_lakes')
+
+#  I have a domain I'm interested in, but there's no reason you can't define something else:
+quick.subset <- function(x, longlat){
+  
+  # longlat should be a vector of four values: c(xmin, xmax, ymin, ymax)
+  x@data$id <- rownames(x@data)
+  
+  x.f = fortify(x, region="id")
+  x.join = join(x.f, x@data, by="id")
+  
+  x.subset <- subset(x.join, x.join$long > longlat[1] & x.join$long < longlat[2] &
+                       x.join$lat > longlat[3] & x.join$lat < longlat[4])
+  
+  x.subset
+}
+
+domain <- c(-100, -85, 36.5, 49.7)
+#lakes.subset <- quick.subset(ne_lakes, domain)
+river.subset <- quick.subset(ne_rivers, domain)
+coast.subset <- quick.subset(ne_coast, domain)
+#states.subset <- quick.subset(ne_states, domain)
+
+nat.crop <- crop(nat.earth, y=extent(domain))
+
+rast.table <- data.frame(xyFromCell(nat.crop, 1:ncell(nat.crop)),
+                         getValues(nat.crop/255))
+
+rast.table$rgb <- with(rast.table, rgb(NE2_50M_SR_W.1,
+                                       NE2_50M_SR_W.2,
+                                       NE2_50M_SR_W.3,
+                                       1))
+# et voila!
+
+map<- ggplot(data = rast.table, aes(x = x, y = y)) +
+  geom_tile(fill = rast.table$rgb) +
+  geom_polygon(data=ne_lakes, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
+  #geom_polygon(data = ne_states, aes(x = long, y = lat, group = group), color = 'black')+
+  scale_alpha_discrete(range=c(1,0)) +
+  
+  geom_path(data=ne_lakes, aes(x = long, y = lat, group = group), color = 'blue') +
+  geom_path(data=river.subset, aes(x = long, y = lat, group = group), color = 'blue') +
+  geom_path(data = ne_states, aes(x = long, y = lat, group = group), color = 'black')+
+  #geom_path(data=coast.subset, aes(x = long, y = lat, group = group), color = 'blue') +
+  xlim(-97, -87) +
+  ylim(36.5, 49.7) +
+  xlab('') + ylab('')
+map <-map + geom_point(data = priority.lat, aes(x = coords.x1, y = coords.x2, shape = Description, label=code), cex = 2.5)+
+  geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label= code ),hjust = -0.5, vjust=0.25 )
+
+map
+#coord_map(xlim= c(-100, -85),ylim= c(36.5, 49.7))
 
 #pdf('outputs/NAPC_sites_2015_temp.pdf')
 sites.t.map

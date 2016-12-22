@@ -312,14 +312,22 @@ plot.cor.clim <- function(x, Climate, xlab, Site){
   
 }
 plot.cor.clim(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie")
+plot.cor.clim(molten.HIC, molten.HIC$PDSI, "PDSI", "Hickory Grove")
+plot.cor.clim(molten.COR, molten.COR$PDSI, "PDSI", "Coral Woods")
+plot.cor.clim(molten.GLA, molten.GLA$PDSI, "PDSI", "Glacial Park")
+plot.cor.clim(molten.STC, molten.STC$PDSI, "PDSI", "St. Croix Savanna")
+plot.cor.clim(molten.TOW, molten.TOW$PDSI, "PDSI", "Townsend Woods")
+plot.cor.clim(molten.UNC, molten.UNC$PDSI, "PDSI", "Uncas Dunes")
+plot.cor.clim(molten.MOU, molten.MOU$PDSI, "PDSI", "Mound Prairie")
+
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
 
 # conduct f-test to see if the relationship pre-1950 is same as post 1950
-#for Hickory Grove
+
 yr <- 1895:1950
 yr.post <- 1950:2014
 
-
+#this function runs the stats and makes plots for pre-1950 vs. post-1950
 plot.pre.post <- function(x, Climate, xlab, Site){
 yr <- 1895:1950
 yr.post <- 1950:2014
@@ -418,6 +426,7 @@ plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") 
 plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
 plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
 plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
+plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
 
 #plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
 #plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
