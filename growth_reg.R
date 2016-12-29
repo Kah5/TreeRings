@@ -163,27 +163,32 @@ highest.cor <- function(site, i){
   reorded.cors <- melted.cors[rev(order(abs(melted.cors[, "value"]))),]
   reorded.cors[i,]
 }
-highest.cor('HIC', 1)
-highest.cor('BON', 1)
-highest.cor('COR', 1)
-highest.cor('GLA', 1)
-highest.cor('STC', 1)
-highest.cor('ENG', 1)
-highest.cor('UNC', 1)
-highest.cor('TOW', 1)
+Highest<- rbind(
+highest.cor('HIC', 1),
+highest.cor('BON', 1),
+highest.cor('COR', 1),
+highest.cor('GLA', 1),
+highest.cor('STC', 1),
+highest.cor('ENG', 1),
+highest.cor('UNC', 1),
+highest.cor('TOW', 1),
 highest.cor('MOU', 1)
+)
 
+Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU")
 
-
-highest.cor('HIC', 2)
-highest.cor('BON', 2)
-highest.cor('COR', 2)
-highest.cor('GLA', 2)
-highest.cor('STC', 2)
-highest.cor('ENG', 2)
-highest.cor('UNC', 2)
-highest.cor('TOW', 2)
+write.csv(Highest, "outputs/highest_cors_table.csv")
+sec.highest<- rbind(
+highest.cor('HIC', 2),
+highest.cor('BON', 2),
+highest.cor('COR', 2),
+highest.cor('GLA', 2),
+highest.cor('STC', 2),
+highest.cor('ENG', 2),
+highest.cor('UNC', 2),
+highest.cor('TOW', 2),
 highest.cor('MOU', 2)
+)
 
 #need to add mou to the locations here
 #now plot the correlations against their mean annual precips:
@@ -225,10 +230,12 @@ x$env <- pre$ksat
 }
 }
 
+lm <- lm(formula = cor ~ env, data = x)
+print(summary(lm))
 ggplot(x, aes(env, cor, color = cor))+#geom_text_repel(aes(label = site))+
-  scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
+  scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+stat_smooth(method = 'lm')+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
   xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))
-  
+
 }
 pdf("outputs/cor_coef_v_MAP.pdf")
 cor.v.clim("tavg", 18,precip, var = "MAP")
@@ -277,8 +284,61 @@ cor.v.clim("tavg", 18,test, var = 'sand')
 cor.v.clim("tmin", 18,test, var = 'sand')
 cor.v.clim("tmax", 18,test, var = 'sand')
 cor.v.clim("Precip", 18,test, var = 'sand')
+cor.v.clim("Precip", 20,test, var = 'sand')
 dev.off()
 
+#plot correlations for savanna and forests
+cor.v.type <- function(clim,mono, pre,var){
+  locs <- read.csv("outputs/priority_sites_locs.csv")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+  
+  precip <- matrix(NA ,nrow = length(sites), ncol = 2)
+  for (i in 1:length(sites)){
+    precip[i,1] <- sites[i]
+    a <- read.csv(paste0(sites[i], "-annualP.csv"))
+    precip[i,2] <- mean(a$PCP)
+  }
+  precip <- precip[order(as.numeric(precip[,2])),]
+  site.order <- rev(precip[,1])
+  precip <- data.frame(precip)
+  colnames(precip) <- c("site", "MAP")
+  precip <- merge(precip, locs, by.x = 'site', by.y = 'code')
+  month.coef <- matrix(NA, nrow = length(precip[,1]), ncol = 1)
+  for(i in 1:length(precip[,1])){
+    cors <- read.csv(paste0(precip[i,1], "-WW", clim, "cor.csv"))
+    month.coef[i,] <- cors[mono,]$V1
+  }
+  x <- as.data.frame(precip)
+  x$cor <- as.vector(month.coef)
+  colnames(x[,1:3]) <- c('site', "MAP", "cor")
+  if(var %in% "MAP"){
+    x$env <- as.numeric(as.character(x$MAP))
+  }else{if (var %in% "awc"){
+    x$env <- pre$awc
+  }else{if (var %in% "ksat"){
+    x$env <- pre$ksat
+  }else{if (var %in% "sand"){
+    x$env <- pre$sand
+  }else{
+    precip$env <- 8888
+  }
+  }
+  }
+  }
+  
+  lm <- lm(formula = cor ~ env, data = x)
+  print(summary(lm))
+  ggplot(x, aes(Description, cor, color = cor))+ geom_boxplot()#geom_text_repel(aes(label = site))+
+    #scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+stat_smooth(method = 'lm')+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
+   # xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))
+  
+}
+cor.v.type("PDSI", 18,test, var = "sand")
+cor.v.type("tavg", 18,test, var = 'sand')
+cor.v.type("tmin", 18,test, var = 'sand')
+cor.v.type("tmax", 18,test, var = 'sand')
+cor.v.type("Precip", 18,test, var = 'sand')
+cor.v.type("Precip", 20,test, var = 'sand')
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
 #compare climate coreelaitons c
@@ -342,8 +402,8 @@ x[x$Year %in% yr,]$group <- 1
 print(summary( lm(value ~ Climate:group, data = x)))
 print(summary(lm(value ~ Climate:group, data = x)))
 print(summary(aov(value~Climate*class, data=x)))
-print(summary(lm(value~Climate/group-1, data=x)))
-print(summary(aov(value~Climate/group, data = x)))
+#print(summary(lm(value~Climate/group-1, data=x)))
+#print(summary(aov(value~Climate/group, data = x)))
 # Extend the regression lines beyond the domain of the data
 
 ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
@@ -419,8 +479,8 @@ plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleas
 pdf('outputs/pdsi_pre_post_plots.pdf')
 plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant
-plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #significant
+plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant (only sig @ 0.15 )
+plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
 plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
 plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") #significant
 plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
@@ -548,6 +608,10 @@ compare.CO2(CO2, molten.PLE)
 compare.CO2(CO2, molten.STC)
 compare.CO2(CO2, molten.SAN)
 compare.CO2(CO2, molten.DES)
+compare.CO2(CO2, molten.COR)
+compare.CO2(CO2, molten.ENG)
+compare.CO2(CO2, molten.MOU)
+compare.CO2(CO2, molten.GLA)
 dev.off()
 
 
