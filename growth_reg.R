@@ -104,7 +104,7 @@ for (i in 1:length(sites)){
 PDSI <- PDSI[order(as.numeric(PDSI[,2])),]
 site.order <- rev(PDSI[,1])
 
-
+#this function plots all the sites on the same barplot and color codes from driest to wettest
 sites.barplot <- function(clim) {
 COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
 HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
@@ -146,13 +146,23 @@ output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
   theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
 output
 }
-pdf("outputs/barplots_clim_v_allsites.pdf", width = 15, height = 7)
+clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
+
+#automate savaing these to individual png files
+for(i in 1:length(clim.cd)){
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/barplots",paste("full_site_barplots_", clim.cd[i], ".png", sep = ""))
+  sites.barplot(clim.cd[i])
+  ggsave(filename=mypath)
+}
+
+#pdf("outputs/barplots_clim_v_allsites.pdf", width = 15, height = 7)
+
 sites.barplot('tavg')
 sites.barplot('tmax')
 sites.barplot('tmin')
 sites.barplot('Precip')
 sites.barplot('PDSI')
-dev.off()
+#dev.off()
 
 #rank the correlations based on highest to lowest for each site
 highest.cor <- function(site, i){
@@ -200,7 +210,7 @@ highest.cor('TOW', 2),
 highest.cor('MOU', 2)
 )
 
-#need to add mou to the locations here
+
 #now plot the correlations against their mean annual precips:
 cor.v.clim <- function(clim,mono, pre,var){
   locs <- read.csv("outputs/priority_sites_locs.csv")
@@ -254,6 +264,7 @@ cor.v.clim("tmin", 18,precip, var = "MAP")
 cor.v.clim("tmax", 18,precip, var = "MAP")
 cor.v.clim("PDSI", 18,precip, var = "MAP")
 dev.off()
+
 #can use the cor.v.clim function to plot correlations against soil characteristics
 #read in site xys
 locs <- read.csv("outputs/priority_sites_locs.csv")
