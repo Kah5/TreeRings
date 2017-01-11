@@ -31,8 +31,21 @@ mound.lat <- data.frame(mound.lat)
 mound$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
 mound.lat$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
 
-priority<- rbind(priority,mound[2,]) # just add mound prairie to priority
-priority.lat <- rbind(priority.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")], mound.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")])
+#read in layer of sites cored in 2016
+sites16 <- readOGR("data/Treecores.kml", layer= "2016sites")
+sites16.lat <- sites16
+sites16 <- spTransform(sites16, CRSobj = CRS('+init=epsg:3175'))
+sites16 <- data.frame(sites16)
+sites16.lat <- data.frame(sites16.lat)
+sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP")
+sites16.lat$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP")
+sites16$Description <- c("Forest", "Savanna", "Savanna", 
+                         "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
+# merge the two data sets using rbind
+priority <- rbind(mound, sites16)
+
+#priority<- rbind(priority,mound[2,]) # just add mound prairie to priority
+#priority.lat <- rbind(priority.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")], mound.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")])
 #for NAPC, create a map with just these tree cores:
 #priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
 #priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
@@ -190,7 +203,7 @@ cbPalette <- c('#a6611a',
 
 
 sites.map <- ggplot()+ geom_raster(data=test.df, aes(x=x, y=y, fill = avg))+
-  labs(x="easting", y="northing", title="Tree Core Sites") + 
+  labs(x="easting", y="northing", title="Tree Core Sites 2015 & 2016") + 
   scale_fill_gradientn(colours = cbPalette2, name ="MAP 1900-1910 (mm) ")+
   coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
 sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
@@ -201,21 +214,46 @@ sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coo
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
                   point.padding = unit(1.5, "lines"))
+  
 
-#pdf("outputs/NAPC_sites_2015_precip.pdf")              
-sites.map
-sites.map2
-#dev.off()
 
-png('outputs/precip_map.png')
+
+
+
+png("outputs/precip_only.png")              
 sites.map
 dev.off()
 
-png('outputs/precip_map_sites.png')
+png("outputs/precip_sites_full.png")
 sites.map2
 dev.off()
 
-#now map for temperature from GHCN data
+#now make a map for sites cored in 2015 only:
+
+map2015 <- sites.map + geom_point(data = mound, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = mound, aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(1.5, "lines"),
+                  point.padding = unit(1.5, "lines"))+
+  labs(x="easting", y="northing", title="Tree Core Sites 2015") 
+
+png("outputs/precip_sites_2015.png")
+map2015
+dev.off()
+
+# map of sites cored in 2016 only:
+map2016 <- sites.map + geom_point(data = sites16, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  geom_text_repel(data = sites16, aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(1.5, "lines"),
+                  point.padding = unit(1.5, "lines"))+
+  labs(x="easting", y="northing", title="Tree Core Sites 2016")
+
+png("outputs/precip_sites_2016.png")
+map2016
+dev.off()
+
+# now map for temperature from GHCN data
 air_temp.1900<- read.table("./data/air_temp_2014/air_temp.1900")
 air_temp.1901<- read.table("./data/air_temp_2014/air_temp.1901")
 air_temp.1902<- read.table("./data/air_temp_2014/air_temp.1902")
@@ -293,6 +331,13 @@ sites.t.map2 <- sites.t.map + geom_point(data = priority, aes(x = coords.x1, y =
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
                   point.padding = unit(1.5, "lines"))
+png("outputs/temp_map.png")
+sites.t.map
+dev.off()
+
+png("outputs/temp_map_full.png")
+sites.t.map2
+dev.off()
 
 #making natural earth maps (from simon gorings blog)
 
