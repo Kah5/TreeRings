@@ -42,7 +42,17 @@ output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
   facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))
 output
 }
-pdf("outputs/site_barplots.pdf")
+
+site.cd <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU")
+#run for loop and save plots to outputs/barplots
+
+for(i in 1:length(site.cd)){
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/barplots",paste("barplots_", site.cd[i], ".png", sep = ""))
+  cor.barplot(site.cd[i])
+  ggsave(filename=mypath)
+}
+
+#also can run them by themselves
 cor.barplot("COR")
 cor.barplot('STC')
 cor.barplot('BON')
@@ -52,7 +62,7 @@ cor.barplot('GLA')
 cor.barplot('ENG')
 cor.barplot('UNC')
 cor.barplot('MOU')
-dev.off()
+
 
 #now make a barplot for each climate factors with the sites on it using the sites.barplot funciton
 
