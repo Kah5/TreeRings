@@ -148,7 +148,7 @@ output
 }
 clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
 
-#automate savaing these to individual png files
+#automate savaing these barplots to individual png files
 for(i in 1:length(clim.cd)){
   mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/barplots",paste("full_site_barplots_", clim.cd[i], ".png", sep = ""))
   sites.barplot(clim.cd[i])
@@ -257,6 +257,20 @@ ggplot(x, aes(env, cor, color = cor))+#geom_text_repel(aes(label = site))+
   xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))
 
 }
+
+#plot these in pngs for may and august for MAP
+for(i in 1:length(clim.cd)){
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_MAP_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim(clim.cd[i], 18, precip, var = "MAP")
+  ggsave(filename=mypath)
+  
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_MAP_aug", clim.cd[i], ".png", sep = ""))
+  cor.v.clim(clim.cd[i], 20, precip, var = "MAP")
+  ggsave(filename=mypath)
+}
+
+
+
 pdf("outputs/cor_coef_v_MAP.pdf")
 cor.v.clim("tavg", 18,precip, var = "MAP")
 cor.v.clim("Precip",18, precip, var = "MAP")
@@ -282,6 +296,29 @@ colnames(precip) <- c("site", "MAP")
 test <- merge(precip, locs, by.x = 'site', by.y = 'code')
 
 #plot correlation coefficients with July climate variables against ksat
+for(i in 1:length(clim.cd)){
+  #for awc
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_awc_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim(clim.cd[i], 18, test, var = "awc")
+  ggsave(filename=mypath)
+  
+  #for ksat
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_ksat_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim(clim.cd[i], 18, test, var = "ksat")
+  ggsave(filename=mypath)
+  
+  #for sand
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_sand_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim(clim.cd[i], 18, test, var = "sand")
+  ggsave(filename=mypath)
+  
+  #for sand
+  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_sand_aug", clim.cd[i], ".png", sep = ""))
+  cor.v.clim(clim.cd[i], 20, test, var = "sand")
+  ggsave(filename=mypath)
+  
+}
+
 pdf("outputs/cor_coef_v_ksat.pdf")
 cor.v.clim("PDSI", 18,test, var = "ksat")
 cor.v.clim("tavg", 18,test, var = 'ksat')

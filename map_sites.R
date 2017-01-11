@@ -16,8 +16,8 @@ MN.priority.alb <- spTransform(MN.priority, CRSobj = CRS('+init=epsg:3175'))
 priority <- data.frame(MN.priority)
 priority.lat <- data.frame(priority)
 
-priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
-priority.lat$code <- c("ITA", "GLE", "MAP", "UNC", "AVH", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVO", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+priority.lat$code <- c("ITA", "GLE", "MAP", "UNC", "AVO", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
 
 #IL.MCCD <- spTransform(IL.MCCD, CRSobj = CRS('+init=epsg:3175'))
 #IL.MCCD <- data.frame(IL.MCCD)
