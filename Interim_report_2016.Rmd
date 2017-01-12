@@ -76,18 +76,16 @@ Figure 3: Strength of site level climate correlations vary according to site lev
 
 ![% sandiness vs. tmax ](outputs/correlations/static_site_cors/site_cor_sand_juntavg.png)
 
-
+Figure 4: Sensitivity of tree ring growth to PDSI across the time periods 1900-1950 (pre-1950, in red), and 1950-2014 (post-1950, in blue) for each site. A) Bonanza Prarire SNA, MN, B). 
 
 ```{r cars}
 summary(cars)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
 plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+

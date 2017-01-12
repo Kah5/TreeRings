@@ -446,6 +446,7 @@ yr <- 1895:1950
 yr.post <- 1950:2014
 
 #this function runs the stats and makes plots for pre-1950 vs. post-1950
+# additionally plots are saved to outputs/correlations within the function
 plot.pre.post <- function(x, Climate, xlab, Site){
 yr <- 1895:1950
 yr.post <- 1950:2014
@@ -464,11 +465,11 @@ print(summary(aov(value~Climate*class, data=x)))
 #print(summary(aov(value~Climate/group, data = x)))
 # Extend the regression lines beyond the domain of the data
 
-ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
+p<- ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
   scale_colour_hue(l=50) +
   #+ylim(-1.0,1.0)
   #+xlim(-4,4)# Use a slightly darker palette than normal
-  geom_smooth(method=lm,   # Add linear regression lines
+  geom_smooth(method='lm',   # Add linear regression lines
               se=TRUE,    # add shaded confidence region
               fullrange=FALSE)+# Extend regression lines
   
@@ -476,15 +477,16 @@ ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
   xlim(-8, 8)+
   ylim(0.5, 1.5) +
   theme_bw()+
-  theme(text = element_text(size = 30))+
+  theme(text = element_text(size = 30), plot.title = element_text(hjust = 0.5))+
   ylab('Detrended Ring width Index') +
   xlab( xlab ) +
   ggtitle(Site)
 
+ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
 }
 
 
-pdf("outputs/pre_post_month_plots.pdf")
+
 plot.pre.post(molten.HIC, molten.HIC$JJA.p, 'Summer Precipitation (mm)', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$JJA.p, 'Summer Precipitation (mm)', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$JJA.p, 'Summer Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
@@ -534,7 +536,8 @@ plot.pre.post(molten.DES, molten.DES$JUNTavg, 'June Average Temperature', "Bois 
 plot.pre.post(molten.SAN, molten.SAN$JUNTavg, 'June Average Temperature', "Sandwich, IL") #significant
 plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleasant Prarie, WI") #significant
 
-pdf('outputs/pdsi_pre_post_plots.pdf')
+#pdf('outputs/pdsi_pre_post_plots.pdf')
+
 plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
 plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
 plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant (only sig @ 0.15 )
@@ -722,86 +725,4 @@ var.test( lm(value ~ PDSI, data = molten.TOW[molten.TOW$Year %in% yr,]),
 
 
 
-
-MLexamp.6 <- lmer(value ~ Year + PCP + TAVG +(1| Year)+ (1 | Site ), data = molten.full)
-
-
-
-#want a mixed effect model that treats climate data as fixed effects
-#growth ~ B0 +B1*precip + B2* Temp + bsite + btree + E
-model.re.lmer<-lmer(value ~ PDSI + (1| Site) , data = molten.full)
-
-# If you want to see the equations for all the sites in this model:
-coef(model.re.lmer)
-
-# If you want to see the averaged (over all trees) equation:
-fixef(model.re.lmer)
-se.fixef(model.re.lmer)
-
-# If you want to see the intercept shift away from the averaged intercept for each state:
-ranef(model.re.lmer)
-se.ranef(model.re.lmer)
-# note: standard errors are all the same because the samples sizes are the same for each state.
-
-
-  # make a CI plot of the intercepts
-mean<-unlist(ranef(model.re.lmer)$Site)
-sd<-unlist(se.ranef(model.re.lmer)$Site)
-
-xlabels=rownames(ranef(model.re.lmer)$Site)
-#xlabels=subset(molten.full ,year==2000, select="Site")
-#par(mfrow=c(1,2))
-
-#errbar(xlabels, mean, yplus=mean+1.96*sd, yminus=mean-1.96*sd, ylim=c(-5,5))	# this comes out of the Hmisc pkg
-
-errbar(xlabels, mean[1:4], yplus=mean[1:4]+1.96*sd[1:4], yminus=mean[1:4]-1.96*sd[1:4], ylim=c(-1,1))	# this comes out of the Hmisc pkg
-#errbar(xlabels$Site[26:50], mean[26:50], yplus=mean[26:50]+1.96*sd[26:50], yminus=mean[26:50]-1.96*sd[26:50], ylim=c(-10,10))
-
-
-
-model1<-"
-model{
-
-#Likelihood
-  for( i in 1:n)
-    {
-      value[i]~dnorm(mu[i], tau)
-      mu[i]<-b0+b1*Year[i]
-    }
-
-#priors
-b0~dnorm(0,.01)
-b1~dnorm(0,.01)
-tau<-pow(sd, -2)
-sd~dunif(0,100)
-#bayesian p-values for the regression coefficient using the step() function
-#step() is an indicator fuction an evaluates to 1 if the argument is greater than 0, 0 otherwise
-p1<-step(b1-1)
-p2<-1-p1
-
-}"
-
-dat<-list(value=molten$value, Year = molten$Year,n=length(molten$Year))
-
-#quick summary
-lapply(dat, summary)
-
-library(rjags)
-mod<-jags.model(file=textConnection(model1), data=dat, n.chains=2, n.adapt=1000)
-
-jags.samples(model= mod,variable.names=c("b0", "b1", "p1", "p2", "sd"), n.iter=1000 )
-
-
-
-summary(lm(dat$value~dat$Year, family=gaussian))
-
-
-samps<-coda.samples(mod, variable.names=c("b0", "b1", "sd"), n.iter=1000)
-
-#Numerical summary of each parameter:
-summary(samps)
-densityplot.mcmc(samps)
-densplot(samps)
-#OLSexamp <- lm(extro ~ open + agree + social, data = lmm.data)
-#summary(OLSexamp)
 
