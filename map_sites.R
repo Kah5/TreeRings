@@ -210,6 +210,7 @@ sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat
                                      colour = "darkgrey", fill = NA)
 
 sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  scale_shape_manual(values=1:4)+
   geom_text_repel(data = priority, aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
@@ -231,6 +232,7 @@ dev.off()
 #now make a map for sites cored in 2015 only:
 
 map2015 <- sites.map + geom_point(data = mound, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  scale_shape_manual(values=c(1,2,3))+
   geom_text_repel(data = mound, aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
@@ -243,6 +245,7 @@ dev.off()
 
 # map of sites cored in 2016 only:
 map2016 <- sites.map + geom_point(data = sites16, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  scale_shape_manual(values=c(1,2,4))+
   geom_text_repel(data = sites16, aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
