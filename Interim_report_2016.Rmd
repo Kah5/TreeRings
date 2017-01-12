@@ -70,16 +70,41 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Figure 3: Strength of site level climate correlations vary according to site level sand content characteristics.  A)Sensitivity of tree ring growth to August Precipitation across % sand gradient. B)Sensitivity of tree ring growth to July Tavg across % sand gradient. C). Sensitivity of tree ring growth to July Tmax across % sand gradient.
 
+```{r, out.width = "600px", fig.show='hold', echo = FALSE}
+library(png)
+library(grid)
+library(gridExtra)
+#grid.arrange(ncol = 2)
+
+knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_augPrecip.png" )
+knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_juntavg.png")
+knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_juntavg.png")
+
+
+```
 ![% sandiness vs. precip ](outputs/correlations/static_site_cors/site_cor_sand_augPrecip.png)
 
 ![% sandiness vs. tavg ](outputs/correlations/static_site_cors/site_cor_sand_juntavg.png)
 
 ![% sandiness vs. tmax ](outputs/correlations/static_site_cors/site_cor_sand_juntavg.png)
 
-Figure 4: Sensitivity of tree ring growth to PDSI across the time periods 1900-1950 (pre-1950, in red), and 1950-2014 (post-1950, in blue) for each site. A) Bonanza Prarire SNA, MN, B). 
+Figure 4: Sensitivity of tree ring growth to PDSI across the time periods 1900-1950 (pre-1950, in red), and 1950-2014 (post-1950, in blue) for each site. A). Bonanza Prarire SNA, MN, B). St. Croix SAvanna, MN, C).
 
-```{r cars}
-summary(cars)
+```{r, out.width = "400px", fig.show='hold', echo = FALSE}
+library(png)
+library(grid)
+library(gridExtra)
+#grid.arrange(ncol = 2)
+
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Hickory Grove, IL.png" )
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Bonanza Prairie, MN.png")
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Uncas Dunes, MN.png")
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_St.Croix Savanna, MN.png")
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Glacial Park, IL.png")
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Townsend Woods, MN.png")
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Coral Woods, IL.png")
+knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Englund Ecotone, MN.png")
+
 ```
 
 
