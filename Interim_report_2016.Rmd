@@ -63,7 +63,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ##Table 1:Site table with highest correlation, year cored, and species present.
 
-##Figure 2: Monthly correlations of annual tree ring width with climate: A). Correlations with monthly Palmer Drought Severity Index (PSDI), B).  Correlations with monthly Precipitation, C).  Correlations with monthly Maximum Temperature (tmax), D).  Correlations with monthly Minimum Temperature (tmin), C).  Correlations with monthly Average Temperature (tavg)
+```{r, echo = FALSE}
+library(knitr)
+tableresults<- read.csv('outputs/highest_cors_table.csv')
+tablespec <- read.csv('outputs/correlations_shifts_species.csv')
+df <- merge(tableresults, tablespec, by.x = 'site', by.y = 'Site')
+colnames(df) <- c('Site', 'X','mono', "Month of Highest Correlation", "Higest Correlation", "Correlation Coefficient", "Shift", "Species")
+kable(df[c("Site", "Month of Highest Correlation", "Higest Correlation", "Correlation Coefficient", "Species")], format = "markdown")
+```
+
+Figure 2: Monthly correlations of annual tree ring width with climate: A). Correlations with monthly Palmer Drought Severity Index (PSDI), B).  Correlations with monthly Precipitation, C).  Correlations with monthly Maximum Temperature (tmax), D).  Correlations with monthly Minimum Temperature (tmin), C).  Correlations with monthly Average Temperature (tavg)
 
 ![Correlation with PDSI](outputs/barplots/full_site_barplots_PDSI.png)
 ![Correlation with Precipitation](outputs/barplots/full_site_barplots_Precip.png)
@@ -83,13 +92,7 @@ knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_aug
 knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_juntavg.png")
 knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_juntavg.png")
 
-
 ```
-![% sandiness vs. precip ](outputs/correlations/static_site_cors/site_cor_sand_augPrecip.png)
-
-![% sandiness vs. tavg ](outputs/correlations/static_site_cors/site_cor_sand_juntavg.png)
-
-![% sandiness vs. tmax ](outputs/correlations/static_site_cors/site_cor_sand_juntavg.png)
 
 Figure 4: Sensitivity of tree ring growth to PDSI across the time periods 1900-1950 (pre-1950, in red), and 1950-2014 (post-1950, in blue) for each site. A). Bonanza Prarire SNA, MN, B). St. Croix SAvanna, MN, C).
 
@@ -109,7 +112,6 @@ knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Coral Woods, IL.
 knitr::include_graphics("outputs/correlations/pre_post_jul_pdsi_Englund Ecotone, MN.png")
 
 ```
-
 
 
 ### References:
