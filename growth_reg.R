@@ -188,7 +188,7 @@ b<- sites.barplot('Precip')+ annotate("text", x = .75, y = .33, label = "B).")
 a<- sites.barplot('PDSI')+ annotate("text", x = .75, y = .6, label = "A).")
 
 #plot all barplots in png for interim report
-png(width = 800, height = 850, 'outputs/barplots/barplots_all_sites_fig2.png')
+png(width = 800, height = 1000, 'outputs/barplots/barplots_all_sites_fig2.png')
 grid_arrange_shared_legend(a,b,c,d,e,nrow = 5, ncol = 1 )
 dev.off()
 
@@ -508,12 +508,12 @@ p<- ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
   xlim(-8, 8)+
   ylim(0.5, 1.5) +
   theme_bw()+
-  theme(text = element_text(size = 30), plot.title = element_text(hjust = 0.5))+
-  ylab('Detrended Ring width Index') +
+  theme(text = element_text(size = 15), plot.title = element_text(hjust = 0.5))+
+  ylab('Detrended RWI') +
   xlab( xlab ) +
   ggtitle(Site)
-
-ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
+p
+#ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
 }
 
 
@@ -569,20 +569,21 @@ plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleas
 
 #pdf('outputs/pdsi_pre_post_plots.pdf')
 
-plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant (only sig @ 0.15 )
-plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
-plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") #significant
-plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
-plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
-plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
-plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
+e<-plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
+a<- plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
+d<- plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant (only sig @ 0.15 )
+h<- plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
+c<-plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
+f<- plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") #significant
+g<- plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
+b<-plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
+i<-plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
+j<-plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
 
-#plot.pre.post(molten.DES, molten.DES$Jul.pdsi, 'July PDSI', "Bois de Soix, MN") #significant
-#plot.pre.post(molten.SAN, molten.SAN$Jul.pdsi, 'July PDSI', "Sandwich, IL") #significant
-#plot.pre.post(molten.PLP, molten.PLP$Jul.pdsi, 'July PDSI', "Pleasant Prarie, WI") #significant
+
+png(width = 600, height = 1000, 'outputs/correlations/all_site_pre_post_fig3.png')
+grid_arrange_shared_legend(a,b,c,d,e,f,g,h,i,j,nrow = 5, ncol = 2 )
+dev.off()
 
 dev.off()
 
