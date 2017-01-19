@@ -285,7 +285,7 @@ lm <- lm(formula = cor ~ env, data = x)
 print(summary(lm))
 ggplot(x, aes(env, cor, color = cor))+#geom_text_repel(aes(label = site))+
   scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+stat_smooth(method = 'lm')+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
-  xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))
+  xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))+
 
 }
 
@@ -367,13 +367,21 @@ cor.v.clim("tmax", 18,test, var = 'awc')
 cor.v.clim("Precip", 18,test, var = 'awc')
 dev.off()
 
-pdf("outputs/cor_coef_v_sand.pdf")
-cor.v.clim("PDSI", 18,test, var = "sand")
-cor.v.clim("tavg", 18,test, var = 'sand')
+#pdf("outputs/cor_coef_v_sand.pdf")
+cor.v.clim("PDSI", 18,test, var = "sand") + ylab('June PDSI correlation coefficient') + ggtitle('June PDSI correlation')
+b <- cor.v.clim("tavg", 18,test, var = 'sand')+ ylab('Correlation coefficient') + ggtitle('B). June Avg. Temperature')
 cor.v.clim("tmin", 18,test, var = 'sand')
-cor.v.clim("tmax", 18,test, var = 'sand')
-cor.v.clim("Precip", 18,test, var = 'sand')
-cor.v.clim("Precip", 20,test, var = 'sand')
+c <- cor.v.clim("tmax", 18,test, var = 'sand')+ ylab('Correlation coefficient') + ggtitle('C). June Max. Temperature')
+cor.v.clim("Precip", 18,test, var = 'sand')+ ylab('Correlation coefficient') + ggtitle('June Precipitation correlation')
+a <- cor.v.clim("Precip", 20,test, var = 'sand')+ ylab('Correlation coefficient') + ggtitle('A). August Precipitation')
+#dev.off()
+
+#print out a PNG
+png(width = 5, height = 9, units = 'in', res = 300,'outputs/correlations/all_site_cor_v_sand.png')
+pushViewport(viewport(layout = grid.layout(3, 1)))
+print(a, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(b, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(c, vp = viewport(layout.pos.row = 3, layout.pos.col = 1))
 dev.off()
 
 #plot correlations for savanna and forests
@@ -581,7 +589,7 @@ i<-plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone,
 j<-plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
 
 
-png(width = 600, height = 1000, 'outputs/correlations/all_site_pre_post_fig3.png')
+png(width = 600, height = 900, 'outputs/correlations/all_site_pre_post_fig3.png')
 grid_arrange_shared_legend(a,b,c,d,e,f,g,h,i,j,nrow = 5, ncol = 2 )
 dev.off()
 
