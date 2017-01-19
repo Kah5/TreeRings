@@ -110,11 +110,8 @@ kable(df[c("Site", "Month of Highest Cor.", "Higest Cor.", "Cor. Coefficient", "
 
 
 ```{r, out.width = "600px", fig.show='hold', echo = FALSE}
-knitr::include_graphics('outputs/barplots/full_site_barplots_PDSI.png')
-knitr::include_graphics('outputs/barplots/full_site_barplots_Precip.png')
-knitr::include_graphics('outputs/barplots/full_site_barplots_tmax.png')
-knitr::include_graphics('outputs/barplots/full_site_barplots_tmin.png')
-knitr::include_graphics('outputs/barplots/full_site_barplots_tavg.png')
+knitr::include_graphics('outputs/barplots/barplots_all_sites_fig2.png')
+
 ```
 
 

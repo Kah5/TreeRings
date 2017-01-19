@@ -48,7 +48,7 @@ site.cd <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU")
 
 for(i in 1:length(site.cd)){
   mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/barplots",paste("barplots_", site.cd[i], ".png", sep = ""))
-  cor.barplot(site.cd[i])
+  cor.barplot(site.cd[i]) 
   ggsave(filename=mypath)
 }
 
@@ -142,6 +142,7 @@ cors.melt[order(cors.melt$months),]
 output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
   #facet_grid(variable~.)+
+  scale_size(range=c(5,20), guide="none")+
   scale_fill_manual(values = rev(brewer.pal(n=9, "RdBu")))+
   theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
 output
@@ -155,14 +156,44 @@ for(i in 1:length(clim.cd)){
   ggsave(filename=mypath)
 }
 
-#pdf("outputs/barplots_clim_v_allsites.pdf", width = 15, height = 7)
+grid_arrange_shared_legend <- function(..., nrow = 1, ncol = length(list(...)), position = c("bottom", "right")) {
+  
+  plots <- list(...)
+  position <- match.arg(position)
+  g <- ggplotGrob(plots[[1]] + theme(legend.position = position))$grobs
+  legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+  lheight <- sum(legend$height)
+  lwidth <- sum(legend$width)
+  gl <- lapply(plots, function(x) x + theme(legend.position = "none"))
+  gl <- c(gl, nrow = nrow, ncol = ncol)
+  
+  combined <- switch(position,
+                     "bottom" = arrangeGrob(do.call(arrangeGrob, gl),
+                                            legend,
+                                            ncol = 1,
+                                            heights = unit.c(unit(1, "npc") - lheight, lheight)),
+                     "right" = arrangeGrob(do.call(arrangeGrob, gl),
+                                           legend,
+                                           ncol = 2,
+                                           widths = unit.c(unit(1, "npc") - lwidth, lwidth)))
+  grid.newpage()
+  grid.draw(combined)
+  
+}
 
-sites.barplot('tavg')
-sites.barplot('tmax')
-sites.barplot('tmin')
-sites.barplot('Precip')
-sites.barplot('PDSI')
-#dev.off()
+e<- sites.barplot('tavg')+ annotate("text", x = .75, y = .25, label = "E).")
+d<- sites.barplot('tmax')+ annotate("text", x = .75, y = .25, label = "D).")
+c<- sites.barplot('tmin')+ annotate("text", x = .75, y = .25, label = "C).")
+b<- sites.barplot('Precip')+ annotate("text", x = .75, y = .33, label = "B).")
+a<- sites.barplot('PDSI')+ annotate("text", x = .75, y = .6, label = "A).")
+
+#plot all barplots in png for interim report
+png(width = 800, height = 850, 'outputs/barplots/barplots_all_sites_fig2.png')
+grid_arrange_shared_legend(a,b,c,d,e,nrow = 5, ncol = 1 )
+dev.off()
+
+
+
 
 #rank the correlations based on highest to lowest for each site
 highest.cor <- function(site, i){
