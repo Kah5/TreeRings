@@ -88,11 +88,8 @@ fig4 <-fig_nums("deltacors", "Sensitivity of tree ring growth to PDSI across the
 `r fig_nums('maps')`
 ```{r, out.width = "400px", fig.show='hold',  echo = FALSE}
 
-knitr::include_graphics('outputs/precip_sites_full.png')
+knitr::include_graphics('outputs/precip_sites_map_fig1.png')
 
-knitr::include_graphics('outputs/precip_sites_2016.png')
-
-knitr::include_graphics('outputs/precip_sites_2015.png')
 ```
 
 ```{r, echo = FALSE, fig.cap = 'Table 1: Site table with highest correlation, year cored, and species present.'}
@@ -142,11 +139,9 @@ knitr::include_graphics("outputs/correlations/static_site_cors/site_cor_sand_jun
 
 
 
-
-
 `r fig_nums('deltacors')`
 
-```{r, out.width = "400px", fig.show='hold', echo = FALSE}
+```{r, fig.width=2, fig.height=2, fig.show='hold', echo = FALSE}
 library(png)
 library(grid)
 library(gridExtra)

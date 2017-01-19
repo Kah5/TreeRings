@@ -8,6 +8,7 @@ library(rgeos)
 library(ggplot2)
 library(rgdal)
 library(ggrepel)
+library(grid)
 
 MN.priority <- readOGR("data/priority.kml", layer = "Priority")
 #IL.MCCD <- readOGR('data/Fieldwork 2016.kml', layer = "McHenry")
@@ -203,11 +204,19 @@ cbPalette <- c('#a6611a',
 
 
 sites.map <- ggplot()+ geom_raster(data=test.df, aes(x=x, y=y, fill = avg))+
-  labs(x="easting", y="northing", title="Tree Core Sites 2015 & 2016") + 
-  scale_fill_gradientn(colours = cbPalette2, name ="MAP 1900-1910 (mm) ")+
+  labs(x="easting", y="northing", title="A). Tree Core Sites 2015 & 2016") + 
+  scale_fill_gradientn(colours = cbPalette2, name ="MAP (mm/yr) ")+
   coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
 sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
-                                     colour = "darkgrey", fill = NA)
+                                     colour = "darkgrey", fill = NA)+theme_bw() +
+  theme(axis.text = element_text(size = 14),
+        axis.text.y = element_text(angle = 90, size = rel(0.7), hjust = 0.75),
+        legend.key = element_rect(),
+        legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_line(colour = "grey40"),
+        panel.grid.minor = element_blank())
+sites.map
 
 sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
   scale_shape_manual(values=1:4)+
@@ -215,7 +224,7 @@ sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coo
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
                   point.padding = unit(1.5, "lines"))
-  
+sites.map2
 
 
 
@@ -237,7 +246,7 @@ map2015 <- sites.map + geom_point(data = mound, aes(x = coords.x1, y = coords.x2
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
                   point.padding = unit(1.5, "lines"))+
-  labs(x="easting", y="northing", title="Tree Core Sites 2015") 
+  labs(x="easting", y="northing", title="B). Tree Core Sites 2015") 
 
 png("outputs/precip_sites_2015.png")
 map2015
@@ -250,11 +259,20 @@ map2016 <- sites.map + geom_point(data = sites16, aes(x = coords.x1, y = coords.
                   fontface = 'bold', color = 'black',
                   box.padding = unit(1.5, "lines"),
                   point.padding = unit(1.5, "lines"))+
-  labs(x="easting", y="northing", title="Tree Core Sites 2016")
+  labs(x="easting", y="northing", title="C). Tree Core Sites 2016")
 
 png("outputs/precip_sites_2016.png")
 map2016
 dev.off()
+
+
+png(width = 800, height = 800, 'outputs/precip_sites_map_fig1.png')
+pushViewport(viewport(layout = grid.layout(2, 2)))
+print(sites.map2, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(map2015, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(map2016, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+dev.off()
+
 
 # now map for temperature from GHCN data
 air_temp.1900<- read.table("./data/air_temp_2014/air_temp.1900")
