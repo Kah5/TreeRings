@@ -181,14 +181,14 @@ grid_arrange_shared_legend <- function(..., nrow = 1, ncol = length(list(...)), 
   
 }
 
-e<- sites.barplot('tavg')+ annotate("text", x = .75, y = .25, label = "E).")
-d<- sites.barplot('tmax')+ annotate("text", x = .75, y = .25, label = "D).")
-c<- sites.barplot('tmin')+ annotate("text", x = .75, y = .25, label = "C).")
-b<- sites.barplot('Precip')+ annotate("text", x = .75, y = .33, label = "B).")
-a<- sites.barplot('PDSI')+ annotate("text", x = .75, y = .6, label = "A).")
+e<- sites.barplot('tavg')+ggtitle("E). Average Temperature")
+d<- sites.barplot('tmax')+ ggtitle("D). Maximum Temperature")
+c<- sites.barplot('tmin')+ ggtitle("C). Minimum Temperature")
+b<- sites.barplot('Precip')+ ggtitle("B). Precipitation")
+a<- sites.barplot('PDSI')+ ggtitle("A). Palmer Drought Severity Index")
 
 #plot all barplots in png for interim report
-png(width = 800, height = 1000, 'outputs/barplots/barplots_all_sites_fig2.png')
+png(width = 8, height = 10, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_fig2.png')
 grid_arrange_shared_legend(a,b,c,d,e,nrow = 5, ncol = 1 )
 dev.off()
 
@@ -516,7 +516,7 @@ p<- ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
   xlim(-8, 8)+
   ylim(0.5, 1.5) +
   theme_bw()+
-  theme(text = element_text(size = 15), plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
   ylab('Detrended RWI') +
   xlab( xlab ) +
   ggtitle(Site)
@@ -589,7 +589,7 @@ i<-plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone,
 j<-plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
 
 
-png(width = 600, height = 900, 'outputs/correlations/all_site_pre_post_fig3.png')
+png(width = 6, height = 9, units = 'in', res = 300, 'outputs/correlations/all_site_pre_post_fig3.png')
 grid_arrange_shared_legend(a,b,c,d,e,f,g,h,i,j,nrow = 5, ncol = 2 )
 dev.off()
 

@@ -38,10 +38,10 @@ sites16.lat <- sites16
 sites16 <- spTransform(sites16, CRSobj = CRS('+init=epsg:3175'))
 sites16 <- data.frame(sites16)
 sites16.lat <- data.frame(sites16.lat)
-sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP")
-sites16.lat$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP")
+sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
+sites16.lat$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
 sites16$Description <- c("Forest", "Savanna", "Savanna", 
-                         "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
+                         "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
 # merge the two data sets using rbind
 priority <- rbind(mound, sites16)
 
@@ -266,7 +266,7 @@ map2016
 dev.off()
 
 
-png(width = 800, height = 800, 'outputs/precip_sites_map_fig1.png')
+png(width = 8, height = 8, units = 'in', res = 300, 'outputs/precip_sites_map_fig1.png')
 pushViewport(viewport(layout = grid.layout(2, 2)))
 print(sites.map2, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(map2015, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
