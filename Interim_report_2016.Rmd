@@ -1,9 +1,9 @@
 ---
-title: "Interim Tree Ring Report 2016"
+title: "Project Title: Investigating past ecosystem carbon uptake and water use in Midwestern Oak Savannas, woodlands, and forests"
+date: "January 17, 2017"
 author: Kelly Heilman
 affiliation: University of Notre Dame
 email: kheilman@nd.edu
-date: "January 17, 2017"
 output: word_document
 fontsize: 11pt
 geometry: margin=1in
@@ -15,7 +15,9 @@ bibliography: TreeRingReport.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-MNDNR Parks & Trails Research Permit: 
+MNDNR Parks & Trails Research Permit:  201650
+
+Scientific & Natural Areas Popgram Permit: 2016-40R
 
 ## Research Objectives:
 ****
@@ -36,8 +38,7 @@ MNDNR Parks & Trails Research Permit:
 ****
 ###*Field Sampling:*
   Previously in 2015, tree cores were sampled using either dispersed sampling (plotless) or a 15m radius plot sampling from select sites across the Midwest (Minnesota, Wisconsin, Iowa, Missouri, and Illinois). In 2016 Tree core samples of 5mm diameter (plant) were collected from trees at the following Minnesota Parks: Itasca State Park (2 plots), Glendalough State Park (2 plots), Glacial Lakes State Park (4 plots), Maplewood State Park (2 plots), Avon Hills SNA (1 plot), and Uncas Dunes SNA (1 plot). In both plots and dispersed sampling methods, tree species, Diameter at Breast Height (DBH) and estimated crown widths were recorded for each tree. For trees in plot sampling, the distance and direction from the plot center were recorded. For dispersed sampling, a GPS waypoint was recorded at each tree cored. 
-  
-###*Sites Sampled 2016*
+  For a full list of specimens collected at each site, please see attached file. 
 
 ###*Tree Core Processing:*
   We prioritized the measurement of *Quercus spp*. from sites from both 2016 and 2015. Tree cores are mounted using water soluble hide glue, sanded, and the number of rings is counted. We measured both earlywood growth, latewood growth, and whole wood growth to the nearest 0.001mm using a Velmax and stored in Tellervo. Whole wood measurements were stored on Tellervo cross dated using the program COFECHA (@grissino-mayer_evaluating_2001). Tree ring records were age detrended using Splines and aggregated into site chronologies using the dplR package in R statistical software (@bunn_statistical_2010). Sites where the developed chronologies are well crossdated are presented here and tree core processing is ongoing in our lab.  
@@ -76,7 +77,7 @@ This is an interim report and represents preliminary results and findings to dat
 
 ##Acknowledgements:
 ****
-This material is based upon work carried out by the PalEON Project (paleonproject.org) with support from the National Science Foundation MacroSystems Biology program under grant no. DEB-	1241874. Additional funding and support from University of Notre Dame Environmental Change Initiative and the Arthur J. Schmitt Leadership Fellowship. Special thanks to Jacklyn Coontz, Clare Bruntrock, Ann Raiho, and Santiago Thompson for field and labwork contributions.
+This material is based upon work carried out by the PalEON Project (paleonproject.org) with support from the National Science Foundation MacroSystems Biology program under grant no. DEB-	1241874. Additional funding and support from University of Notre Dame Environmental Change Initiative and the Arthur J. Schmitt Leadership Fellowship. Special thanks to Jacklyn Cooney, Clare Bruntrock, Ann Raiho, and Santiago Thompson for field and labwork contributions.
 
 
 ```{r, echo = FALSE}

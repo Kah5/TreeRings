@@ -16,7 +16,7 @@ StCroix <- read.tucson('./cofecha/STCww.rwl')
 Coral <- read.tucson('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl')
 Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
 Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
-
+Mound <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
 
 #and some records from ITRDB:
 PleasantPrairie <- read.tucson('data/wi006.rwl')#Pleasant prairie site from IRTDB--not to be confused with KH collected from pleasant valley conservancy
@@ -27,6 +27,7 @@ Sandwich <- read.tucson ("data/il002.rwl")
 Desoix <- read.tucson ("data/mn029.rwl") #Dubois de Souix record--north of bonanaza
 Yellow <- read.tucson ("data/ia029.rwl") #itrdb
 
+#this function uses dplr to read rwl files,plot spaghetti plots, detrend and plot chronologies
 read_detrend_rwl <- function(rwl, name){
   pdf(paste0('outputs/spagplots/',name,'.pdf'))
   plot(rwl, plot.type = 'spag')
@@ -35,6 +36,9 @@ read_detrend_rwl <- function(rwl, name){
   #detrend
   rwl.rwi <- detrend(rwl = rwl, method = "ModNegExp")
   rwl <- chron(rwl.rwi)
+  pdf(paste0('outputs/cronplots/', name, '.pdf'))
+  plot(rwl)
+  dev.off()
   #rwl.bai <- chron(bai.out(rwl.rwi))
   #rwl.bai$Year <- min(as.numeric(rownames(rwl))):max(as.numeric(rownames(rwl)))
   #rwl.bai$Site <- name
@@ -53,6 +57,7 @@ StCroix <- read_detrend_rwl(StCroix, "StCroix")
 Coral <- read_detrend_rwl(Coral, "Coral")
 Uncas <- read_detrend_rwl(Uncas, "Uncas")
 Englund <- read_detrend_rwl(Englund, "Englund")
+Mound <- read_detrend_rwl(Mound, "Mound")
 
 
 
@@ -91,6 +96,7 @@ MNwc.clim <- read.csv("data/West_central_MN_nclimdiv.csv") #Bonanza praire, Dubo
 WIsc.clim <- read.csv("data/south_central_WI_climdiv.csv") #pleasant valley conservancy
 MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #townsend woods 
 MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #St. Croix savanna
+MNse.clim <- read.csv("data/South_East_MN_CDO.csv") # for mound prairie
 
 #this function merges relevant climate parameters with the rwi site chronologies
 merge.clim.chron <- function(MNcd.clim, chron){
@@ -185,6 +191,7 @@ molten.TOW <- merge.clim.chron(MNec.clim, Townsend)
 molten.STC <- merge.clim.chron(MNec.clim, StCroix)
 molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
 molten.ENG <- merge.clim.chron(MNec.clim, Englund)
+molten.MOU <- merge.clim.chron(MNse.clim, Mound)
 
 ###############################################################
 #using the treeclim R pacakge to calculate moving correlations#
@@ -298,8 +305,9 @@ clim.cor(WIse.clim, PleasantPrairie, 'Pleasant_Prairie_')
 clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
 clim.cor(MNwc.clim, Desoix, 'Desoix_')
 clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
-clim.cor(MNse.clim, Townsend, 'Townsend_woods_')
-clim.cor(MNse.clim, StCroix, 'StCroix_savanna_')
+clim.cor(MNec.clim, Townsend, 'Townsend_woods_')
+clim.cor(MNec.clim, StCroix, 'StCroix_savanna_')
+clim.cor(MNse.clim, Mound, 'Mound_prairie_')
 
 
 
@@ -513,5 +521,5 @@ plot(df.list$annualclim$TMIN, df.list$rwi$HIC397)
 
 #want to plot all 
 molten.full <- rbind(molten.HIC, molten.BON, molten.STC, #molten.PLE,
-                     molten.TOW, molten.ENG, molten.UNC, molten.COR, molten.GLA)
+                     molten.TOW, molten.ENG, molten.UNC, molten.COR, molten.GLA, molten.MOU)
 

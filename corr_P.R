@@ -38,11 +38,12 @@ if(wood == "EW"){
   Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
   Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
   Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
+  Mound <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
   }}
 
 #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
-site <- Bonanza
-site.code <- "BON"
+site <- Mound
+site.code <- "MOU"
 
 
 ##################################################
@@ -95,6 +96,8 @@ MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
   MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
 }else{ if(site.code == "TOW"){
   MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
+}else{ if(site.code == "MOU"){
+  MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
 }else{ if(site.code == "UNC"){
   MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 }else { if(site.code == 'PLE'){
@@ -102,6 +105,7 @@ MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 }else { if(site.code == 'YRF'){
   MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
   #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
+}
 }
 }
 }
