@@ -1,11 +1,10 @@
 ---
 title: "Interim Tree Ring Report 2016"
-author:
-- affiliation: University of Notre Dame
-  name: Kelly Heilman
+author: Kelly Heilman
+affiliation: University of Notre Dame
+email: kheilman@nd.edu
 date: "January 17, 2017"
 output: word_document
-
 fontsize: 11pt
 geometry: margin=1in
 fontfamily: mathpazo
@@ -16,6 +15,7 @@ bibliography: TreeRingReport.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+MNDNR Parks & Trails Research Permit: 
 
 ## Research Objectives:
 ****
@@ -35,7 +35,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ##Methods: 
 ****
 ###*Field Sampling:*
-  Previously in 2015, tree cores were sampled using either dispersed sampling (plotless) or a 15m radius plot sampling from select sites across the Midwest (Minnesota, Wisconsin, Iowa, Missouri, and Illinois). In 2016, core samples were taken from trees in 15m radius plots at sites in Minnesota State Parks/SNA’s and in McHenry County Conservation District, IL. In both plots and dispersed sampling methods, tree species, Diameter at Breast Height (DBH) and estimated crown widths were recorded for each tree. For trees in plot sampling, the distance and direction from the plot center were recorded. For dispersed sampling, a GPS waypoint was recorded at each tree cored. 
+  Previously in 2015, tree cores were sampled using either dispersed sampling (plotless) or a 15m radius plot sampling from select sites across the Midwest (Minnesota, Wisconsin, Iowa, Missouri, and Illinois). In 2016 Tree core samples of 5mm diameter (plant) were collected from trees at the following Minnesota Parks: Itasca State Park (2 plots), Glendalough State Park (2 plots), Glacial Lakes State Park (4 plots), Maplewood State Park (2 plots), Avon Hills SNA (1 plot), and Uncas Dunes SNA (1 plot). In both plots and dispersed sampling methods, tree species, Diameter at Breast Height (DBH) and estimated crown widths were recorded for each tree. For trees in plot sampling, the distance and direction from the plot center were recorded. For dispersed sampling, a GPS waypoint was recorded at each tree cored. 
+  
+###*Sites Sampled 2016*
 
 ###*Tree Core Processing:*
   We prioritized the measurement of *Quercus spp*. from sites from both 2016 and 2015. Tree cores are mounted using water soluble hide glue, sanded, and the number of rings is counted. We measured both earlywood growth, latewood growth, and whole wood growth to the nearest 0.001mm using a Velmax and stored in Tellervo. Whole wood measurements were stored on Tellervo cross dated using the program COFECHA (@grissino-mayer_evaluating_2001). Tree ring records were age detrended using Splines and aggregated into site chronologies using the dplR package in R statistical software (@bunn_statistical_2010). Sites where the developed chronologies are well crossdated are presented here and tree core processing is ongoing in our lab.  
@@ -69,6 +71,9 @@ While there were differences in which species and sites showed the declines in g
 ****
 Several of the sites and species cored during summer field seasons of 2015 and 2016 are currently being counted, measured, and crossdated in our laboratory, and as such, I have only presented results from well cross-dated series. Ongoing work will prioritize measurement of closed forest sites, particularly in Minnesota, and expand the analysis beyond the oak species sampled. Additional analyses proposed include examining growth responses of savanna trees post-land management practices to quantify the impact (if any) of prescribed fires, or land clearing on individual tree growth, where we have datasets for this type of analysis. Additionally, development of a full model that explains annual Ring Width as a function of tree Age, climate, soil types and with random effects for site and species factors will provide a more comprehensive model for tree growth across the region. 
 
+##Project Documentation & Dispostion of specimens:
+This is an interim report and represents preliminary results and findings to date. Final results will be documented in a written manuscript in a peer reviewed scientific journal (date and journal TBD). Specimens collected are still being measured at the McLachlan Lab at University of Notre Dame. Ring Width measurements are stored on the University of Notre Dame Tellervo Server and will be made publically avaliable post-publication.
+
 ##Acknowledgements:
 ****
 This material is based upon work carried out by the PalEON Project (paleonproject.org) with support from the National Science Foundation MacroSystems Biology program under grant no. DEB-	1241874. Additional funding and support from University of Notre Dame Environmental Change Initiative and the Arthur J. Schmitt Leadership Fellowship. Special thanks to Jacklyn Coontz, Clare Bruntrock, Ann Raiho, and Santiago Thompson for field and labwork contributions.
@@ -79,47 +84,54 @@ library(captioner)
 table_nums <- captioner(prefix = "Table")
 fig_nums <- captioner(prefix = "Figure")
 fig1 <- fig_nums("maps", "Location of sites across a gradient of Mean Annual Precipitation. A). All sites, B). Sites cored in 2016, C). Sites cored in 2015.")
-fig2 <- fig_nums("Cors", "Monthly correlations of annual tree ring width with climate: A). Correlations with monthly Palmer Drought Severity Index (PSDI), B).  Correlations with monthly Precipitation, C).  Correlations with monthly Maximum Temperature (tmax), D).  Correlations with monthly Minimum Temperature (tmin), C).  Correlations with monthly Average Temperature (tavg)")
-fig3 <- fig_nums("soilcors", "Strength of site level climate correlations vary according to site level sand content characteristics.  A)Sensitivity of tree ring growth to August Precipitation across % sand gradient. B)Sensitivity of tree ring growth to July Tavg across % sand gradient. C). Sensitivity of tree ring growth to July Tmax across % sand gradient.")
+fig2 <- fig_nums("Cors", "Monthly correlations of annual tree ring width with monthly climate: A).Palmer Drought Severity Index (PSDI), B). Precipitation, C).Maximum Temperature (tmax), D). Minimum Temperature (tmin), E).Average Temperature (tavg). Sites with higher Annual Precipitation are shown in blue and lower precipitaiton in red.")
+fig3 <- fig_nums("soilcors", "Strength of site level climate correlations vary according to site level sand content characteristics. A).Sensitivity of tree ring growth to August Precipitation across % sand gradient. B).Sensitivity of tree ring growth to July Tavg across % sand gradient. C).Sensitivity of tree ring growth to July Tmax across % sand gradient.")
+
 fig4 <-fig_nums("deltacors", "Sensitivity of tree ring growth to PDSI across the time periods 1900-1950 (pre-1950, in red), and 1950-2014 (post-1950, in blue) for each site.")
 ```
+Page Break
+
 ##Figures:
 ****
 `r fig_nums('maps')`
-```{r, out.width = "400px", fig.show='hold',  echo = FALSE}
+
+```{r, fig.show='hold',  echo = FALSE}
 
 knitr::include_graphics('outputs/precip_sites_map_fig1.png')
 
 ```
+Page Break
+
+Table 1: Site table with highest climatic correlation, month of highest correlation coefficient, and species cored at the site.
 
 ```{r, echo = FALSE, fig.cap = 'Table 1: Site table with highest correlation, year cored, and species present.'}
 
 library(knitr)
+library(pander)
 tableresults<- read.csv('outputs/highest_cors_table.csv')
 tablespec <- read.csv('outputs/correlations_shifts_species.csv')
 df <- merge(tableresults, tablespec, by.x = 'site', by.y = 'Site')
-colnames(df) <- c('Site', 'X','mono', "Month of Highest Cor.", "Higest Cor.", "Cor. Coefficient", "Shift", "Species")
-kable(df[c("Site", "Month of Highest Cor.", "Higest Cor.", "Cor. Coefficient", "Species")], format = "markdown")
+colnames(df) <- c('Site', 'X','mono', "Month", "Higest Cor.", "Cor. Coeff.", "Shift", "Species")
+
+pander(df[c("Site", "Month", "Higest Cor.", "Cor. Coeff.", "Species")], split.cells = 30)
 ```
 
 
-
+Page Break
 
 
 `r fig_nums('Cors')`
 
 
-```{r, out.width = "800px", fig.show='hold', echo = FALSE}
+```{r, fig.show='hold', echo = FALSE}
 knitr::include_graphics('outputs/barplots/barplots_all_sites_fig2.png')
 
 ```
 
 
+Page Break
 
-
-`r fig_nums('soilcors')`
-
-
+Figure 3: Strength of site level climate correlations vary according to site level sand content characteristics. A).Sensitivity of tree ring growth to August Precipitation across % sand gradient. B).Sensitivity of tree ring growth to July Tavg across % sand gradient. C).Sensitivity of tree ring growth to July Tmax across % sand gradient.
 
 ```{r,fig.height=3, fig.width=5, out.height=300, out.width=500, dpi=300, fig.show='hold', echo = FALSE}
 
@@ -133,7 +145,7 @@ knitr::include_graphics("outputs/correlations/all_site_cor_v_sand.png")
 
 ```
 
-
+Page Break
 
 `r fig_nums('deltacors')`
 
@@ -148,6 +160,7 @@ knitr::include_graphics("outputs/correlations/all_site_pre_post_fig3.png" )
 
 ```
 
+Page Break
 
 ### References:
 ****
