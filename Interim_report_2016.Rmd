@@ -15,9 +15,6 @@ bibliography: TreeRingReport.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-MNDNR Parks & Trails Research Permit:  201650
-
-Scientific & Natural Areas Popgram Permit: 2016-40R
 
 ## Research Objectives:
 ****
@@ -37,8 +34,8 @@ Scientific & Natural Areas Popgram Permit: 2016-40R
 ##Methods: 
 ****
 ###*Field Sampling:*
-  Previously in 2015, tree cores were sampled using either dispersed sampling (plotless) or a 15m radius plot sampling from select sites across the Midwest (Minnesota, Wisconsin, Iowa, Missouri, and Illinois). In 2016 Tree core samples of 5mm diameter (plant) were collected from trees at the following Minnesota Parks: Itasca State Park (2 plots), Glendalough State Park (2 plots), Glacial Lakes State Park (4 plots), Maplewood State Park (2 plots), Avon Hills SNA (1 plot), and Uncas Dunes SNA (1 plot). In both plots and dispersed sampling methods, tree species, Diameter at Breast Height (DBH) and estimated crown widths were recorded for each tree. For trees in plot sampling, the distance and direction from the plot center were recorded. For dispersed sampling, a GPS waypoint was recorded at each tree cored. 
-  For a full list of specimens collected at each site, please see attached file. 
+  Previously in 2015, tree cores were sampled using either dispersed sampling (plotless) or a 15m radius plot sampling from select sites across the Midwest (Minnesota, Wisconsin, Iowa, Missouri, and Illinois). In 2016 Tree core samples of 5mm diameter (plant) were collected from trees at the following McHenry County Conservation District Parks: Pleasant Valley Conservation Area (1 site) and Coral Woods (1 site). Additionally, research was conducted at the following Minnesota Parks: Itasca State Park (2 plots), Glendalough State Park (2 plots), Glacial Lakes State Park (4 plots), Maplewood State Park (2 plots), Avon Hills SNA (1 plot), and Uncas Dunes SNA (1 plot). In both plots and dispersed sampling methods, tree species, Diameter at Breast Height (DBH) and estimated crown widths were recorded for each tree. For trees in plot sampling, the distance and direction from the plot center were recorded. For dispersed sampling, a GPS waypoint was recorded at each tree cored. 
+
 
 ###*Tree Core Processing:*
   We prioritized the measurement of *Quercus spp*. from sites from both 2016 and 2015. Tree cores are mounted using water soluble hide glue, sanded, and the number of rings is counted. We measured both earlywood growth, latewood growth, and whole wood growth to the nearest 0.001mm using a Velmax and stored in Tellervo. Whole wood measurements were stored on Tellervo cross dated using the program COFECHA (@grissino-mayer_evaluating_2001). Tree ring records were age detrended using Splines and aggregated into site chronologies using the dplR package in R statistical software (@bunn_statistical_2010). Sites where the developed chronologies are well crossdated are presented here and tree core processing is ongoing in our lab.  
