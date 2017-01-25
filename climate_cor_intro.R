@@ -196,3 +196,4 @@ output
 }
 
 climate.barplot(precip, site.code, "Precipitation")
+# based on this barplot, precipitation from the previous july has the strongest correlation with climate

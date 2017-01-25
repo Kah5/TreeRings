@@ -117,8 +117,8 @@ MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 }
 }
 }
-MNcd.clim$PCP <- MNcd.clim$PCP*25.54 # convert to mm
 
+MNcd.clim$PCP <- MNcd.clim$PCP*25.54 # convert to mm
 keeps <- c("Year", "Month",  "PCP")
 keepstavg <- c("Year", "Month", "TAVG")
 keepst <- c("Year", "Month",  "TMAX")
