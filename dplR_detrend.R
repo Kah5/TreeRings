@@ -37,6 +37,9 @@ plot(series, type = 'l',
      xlab = "Raw Tree Ring Width", 
      main = "Raw Tree Ring Width")
 
+# we can also look at descriptive stats for Bonanaza using rwl.stats()
+rwl.stats(site[,1:10])
+
 # notice that this record has very high growth at the beginning and a year of very high growth in the middle
 # The Growth at the beginning of the record is often thought of as age related fast growth
 # The growth in the middle may be in response to disturbances or climate
@@ -53,3 +56,22 @@ plot(series, type = 'l',
 # It prints the resulting detrended ring width series for each method
 series.rwi <- detrend.series(y = series, y.name = "BON13a", verbose=TRUE)
 
+
+
+# we can then detrend an entire site using the same method using the detrend function()
+# this function uses detrend.series on all the series in the rwl file
+site.code.rwi <- detrend(rwl = site, method = "Spline")
+
+# in reality, we should make sure that the method we use to detrend is apppriate,
+# but for an intro, we will just ignore it. 
+
+# once we have all of the series in the site detrended, we can create a chronology
+#
+site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
+#write chronology to text 
+crn.trend <- chron(site, prefix= paste(site.code), prewhiten = TRUE)
+crn.prewhiten <- chron(site,prefix= paste(site.code), prewhiten = TRUE ) #also has residuals
+
+write.csv(site.code.crn, paste0(site.code, "-crn.csv"))
+crn.plot(site.code.crn, add.spline = TRUE)
+site.code.stats <- rwi.stats(site)
