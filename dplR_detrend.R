@@ -60,18 +60,26 @@ series.rwi <- detrend.series(y = series, y.name = "BON13a", verbose=TRUE)
 
 # we can then detrend an entire site using the same method using the detrend function()
 # this function uses detrend.series on all the series in the rwl file
-site.code.rwi <- detrend(rwl = site, method = "Spline")
+site.code.rwi <- detrend(rwl = site, method = "Friedman")
 
 # in reality, we should make sure that the method we use to detrend is apppriate,
-# but for an intro, we will just ignore it. 
+# but for an intro, we will just assume a Friedman is appropriate. 
 
 # once we have all of the series in the site detrended, we can create a chronology
-#
 site.code.crn <- chron(site.code.rwi, prefix = paste(site.code))
-#write chronology to text 
-crn.trend <- chron(site, prefix= paste(site.code), prewhiten = TRUE)
-crn.prewhiten <- chron(site,prefix= paste(site.code), prewhiten = TRUE ) #also has residuals
+# a chronology can be thought of as an average of the detrended growth for each year 
 
-write.csv(site.code.crn, paste0(site.code, "-crn.csv"))
+# the site.code.crn object now has two columns, BONstd (the value for chronology) and samp.depth (the )
+head(site.code.crn)
+
+# We can then plot the detrended chronology. This plot also has sample depth on it
 crn.plot(site.code.crn, add.spline = TRUE)
-site.code.stats <- rwi.stats(site)
+
+# for refrence, this is what the plot would look like if we did not detrend:
+Trended.crn <- chron(site, prefix = paste(site.code))
+crn.plot(Trended.crn, add.spline = TRUE)
+
+# create a column that for the years
+site.code.crn$Year <- rownames(site.code.crn)
+#write the detrend chronology to text: This allows us to use it later
+write.csv(site.code.crn, paste0('data/crn/',site.code, "-crn.csv"))
