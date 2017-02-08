@@ -436,6 +436,39 @@ cor.v.type("tmin", 18,test, var = 'sand')
 cor.v.type("tmax", 18,test, var = 'sand')
 cor.v.type("Precip", 18,test, var = 'sand')
 cor.v.type("Precip", 20,test, var = 'sand')
+
+
+mean.growth.barplot <- function(clim,mono, pre){
+  locs <- read.csv("outputs/priority_sites_locs.csv")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+  
+  meangrowth <- matrix(NA ,nrow = length(sites), ncol = 2)
+  for (i in 1:length(sites)){
+    meangrowth[i,1] <- sites[i]
+    a <- read.csv(paste0("data/site_stats/",sites[i], "-site_stats.csv"))
+    meangrowth[i,2] <- mean(a$mean)
+  }
+  meangrowth <- meangrowth[order(as.numeric(meangrowth[,2])),]
+  site.order <- rev(meangrowth[,1])
+  meangrowth <- data.frame(meangrowth)
+  colnames(meangrowth) <- c("site", "Meangrowth")
+  meangrowth <- merge(meangrowth, locs, by.x = 'site', by.y = 'code')
+  month.coef <- matrix(NA, nrow = length(meangrowth[,1]), ncol = 1)
+  for(i in 1:length(meangrowth[,1])){
+    cors <- read.csv(paste0(meangrowth[i,1], "-WW", clim, "cor.csv"))
+    month.coef[i,] <- cors[mono,]$V1
+  }
+  x <- as.data.frame(meangrowth)
+  x$cor <- as.vector(month.coef)
+  x$Meangrowth <- as.numeric(x$Meangrowth)
+  colnames(x[,1:3]) <- c('site', "Meangrowth", "cor")
+  
+  ggplot(x, aes(site, Meangrowth, fill = Description))+#geom_text_repel(aes(label = site))+
+    geom_bar(stat= 'identity') + theme_bw()
+}
+mean.growth.barplot("Precip", 20,test)
+
+
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
 #compare climate coreelaitons c
