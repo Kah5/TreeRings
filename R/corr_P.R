@@ -42,14 +42,18 @@ if(wood == "EW"){
   }}
 
 #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
-site <- Mound
-site.code <- "MOU"
+site <- Hickory
+site.code <- "HIC"
 
 
 ##################################################
 #################################################
 ################################################
 ################################################
+
+stats.rwl <- rwl.stats(site)
+write.csv(stats.rwl, paste0("data/site_stats/",site.code, "-site_stats.csv"))
+
 site.code.rwi <- detrend(rwl = site, method = "Spline")
 plot(site)
 #create chronology of sites
