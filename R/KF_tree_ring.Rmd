@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Kalman Filter/Time varying Regression model to estimate tree ring regressions 
-
+code  based off an example from:
 <http://lalas.github.io/quantitativeThoughts/r/2014/09/01/dlmTutorial.html#topic2.1>
 ```{r cars}
 library(dplR)
@@ -36,9 +36,12 @@ You can also embed plots, for example:
 library(PerformanceAnalytics, quietly = TRUE,  warn.conflicts = FALSE)
 library(dlm)
 
+val <- molten.BON
+clim <- "Jul.pdsi"
+kalman.plot <- function(val, clim){
 # convert to xts objects
-tr<- as.xts(molten.PLE[,c("value")], order.by = as.yearqtr(molten.PLE$Year))
-pdsi <- as.xts(molten.PLE[,c( "PDSI")], order.by = as.yearqtr(molten.PLE$Year))
+tr<- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
+pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
 
 # Specifying a set model parameters
 s2_obs = 1      # Variance of observations
@@ -59,8 +62,7 @@ tvp.dlm[c("JFF","JV","JGG","JW")]
 #ols.fit = lm(HAM1 ~ sp500)
 ols.fit <- lm(tr ~ pdsi)
 summary(ols.fit)
-```
-```{r}
+
 start.vals = c(0,0,0)
 # Names ln variance of: observation y, alpha and beta (corresponding intercept and slope of y (tr index) with respect to X (PDSI))
 names(start.vals) = c("lns2_obs", "lns2_alpha", "lns2_beta")
@@ -79,8 +81,7 @@ se2 <- sqrt(exp(TVP.mle$par))
 names(se2) = c("s_obs", "s_alpha", "s_beta")
 sqrt(se2)
 
-```
-```{r}
+
 # Build fitted ss model, passing to it sp500 as the matrix X in the model
 TVP.dlm <- buildTVP(TVP.mle$par, pdsi)
 #Filtering and Smooting:
@@ -89,21 +90,21 @@ TVP.dlm <- buildTVP(TVP.mle$par, pdsi)
 #Now that we have obtained model estimates, and build the optimal model, we can filter the data through it, to obtain filtered values of the state vectors, together with their variance/co-variance matrices.
 
 TVP.f <- dlmFilter(y = tr, mod = TVP.dlm)
-class(TVP.f)
+#class(TVP.f)
 
-names(TVP.f)
+#names(TVP.f)
 
 #Similarly, to obtained the smoothed values of the state vectors, together with their variance/co-variance matrices; using knowledge of the entire series
 
 # Optimal estimates of θ_t given information available at time T.
 TVP.s <- dlmSmooth(TVP.f)
-class(TVP.s)
+#class(TVP.s)
 
-```
 
-Plotting the results (smoothed values)
-Now that we have obtained the smoothed values of the state vectors, we can draw them as:
-```{r}
+
+#Plotting the results (smoothed values)
+#Now that we have obtained the smoothed values of the state vectors, we can draw them as:
+
 
 
 # extract smoothed states - intercept and slope coefs
@@ -124,7 +125,7 @@ a.l = alpha.s - 1.96*se.xts[, "alpha"]
 b.u = beta.s  + 1.96*se.xts[, "beta"]
 b.l = beta.s  - 1.96*se.xts[, "beta"]
 #And plotting the results with +/- 2 times the standard deviation
-
+par(mfrow = c(2,1))
 # plot smoothed estimates with +/- 2*SE bands
 chart.TimeSeries(cbind(alpha.s, a.l, a.u), main="Smoothed estimates of alpha", ylim=c(0,2),
                  colorset=c(1,2,2), lty=c(1,2,2),ylab=expression(alpha),xlab="")
@@ -132,6 +133,58 @@ chart.TimeSeries(cbind(alpha.s, a.l, a.u), main="Smoothed estimates of alpha", y
 chart.TimeSeries(cbind(beta.s, b.l, b.u), main="Smoothed estimates of beta",
                  colorset=c(1,2,2), lty=c(1,2,2),ylab=expression(beta),xlab="")
 
+
+}
+
+X11(width = 12)
+kalman.plot(val = molten.UNC, clim = "Jul.pdsi")
+kalman.plot(val = molten.BON, clim = "Jul.pdsi")
+kalman.plot(val = molten.HIC, clim = "Jul.pdsi")
+kalman.plot(val = molten.STC, clim = "Jul.pdsi")
+kalman.plot(val = molten.TOW, clim = "Jul.pdsi")
+kalman.plot(val = molten.COR, clim = "Jul.pdsi")
+kalman.plot(val = molten.ENG, clim = "Jul.pdsi")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## lets try specifying a model using the package FKF
+```{r}
+library(FKF)
+## Local level model for the treering width data.
+## Transition equation:
+## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)
+## Measurement equation:
+## y[t] = alpha[t] + eps[t], eps[t] ~ N(0, GGt)
+y <- treering
+y[c(3, 10)] <- NA # NA values can be handled
+
+## Set constant parameters:
+dt <- ct <- matrix(0)
+Zt <- Tt <- matrix(1)
+a0 <- y[1] # Estimation of the first width
+P0 <- matrix(100) # Variance of 'a0'
+
+## Estimate parameters:
+fit.fkf <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
+GGt = var(y, na.rm = TRUE) * .5),
+fn = function(par, ...)
+-fkf(HHt = matrix(par[1]), GGt = matrix(par[2]), ...)$logLik,
+yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
+Zt = Zt, Tt = Tt, check.input = FALSE)
+
+## Filter Nile data with estimated parameters:
+fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = matrix(fit.fkf$par[1]),
+GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
+
+## Plot the width together with fitted local levels:
+plot(y, main = "Treering data")
+lines(ts(fkf.obj$att[1, ], start = start(y), frequency = frequency(y)), col = "blue")
+legend("top", c("Treering data", "Local level"), col = c("black", "blue"), lty = 1)
+
+## Check the residuals for normality:
+plot(fkf.obj, type = "resid.qq")
+
+## Test for autocorrelation:
+plot(fkf.obj, type = "acf", na.action = na.pass)
+
+```
+
