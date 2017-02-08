@@ -146,45 +146,173 @@ kalman.plot(val = molten.COR, clim = "Jul.pdsi")
 kalman.plot(val = molten.ENG, clim = "Jul.pdsi")
 ```
 
-## lets try specifying a model using the package FKF
+## compare to moving window correlations:
 ```{r}
-library(FKF)
-## Local level model for the treering width data.
-## Transition equation:
-## alpha[t+1] = alpha[t] + eta[t], eta[t] ~ N(0, HHt)
-## Measurement equation:
-## y[t] = alpha[t] + eps[t], eps[t] ~ N(0, GGt)
-y <- treering
-y[c(3, 10)] <- NA # NA values can be handled
+library(treeclim)
 
-## Set constant parameters:
-dt <- ct <- matrix(0)
-Zt <- Tt <- matrix(1)
-a0 <- y[1] # Estimation of the first width
-P0 <- matrix(100) # Variance of 'a0'
+# we will us the dcc function in the tree clim package, but this funtion takes monthly data:
 
-## Estimate parameters:
-fit.fkf <- optim(c(HHt = var(y, na.rm = TRUE) * .5,
-GGt = var(y, na.rm = TRUE) * .5),
-fn = function(par, ...)
--fkf(HHt = matrix(par[1]), GGt = matrix(par[2]), ...)$logLik,
-yt = rbind(y), a0 = a0, P0 = P0, dt = dt, ct = ct,
-Zt = Zt, Tt = Tt, check.input = FALSE)
+#read climate
+IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Glacial park
+WIse.clim <- read.csv("data/south_east_wi_climdiv.csv") #pleasant prairie 
+MNwc.clim <- read.csv("data/West_central_MN_nclimdiv.csv") #Bonanza praire, Duboix
+WIsc.clim <- read.csv("data/south_central_WI_climdiv.csv") #pleasant valley conservancy
+MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #townsend woods 
+MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #St. Croix savanna
+MNse.clim <- read.csv("data/South_East_MN_CDO.csv") # for mound prairie
 
-## Filter Nile data with estimated parameters:
-fkf.obj <- fkf(a0, P0, dt, ct, Tt, Zt, HHt = matrix(fit.fkf$par[1]),
-GGt = matrix(fit.fkf$par[2]), yt = rbind(y))
+# We need the raw data:
+Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
+Hickory <- read.tucson ("./cofecha/HICww.rwl")
+Bonanza <- read.tucson("./cofecha/BONww.rwl")
+Pleasant <- read.tucson('./cofecha/PLEww.rwl')
+Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
+StCroix <- read.tucson('./cofecha/STCww.rwl')
+Coral <- read.tucson('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl')
+Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
+Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
+Mound <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
 
-## Plot the width together with fitted local levels:
-plot(y, main = "Treering data")
-lines(ts(fkf.obj$att[1, ], start = start(y), frequency = frequency(y)), col = "blue")
-legend("top", c("Treering data", "Local level"), col = c("black", "blue"), lty = 1)
 
-## Check the residuals for normality:
-plot(fkf.obj, type = "resid.qq")
 
-## Test for autocorrelation:
-plot(fkf.obj, type = "acf", na.action = na.pass)
+
+source("R/read_detrend_rwl.R")
+
+Glacial <- read_detrend_rwl(Glacial, "Glacial")
+Hickory <- read_detrend_rwl(Hickory, "Hickory")
+Bonanza <- read_detrend_rwl(Bonanza, "Bonanza")
+Pleasant <- read_detrend_rwl(Pleasant, "Pleasant")
+Townsend <- read_detrend_rwl(Townsend, "Townsend")
+StCroix <- read_detrend_rwl(StCroix, "StCroix")
+Coral <- read_detrend_rwl(Coral, "Coral")
+Uncas <- read_detrend_rwl(Uncas, "Uncas")
+Englund <- read_detrend_rwl(Englund, "Englund")
+Mound <- read_detrend_rwl(Mound, "Mound")
+
+# moving corrlations between climate and tree growth:
+
+a<- dcc(Hickory, IL.clim[1:1452,c("Year", "Month", "TMAX")], dynamic = 'moving')
+a
+
+plot(a)
+traceplot(a)
+
+
+#these funcitons print out plots in correlations
+
+clim.cor<- function(climate, chron, site.name){
+
+PREC <- climate[,c('Year', 'Month', 'PCP')]
+PREC$PCP <- PREC$PCP*25.54
+PREC <- PREC[1:1452,]
+
+
+hic.pdsi.static <- dcc(chron, PREC, dynamic = 'static', win_size = 35, win_offset = 5)
+pdf(paste0('outputs/correlations/PREC_', site.name,'dynamic.pdf'))
+print(plot(hic.pdsi.static))
+#g_test(hic.pdsi.moving)
+#traceplot(hic.pdsi.moving)
+#plot(skills(hic.pdsi.moving))
+
+
+hic.pdsi.moving <- dcc(chron, PREC, dynamic = 'moving', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
+dev.off()
+
+#PDSI
+PDSI <- climate[,c('Year', 'Month', 'PDSI')]
+
+PDSI <- PDSI[1:1452,]
+
+pdf(paste0('outputs/correlations/PDSI_', site.name,'dynamic.pdf'))
+hic.pdsi.static <- dcc(chron, PDSI, dynamic = 'static', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.static))
+#g_test(hic.pdsi.moving)
+#traceplot(hic.pdsi.moving)
+#plot(skills(hic.pdsi.moving))
+
+hic.pdsi.moving <- dcc(chron, PDSI, dynamic = 'moving', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
+dev.off()
+
+#TAVG
+TAVG <- climate[,c('Year', 'Month', 'TAVG')]
+
+TAVG <- TAVG[1:1452,]
+
+pdf(paste0('outputs/correlations/TAVG_', site.name,'dynamic.pdf'))
+hic.pdsi.static <- dcc(chron, TAVG, dynamic = 'static', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.static))
+
+
+hic.pdsi.moving <- dcc(chron, TAVG, dynamic = 'moving', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+dev.off()
+
+
+#TMAX
+TMAX <- climate[,c('Year', 'Month', 'TMAX')]
+
+TMAX <- TMAX[1:1452,]
+
+pdf(paste0('outputs/correlations/TMAX_', site.name,'dynamic.pdf'))
+hic.pdsi.static <- dcc(chron, TMAX, dynamic = 'static', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.static))
+
+
+hic.pdsi.moving <- dcc(chron, TMAX, dynamic = 'moving', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
+dev.off()
+
+#TMIN
+TMIN <- climate[,c('Year', 'Month', 'TMIN')]
+
+TMIN <- TMIN[1:1452,]
+
+pdf(paste0('outputs/correlations/TMIN_', site.name,'dynamic.pdf'))
+hic.pdsi.static <- dcc(chron, TMIN, dynamic = 'static', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.static))
+
+
+hic.pdsi.moving <- dcc(chron, TMIN, dynamic = 'moving', win_size = 35, win_offset = 5)
+
+print(plot(hic.pdsi.moving))
+#g_test(hic.pdsi.moving)
+print(traceplot(hic.pdsi.moving))
+#plot(skills(hic.pdsi.moving))
+dev.off()
+dev.off()
+}
+
+clim.cor(IL.clim, Hickory, 'Hickory_Grove_')
+clim.cor(IL.clim, Sandwich, 'Sandwich_')
+clim.cor(WIse.clim, PleasantPrairie, 'Pleasant_Prairie_')
+clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
+clim.cor(MNwc.clim, Desoix, 'Desoix_')
+clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
+clim.cor(MNec.clim, Townsend, 'Townsend_woods_')
+clim.cor(MNec.clim, StCroix, 'StCroix_savanna_')
+clim.cor(MNse.clim, Mound, 'Mound_prairie_')
+
 
 ```
 
