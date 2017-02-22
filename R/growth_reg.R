@@ -656,6 +656,55 @@ dev.off()
 
 
 
+#################################################
+# Linear regressions by group with bootstrapping#
+#################################################
+library(boot)
+
+
+
+#this function runs the stats and makes plots for pre-1950 vs. post-1950
+# additionally plots are saved to outputs/correlations within the function
+
+
+growth_reg = function(data, indices){
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  data$class <- '9999'
+  data[data$Year %in% yr,]$class <- 'Pre-1950'
+  data[data$Year %in% yr.post,]$class <- 'Post-1950'
+  #create dummy variable
+  data$group <- 0
+  data[data$Year %in% yr,]$group <- 1
+d = data[indices, ]
+H_relationship = lm(d$value~d[,c(climate)], data = d)
+H_r_sq = summary(H_relationship)$r.square
+#H_p = summary(H_relationship)$coefficients[,4]
+G_relationship = lm(d$value~d[,c(climate)]:group, data = d)
+G_r_sq = summary(G_relationship)$r.square
+#G_p = summary(G_relationship)$coefficients[,4]
+relationships = c(H_r_sq, #H_p, 
+                  G_r_sq) #, G_p)
+return(relationships)
+}
+
+# bootstrapping
+results = boot(data = molten.TOW, statistic = growth_reg, R = 5000)
+print (results) # view bootstrapping
+plot(results, index = 1)
+plot(results, index = 2)
+
+confidence_interval_H = boot.ci(results, index = 1, conf = 0.95, type = 'bca')
+print(confidence_interval_H)
+ci_H = confidence_interval_H$bca[ , c(4, 5)]
+print(ci_H)
+
+hist(results$t[,1], main = 'Coefficient of Determination: Height', xlab = 'RSquared',
+     col = 'grey')
+hist(results$t[,1], main = 'Coefficient of Determination: Height', xlab = 'RSquared',
+     col = 'grey', prob = T)
+lines(density(results$t[,1]), col = 'blue')
+abline(v = ci_H, col = 'red')
 
 #####################################
 #plot correlations against soil type#
