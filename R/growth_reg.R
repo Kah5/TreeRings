@@ -661,13 +661,15 @@ dev.off()
 #################################################
 library(boot)
 
+# are the residuals increasing over time?
+test <- lm(molten.HIC$value~molten.HIC$PDSI)
+plot(molten.HIC$Year, test$residuals, type = "l")
+summary(lm(test$residuals ~ molten.HIC$Year))
 
-
-#this function runs the stats and makes plots for pre-1950 vs. post-1950
-# additionally plots are saved to outputs/correlations within the function
-
+print(summary(aov(data$value~data$PDSI*data$class)))
 
 growth_reg = function(data, indices){
+  climate <- "Jul.pdsi"
   yr <- 1895:1950
   yr.post <- 1950:2014
   data$class <- '9999'
@@ -678,32 +680,41 @@ growth_reg = function(data, indices){
   data[data$Year %in% yr,]$group <- 1
 d = data[indices, ]
 H_relationship = lm(d$value~d[,c(climate)], data = d)
-H_r_sq = summary(H_relationship)$r.square
-#H_p = summary(H_relationship)$coefficients[,4]
-G_relationship = lm(d$value~d[,c(climate)]:group, data = d)
-G_r_sq = summary(G_relationship)$r.square
-#G_p = summary(G_relationship)$coefficients[,4]
-relationships = c(H_r_sq, #H_p, 
-                  G_r_sq) #, G_p)
+H_r_sq = coefficients(H_relationship)
+H_p = summary(H_relationship)$coefficients[,4]
+G_relationship = lm(d$value~d[,c(climate)]*d$group, data = d)
+G_r_sq = coefficients(G_relationship)
+G_p = summary(G_relationship)$coefficients[,4]
+relationships = c(H_r_sq, H_p, 
+                  G_r_sq , G_p)
 return(relationships)
 }
 
 # bootstrapping
-results = boot(data = molten.TOW, statistic = growth_reg, R = 5000)
-print (results) # view bootstrapping
-plot(results, index = 1)
-plot(results, index = 2)
+results = boot(data = molten.HIC, statistic = growth_reg, R = 5000)
+print (results) # view bootstrapped coefficients
 
-confidence_interval_H = boot.ci(results, index = 1, conf = 0.95, type = 'bca')
+
+plot(results, index = 1) # plot boot strapped intercept
+plot(results, index = 2) # beta reg. coefficien
+plot(results, index = 3) # pvalue inte
+plot(results, index = 4) # pvalue beta
+plot(results, index = 5) 
+plot(results, index = 6)
+plot(results, index = 7)
+plot(results, index = 8)
+
+
+confidence_interval_H = boot.ci(results, index = 2, conf = 0.95, type = 'bca')
 print(confidence_interval_H)
 ci_H = confidence_interval_H$bca[ , c(4, 5)]
-print(ci_H)
+print(ci_H) # if ciH doesnt contain 0, then the reg coefficient is >0 significant
 
-hist(results$t[,1], main = 'Coefficient of Determination: Height', xlab = 'RSquared',
+hist(results$t[,1], main = 'intercept', xlab = 'int',
      col = 'grey')
-hist(results$t[,1], main = 'Coefficient of Determination: Height', xlab = 'RSquared',
+hist(results$t[,2], main = 'Beta: PDSI', xlab = 'beta',
      col = 'grey', prob = T)
-lines(density(results$t[,1]), col = 'blue')
+lines(density(results$t[,2]), col = 'blue')
 abline(v = ci_H, col = 'red')
 
 #####################################
