@@ -172,7 +172,7 @@ annuals <- data.frame(Year = annual.p$Year,
                       JUNTmax = jun.tmax[1:120,]$TMAX,
                       Jul.pdsi = jul.pdsi[1:120,]$PDSI)
 
-#merge annuals with hickory
+#merge annuals with rwl
 annuals.crn <- merge(annuals, chron[c('Year', 'xxxstd', 'Site')], by = "Year")
 melt(annuals.crn, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
                                        "JUNTmin","JUNTavg", 'JUNTmax',"Jul.pdsi"))
@@ -192,6 +192,10 @@ molten.STC <- merge.clim.chron(MNec.clim, StCroix)
 molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
 molten.ENG <- merge.clim.chron(MNec.clim, Englund)
 molten.MOU <- merge.clim.chron(MNse.clim, Mound)
+
+write.csv(molten.HIC, "data/molten.hic.csv")
+
+
 
 ###############################################################
 #using the treeclim R pacakge to calculate moving correlations#

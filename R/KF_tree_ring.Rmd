@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Kalman Filter/Time varying Regression model to estimate tree ring regressions 
 code  based off an example from:
 <http://lalas.github.io/quantitativeThoughts/r/2014/09/01/dlmTutorial.html#topic2.1>
+
+Here we read in example data
 ```{r cars}
 library(dplR)
 Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
@@ -28,9 +30,7 @@ molten.HIC<- read.csv('data/molten.hic.csv')
 
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
 library(PerformanceAnalytics, quietly = TRUE,  warn.conflicts = FALSE)
@@ -38,7 +38,7 @@ library(dlm)
 
 val <- molten.BON
 clim <- "Jul.pdsi"
-kalman.plot <- function(val, clim){
+kalman.plot <- function(val, clim, site.code){
 # convert to xts objects
 tr<- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
 pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
@@ -59,7 +59,7 @@ tvp.dlm[c("JFF","JV","JGG","JW")]
 
 #If we were to do a simple linear regression (Ordinary Least Square fit - constant equity beta), we would do something like
 
-#ols.fit = lm(HAM1 ~ sp500)
+
 ols.fit <- lm(tr ~ pdsi)
 summary(ols.fit)
 
@@ -126,24 +126,25 @@ b.u = beta.s  + 1.96*se.xts[, "beta"]
 b.l = beta.s  - 1.96*se.xts[, "beta"]
 #And plotting the results with +/- 2 times the standard deviation
 par(mfrow = c(2,1))
+
 # plot smoothed estimates with +/- 2*SE bands
-chart.TimeSeries(cbind(alpha.s, a.l, a.u), main="Smoothed estimates of alpha", ylim=c(0,2),
+chart.TimeSeries(cbind(alpha.s, a.l, a.u), main=paste("Smoothed estimates of alpha for", site.code), ylim=c(0,2),
                  colorset=c(1,2,2), lty=c(1,2,2),ylab=expression(alpha),xlab="")
 
-chart.TimeSeries(cbind(beta.s, b.l, b.u), main="Smoothed estimates of beta",
+chart.TimeSeries(cbind(beta.s, b.l, b.u), main=paste("Smoothed estimates of beta for", site.code),
                  colorset=c(1,2,2), lty=c(1,2,2),ylab=expression(beta),xlab="")
 
 
 }
 
 X11(width = 12)
-kalman.plot(val = molten.UNC, clim = "Jul.pdsi")
-kalman.plot(val = molten.BON, clim = "Jul.pdsi")
-kalman.plot(val = molten.HIC, clim = "Jul.pdsi")
-kalman.plot(val = molten.STC, clim = "Jul.pdsi")
-kalman.plot(val = molten.TOW, clim = "Jul.pdsi")
-kalman.plot(val = molten.COR, clim = "Jul.pdsi")
-kalman.plot(val = molten.ENG, clim = "Jul.pdsi")
+kalman.plot(val = molten.UNC, clim = "Jul.pdsi", site.code = "UNC")
+kalman.plot(val = molten.BON, clim = "Jul.pdsi", site.code = "BON")
+kalman.plot(val = molten.HIC, clim = "Jul.pdsi", site.code = "HIC")
+kalman.plot(val = molten.STC, clim = "Jul.pdsi", site.code = "STC")
+kalman.plot(val = molten.TOW, clim = "Jul.pdsi", site.code = "TOW")
+kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
+kalman.plot(val = molten.ENG, clim = "Jul.pdsi", site.code = "ENG")
 ```
 
 ## compare to moving window correlations:
@@ -189,16 +190,16 @@ Uncas <- read_detrend_rwl(Uncas, "Uncas")
 Englund <- read_detrend_rwl(Englund, "Englund")
 Mound <- read_detrend_rwl(Mound, "Mound")
 
-# moving corrlations between climate and tree growth:
+# moving correlations between climate and tree growth:
 
-a<- dcc(Hickory, IL.clim[1:1452,c("Year", "Month", "TMAX")], dynamic = 'moving')
+a<- dcc(Hickory, IL.clim[1:1452,c("Year", "Month", "PCP")], dynamic = 'moving', win_size = 35, win_offset = 5)
 a
 
 plot(a)
 traceplot(a)
 
 
-#these funcitons print out plots in correlations
+#these funcitons print out plots time moving correlations for all of the climate parameters
 
 clim.cor<- function(climate, chron, site.name){
 
@@ -208,7 +209,7 @@ PREC <- PREC[1:1452,]
 
 
 hic.pdsi.static <- dcc(chron, PREC, dynamic = 'static', win_size = 35, win_offset = 5)
-pdf(paste0('outputs/correlations/PREC_', site.name,'dynamic.pdf'))
+pdf(paste0('outputs/correlations/moving_site_cors/PREC_', site.name,'dynamic.pdf'))
 print(plot(hic.pdsi.static))
 #g_test(hic.pdsi.moving)
 #traceplot(hic.pdsi.moving)
@@ -228,7 +229,7 @@ PDSI <- climate[,c('Year', 'Month', 'PDSI')]
 
 PDSI <- PDSI[1:1452,]
 
-pdf(paste0('outputs/correlations/PDSI_', site.name,'dynamic.pdf'))
+pdf(paste0('outputs/correlations/moving_site_cors/PDSI_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, PDSI, dynamic = 'static', win_size = 35, win_offset = 5)
 
 print(plot(hic.pdsi.static))
@@ -249,7 +250,7 @@ TAVG <- climate[,c('Year', 'Month', 'TAVG')]
 
 TAVG <- TAVG[1:1452,]
 
-pdf(paste0('outputs/correlations/TAVG_', site.name,'dynamic.pdf'))
+pdf(paste0('outputs/correlations/moving_site_cors/TAVG_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, TAVG, dynamic = 'static', win_size = 35, win_offset = 5)
 
 print(plot(hic.pdsi.static))
@@ -268,7 +269,7 @@ TMAX <- climate[,c('Year', 'Month', 'TMAX')]
 
 TMAX <- TMAX[1:1452,]
 
-pdf(paste0('outputs/correlations/TMAX_', site.name,'dynamic.pdf'))
+pdf(paste0('outputs/correlations/moving_site_cors/TMAX_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, TMAX, dynamic = 'static', win_size = 35, win_offset = 5)
 
 print(plot(hic.pdsi.static))
@@ -287,7 +288,7 @@ TMIN <- climate[,c('Year', 'Month', 'TMIN')]
 
 TMIN <- TMIN[1:1452,]
 
-pdf(paste0('outputs/correlations/TMIN_', site.name,'dynamic.pdf'))
+pdf(paste0('outputs/correlations/moving_site_cors/TMIN_', site.name,'dynamic.pdf'))
 hic.pdsi.static <- dcc(chron, TMIN, dynamic = 'static', win_size = 35, win_offset = 5)
 
 print(plot(hic.pdsi.static))
@@ -304,8 +305,6 @@ dev.off()
 }
 
 clim.cor(IL.clim, Hickory, 'Hickory_Grove_')
-clim.cor(IL.clim, Sandwich, 'Sandwich_')
-clim.cor(WIse.clim, PleasantPrairie, 'Pleasant_Prairie_')
 clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
 clim.cor(MNwc.clim, Desoix, 'Desoix_')
 clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
