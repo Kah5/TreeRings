@@ -681,12 +681,13 @@ growth_reg = function(data, indices){
 d = data[indices, ]
 H_relationship = lm(d$value~d[,c(climate)], data = d)
 H_r_sq = coefficients(H_relationship)
-H_p = summary(H_relationship)$coefficients[,4]
+#H_p = summary(H_relationship)$coefficients[,4]
 G_relationship = lm(d$value~d[,c(climate)]*d$group, data = d)
 G_r_sq = coefficients(G_relationship)
-G_p = summary(G_relationship)$coefficients[,4]
-relationships = c(H_r_sq, H_p, 
-                  G_r_sq , G_p)
+#G_p = summary(G_relationship)$coefficients[,4]
+relationships = c(H_r_sq, #H_p, 
+                  G_r_sq #, G_p
+                  )
 return(relationships)
 }
 
@@ -696,13 +697,17 @@ print (results) # view bootstrapped coefficients
 
 
 plot(results, index = 1) # plot boot strapped intercept
-plot(results, index = 2) # beta reg. coefficien
-plot(results, index = 3) # pvalue inte
-plot(results, index = 4) # pvalue beta
-plot(results, index = 5) 
-plot(results, index = 6)
-plot(results, index = 7)
-plot(results, index = 8)
+plot(results, index = 2) # beta reg. coefficient
+plot(results, index = 3) # boot strapped intercept with grouping
+plot(results, index = 4) # beta reg coefficient
+plot(results, index = 5) # class 1 reg coefficient
+plot(results, index = 6) # class 2 reg coefficient
+
+# still not sure which class is which in this
+
+# the idea is to compare distributions of slope to 0 (if CI doesnt include 0, it should be different from 0)
+# also compare the two slope distributions to determine if they are statistically different from each other (ftest/anova)
+
 
 
 confidence_interval_H = boot.ci(results, index = 2, conf = 0.95, type = 'bca')
