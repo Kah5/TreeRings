@@ -532,10 +532,11 @@ x$group <- 0
 x[x$Year %in% yr,]$group <- 1
 
 #if the dummy variable is significant, then the two slopes are different
-print(summary( lm(value ~ Climate:group, data = x)))
+print(summary( lm(value ~ Climate*group, data = x)))
 print(summary(lm(value ~ Climate:group, data = x)))
 print(summary(aov(value~Climate*class, data=x)))
-#print(summary(lm(value~Climate/group-1, data=x)))
+print(anova(lm(value ~ Climate*group, data = x), lm(value ~ Climate, data = x))
+)#print(summary(lm(value~Climate/group-1, data=x)))
 #print(summary(aov(value~Climate/group, data = x)))
 # Extend the regression lines beyond the domain of the data
 
