@@ -77,11 +77,11 @@ Glacial$type <- "Savanna"
 Coral$type <- "Forest"
 Uncas$type <- "Savanna"
 Englund$type <- "Forest"
+Mound$type <- "Savanna"
 
 
 
-
-crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, #PleasantPrairie, 
+crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, Mound, #PleasantPrairie, 
               Townsend, Glacial, Coral, Uncas, Englund)
 X11(width = 14)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)

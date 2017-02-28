@@ -532,9 +532,9 @@ x$group <- 0
 x[x$Year %in% yr,]$group <- 1
 
 #if the dummy variable is significant, then the two slopes are different
-print(summary( lm(value ~ Climate*group, data = x)))
-print(summary(lm(value ~ Climate:group, data = x)))
-print(summary(aov(value~Climate*class, data=x)))
+print(summary(aov(value ~ Climate * group, data = x)))
+#print(summary(lm(value ~ Climate:group, data = x)))
+#print(summary(aov(value~Climate*class, data=x)))
 print(anova(lm(value ~ Climate*group, data = x), lm(value ~ Climate, data = x))
 )#print(summary(lm(value~Climate/group-1, data=x)))
 #print(summary(aov(value~Climate/group, data = x)))
@@ -613,19 +613,19 @@ plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleas
 
 #pdf('outputs/pdsi_pre_post_plots.pdf')
 
-e <-plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
+e <- plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
 a <- plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
 d <- plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant (only sig @ 0.15 )
 h <- plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
-c <-plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
+c <- plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
 f <- plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") #significant
 g <- plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
-b <-plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
-i <-plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
-j <-plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
+b <- plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
+i <- plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
+j <- plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
 
 source("R/grid_arrange_shared_legend.R")
-png(width = 6, height = 9, units = 'in', res = 300, 'outputs/correlations/all_site_pre_post_fig3.png')
+png(width = 6, height = 9, units = 'in', res = 300, 'outputs/correlations/all_site_pre_post_fig3-ModNegExp.png')
 grid_arrange_shared_legend(a,b,c,d,e,f,g,h,i,j,nrow = 5, ncol = 2 )
 dev.off()
 
@@ -636,19 +636,23 @@ dev.off()
 
 # plot out sites with slope change:
 # St Croix savanna (c),
-png(width = 6, height = 9, units = 'in', res = 300, 'outputs/correlations/all_site_pre_post_fig3.png')
-grid_arrange_shared_legend(c,a,d,e,f,g,h,i,j,b,nrow = 5, ncol = 2 )
+png(width = 6, height = 5, units = 'in', res = 300, 'outputs/correlations/slopechange_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(c,d,nrow = 2, ncol = 2 )
 dev.off()
 
 # plot out sites with intercept change:
 # hickory grove (e), bonanza prairie (a), 
 # pleasant valley, glacial park, coral woods
 
-
+png(width = 6, height = 5, units = 'in', res = 300, 'outputs/correlations/interceptchange_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(a,e,f,g,nrow = 2, ncol = 2 )
+dev.off()
 
 # plot out sites with no changes:
 # mound prairie (j), Townsend woods (h), 
 #englund ecotone(i), Uncas dunes (b)
+png(width = 6, height = 5, units = 'in', res = 300, 'outputs/correlations/nochange_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(j,b,h,i,nrow = 2, ncol = 2 )
 dev.off()
 
 

@@ -14,7 +14,7 @@ MN.priority <- readOGR("data/priority.kml", layer = "Priority")
 #IL.MCCD <- readOGR('data/Fieldwork 2016.kml', layer = "McHenry")
 
 MN.priority.alb <- spTransform(MN.priority, CRSobj = CRS('+init=epsg:3175'))
-priority <- data.frame(MN.priority)
+priority <- data.frame(MN.priority.alb)
 priority.lat <- data.frame(priority)
 
 priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVO", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
@@ -25,12 +25,13 @@ priority.lat$code <- c("ITA", "GLE", "MAP", "UNC", "AVO", "STC", "GLL", "GLA", "
 #IL.MCCD$code <- c("GLA", "PLV", " ", "HAR", "BEC", " ", "ELN", "COR")
 #priority <- rbind(priority, IL.MCCD)
 mound <- readOGR("data/Treecores.kml", layer= "2015sites")
-mound.lat <- mound
+#mound.lat <- mound
 mound <- spTransform(mound, CRSobj = CRS('+init=epsg:3175'))
 mound <- data.frame(mound)
-mound.lat <- data.frame(mound.lat)
+mound.lat <- data.frame(mound)
 mound$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
 mound.lat$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
+mound <- rbind(mound, priority[priority$code %in% c("TOW", "HIC", "STC"),]) # add townsend woods
 
 #read in layer of sites cored in 2016
 sites16 <- readOGR("data/Treecores.kml", layer= "2016sites")
@@ -44,7 +45,11 @@ sites16$Description <- c("Forest", "Savanna", "Savanna",
                          "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
 # merge the two data sets using rbind
 priority <- rbind(mound, sites16)
-
+priority$PDSI_time <- c("Not measured", "No Change", "Growth Change", "Not measured", 
+                        "Not measured", "No Change", "Not measured", "Not measured", 
+                        "Growth Change", "Not measured", "Not measured","Growth Change", "Slope Change","Slope Change","No Change",
+                        "Growth Change", "Not measured", "No Change", "Not measured", 
+                        "Not measured", "Not measured", "Not measured", "Not measured")
 #priority<- rbind(priority,mound[2,]) # just add mound prairie to priority
 #priority.lat <- rbind(priority.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")], mound.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")])
 #for NAPC, create a map with just these tree cores:
@@ -226,9 +231,17 @@ sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coo
                   point.padding = unit(1.5, "lines"))
 sites.map2
 
-
-
-
+measured <- priority[!priority$PDSI_time %in% "Not measured",]
+sites.cor <- sites.map + geom_point(data = measured, aes(x = coords.x1, y = coords.x2, shape = Description, color = PDSI_time), cex = 2.5)+
+  scale_shape_manual(values=c(15,16,17,3))+
+  geom_text_repel(data = measured, aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(1.5, "lines"),
+                  point.padding = unit(1.5, "lines"))
+sites.cor
+png(height = 6, width = 6, units = 'in', res = 300, "outputs/PDSI_time_cor_map.png")              
+sites.cor
+dev.off()
 
 png("outputs/precip_only.png")              
 sites.map
