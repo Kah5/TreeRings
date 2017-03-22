@@ -1,0 +1,103 @@
+# This script will read .gpx files with coordinates of plot centers and or mapped trees, and create stand maps
+library(maptools)
+library(sp)  # classes for spatial data
+library(raster)  # grids, rasters
+library(rasterVis)  # raster visualisation
+library(maptools)
+library(rgeos)
+library(ggplot2)
+library(rgdal)
+library(ggrepel)
+library(grid)
+#library(plotKML)
+library(plotKML)
+library(dplyr)
+# read in a gpx file
+test <- readGPX("C:/Users/JMac/Box Sync/GPX/Waypoints_06-AUG-16.gpx")
+
+
+# put all the files into the same directory, then
+
+myfiles <- list.files("C:/Users/JMac/Box Sync/GPX/2016/")
+mydir <- 'C:/Users/JMac/Box Sync/GPX/2016/'
+
+
+wpfull <- NULL
+
+for (i in 1:length(myfiles)) {
+  # - Select first file from the list and import data into R object
+  wplist <- readGPX( paste0(mydir,myfiles[i]), way=T)
+  # extract latitude, longituDe, elevation, time, name and comments and apppend to R dataframe
+  wpdf<- wplist$waypoints
+  # append dataframe from last index to a full waypoint object
+  wpfull <- bind_rows(wpfull, wpdf)
+}
+
+head(wpfull)
+wpfull$code <- substr(wpfull$name, 1, 3)
+
+
+# plot out 
+ggplot(data = wpfull, aes(x = lon, y = lat))+geom_point()
+
+# get non-exact lat longs
+mound <- readOGR("data/Treecores.kml", layer= "2015sites")
+#mound.lat <- mound
+#mound <- spTransform(mound, CRSobj = CRS('+init=epsg:3175'))
+mound <- data.frame(mound)
+mound.lat <- data.frame(mound)
+mound$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
+mound.lat$code <- c("LED", "MOU", "BON", "UNI", "PAM", "ENG", "BAC", "CAC", "GLA", "BOO","DUF", "PLE")
+mound <- rbind(mound, priority[priority$code %in% c("TOW", "HIC", "STC"),]) # add townsend woods
+
+
+
+
+MN.priority <- readOGR("data/priority.kml", layer = "Priority")
+#read in layer of sites cored in 2016
+sites16 <- readOGR("data/Treecores.kml", layer= "2016sites")
+sites16.lat <- sites16
+#sites16 <- spTransform(sites16, CRSobj = CRS('+init=epsg:3175'))
+sites16 <- data.frame(sites16)
+sites16.lat <- data.frame(sites16.lat)
+sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
+sites16.lat$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
+sites16$Description <- c("Forest", "Savanna", "Savanna", 
+                         "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
+# merge the two data sets using rbind
+priority <- rbind(mound, sites16)
+colnames(priority) <- c("Name", "Description", "lon.coarse", "lat.coarse", 'elev', "optional", "code")
+
+
+coarse <- priority[,c("lon.coarse", 'lat.coarse', 'code', "Description")]
+waypt <- wpfull[,c('lon', 'lat', 'code', 'Name')]
+
+full <- merge(coarse, waypt, by = "code", all = TRUE)
+
+
+ggplot(full, aes(lon.coarse, lat.coarse))+geom_point()
+
+#map out 
+# need to fix the projections so that they match up
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", 
+                                           'michigan', 'missouri', 'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+#mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata<-data.frame(states)
+
+
+# map out the sites
+sites.map <- ggplot()+ geom_point(data = full, aes(x = lon.coarse, y = lat.coarse), cex = 2.5)+
+  geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                     colour = "darkgrey", fill = NA)+theme_bw() +
+  theme(axis.text = element_text(size = 14),
+        axis.text.y = element_text(angle = 90, size = rel(0.7), hjust = 0.75),
+        legend.key = element_rect(),
+        legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_line(colour = "grey40"),
+        panel.grid.minor = element_blank()) + theme_bw()+ coord_map()
+sites.map

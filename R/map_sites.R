@@ -10,6 +10,17 @@ library(rgdal)
 library(ggrepel)
 library(grid)
 
+
+
+
+
+
+
+
+
+
+# reading in data from google maps (not all are exact site points)
+
 MN.priority <- readOGR("data/priority.kml", layer = "Priority")
 #IL.MCCD <- readOGR('data/Fieldwork 2016.kml', layer = "McHenry")
 
