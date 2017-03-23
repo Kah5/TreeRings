@@ -163,15 +163,19 @@ map.plot <- function(sitecode){
 
   dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),30,npoints = 100)
   #geom_path will do open circles, geom_polygon will do filled circles
-  specColors
+  
   species <-c("Bur Oak", "White Oak", "Red Oak", "Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
               "Red Maple",
               "Basswood", "Quaking Aspen", "Aspen","Red Pine", "White Pine", "White Spruce", 
               "Green Ash", "Black Cherry", "Hophornbeam","Ironwood","Standing Dead")
-    
+ 
+   colorsforspec <- c("#FF0000FF" ,"#FF5500FF" ,"#FFAA00FF" ,"#FFFF00FF", "#AAFF00FF", "#55FF00FF", "#00FF00FF" ,"#00FF55FF",
+  "#00FFAAFF", "#00FFFFFF", "#00AAFFFF", "#0055FFFF" ,"#0000FFFF" ,"#5500FFFF" ,"#AA00FFFF" ,"#FF00FFFF",
+  "#FF00AAFF" , "black")
+  
   ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
     #scale_color_manual(values = specColors)
-    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map"))+
+    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) 
     }
 
 map.plot("ITA1")
@@ -188,8 +192,8 @@ map.plot("COR1")
 map.plot("DUF-1")
 map.plot("DUF-2")
 map.plot("GLA-2")
-
-
+map.plot("HIC-2")
+map.plot("HIC-1")
 
 
 
@@ -198,7 +202,7 @@ map.plot("GLA-2")
 ########################################
 
 # for 2016: MAP3, MAP4, GLE2
-# for 2015: 
+# for 2015: BOO, BON, STC, TOW, PLE, UNI, MOU, ENG, 
 
 map.dispersed <- function(sitecode){
   
@@ -215,11 +219,14 @@ map.dispersed <- function(sitecode){
   site.alb <- data.frame(site.alb)
 
   ggplot()+ geom_point(data = site.alb, aes(x = lon, y = lat, color = Species, size = DBH..cm.)) +
-    theme_bw()
+    theme_bw() + ggtitle(paste(sitecode, " dispersed sample plot"))
 }
 map.dispersed("MAP3")
 map.dispersed("TOW")
-# map4
+map.dispersed("STC")
+map.dispersed("UNI")
+
+
 
 
 # still working on cleaning the datasets but would like to eventually:
