@@ -152,7 +152,7 @@ map.plot <- function(sitecode){
 
   ggplot(site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.))+geom_point() + theme_bw()
 
-
+  
   circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
   r = diameter / 2
   tt <- seq(0,2*pi,length.out = npoints)
@@ -171,8 +171,8 @@ map.plot <- function(sitecode){
     
   ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
     #scale_color_manual(values = specColors)
-    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map"))
-}
+    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map"))+
+    }
 
 map.plot("ITA1")
 map.plot("ITA2")
@@ -188,6 +188,9 @@ map.plot("COR1")
 map.plot("DUF-1")
 map.plot("DUF-2")
 map.plot("GLA-2")
+
+
+
 
 
 ########################################
@@ -217,3 +220,10 @@ map.dispersed <- function(sitecode){
 map.dispersed("MAP3")
 map.dispersed("TOW")
 # map4
+
+
+# still working on cleaning the datasets but would like to eventually:
+# 1. map by DBH size and Actual crown width
+# 2. map over soil covariates
+# 3. map over DEM/topography metrics
+# 4. Estimate tree density from these small plots
