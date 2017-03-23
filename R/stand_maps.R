@@ -130,3 +130,18 @@ site.alb$y_tree <- site.alb$lat + sin(as_radians(site.alb$direction))*(site.alb$
 
 
 ggplot(site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.))+geom_point() + theme_bw()
+
+
+circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+  r = diameter / 2
+  tt <- seq(0,2*pi,length.out = npoints)
+  xx <- center[1] + r * cos(tt)
+  yy <- center[2] + r * sin(tt)
+  return(data.frame(x = xx, y = yy))
+}
+
+dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),60,npoints = 100)
+#geom_path will do open circles, geom_polygon will do filled circles
+
+ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) +
+  theme_bw() + geom_path(data = dat, aes(x=x,y=y))
