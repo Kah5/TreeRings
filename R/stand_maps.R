@@ -106,42 +106,54 @@ sites.map
 write.csv(full, "C:/Users/JMac/Documents/Kelly/TreeRings/outputs/lat_long_sites.csv")
 
 #####################################
-# read in metadata from a stand MAP1#
+# read in metadata from a stand#
 #####################################
 
-
-site <- read.csv("data/MAP1_metadata.csv")
-site$name <- "MAP1"
-site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
-
-
-# convert lat long to albers projection:
-coordinates(site) <- ~lon +lat
-proj4string(site) <- '+init=epsg:4326' # define native proj
-site.alb <- spTransform(site, CRS('+init=epsg:3175')) # converte to albers
-site.alb <- data.frame(site.alb)
-
-# function converts degrees to radians, since R deals with radians
-as_radians <- function(deg) {(deg * pi) / (180)}
-
-# find X-y coordinates of the trees within the plots:
-site.alb$x_tree <- site.alb$lon + cos(as_radians(site.alb$direction))*(site.alb$dist2center + 0.5*site.alb$DBH..cm.)
-site.alb$y_tree <- site.alb$lat + sin(as_radians(site.alb$direction))*(site.alb$dist2center + 0.5*site.alb$DBH..cm.)
+map.plot <- function(sitecode){
+  
+  site <- read.csv(paste0("data/site_maps/stand_metadata/", sitecode,"_metadata.csv"))
+  site$name <- sitecode
+  site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
 
 
-ggplot(site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.))+geom_point() + theme_bw()
+  # convert lat long to albers projection:
+  coordinates(site) <- ~lon +lat
+  proj4string(site) <- '+init=epsg:4326' # define native proj
+  site.alb <- spTransform(site, CRS('+init=epsg:3175')) # converte to albers
+  site.alb <- data.frame(site.alb)
+
+  # function converts degrees to radians, since R deals with radians
+  as_radians <- function(deg) {(deg * pi) / (180)}
+
+  # find X-y coordinates of the trees within the plots:
+  site.alb$x_tree <- site.alb$lon + cos(as_radians(site.alb$direction))*(site.alb$dist2center + (0.5*site.alb$DBH..cm.))
+  site.alb$y_tree <- site.alb$lat + sin(as_radians(site.alb$direction))*(site.alb$dist2center + (0.5*site.alb$DBH..cm.))
 
 
-circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+  ggplot(site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.))+geom_point() + theme_bw()
+
+
+  circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
   r = diameter / 2
   tt <- seq(0,2*pi,length.out = npoints)
   xx <- center[1] + r * cos(tt)
   yy <- center[2] + r * sin(tt)
   return(data.frame(x = xx, y = yy))
+  }
+
+  dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),60,npoints = 100)
+  #geom_path will do open circles, geom_polygon will do filled circles
+
+  ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) +
+    theme_bw() + geom_path(data = dat, aes(x=x,y=y))
 }
 
-dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),60,npoints = 100)
-#geom_path will do open circles, geom_polygon will do filled circles
-
-ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) +
-  theme_bw() + geom_path(data = dat, aes(x=x,y=y))
+map.plot("ITA2")
+map.plot("GLL1")
+map.plot("GLL2")
+map.plot("GLL3")
+map.plot("GLL4")
+map.plot("UNC1")
+map.plot("AVO")
+map.plot("PVC")
+map.plot("GLE1")
