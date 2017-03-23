@@ -72,6 +72,26 @@ colnames(priority) <- c("Name", "Description", "lon.coarse", "lat.coarse", 'elev
 coarse <- priority[,c("lon.coarse", 'lat.coarse', 'code', "Description")]
 waypt <- wpfull[,c('lon', 'lat', 'code', 'name')]
 
+
+# read in lat long from 2015 sites
+sites15 <- readOGR("data/Cored trees.kml", layer = "Trees_sites")
+
+sites15.lat <- sites15
+#sites16 <- spTransform(sites16, CRSobj = CRS('+init=epsg:3175'))
+sites15 <- as.data.frame(sites15)
+colnames(sites15) <- c('name', "Description", "lon", "lat", "ele")
+sites15$name <- as.character(sites15$name)
+sites15$code <- substr(sites15$name, 1, 3)
+sites15$time <- NA
+sites15$sym <- NA
+
+# reorder
+sites15<- sites15[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
+
+# add onto wpfull:
+wpfull <- rbind(wpfull, sites15)
+
+# merge the datasets together
 full <- merge(coarse, waypt, by = "code", all = TRUE)
 
 
@@ -126,8 +146,8 @@ map.plot <- function(sitecode){
   as_radians <- function(deg) {(deg * pi) / (180)}
 
   # find X-y coordinates of the trees within the plots:
-  site.alb$x_tree <- site.alb$lon + cos(as_radians(site.alb$direction))*(site.alb$dist2center + (0.5*site.alb$DBH..cm.))
-  site.alb$y_tree <- site.alb$lat + sin(as_radians(site.alb$direction))*(site.alb$dist2center + (0.5*site.alb$DBH..cm.))
+  site.alb$x_tree <- site.alb$lon + cos(as_radians(site.alb$direction))*(site.alb$dist2center + (0.5*(site.alb$DBH..cm./100)))
+  site.alb$y_tree <- site.alb$lat + sin(as_radians(site.alb$direction))*(site.alb$dist2center + (0.5*(site.alb$DBH..cm./100)))
 
 
   ggplot(site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.))+geom_point() + theme_bw()
@@ -141,13 +161,20 @@ map.plot <- function(sitecode){
   return(data.frame(x = xx, y = yy))
   }
 
-  dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),60,npoints = 100)
+  dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),30,npoints = 100)
   #geom_path will do open circles, geom_polygon will do filled circles
-
-  ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) +
-    theme_bw() + geom_path(data = dat, aes(x=x,y=y))
+  specColors
+  species <-c("Bur Oak", "White Oak", "Red Oak", "Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
+              "Red Maple",
+              "Basswood", "Quaking Aspen", "Aspen","Red Pine", "White Pine", "White Spruce", 
+              "Green Ash", "Black Cherry", "Hophornbeam","Ironwood","Standing Dead")
+    
+  ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
+    #scale_color_manual(values = specColors)
+    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map"))
 }
 
+map.plot("ITA1")
 map.plot("ITA2")
 map.plot("GLL1")
 map.plot("GLL2")
@@ -157,3 +184,36 @@ map.plot("UNC1")
 map.plot("AVO")
 map.plot("PVC")
 map.plot("GLE1")
+map.plot("COR1")
+map.plot("DUF-1")
+map.plot("DUF-2")
+map.plot("GLA-2")
+
+
+########################################
+# we have some dispersed sampling sites#
+########################################
+
+# for 2016: MAP3, MAP4, GLE2
+# for 2015: 
+
+map.dispersed <- function(sitecode){
+  
+  site <- read.csv(paste0("data/site_maps/dispersed_metadata/",sitecode,"_metadata.csv"))
+  
+  site$code <- sitecode
+  site$name <- paste0(sitecode, "-", as.character(site$TagID))
+  site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+
+  # convert lat long to albers projection:
+  coordinates(site) <- ~lon +lat
+  proj4string(site) <- '+init=epsg:4326' # define native proj
+  site.alb <- spTransform(site, CRS('+init=epsg:3175')) # converte to albers
+  site.alb <- data.frame(site.alb)
+
+  ggplot()+ geom_point(data = site.alb, aes(x = lon, y = lat, color = Species, size = DBH..cm.)) +
+    theme_bw()
+}
+map.dispersed("MAP3")
+map.dispersed("TOW")
+# map4
