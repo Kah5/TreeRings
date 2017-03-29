@@ -234,3 +234,22 @@ map.dispersed("UNI")
 # 2. map over soil covariates
 # 3. map over DEM/topography metrics
 # 4. Estimate tree density from these small plots
+
+
+# Mapping out UNDERC stand maps from Sam Pecoraro's masters:
+
+UND <- read.csv("C:/Users/JMac/Box Sync/Pecoraro Permanent Archive/All mapped plots cartesian coordinates.csv")
+
+# plot only underc plots (plots 1-3, 7-12, 15-18)
+
+plotnums <- c(1:3, 7:9, 15:18) # cut out 10- 12 for plotting purposes
+UND <- UND[UND$PLOT %in% plotnums, ]
+UND$PLOTNAME <- paste("UNDERC", UND$PLOT)
+
+X11(width = 12)
+
+png(width = 14, height = 9, units = "in", res = 300, filename = "C:/Users/JMac/Box Sync/Pecoraro Permanent Archive/KH_replotted_UNDERC.png")
+ggplot(UND, aes(x = X_COORD, y = Y_COORD, shape = CANOPY_CLASS, size = DBH, color = SPECIES))+
+  geom_point()+theme_bw()+facet_wrap(~ PLOTNAME, scales = "free")+ coord_equal()+ 
+  theme(strip.background = element_rect(fill="forestgreen"), legend.position="bottom") + ylab("Y_COORD (m)")+ xlab("X_COORD (m)")+ggtitle ("UNDERC FOREST PLOTS 2012")
+dev.off()

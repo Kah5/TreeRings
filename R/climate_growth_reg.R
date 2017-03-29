@@ -7,8 +7,63 @@ library(dplR)
 #Hickory Grove
 Hickory <- read.tucson ("./cofecha/HICww.rwl")
 HIC.stats <- rwi.stats(Hickory)
+
+
+
 #detrend 
 Hickory.rwi <- detrend(rwl = Hickory, method = "ModNegExp")
+Hickory.rwi$year <- rownames(Hickory.rwi)
+# calculate record age
+
+treedata <- data.frame(ID = colnames(Hickory.rwi),
+                       sampleyr = 2015)
+
+
+Hic <- data.frame(Hickory.rwi)
+
+# Find tree age for each tree at the time of sampling
+for(i in unique(colnames(Hic))){
+  treedata[treedata$ID==i, "age"] <- treedata[treedata$ID == i, "sampleyr"] - as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
+}
+summary(treedata)  
+
+treeages <- matrix(NA, nrow(Hic),
+                       )
+Hic <- t(Hic)
+Hic.age <- data.frame(Hic)
+
+# code for calculating tree age in each year
+
+for(i in unique(colnames(Hic))){
+  
+firstyr <- as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
+#Hic.age[Hic.age$year == firstyr,i] <- 1
+yridx <- firstyr:2015
+for (yr in firstyr:2015){
+Hic.age[as.numeric(Hic.age$year)== yr,i] <- yr-firstyr
+}
+}
+
+Hic.age$year <- rownames(Hic)
+
+# plot rwi vs. tree age:
+Age.m <- melt(Hic.age)
+colnames(Age.m) <- c("year", "ID", "Age")
+
+RWI.m <- melt(Hic)
+colnames(RWI.m) <- c("year", "ID", "RWI")
+
+site.m <- merge(Age.m, RWI.m, by = c('year', "ID"))
+
+ggplot(site.m, aes(x = Age, y = RWI, color = ID))+geom_line()
+
+
+
+
+# find the # of young and old trees in a record
+
+Hic.young <- Hickory.rwi[,is.na(Hickory.rwi[Hickory.rwi$year == "1890",])]
+
 Hickory <- chron(Hickory.rwi)            
 
 
