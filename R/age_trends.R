@@ -121,3 +121,14 @@ ggplot(HIC_climate, aes(x = Age, y = RWI))+geom_point()
 HIC_climate$ age.class <-cut(HIC_climate$Age, breaks = seq(1,165, by = 20))
 ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
 
+
+gam1 <- gam(RWI~ s(PCP)+
+              s(TMIN) +
+              s(TAVG) +
+              s(PDSI),
+            data=HIC_climate)
+
+summary(gam1)$r.sq # R-squared
+summary(gam1)$dev.expl # explained deviance
+anova(gam1)
+AIC(gam1)
