@@ -39,15 +39,24 @@ tree_age_agg(Hickory.bai, 2015, "HIC", "RWI_BAI_test")
 Stc <- tree_age_agg(StCroix.rwi, 2015, "STC", "RWI_ModNegExp_detrended")
 
 Hic$year <- as.numeric(Hic$year)
+Hic$class <- "notentered"
+# need to assign old trees then and old trees now
+for (i in unique(Hic$ID)){
+ ifelse(Hic[Hic$ID %in% i & Hic$year == 1950,]$Age < 50, Hic[Hic$ID %in% i, ]$class <-  "young",  Hic[Hic$ID %in% i, ]$class<- "old")
+}
 
 ggplot(Hic, aes(x = Age, y = RWI))+geom_point()
-ggplot(Hic, aes(x = year, y = RWI))+geom_point()
+ggplot(Hic, aes(x = year, y = RWI, color = class))+geom_point()+stat_smooth(method = "lm")
 ggplot(Hic, aes(x = year, y = Age))+geom_point()
 
 Stc$year <- as.numeric(Stc$year)
-
+Stc$class <- "notentered"
+# need to assign old trees then and old trees now
+for (i in unique(Stc$ID)){
+  ifelse(Stc[Stc$ID %in% i & Stc$year == 1950,]$Age < 50, Stc[Stc$ID %in% i, ]$class <-  "young",  Stc[Stc$ID %in% i, ]$class<- "old")
+}
 ggplot(Stc, aes(x = Age, y = RWI))+geom_point()
-ggplot(Stc, aes(x = year, y = RWI))+geom_point()
+ggplot(Stc, aes(x = year, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
 ggplot(Stc, aes(x = year, y = Age))+geom_point()
 
 
@@ -139,16 +148,19 @@ Hic.clim <- get.clim(IL.clim)
 Stc.clim <- get.clim(MNcd.clim)
 
 HIC_climate <- merge(Hic, Hic.clim, by = "year")
-ggplot(HIC_climate, aes(x = Age, y = RWI))+geom_point()
+ggplot(HIC_climate, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
 
 STC_climate <- merge(Stc, Stc.clim, by = "year")
+ggplot(STC_climate, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
+
 STC_climate$site <- "STC"
 HIC_climate$site <- "HIC"
 
 
+
 all <- rbind(STC_climate, HIC_climate)
-#HIC_climate$ age.class <-cut(HIC_climate$Age, breaks = seq(1,165, by = 20))
-#ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
+HIC_climate$age.class <-cut(HIC_climate$Age, breaks = seq(1,165, by = 20))
+ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
 ggplot(all, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
 all$year <- as.numeric(all$year)
 
@@ -159,7 +171,7 @@ summary(lm(RWI~year:site, data = all))
 
 ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
 
-
+# typical tree ring model of growth has precip, temp, pdsi, ages, and sites
 gam1 <- gam(RWI~ s(PCP)+
               s(TMIN) +
               s(TAVG) +

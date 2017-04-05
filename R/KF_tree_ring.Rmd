@@ -38,15 +38,24 @@ library(dlm)
 
 val <- molten.BON
 clim <- "Jul.pdsi"
+
 kalman.plot <- function(val, clim, site.code){
+
+  
+  
 # convert to xts objects
 tr<- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
+
 pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
 
+tmin <- as.xts(val[,c( clim2 )], order.by = as.yearqtr(val$Year))
+
+
 # Specifying a set model parameters
-s2_obs = 1      # Variance of observations
-s2_alpha = 0.1 # Variance of the alpha regression parameter
-s2_beta = 0.1  # Variance of the beta regression parameter
+s2_obs = 10      # Variance of observations
+s2_alpha = 0.0001 # Variance of the alpha regression parameter
+s2_beta = 0.0001  # Variance of the beta regression parameter
+s2_beta2 = 0.0001 
 
 # Construct a regression model
 tvp.dlm = dlmModReg(X=pdsi, addInt=TRUE, dV=s2_obs, dW=c(s2_alpha, s2_beta))
@@ -60,7 +69,7 @@ tvp.dlm[c("JFF","JV","JGG","JW")]
 #If we were to do a simple linear regression (Ordinary Least Square fit - constant equity beta), we would do something like
 
 
-ols.fit <- lm(tr ~ pdsi)
+ols.fit <- lm(tr ~ pdsi + tmin)
 summary(ols.fit)
 
 start.vals = c(0,0,0)
@@ -137,6 +146,10 @@ chart.TimeSeries(cbind(beta.s, b.l, b.u), main=paste("Smoothed estimates of beta
 
 }
 
+
+
+#using molten outputs form climate_growth_reg_chron.R
+
 X11(width = 12)
 kalman.plot(val = molten.UNC, clim = "Jul.pdsi", site.code = "UNC")
 kalman.plot(val = molten.BON, clim = "Jul.pdsi", site.code = "BON")
@@ -145,6 +158,235 @@ kalman.plot(val = molten.STC, clim = "Jul.pdsi", site.code = "STC")
 kalman.plot(val = molten.TOW, clim = "Jul.pdsi", site.code = "TOW")
 kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
 kalman.plot(val = molten.ENG, clim = "Jul.pdsi", site.code = "ENG")
+kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
+
+
+X11(width = 12)
+kalman.plot(val = molten.UNC, clim = "Jul.pdsi", site.code = "UNC")
+kalman.plot(val = molten.BON, clim = "Jul.pdsi", site.code = "BON")
+kalman.plot(val = molten.HIC, clim = "Jul.pdsi", site.code = "HIC")
+kalman.plot(val = molten.STC, clim = "Jul.pdsi", site.code = "STC")
+kalman.plot(val = molten.TOW, clim = "Jul.pdsi", site.code = "TOW")
+kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
+kalman.plot(val = molten.ENG, clim = "Jul.pdsi", site.code = "ENG")
+kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
+
+
+```
+
+#####################
+jags model of tree ring growth 
+```{r}
+TreeRingModel = "
+model{
+
+  #### Data Model -- linear regression of rwi with drought
+ for(i in 1:N){
+ Y[i] ~ dnorm(mu[i], tau) # Observation
+mu[i] <- alpha + beta * (x[i] - mean(x[])) # System Process Model
+ }
+
+ #priors
+  # Distributions are set to all parameters
+ sigma <- 1/sqrt(tau)
+  alpha ~ dnorm(0, 1.0E-6)
+  beta ~ dnorm(0, 1.0E-6)
+  tau ~ dgamma(1.0E-3, 1.0E-3)
+}
+"
+
+```
+Define data and priors
+```{r}
+data <- list(Y=molten.HIC$value, x = molten.HIC$Jul.pdsi, N=length(Y))
+```
+
+Define intitial conditions
+```{r}
+nchain = 3
+init <- list()
+for(i in 1:nchain){
+  Y.samp = sample(Y,length(Y),replace=TRUE)
+  init[[i]] <- list(tau=1/var(diff(Y.samp)),beta=5/var(Y.samp), alpha = 5/var(Y.samp))
+}
+```
+
+Jags model
+```{r}
+j.model   <- jags.model (file = textConnection(TreeRingModel),
+                             data = data,
+                             inits = init,
+                             n.chains = 3)
+```
+
+assess convergence
+```{r}
+## burn-in
+jags.out   <- coda.samples (model = j.model,
+                            variable.names = c("alpha","beta"),
+                                n.iter = 1000)
+plot(jags.out)
+```
+
+
+```{r}
+jags.out   <- coda.samples (model = j.model,
+                            variable.names = c("x","alpha","beta"),
+                                n.iter = 10000)
+```
+
+Visualize posteriors 
+
+```{r}
+ciEnvelope <- function(x,ylo,yhi,...){
+  polygon(cbind(c(x, rev(x), x[1]), c(ylo, rev(yhi),
+                                      ylo[1])), border = NA,...) 
+}
+out <- as.matrix(jags.out)
+ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
+
+time <- molten.HIC$Year
+plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="RWI",log='y')
+ciEnvelope(time,ci[1,],ci[3,],col="lightBlue")
+points(time,y,pch="+",cex=0.5)
+
+```
+
+posterieors
+```{r}
+layout(matrix(c(1,2,3,3),2,2,byrow=TRUE))
+hist(1/sqrt(out[,1]),main=colnames(out)[1])
+hist(1/sqrt(out[,2]),main=colnames(out)[2])
+plot(out[,1],out[,2],pch=".",xlab=colnames(out)[1],ylab=colnames(out)[2])
+cor(out[,1:2])
+```
+
+#######################################
+# defining KF by hand--still needs work
+# define the kalman filter here
+```{r}
+KalmanFilter <- function(M,mu0,P0,Q,R,Y){
+  ##Inputs:
+  ##  M   = model matrix
+  ##  mu0 = initial condition mean vector
+  ##  P0  = initial condition covariance matrix
+  ##  Q   = process error covariance matrix
+  ##  R   = observation error covariance matrix
+  ##  Y   = observation matrix (with missing values as NAs), time as col's
+  
+  ## Output: (as a list)
+  ##  mu.f, mu.a  = state mean vector for (a)nalysis and (f)orecast steps
+  ##  P.f, P.a    = state covariance matrix for a and f
+  
+  ## storage
+  nstates = nrow(Y)  
+  nt = ncol(Y)
+  mu.f  = matrix(NA,nstates,nt+1)  ## forecast mean for time t
+  mu.a  = matrix(NA,nstates,nt)  ## analysis mean for time t
+  P.f  = array(NA,c(nstates,nstates,nt+1))  ## forecast variance for time t
+  P.a  = array(NA,c(nstates,nstates,nt))  ## analysis variance for time t
+
+  ## initialization
+  mu.f[,1] = mu0
+  P.f[,,1] = P0
+  I = diag(1,nstates)
+
+  ## run updates sequentially for each observation.
+  for(t in 1:nt){
+
+    ## Analysis step: combine previous forecast with observed data
+    obs = !is.na(Y[,t]) ## which Y's were observed?
+    if(any(obs)){
+      H <- I[obs,]                                                        ## observation matrix
+      K <- P.f[,,t] %*% t(H) %*% solve(H%*%P.f[,,t]%*%t(H) + R[obs,obs])  ## calculate Kalman gain
+      mu.a[,t] <- mu.f[,t] + K%*%(Y[obs,t] - H %*% mu.f[,t])              ## update mean
+      P.a[,,t] <- (1-K %*% H)*P.f[,,t]                                    ## update covariance
+    } else {
+      ##if there's no data, the posterior is the prior
+      mu.a[,t] = mu.f[,t]
+      P.a[,,t] = P.a[,,t]
+    }
+
+    ## Forecast step: predict to next step from current
+    mu.f[,t+1] = M%*%mu.a[,t]
+    P.f[,,t+1] = Q + M*P.a[,,t]*t(M)
+  
+  }
+  
+  return(list(mu.f=mu.f,mu.a=mu.a,P.f=P.f,P.a=P.a))
+}
+
+ciEnvelope <- function(x,ylo,yhi,...){
+  polygon(cbind(c(x, rev(x), x[1]), c(ylo, rev(yhi),
+                                      ylo[1])), border = NA,...) 
+}
+```
+
+```{r}
+time = molten.HIC$Year
+states = c("value")
+nstates = length(states)
+y = t(molten.HIC[,states])
+
+## define adjacency between states slected
+adj = matrix(c(0),nstates,nstates,byrow=TRUE)
+
+## plot time-series from states
+plot(time,1:length(time),type='n',ylab="Tree Ring Index Index",lwd=2,log='y',ylim=range(y,na.rm=TRUE))
+for(i in 1:nstates){
+  lines(time,y[i,],col=i,lwd=2)
+}
+legend("topleft",legend=states,lwd=2,col=1:nstates)
+
+## log transform data
+Y   = log10(y)
+
+## load parameters (assume known)
+load("data/KFalpha.params.Rdata")
+
+## options for process model 
+alpha = 0       ## assume no spatial flux
+#alpha = 0.05    ## assume a large spatial flux
+M = adj*alpha + diag(1-alpha*apply(adj,1,sum))  ## random walk with flux
+
+## options for process error covariance
+Q = tau_proc            ## full covariance matrix
+Q = diag(diag(Q))       ## diagonal covariance matrix
+Q = 0.0131
+## observation error covariance (assumed independent)  
+R = diag(tau_obs,nstates) 
+
+## prior on first step, initialize with long-term mean and covariance
+mu0 = apply(Y,1,mean,na.rm=TRUE)
+P0 = cov(t(Y),use="pairwise.complete.obs")
+
+## Run Kalman Filter
+KF00 = KalmanFilter(M,mu0,P0,Q,R,Y)
+```
+
+```{r}
+attach(KF00)
+nt = length(time)
+
+### plot ANALYSIS mean & CI time-series
+par(mfrow=c(3,1))
+for(i in 1){
+  ci = rbind(mu.a[i,]-1.96*sqrt(P.a[i,i,]),mu.a[i,]+1.96*sqrt(P.a[i,i,]))
+  plot(time,mu.a[i,],ylim=range(ci,na.rm=TRUE),type='n',main=states[i])
+  ciEnvelope(time,ci[1,],ci[2,],col="lightBlue")
+  lines(time,mu.a[i,],col=4)
+  lines(time,Y[i,])
+}
+
+## plot ANALYSIS and FORECAST variance time-series
+par(mfrow=c(3,1))
+for(i in 1){
+  plot(time,sqrt(P.a[i,i,]),ylim=c(0,sqrt(max(c(P.a[i,i,],P.f[i,i,])))),main=states[i],xlab="Time",
+       ylab="Std Error",type='l')
+  lines(time,sqrt(P.f[i,i,1:nt]),col=2)
+  points(time[is.na(Y[i,])],rep(0,nt)[is.na(Y[i,])],pch="*",col=3) ## flag's the zero's
+  legend("topright",legend=c("Analysis","Forecast","NAs"),col=1:3,lty=c(1,1,NA),pch=c(NA,NA,1),cex=1.4)
+}
 ```
 
 ## compare to moving window correlations:
