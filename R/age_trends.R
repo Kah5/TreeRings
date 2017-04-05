@@ -29,43 +29,34 @@ StCroix.rwi$year <- rownames(StCroix.rwi)
 
 StCroix.bai$year <- rownames(StCroix.bai)
 
-
+# tree age_agg adds on the ages of the trees at each year
+# can do this with BAI or detrended RWI
 source("R/tree_age_agg.R")
 
+Hic <- tree_age_agg(rwiorbai = Hickory.rwi, sampleyear = 2015, site.code= "HIC", age1950 = 50,type = "RWI_ModNegExp_detrended")
+#tree_age_agg(Hickory.bai, 2015, "HIC", "RWI_BAI_test")
+Stc <- tree_age_agg(StCroix.rwi, 2015, "STC", 50,"RWI_ModNegExp_detrended")
 
-Hic <- tree_age_agg(Hickory.rwi, 2015, "HIC", "RWI_ModNegExp_detrended")
-tree_age_agg(Hickory.bai, 2015, "HIC", "RWI_BAI_test")
-
-Stc <- tree_age_agg(StCroix.rwi, 2015, "STC", "RWI_ModNegExp_detrended")
-
-Hic$year <- as.numeric(Hic$year)
-Hic$class <- "notentered"
-# need to assign old trees then and old trees now
-for (i in unique(Hic$ID)){
- ifelse(Hic[Hic$ID %in% i & Hic$year == 1950,]$Age < 50, Hic[Hic$ID %in% i, ]$class <-  "young",  Hic[Hic$ID %in% i, ]$class<- "old")
-}
 
 ggplot(Hic, aes(x = Age, y = RWI))+geom_point()
 ggplot(Hic, aes(x = year, y = RWI, color = class))+geom_point()+stat_smooth(method = "lm")
 ggplot(Hic, aes(x = year, y = Age))+geom_point()
 
-Stc$year <- as.numeric(Stc$year)
-Stc$class <- "notentered"
-# need to assign old trees then and old trees now
-for (i in unique(Stc$ID)){
-  ifelse(Stc[Stc$ID %in% i & Stc$year == 1950,]$Age < 50, Stc[Stc$ID %in% i, ]$class <-  "young",  Stc[Stc$ID %in% i, ]$class<- "old")
-}
+
 ggplot(Stc, aes(x = Age, y = RWI))+geom_point()
 ggplot(Stc, aes(x = year, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
 ggplot(Stc, aes(x = year, y = Age))+geom_point()
 
 
-trends <- lm(RWI ~ year, data = Hic)
+###################################
+#add climate onto the age trends
+####################################
 
+# read in the climate for each site
 IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Glacial park
 MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 
-get.clim <- function(MNcd.clim){
+get.clim <- function(MNcd.clim, site.df){
   MNcd.clim$PCP <- MNcd.clim$PCP*25.54
   
   keeps <- c("Year", "Month",  "PCP")
@@ -142,27 +133,29 @@ get.clim <- function(MNcd.clim){
   #annuals.crn <- merge(annuals, chron, by = "Year")
   #melt(annuals.crn, id = c('ear','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
    #                        "JUNTmin","JUNTavg", 'JUNTmax',"Jul.pdsi"))
-  annuals
-  }
-Hic.clim <- get.clim(IL.clim)
-Stc.clim <- get.clim(MNcd.clim)
+  df<- merge(site.df, annuals, by = "year")
+  df
+}
 
-HIC_climate <- merge(Hic, Hic.clim, by = "year")
-ggplot(HIC_climate, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
-
-STC_climate <- merge(Stc, Stc.clim, by = "year")
-ggplot(STC_climate, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
-
-STC_climate$site <- "STC"
-HIC_climate$site <- "HIC"
+# get climate and merge with the existing dataframes:
+HIC_clim <- get.clim(IL.clim, Hic)
+STC_clim <- get.clim(MNcd.clim, Stc)
 
 
+ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
 
-all <- rbind(STC_climate, HIC_climate)
-HIC_climate$age.class <-cut(HIC_climate$Age, breaks = seq(1,165, by = 20))
+
+ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
+
+STC_clim$site <- "STC"
+HIC_clim$site <- "HIC"
+
+
+
+all <- rbind(STC_clim, HIC_clim)
 ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
 ggplot(all, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
-all$year <- as.numeric(all$year)
+
 
 summary(lm(RWI~PDSI, data = all))
 summary(lm(RWI~PDSI:site, data = all))
