@@ -10,7 +10,7 @@ library(ggplot2)
 # then outputs the melted df with year, tree id, age, and RWI
 # note, you need to add years as a column for the rwiorbai first
 # this saves as a csv but also outputs a df
-tree_age_agg<- function(rwiorbai, sampleyear, site.code, type){
+tree_age_agg<- function(rwiorbai, sampleyear, site.code, age1950,type){
 
 # calculate record age
 treedata <- data.frame(ID = colnames(rwiorbai),
@@ -54,11 +54,13 @@ site.m <- merge(Age.m, RWI.m, by = c('year', "ID"))
 
 ggplot(site.m, aes(x = Age, y = RWI, color = ID)) + geom_line()
 
-#hist(site.m[site.m$year == 2015,]$Age, breaks = 25)
-
-#bai.chron <- chron(Hickory.bai)
-#plot(as.numeric(rownames(bai.chron)), bai.chron[,1])
-
+site.m$year <- as.numeric(site.m$year)
+site.m$ID <- as.character(site.m$ID)
+site.m$ageclass <- "notentered"
+# need to assign old trees then and old trees now
+for (i in unique(site.m$ID)){
+  ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age < age1950, site.m[site.m$ID %in% i, ]$ageclass <-  "young",  site.m[site.m$ID %in% i, ]$ageclass<- "old")
+}
 write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-",type, ".csv"))
 site.m
 }
