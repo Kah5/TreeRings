@@ -17,6 +17,18 @@ Hickory.rwi$year <- rownames(Hickory.rwi)
 
 Hickory.bai$year <- rownames(Hickory.bai)
 
+# grab from another site
+StCroix <- read.tucson("./cofecha/STCww.rwl")
+STC.stats <- rwi.stats(StCroix)
+
+StCroix.rwi <- StCroix.bai
+StCroix.bai <- bai.out(StCroix)
+#detrend 
+StCroix.rwi <- detrend(rwl = StCroix, method = "ModNegExp")
+StCroix.rwi$year <- rownames(StCroix.rwi)
+
+StCroix.bai$year <- rownames(StCroix.bai)
+
 
 source("R/tree_age_agg.R")
 
@@ -24,15 +36,25 @@ source("R/tree_age_agg.R")
 Hic <- tree_age_agg(Hickory.rwi, 2015, "HIC", "RWI_ModNegExp_detrended")
 tree_age_agg(Hickory.bai, 2015, "HIC", "RWI_BAI_test")
 
+Stc <- tree_age_agg(StCroix.rwi, 2015, "STC", "RWI_ModNegExp_detrended")
+
 Hic$year <- as.numeric(Hic$year)
 
 ggplot(Hic, aes(x = Age, y = RWI))+geom_point()
 ggplot(Hic, aes(x = year, y = RWI))+geom_point()
 ggplot(Hic, aes(x = year, y = Age))+geom_point()
 
+Stc$year <- as.numeric(Stc$year)
+
+ggplot(Stc, aes(x = Age, y = RWI))+geom_point()
+ggplot(Stc, aes(x = year, y = RWI))+geom_point()
+ggplot(Stc, aes(x = year, y = Age))+geom_point()
+
+
+trends <- lm(RWI ~ year, data = Hic)
 
 IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Glacial park
-
+MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 
 get.clim <- function(MNcd.clim){
   MNcd.clim$PCP <- MNcd.clim$PCP*25.54
@@ -114,19 +136,39 @@ get.clim <- function(MNcd.clim){
   annuals
   }
 Hic.clim <- get.clim(IL.clim)
+Stc.clim <- get.clim(MNcd.clim)
 
 HIC_climate <- merge(Hic, Hic.clim, by = "year")
 ggplot(HIC_climate, aes(x = Age, y = RWI))+geom_point()
 
-HIC_climate$ age.class <-cut(HIC_climate$Age, breaks = seq(1,165, by = 20))
-ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
+STC_climate <- merge(Stc, Stc.clim, by = "year")
+STC_climate$site <- "STC"
+HIC_climate$site <- "HIC"
+
+
+all <- rbind(STC_climate, HIC_climate)
+#HIC_climate$ age.class <-cut(HIC_climate$Age, breaks = seq(1,165, by = 20))
+#ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
+ggplot(all, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
+all$year <- as.numeric(all$year)
+
+summary(lm(RWI~PDSI, data = all))
+summary(lm(RWI~PDSI:site, data = all))
+summary(lm(RWI~year, data = all))
+summary(lm(RWI~year:site, data = all))
+
+ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
 
 
 gam1 <- gam(RWI~ s(PCP)+
               s(TMIN) +
               s(TAVG) +
-              s(PDSI),
-            data=HIC_climate)
+              s(PDSI) + s(Age) + s(site),
+            data=all)
+
+
+gam1
+plot(gam1)
 
 summary(gam1)$r.sq # R-squared
 summary(gam1)$dev.expl # explained deviance

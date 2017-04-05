@@ -45,8 +45,8 @@ pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
 
 # Specifying a set model parameters
 s2_obs = 1      # Variance of observations
-s2_alpha = 0.01 # Variance of the alpha regression parameter
-s2_beta = 0.01  # Variance of the beta regression parameter
+s2_alpha = 0.1 # Variance of the alpha regression parameter
+s2_beta = 0.1  # Variance of the beta regression parameter
 
 # Construct a regression model
 tvp.dlm = dlmModReg(X=pdsi, addInt=TRUE, dV=s2_obs, dW=c(s2_alpha, s2_beta))
