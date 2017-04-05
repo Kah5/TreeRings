@@ -142,13 +142,53 @@ HIC_clim <- get.clim(IL.clim, Hic)
 STC_clim <- get.clim(MNcd.clim, Stc)
 
 
-ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
-
-
-ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
+ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
 
 STC_clim$site <- "STC"
 HIC_clim$site <- "HIC"
+
+plot.young.old <- function(x, Climate, xlab, Site){
+  
+  #create dummy variable
+  x$group <- 0
+  x[x$ageclass %in% "old",]$group <- 1
+  
+  #if the dummy variable is significant, then the two slopes are different
+  print(summary(aov(x$RWI ~ x[,c(Climate)] * x$group)))
+  #print(summary(lm(value ~ Climate:group, data = x)))
+  #print(summary(aov(value~Climate*class, data=x)))
+  print(anova(lm(x$RWI ~ x[,c(Climate)] * x$group), lm(x$RWI ~ x[,c(Climate)])))
+  #print(summary(lm(value~Climate/group-1, data=x)))
+  #print(summary(aov(value~Climate/group, data = x)))
+  # Extend the regression lines beyond the domain of the data
+  
+  p<- ggplot(x, aes(x=x[,Climate], y=x$RWI, colour=x$ageclass)) + geom_point(shape=1) +
+    #scale_colour_hue(l=50) +
+    #+ylim(-1.0,1.0)
+    #+xlim(-4,4)# Use a slightly darker palette than normal
+    geom_smooth(method='lm',   # Add linear regression lines
+                se=TRUE,    # add shaded confidence region
+                fullrange=FALSE)+# Extend regression lines
+    
+    scale_color_manual(values=c('old'="red",'young'="blue"))+
+    #xlim(-8, 8)+
+    #ylim(0.5, 1.5) +
+    theme_bw()+
+    theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
+    ylab('Detrended RWI') +
+    xlab( xlab ) +
+    ggtitle(Site)
+  p
+  #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
+}
+
+plot.young.old(STC_clim, "PDSI", "PDSI", "STC")
+plot.young.old(HIC_clim, "PDSI", "PDSI", "HIC")
+
+
+
+
 
 
 
