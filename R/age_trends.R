@@ -44,13 +44,13 @@ source("R/tree_age_agg.R")
 
 Hic <- tree_age_agg(rwiorbai = Hickory.bai, sampleyear = 2015, site.code= "HIC", age1950 = 50,type = "RWI_ModNegExp_detrended")
 Stc <- tree_age_agg(StCroix.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Bon <- tree_age_agg(Bonanza.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Tow <- tree_age_agg(Townsend.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Ple <- tree_age_agg(Pleasant.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Cor <- tree_age_agg(Coral.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Unc <- tree_age_agg(Uncas.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Eng <- tree_age_agg(Englund.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Mou <- tree_age_agg(Mound.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Bon <- tree_age_agg(Bonanza.bai, 2015, "BON", 50,"RWI_ModNegExp_detrended")
+Tow <- tree_age_agg(Townsend.bai, 2015, "TOW", 50,"RWI_ModNegExp_detrended")
+Ple <- tree_age_agg(Pleasant.bai, 2015, "PLE", 50,"RWI_ModNegExp_detrended")
+Cor <- tree_age_agg(Coral.bai, 2015, "COR", 50,"RWI_ModNegExp_detrended")
+Unc <- tree_age_agg(Uncas.bai, 2015, "UNC", 50,"RWI_ModNegExp_detrended")
+Eng <- tree_age_agg(Englund.bai, 2015, "ENG", 50,"RWI_ModNegExp_detrended")
+Mou <- tree_age_agg(Mound.bai, 2015, "MOU", 50,"RWI_ModNegExp_detrended")
 
 
 ###################################

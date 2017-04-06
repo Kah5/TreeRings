@@ -56,10 +56,12 @@ ggplot(site.m, aes(x = Age, y = RWI, color = ID)) + geom_line()
 
 site.m$year <- as.numeric(site.m$year)
 site.m$ID <- as.character(site.m$ID)
-site.m$ageclass <- "notentered"
+site.m$ageclass <- "young"
 # need to assign old trees then and old trees now
 for (i in unique(site.m$ID)){
-  ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 | site.m[site.m$ID %in% i & site.m$year == 1950,]$Age == "NA", site.m[site.m$ID %in% i, ]$ageclass <-  "young",  site.m[site.m$ID %in% i, ]$ageclass<- "old")
+  ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 , site.m[site.m$ID %in% i, ]$ageclass <-  "young",  
+         ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age > age1950 ,site.m[site.m$ID %in% i, ]$ageclass<- "old", site.m[site.m$ID %in% i, ]$ageclass <-  "young"))
+                
 }
 write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-",type, ".csv"))
 site.m
