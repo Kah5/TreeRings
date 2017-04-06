@@ -148,6 +148,10 @@ ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat
 STC_clim$site <- "STC"
 HIC_clim$site <- "HIC"
 
+
+
+# this function plots a scatter plot of a climate param vs. growth (RWI)
+# with two separate slopes for the "young" and the "old" trees
 plot.young.old <- function(x, Climate, xlab, Site){
   
   #create dummy variable
