@@ -203,7 +203,7 @@ HIC_clim$site <- "HIC"
 
 # this function plots a scatter plot of a climate param vs. growth (RWI)
 # with two separate slopes for the "young" and the "old" trees
-plot.young.old <- function(x, Climate, xlab, Site){
+plot.young.old <- function(x, Climate, xlab, ylab,Site){
   
   if(length(unique(x$ageclass)) >= 1){
   #create dummy variable
@@ -232,7 +232,7 @@ plot.young.old <- function(x, Climate, xlab, Site){
     #ylim(0.5, 1.5) +
     theme_bw()+
     theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
-    ylab('Detrended RWI') +
+    ylab(ylab) +
     xlab( xlab ) +
     ggtitle(Site)
   }else{
@@ -254,7 +254,7 @@ plot.young.old <- function(x, Climate, xlab, Site){
       #ylim(0.5, 1.5) +
       theme_bw()+
       theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
-      ylab('Detrended RWI') +
+      ylab(ylab) +
       xlab( xlab ) +
       ggtitle(Site)
   }
@@ -262,18 +262,19 @@ plot.young.old <- function(x, Climate, xlab, Site){
   #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
 }
 
-plot.young.old(STC_clim, "PDSI", "PDSI", "STC")
-plot.young.old(HIC_clim, "PDSI", "PDSI", "HIC")
-plot.young.old(TOW_clim, "PDSI", "PDSI", "TOW")
-plot.young.old(BON_clim, "PDSI", "PDSI", "BON")
-plot.young.old(PLE_clim, "PDSI", "PDSI", "PLE")
-plot.young.old(COR_clim, "PDSI", "PDSI", "COR")
-plot.young.old(UNC_clim, "PDSI", "PDSI", "UNC")
-plot.young.old(ENG_clim, "PDSI", "PDSI", "ENG")
-plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", Site = "MOU")
+pdf("outputs/correlations/BAI_young_old_figs.pdf")
+plot.young.old(STC_clim, "PDSI", "PDSI","BAI", "STC")
+plot.young.old(HIC_clim, "PDSI", "PDSI","BAI", "HIC")
+plot.young.old(TOW_clim, "PDSI", "PDSI","BAI", "TOW")
+plot.young.old(BON_clim, "PDSI", "PDSI","BAI", "BON")
+plot.young.old(PLE_clim, "PDSI", "PDSI","BAI", "PLE")
+plot.young.old(COR_clim, "PDSI", "PDSI","BAI", "COR")
+plot.young.old(UNC_clim, "PDSI", "PDSI","BAI", "UNC")
+plot.young.old(ENG_clim, "PDSI", "PDSI","BAI", "ENG")
+plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site = "MOU")
+dev.off()
 
-
-
+# should create PNGS but that is for a later date
 
 
 
