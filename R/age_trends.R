@@ -1,3 +1,5 @@
+library(dplR)
+library(ggplot2)
 # lets look at relationship to climate with age:
 
 
@@ -5,47 +7,50 @@
 #read in rwl & add site + year codes#
 #####################################
 
-#Hickory Grove
-Hickory <- read.tucson ("./cofecha/HICww.rwl")
-HIC.stats <- rwi.stats(Hickory)
+# quick function to read detrend and add the year as a column:
+# this function will also just calculate BAI instead
+read_detrend_year <- function( filename, method , rwiorbai){
+  newseries <- read.tucson( filename )
+  ifelse(rwiorbai == "rwi", 
+          detrended <- detrend(rwl = newseries, method = method),
+          detrended <- bai.out(rwl = newseries))
+  
+  detrended$year <- rownames(detrended)
+  detrended
+}
 
-Hickory.rwi <- Hickory.bai
-Hickory.bai <- bai.out(Hickory)
-#detrend 
-Hickory.rwi <- detrend(rwl = Hickory, method = "ModNegExp")
-Hickory.rwi$year <- rownames(Hickory.rwi)
+#calculate BAI or the detrended RWI: switch the rwiorbai argument 
+Hickory.bai <- read_detrend_year("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
+StCroix.bai <- read_detrend_year("./cofecha/STCww.rwl", method = "ModNegExp", rwiorbai = "bai")
+Bonanza.bai <- read_detrend_year("./cofecha/BONww.rwl", method = "ModNegExp", rwiorbai = "bai")
+#Hickory.bai <- read_detrend_year ("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
+#PleasantWolf.bai <- read_detrend_year('data/wi006.rwl', method = "ModNegExp", rwiorbai = "bai") #Pleasant prairie in southeast WI, from ITRDB
+#Sand.bai <- read_detrend_year("data/il001.rwl", method = "ModNegExp", rwiorbai = "bai") #Sandwich, il. Cook tree rings from the 1980's
+#Pulaski <- read_detrend_year("./in001.rwl", method = "ModNegExp", rwiorbai = "bai")
+Townsend.bai <- read_detrend_year('./cofecha/tow/TOWww.rwl', method = "ModNegExp", rwiorbai = "bai")#townsedn woods
+#YellowRiver <- read_detrend_year('data/ia029.rwl', method = "ModNegExp", rwiorbai = "bai") # had to fix a wrong year
+Pleasant.bai <- read_detrend_year('./cofecha/PLEww.rwl', method = "ModNegExp", rwiorbai = "bai") #Pleasant valley conservency
+#Desouix <- read_detrend_year('data/mn029.rwl', method = "ModNegExp", rwiorbai = "bai") #close to BONanza
+Coral.bai <- read_detrend_year('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl', method = "ModNegExp", rwiorbai = "bai")
+Uncas.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl", method = "ModNegExp", rwiorbai = "bai")
+Glacial.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl", method = "ModNegExp", rwiorbai = "bai")
+Englund.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl", method = "ModNegExp", rwiorbai = "bai")
+Mound.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl", method = "ModNegExp", rwiorbai = "bai")
 
-Hickory.bai$year <- rownames(Hickory.bai)
-
-# grab from another site
-StCroix <- read.tucson("./cofecha/STCww.rwl")
-STC.stats <- rwi.stats(StCroix)
-
-StCroix.rwi <- StCroix.bai
-StCroix.bai <- bai.out(StCroix)
-#detrend 
-StCroix.rwi <- detrend(rwl = StCroix, method = "ModNegExp")
-StCroix.rwi$year <- rownames(StCroix.rwi)
-
-StCroix.bai$year <- rownames(StCroix.bai)
-
+##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
 source("R/tree_age_agg.R")
 
-Hic <- tree_age_agg(rwiorbai = Hickory.rwi, sampleyear = 2015, site.code= "HIC", age1950 = 50,type = "RWI_ModNegExp_detrended")
-#tree_age_agg(Hickory.bai, 2015, "HIC", "RWI_BAI_test")
-Stc <- tree_age_agg(StCroix.rwi, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-
-
-ggplot(Hic, aes(x = Age, y = RWI))+geom_point()
-ggplot(Hic, aes(x = year, y = RWI, color = class))+geom_point()+stat_smooth(method = "lm")
-ggplot(Hic, aes(x = year, y = Age))+geom_point()
-
-
-ggplot(Stc, aes(x = Age, y = RWI))+geom_point()
-ggplot(Stc, aes(x = year, y = RWI, color = class))+geom_point()+stat_smooth(method = 'lm')
-ggplot(Stc, aes(x = year, y = Age))+geom_point()
+Hic <- tree_age_agg(rwiorbai = Hickory.bai, sampleyear = 2015, site.code= "HIC", age1950 = 50,type = "RWI_ModNegExp_detrended")
+Stc <- tree_age_agg(StCroix.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Bon <- tree_age_agg(Bonanza.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Tow <- tree_age_agg(Townsend.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Ple <- tree_age_agg(Pleasant.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Cor <- tree_age_agg(Coral.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Unc <- tree_age_agg(Uncas.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Eng <- tree_age_agg(Englund.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
+Mou <- tree_age_agg(Mound.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
 
 
 ###################################
@@ -54,9 +59,49 @@ ggplot(Stc, aes(x = year, y = Age))+geom_point()
 
 # read in the climate for each site
 IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Glacial park
-MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+EC_MN.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 
-get.clim <- function(MNcd.clim, site.df){
+get.clim <- function(site.code, site.df){
+  if(site.code == "BON"){
+    MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+  } else{ if(site.code == "HIC" ){
+    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+  } else{ if(site.code == "GLA" ){
+    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+  } else{ if(site.code == "COR" ){
+    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+  } else{ if(site.code == "W-R" ){
+    MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+  } else{ if(site.code == 'SAW'){
+    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+  }else{ if(site.code == "STC"){
+    MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+  }else{ if(site.code == "ENG"){
+    MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
+  }else{ if(site.code == "TOW"){
+    MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
+  }else{ if(site.code == "MOU"){
+    MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
+  }else{ if(site.code == "UNC"){
+    MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+  }else { if(site.code == 'PLE'){
+    MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
+  }else { if(site.code == 'YRF'){
+    MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
+    #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
+  }
+  }
+  }
+  }
+  }
+  }
+  }
+  }
+  }
+  }
+  }
+  }
+  
   MNcd.clim$PCP <- MNcd.clim$PCP*25.54
   
   keeps <- c("Year", "Month",  "PCP")
@@ -138,12 +183,18 @@ get.clim <- function(MNcd.clim, site.df){
 }
 
 # get climate and merge with the existing dataframes:
-HIC_clim <- get.clim(IL.clim, Hic)
-STC_clim <- get.clim(MNcd.clim, Stc)
+HIC_clim <- get.clim("HIC", Hic)
+STC_clim <- get.clim("STC", Stc)
+BON_clim <- get.clim("BON", Bon)
+TOW_clim <- get.clim("TOW", Tow)
+PLE_clim <- get.clim("PLE", Ple)
+COR_clim <- get.clim("COR", Cor)
+UNC_clim <- get.clim("UNC", Unc)
+ENG_clim <- get.clim("ENG", Eng)
+MOU_clim <- get.clim("MOU", Mou)
 
-
-ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+#ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+#ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
 
 STC_clim$site <- "STC"
 HIC_clim$site <- "HIC"
@@ -156,7 +207,7 @@ plot.young.old <- function(x, Climate, xlab, Site){
   
   #create dummy variable
   x$group <- 0
-  x[x$ageclass %in% "old",]$group <- 1
+  ifelse(x$ageclass %in% "old", x$group <- 1, x$group <- 0)
   
   #if the dummy variable is significant, then the two slopes are different
   print(summary(aov(x$RWI ~ x[,c(Climate)] * x$group)))
@@ -189,6 +240,13 @@ plot.young.old <- function(x, Climate, xlab, Site){
 
 plot.young.old(STC_clim, "PDSI", "PDSI", "STC")
 plot.young.old(HIC_clim, "PDSI", "PDSI", "HIC")
+plot.young.old(TOW_clim, "PDSI", "PDSI", "TOW")
+plot.young.old(BON_clim, "PDSI", "PDSI", "BON")
+plot.young.old(PLE_clim, "PDSI", "PDSI", "PLE")
+plot.young.old(COR_clim, "PDSI", "PDSI", "COR")
+plot.young.old(UNC_clim, "PDSI", "PDSI", "UNC")
+plot.young.old(ENG_clim, "PDSI", "PDSI", "ENG")
+plot.young.old(MOU_clim, "PDSI", "PDSI", "MOU")
 
 
 
