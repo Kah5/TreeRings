@@ -205,6 +205,7 @@ HIC_clim$site <- "HIC"
 # with two separate slopes for the "young" and the "old" trees
 plot.young.old <- function(x, Climate, xlab, Site){
   
+  if(length(unique(x$ageclass)) >= 1){
   #create dummy variable
   x$group <- 0
   ifelse(x$ageclass %in% "old", x$group <- 1, x$group <- 0)
@@ -234,6 +235,29 @@ plot.young.old <- function(x, Climate, xlab, Site){
     ylab('Detrended RWI') +
     xlab( xlab ) +
     ggtitle(Site)
+  }else{
+    print(anova(lm(x$RWI ~ x[,c(Climate)])))
+    #print(summary(lm(value~Climate/group-1, data=x)))
+    #print(summary(aov(value~Climate/group, data = x)))
+    # Extend the regression lines beyond the domain of the data
+    
+    p<- ggplot(x, aes(x=x[,Climate], y=x$RWI, colour=x$ageclass)) + geom_point(shape=1) +
+      #scale_colour_hue(l=50) +
+      #+ylim(-1.0,1.0)
+      #+xlim(-4,4)# Use a slightly darker palette than normal
+      geom_smooth(method='lm',   # Add linear regression lines
+                  se=TRUE,    # add shaded confidence region
+                  fullrange=FALSE)+# Extend regression lines
+      
+      scale_color_manual(values=c('young'="blue"))+
+      #xlim(-8, 8)+
+      #ylim(0.5, 1.5) +
+      theme_bw()+
+      theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
+      ylab('Detrended RWI') +
+      xlab( xlab ) +
+      ggtitle(Site)
+  }
   p
   #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
 }
@@ -246,7 +270,7 @@ plot.young.old(PLE_clim, "PDSI", "PDSI", "PLE")
 plot.young.old(COR_clim, "PDSI", "PDSI", "COR")
 plot.young.old(UNC_clim, "PDSI", "PDSI", "UNC")
 plot.young.old(ENG_clim, "PDSI", "PDSI", "ENG")
-plot.young.old(MOU_clim, "PDSI", "PDSI", "MOU")
+plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", Site = "MOU")
 
 
 
