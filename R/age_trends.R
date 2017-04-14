@@ -1,7 +1,8 @@
 library(dplR)
 library(ggplot2)
+library(R2jags)
 # lets look at relationship to climate with age:
-
+setwd("C:/Users/JMac/Documents/Kelly/TreeRings")
 
 #####################################
 #read in rwl & add site + year codes#
@@ -20,7 +21,7 @@ read_detrend_year <- function( filename, method , rwiorbai){
 }
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
-Hickory.bai <- read_detrend_year("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
+Hickory.bai <- read_detrend_year("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi")
 StCroix.bai <- read_detrend_year("./cofecha/STCww.rwl", method = "ModNegExp", rwiorbai = "bai")
 Bonanza.bai <- read_detrend_year("./cofecha/BONww.rwl", method = "ModNegExp", rwiorbai = "bai")
 #Hickory.bai <- read_detrend_year ("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
@@ -199,6 +200,7 @@ MOU_clim <- get.clim("MOU", Mou)
 STC_clim$site <- "STC"
 HIC_clim$site <- "HIC"
 
+lm(HIC_clim$RWI~ HIC_clim$PDSI)
 
 
 # this function plots a scatter plot of a climate param vs. growth (RWI)
@@ -306,3 +308,186 @@ summary(gam1)$r.sq # R-squared
 summary(gam1)$dev.expl # explained deviance
 anova(gam1)
 AIC(gam1)
+
+
+scaledlinear <- "model{
+  for(i in 1:Ntotal){
+    zy[i] ~ dt(mu[i], 1/zsigma^2, nu)
+    mu[i] <- zbeta0 + zbeta * zx[i]
+  }
+
+#priors
+  zbeta0 ~ dnorm(0,1/(10)^2)
+  zbeta1 ~ dnorm(0,1/(10)^2)
+  zsigma ~ dunif(1.0E-3,1.0E-3)
+  nu <- nuMinusOne+1
+  nuMinusOne ~ dexp(1/29)
+  
+  }
+}"
+
+
+# data for linear reg
+HIC_clim <- HIC_clim[!is.na(HIC_clim$RWI),]
+myData = HIC_clim
+xName = "PDSI" ; yName = "RWI"
+
+#function to generate mcmc chains in the linear regression model
+genMCMC = function( data , xName="x" , yName="y" , 
+                    numSavedSteps=50000 , saveName=NULL ) { 
+  require(rjags)
+  #-----------------------------------------------------------------------------
+  # THE DATA.
+  y = data[,yName]
+  x = data[,xName]
+  # Do some checking that data make sense:
+  if ( any( !is.finite(y) ) ) { stop("All y values must be finite.") }
+  if ( any( !is.finite(x) ) ) { stop("All x values must be finite.") }
+  #Ntotal = length(y)
+  # Specify the data in a list, for later shipment to JAGS:
+  dataList = list(
+    x = x ,
+    y = y 
+  )
+  #-----------------------------------------------------------------------------
+  # THE MODEL.
+  modelString = "
+  # Standardize the data:
+  data {
+  Ntotal <- length(y)
+  xm <- mean(x)
+  ym <- mean(y)
+  xsd <- sd(x)
+  ysd <- sd(y)
+  for ( i in 1:length(y) ) {
+  zx[i] <- ( x[i] - xm ) / xsd
+  zy[i] <- ( y[i] - ym ) / ysd
+  }
+  }
+  # Specify the model for standardized data:
+  model {
+  for ( i in 1:Ntotal ) {
+  zy[i] ~ dt( zbeta0 + zbeta1 * zx[i] , 1/zsigma^2 , nu )
+  }
+  # Priors vague on standardized scale:
+  zbeta0 ~ dnorm( 0 , 1/(10)^2 )  
+  zbeta1 ~ dnorm( 0 , 1/(10)^2 )
+  zsigma ~ dunif( 1.0E-3 , 1.0E+3 )
+  nu ~ dexp(1/30.0)
+  # Transform to original scale:
+  beta1 <- zbeta1 * ysd / xsd  
+  beta0 <- zbeta0 * ysd  + ym - zbeta1 * xm * ysd / xsd 
+  sigma <- zsigma * ysd
+  }
+  " # close quote for modelString
+  # Write out modelString to a text file
+  writeLines( modelString , con="TEMPmodel.txt" )
+  #-----------------------------------------------------------------------------
+  # INTIALIZE THE CHAINS.
+  # Let JAGS do it...
+  #-----------------------------------------------------------------------------
+  # RUN THE CHAINS
+  parameters = c( "beta0" ,  "beta1" ,  "sigma", 
+                  "zbeta0" , "zbeta1" , "zsigma", "nu" )
+  adaptSteps = 500  # Number of steps to "tune" the samplers
+  burnInSteps = 1000
+  nChains = 4 
+  thinSteps = 1
+  nIter = ceiling( ( numSavedSteps * thinSteps ) / nChains )
+  # Create, initialize, and adapt the model:
+  jagsModel = jags.model( "TEMPmodel.txt" , data=dataList , #inits=initsList , 
+                          n.chains=nChains , n.adapt=adaptSteps )
+  # Burn-in:
+  cat( "Burning in the MCMC chain...\n" )
+  update( jagsModel , n.iter=burnInSteps )
+  # The saved MCMC chain:
+  cat( "Sampling final MCMC chain...\n" )
+  codaSamples = coda.samples( jagsModel , variable.names=parameters , 
+                              n.iter=nIter , thin=thinSteps )
+  # resulting codaSamples object has these indices: 
+  #   codaSamples[[ chainIdx ]][ stepIdx , paramIdx ]
+  if ( !is.null(saveName) ) {
+    save( codaSamples , file=paste(saveName,"Mcmc.Rdata",sep="") )
+  }
+  return( codaSamples )
+} # end function
+
+
+startTime = proc.time()
+mcmcCoda = genMCMC( data=myData , xName=xName , yName=yName , 
+                    numSavedSteps=20000 , saveName=fileNameRoot )
+stopTime = proc.time()
+duration = stopTime - startTime
+show(duration)
+
+source("R/useful_jags_output_summary.R")
+# Display diagnostics of chain, for specified parameters:
+parameterNames = varnames(mcmcCoda) # get all parameter names
+for ( parName in parameterNames ) {
+  diagMCMC( codaObject=mcmcCoda , parName=parName , 
+            saveName=fileNameRoot , saveType=graphFileType )
+}
+#------------------------------------------------------------------------------- 
+# Get summary statistics of chain: functions from 
+summaryInfo = smryMCMC( mcmcCoda , 
+                        compValBeta1=0.0 , ropeBeta1=c(-0.5,0.5) ,
+                        saveName=fileNameRoot )
+show(summaryInfo)
+# Display posterior information:
+plotMCMC( mcmcCoda , data=myData , xName=xName , yName=yName , 
+          compValBeta1=0.0 , ropeBeta1=c(-0.5,0.5) ,
+          pairsPlot=TRUE , showCurve=FALSE ,
+          saveName=fileNameRoot , saveType=graphFileType )
+#------------------------------------------------------------------------------- 
+
+#####################################################################################
+# lets now add in a heirarchical regression that includes the subject/the tree:
+#####################################################################################
+# this code takes way too long ~ 2 hrs! but it eventually ran, I was getting plots, but strange errors occured
+source("R/growth_PDSI_robust_heir_reg_by_tree.R")
+
+HIC_clim <- HIC_clim[!is.na(HIC_clim$RWI),]
+myData = HIC_clim # looking at hickory grove climate and TR growth
+
+xName = "Jul.pdsi" ; yName = "RWI" ; sName="ID"
+fileNameRoot = "HierLinRegressTree-Jags-" 
+
+# myData = read.csv( file="IncomeFamszState.csv" )
+# xName = "Famsz" ; yName = "Income" ; sName="State"
+# fileNameRoot = "IncomeFamszState-Lin-Jags-" 
+
+# myData = read.csv( file="BugsRatsData.csv" )
+# xName = "Day" ; yName = "Weight" ; sName="Subj"
+# fileNameRoot = "BugsRatsData-Jags-" 
+
+graphFileType = "eps" 
+#------------------------------------------------------------------------------- 
+# Load the relevant model into R's working memory:
+source("R/growth_PDSI_robust_heir_reg_by_tree.R")
+#------------------------------------------------------------------------------- 
+# Generate the MCMC chain:
+#startTime = proc.time()
+mcmcCoda = genMCMC( data=myData , xName=xName , yName=yName , sName=sName ,
+                    numSavedSteps=20000 , thinSteps=15 , saveName=fileNameRoot )
+#stopTime = proc.time()
+#duration = stopTime - startTime
+#show(duration)
+# #------------------------------------------------------------------------------- 
+# # Display diagnostics of chain, for specified parameters:
+parameterNames = varnames(mcmcCoda) # get all parameter names
+for ( parName in c("beta0mu","beta1mu","nu","sigma","beta0[1]","beta1[1]") ) {
+  diagMCMC( codaObject=mcmcCoda , parName=parName , 
+            saveName=fileNameRoot , saveType=graphFileType )
+}
+#------------------------------------------------------------------------------- 
+# Get summary statistics of chain:
+summaryInfo = smryMCMC( mcmcCoda , saveName=fileNameRoot )
+show(summaryInfo)
+# Display posterior information:
+plotMCMC( mcmcCoda , data=myData , xName=xName , yName=yName , sName=sName ,
+          compValBeta1=0.0 , ropeBeta1=c(-0.5,0.5) ,
+          pairsPlot=TRUE , showCurve=FALSE ,
+          saveName=fileNameRoot , saveType=graphFileType )
+#------------------------------------------------------------------------------- 
+
+
