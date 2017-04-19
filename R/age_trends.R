@@ -22,7 +22,7 @@ read_detrend_year <- function( filename, method , rwiorbai){
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
 Hickory.bai <- read_detrend_year("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-StCroix.bai <- read_detrend_year("./cofecha/STCww.rwl", method = "ModNegExp", rwiorbai = "bai")
+StCroix.bai <- read_detrend_year("./cofecha/STCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
 Bonanza.bai <- read_detrend_year("./cofecha/BONww.rwl", method = "ModNegExp", rwiorbai = "bai")
 #Hickory.bai <- read_detrend_year ("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
 #PleasantWolf.bai <- read_detrend_year('data/wi006.rwl', method = "ModNegExp", rwiorbai = "bai") #Pleasant prairie in southeast WI, from ITRDB
@@ -173,7 +173,8 @@ get.clim <- function(site.code, site.df){
                         JUNTmin = jun.tmin[1:120,]$TMIN,
                         JUNTavg = jun.tavg[1:120,]$TAVG, 
                         JUNTmax = jun.tmax[1:120,]$TMAX,
-                        Jul.pdsi = jul.pdsi[1:120,]$PDSI)
+                        Jul.pdsi = jul.pdsi[1:120,]$PDSI, 
+                        WUE.fake = seq(0,15, by = 15/119))
   
   #merge annuals with rwl
   #annuals.crn <- merge(annuals, chron, by = "Year")
@@ -293,7 +294,44 @@ summary(lm(RWI~year:site, data = all))
 
 ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
 
+# ------------------------------------------------
+# Power analysis of general linear model 
+# ------------------------------------------------
+
+library(pwr)
+library(nlme)
+
+Model <- function(x = all,
+                  type = c("normal","log","logit")){
+  ## Transforms
+  if (type[1] == "log")
+    x$RWI <- log(x$RWI)
+  else if (type[1] == "logit")
+    x$RWI <- log(x$RWI / (1 - x$RWI))
+  
+  mod <- lme(RWI ~ year,
+             data = x,
+             random = ~ 1 | site/Age,
+             na.action = na.omit,
+             control = lmeControl(opt = "optim",
+                                  maxIter = 800, msMaxIter = 800)
+  )
+  mod$type <- type[1]
+  
+  return(mod)
+}
+Model(x = all, type = "normal")
+
+
+
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
+glm1 <- glm(RWI~ PCP+
+              TMIN +
+              TAVG +
+              PDSI + Age + site,
+            data=all)
+
+
 gam1 <- gam(RWI~ s(PCP)+
               s(TMIN) +
               s(TAVG) +
@@ -460,7 +498,7 @@ fileNameRoot = "HierLinRegressTree-Jags-"
 # xName = "Day" ; yName = "Weight" ; sName="Subj"
 # fileNameRoot = "BugsRatsData-Jags-" 
 
-graphFileType = "eps" 
+graphFileType = "jpg" 
 #------------------------------------------------------------------------------- 
 # Load the relevant model into R's working memory:
 source("R/growth_PDSI_robust_heir_reg_by_tree.R")
