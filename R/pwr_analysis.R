@@ -118,7 +118,7 @@ print(pc4)
 # basic power analysis
 #-------------------------------------------------------
 
-rm(list=ls())
+#rm(list=ls())
 possible.ns <- seq(from=100, to=2000, by=50)
 powers <- rep(NA, length(possible.ns))
 powers.cov <- rep(NA, length(possible.ns))        # Need a second empty vector
@@ -172,7 +172,7 @@ points(possible.ns, powers.cov, col="red")
 glm(RWI ~ WUE.fake + PDSI + year, data = all)
 
 
-# for TREE ring model
+# Power analysis for overall TREE ring model (not time varying)
 possible.ns <- seq(from=10, to=100, by=10) # needs to be an even no
 powers <- rep(NA, length(possible.ns))
 powers.cov <- rep(NA, length(possible.ns)) 
@@ -347,11 +347,313 @@ plot(possible.ns, powers.covsite, ylim=c(0,1),
 #points(possible.ns, powers.covPDSI, col="blue")
 abline(a = 0.8, b = 0, col = 'red')
 
+#-----------------------------------------------------------
+# Power for wue over time
+#-----------------------------------------------------------
+possible.ns <- seq(from=10, to=100, by=10) # needs to be an even no
+possible.times <- seq(from=1, to=100, by=5)
+powers <- rep(NA, length(possible.ns))
+powers.cov <- rep(NA, length(possible.ns)) 
+powers.covyear <- rep(NA, length(possible.ns))# Need a second empty vector
+powers.covsite <- rep(NA, length(possible.ns))
+powers.covforest <- rep(NA, length(possible.ns))
+alpha <- 0.05
+sims <- 500
 
+for (j in 1:length(possible.ns)){
+  N <- possible.times[j]
+  
+  #significant.experiments <- rep(NA, sims)
+  significant.experiments.cov <- rep(NA, sims)      # Need a second empty vector here too
+  significant.experiments.covyear <- rep(NA, sims) 
+  #significant.experiments.covsite <- rep(NA, sims)
+  #significant.experiments.covforest <- rep(NA, sims)
+  
+  
+  for (i in 1:sims){
+    #forest <- c(rep("F", N/2), rep("S", N/2))       # Generate "gender" covariate
+    #site <- sample (rep (1:4, N), size = N)
+    #site <- c(rep(1, N/4), rep(2, N/4), rep(3, N/4), rep(4, N/4))
+    
+    N <- 5 # five samples at a site
+    
+    RWI <- matrix(0, nrow = N, ncol = T)
+    WUE <- matrix(0, nrow = N, ncol = T)
+    year <- matrix(0, nrow = N, ncol = T)
+    site <- matrix(0, nrow = N, ncol = 1)
+   
+    # create time series of WUE, RWI, etc from fake and real data distns  
+   for(t in 1:T){
+     for(n in 1:N){
+      WUE[n,t] <- sample(all[all$year == (2014 - t),]$WUE.fake, size = 1) + rnorm(n = 1, mean = 0.15, sd = 1)
+      RWI[n,t] <- sample(all[all$year == (2014 - t),]$RWI, size = 1) #RWI[t+1] <- rnorm(n = T, mean = 1, sd = 0.25)#WUE <- rnorm(n = N, mean = 10, sd = 2.5)
+      PDSI[n,t] <- sample(all[all$year == (2014 - t),]$PDSI, size = 1) #RWI[t+1] <- rnorm(n = T, mean = 1, sd = 0.25)#WUE <- rnorm(n = N, mean = 10, sd = 2.5)
+      year[n,t] <- 2014-t
+      }
+   }
+  
+    for(n in 1:N){
+      site[n] <- sample(c("a", "b", "c", "d"), size = 1, replace = T) 
+      
+    }
+    # melt the datframes to have only years and values
+    WUE <- data.frame(WUE)
+   # WUE$sample <- 1:N
+    RWI <- data.frame(RWI)
+    #RWI$sample <- 1:N
+    WUE <- data.frame(t(WUE))
+    WUE$year <- c(year[1,])
+    RWI <- data.frame(t(RWI))
+    RWI$year<-  c(year[1,])
+    
+    WUE.m <- melt(WUE, id.vars = c("year"))
+    RWI.m <- melt(RWI, id.vars = c("year"))
+    
+    df <- data.frame(year = as.numeric(WUE.m$year),
+                     RWI = RWI.m$value, 
+                     WUE = WUE.m$value)
+    ## This is the novel analysis -- including two covariates to increase precision ##
+    fit.sim.cov <- gam(RWI ~ year +  WUE , data = df) 
+    
+    ## extract p-values and calculate significance ##
+    
+    #p.value <- summary(fit.sim)$coefficients[4]
+    p.value.cov <- summary(fit.sim.cov)$p.coeff[3] # for WUE
+    p.value.covyear <- summary(fit.sim.cov)$p.coeff[2]
+    #p.value.covsite <- summary(fit.sim.cov)$coefficients[5,4]
+    #p.value.covforest <- summary(fit.sim.cov)$coefficients[2,4]
+    
+    #significant.experiments[i] <- (p.value <= alpha)
+    significant.experiments.cov[i] <- (p.value.cov <= alpha)
+    significant.experiments.covyear[i] <- (p.value.covyear <= alpha)
+    #significant.experiments.covsite[i] <- (p.value.covsite <= alpha)
+    #significant.experiments.covforest[i] <- (p.value.covforest <= alpha)
+    
+  }
+  
+  #powers[j] <- mean(significant.experiments)
+  powers.cov[j] <- mean(significant.experiments.cov)
+  powers.covyear[j] <- mean(significant.experiments.covyear)
+  #powers.covsite[j] <- mean(significant.experiments.covsite)
+  #powers.covforest[j] <- mean(significant.experiments.covforest)
+}
 
+png("outputs/pwr_year.png")
+plot(possible.ns, powers.cov, ylim=c(0,1), 
+     main = "Number of years needed for hyp WUE significance", xlab="Total number years", ylab = "Power")
+#points(possible.ns, powers.cov, col="red")
+#points(possible.ns, powers.covPDSI, col="blue")
+abline(a = 0.8, b = 0, col = 'red')
+dev.off()
 
+Model <- function(x = all,
+                  type = c("normal","log","logit")){
+  ## Transforms
+  if (type[1] == "log")
+    x$RWI <- log(x$RWI)
+  else if (type[1] == "logit")
+    x$RWI <- log(x$RWI / (1 - x$RWI))
+  
+  mod <- lme(RWI ~ PDSI + WUE.fake  ,
+             data = x,
+             random = ~ 1 | ID/site,
+             na.action = na.omit,
+             control = lmeControl(opt = "optim",
+                                  maxIter = 800, msMaxIter = 800)
+  )
+  mod$type <- type[1]
+  
+  return(mod)
+}
+
+mod <- Model(all, "normal")
+
+factoredDesign <- function(Elevs = 0.2/c(1,5,10,20),
+                           Nlevs = seq(5, 100, by = 5),
+                           Jlevs = seq(4, 10, by = 2),
+                           Klevs = c(2, 4, 6), ...){
+  ## Generates factored series of sampling designs for simulation
+  ## of data that follow a particular model.
+  ## Inputs:
+  ##   Elevs - vector of effect sizes for the slope parameter.
+  ##   Nlevs - vector of number of years to sample.
+  ##   Jlevs - vector of number of trees to sample in each site.
+  ##   Klevs - vector of number of sites to sample.
+  ## Results:
+  ##   Data frame with where columns are the factors and
+  ##   rows are the designs.
+  
+  # Level lengths
+  lE <- length(Elevs)
+  lN <- length(Nlevs)
+  lJ <- length(Jlevs)
+  lK <- length(Klevs)
+  
+  # Generate repeated vectors for each factor
+  E <- rep(Elevs, each = lN*lJ*lK)
+  N <- rep(rep(Nlevs, each = lJ*lK), times = lE)
+  J <- rep(rep(Jlevs, each = lK), times = lE*lN)
+  K <- rep(Klevs, times = lE*lN*lJ)
+  
+  return(data.frame(E, N, J, K))
+}
+factoredDesign()
 
 ######################
+
+GetHyperparam<-function(x,b=NULL){
+  ## Get the hyperparameters from the mixed effect model
+  fe <- fixef(x)
+  
+  if(is.null(b))
+    b<-fe[2] # use the data effect size if not supplied
+  
+  mu.a <- fe[1] 
+  
+  vc <- VarCorr(x)
+  sigma.y <- as.numeric(vc[5, 2]) # Residual StdDev
+  sigma.a <- as.numeric(vc[2, 2]) # Cobblebar StdDev
+  sigma.g <- as.numeric(vc[4, 2]) # Cobblebar:transect StdDev
+  
+  hp<-c(b, mu.a, sigma.y, sigma.a, sigma.g)
+  names(hp)<-c("b", "mu.a", "sigma.y", "sigma.a", "sigma.g")
+  return(hp)
+}
+
+
+fake <- function(N = 2, J = 6, K = 5, b = NULL, m.orig = mod,
+                 transform = TRUE, ...){
+  ## Simulated Data for power analysis
+  ## N = Number of years
+  ## J = Number of cobblebars
+  ## K = Number of transects within cobblebars
+  year <- rep(0:(N-1), each = J*K)
+  tree <- factor(rep(rep(1:J, each = K), times = N))
+  site <- factor(rep(1:K, times = N*J))
+  #WUE.fake <- rnorm(J*K, mean(all$WUE.fake)
+  
+  ## Simulated parameters
+  hp<-GetHyperparam(x=m.orig)
+  if(is.null(b))
+    b <- hp['b']
+  g <- rnorm(J*K, 0, hp['sigma.g'])
+  a <- rnorm(J*K, hp['mu.a'] + g, hp['sigma.a'])
+  
+  ## Simulated responses
+  eta <- rnorm(J*K*N, a + b * year , hp['sigma.y'])
+  #if (transform){
+   # if (m.orig$type == "normal"){
+    #  y <- eta
+     # y[y > 1] <- 1 # Fix any boundary problems.
+      #y[y < 0] <- 0
+    #}
+    #else if (m.orig$type == "log"){
+     # y <- exp(eta)
+      #y[y > 1] <- 1
+    #}
+    #else if (m.orig$type == "logit")
+     # y <- exp(eta) / (1 + exp(eta))
+  #}
+  
+  #else{
+    y <- eta
+  #}
+  
+  return(data.frame(RWI = y,  site, tree))
+}
+
+
+
+fake()
+
+
+
+
+fakeModWithRestarts <- function(m.o, n = 100,  ...){
+  ## A Fake Model
+  withCallingHandlers({
+    i <- 0
+    mod <- NULL
+    while (i < n & is.null(mod)){
+      mod <- withRestarts({
+        f <- fake(m.orig = m.o, transform = F, ...)
+        return(update(m.o, data = f))
+      },
+      rs = function(){
+        i <<- i + 1
+        return(NULL)
+      })
+    }
+    if(is.null(mod))
+      warning("ExceededIterations")
+    return(mod)
+  },
+  error = function(e){
+    invokeRestart("rs")
+  },
+  warning = function(w){
+    if(w$message == "ExceededIterations")
+      cat("\n", w$message, "\n")
+    else
+      invokeRestart("rs")
+  })
+}
+
+dt.power <- function (m, n.sims = 1000, alpha=0.05, ...){
+  ## Calculate power for a particular sampling design
+  signif<-rep(NA, n.sims)
+  for(i in 1:n.sims){
+    lme.power <- fakeModWithRestarts(m.o = m, ...)
+    if(!is.null(lme.power))
+      signif[i] <- summary(lme.power)$tTable[2, 5] < alpha
+  }
+  power <- mean(signif, na.rm = T)
+  return(power)
+}
+
+powerAnalysis <- function(parallel = T, ...){
+  ## Full Power Analysis
+  
+  ## Parallel
+  if(parallel){
+    closeAllConnections()
+    cl <- makeCluster(7, type = "SOCK")
+    on.exit(closeAllConnections())
+    clusterEvalQ(cl, source("cobblebars2.r"))
+  }
+  
+  ## The simulations
+  dat <- factoredDesign(...)
+  
+  if (parallel){
+    dat$power <- parRapply(cl, dat, function(x,...){
+      dt.power(N = x[2], J = x[3], K = x[4], b = x[1], ...)
+    }, ...)
+  } else {
+    dat$power <- apply(dat, 1, function(x, ...){
+      dt.power(N = x[2], J = x[3], K = x[4], b = x[1], ...)
+    }, ...)
+  }
+  
+  return(dat)
+}
+
+dt <- powerAnalysis(parallel = F)
+
+plotPower <- function(dt){
+  xyplot(power~N|J*K, data = dt, groups = E,
+         panel = function(...){panel.xyplot(...)
+           panel.abline(h = 0.8, lty = 2)},
+         type = c("p", "l"),
+         xlab = "sampling years",
+         ylab = "power",
+         strip = strip.custom(var.name = c("C", "T"),
+                              strip.levels = c(T, T)),
+         auto.key = T
+  )
+}
+
+
 
 simfunc <- function( effectofPDSI, effectofWUE, n=10 ) {
   
