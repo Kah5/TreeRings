@@ -300,6 +300,7 @@ ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(metho
 # get a function to extract the senstivity of Growth-climate relationship of each site
 ##########################################################################
 
+# function to extract whole time series slope of lm(RWI ~ PDSI)
 get.clim.sensitivity <- function(df){
   
   coeffs <- matrix ( 0, length(unique(all$site)), 3 ) # set up matrix for coefficients
@@ -321,8 +322,30 @@ get.clim.sensitivity <- function(df){
   
 }
 
-# get all the sensitivities for pdsi
+# get all the sensitivities for pdsi:
 pdsi.sens <- get.clim.sensitivity(all)
+
+# function to extract slopes for young an old trees of lm(RWI~PDSI)
+get.clim.sens.age <- function(df){
+  
+  coeffs <- matrix ( 0, length(unique(all$site)), 3 ) # set up matrix for coefficients
+  
+  
+  for(s in 1: length(unique(all$site))){
+    name <- unique(all$site)[s]  
+    lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
+    coeffs[paste0(s,"young"),2:3] <- summary(lmest)$coefficients[2,1:2]
+    coeffs[s , 1] <- name
+  }
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("site", "slope.est", "std.err")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
+  coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
+  coeffs
+  
+}
 
 # read in soil, xy characteristics
 locs <- read.csv("outputs/priority_sites_locs.csv")
