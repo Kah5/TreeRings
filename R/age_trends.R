@@ -357,10 +357,59 @@ site.df$tm30yr <- extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
 #--------------------------------------------------------------
 # how does sensitivity to drought vary by climate, envtl factors?
 #---------------------------------------------------------------
-# prelimnary plots sugges that low precipitation and low T places might be less sensitive to PDSI
+# prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
 ggplot(site.df, aes(pr30yr, slope.est))+geom_point()
 ggplot(site.df, aes(tm30yr, slope.est))+geom_point()
 ggplot(site.df, aes(sand, slope.est))+geom_point()
+
+# fit a gam on the slope estimate
+gam.sens <- gam(slope.est ~ pr30yr + tm30yr   , data = site.df)
+
+summary(gam.sens) # explains 89.3% of deviance:
+
+
+pred <- predict(gam.sens)
+
+
+
+
+
+# set up matrix of z-values
+x <- seq(min(site.df$pr30yr),max(site.df$pr30yr),len=100)
+y <- seq(min(site.df$tm30yr),max(site.df$tm30yr),len=100)
+
+z  <- outer(x,y,function(x,y){predict(gam.sens, data.frame(pr30yr=x, tm30yr=y))});
+
+p  <- persp(x,y,z, theta = 100, phi = 20,
+            col = "lightblue", shade = 0.8, ticktype = "detailed")
+
+obs  <- trans3d(site.df$pr30yr, site.df$pr30yr,site.df$slope.est, p);
+pred  <- trans3d(x, y, fitted(gam.sens), p);
+points(obs, col = "red", pch = 16);
+segments(obs$x, obs$y, pred$x, pred$y)
+
+
+
+# other options for 3d graphs:
+plot.df <- expand.grid(pr30yr=x,tm30yr=y)
+plot.df$z <- predict(gam.sens,newdata=plot.df)
+library(reshape2)
+z <- dcast(plot.df, pr30yr~tm30yr ,value.var="z")[-1]
+
+# plot the points, the fitted surface, and droplines
+library(rgl)
+colors <- 2.5+0.5*sign(residuals(gam.sens))
+open3d(scale=c(1,1,0.2))
+points3d(site.df$pr30yr, site.df$tm30yr, site.df$slope.est,col=colors)
+surface3d(x,y,as.matrix(z),col="blue",alpha=.2)
+apply(df,1,function(row)lines3d(rep(row[1],2),rep(row[2],2),c(log(row[3]),row[4]),col=colors))
+axes3d()
+title3d(xlab="X",ylab="Y",zlab="log(Z)")
+
+
+
+
+
 
 
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
