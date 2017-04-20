@@ -328,24 +328,47 @@ pdsi.sens <- get.clim.sensitivity(all)
 # function to extract slopes for young an old trees of lm(RWI~PDSI)
 get.clim.sens.age <- function(df){
   
-  coeffs <- matrix ( 0, length(unique(all$site)), 3 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(all$site))*2, 4 ) # set up matrix for coefficients
   
   
   for(s in 1: length(unique(all$site))){
-    name <- unique(all$site)[s]  
-    lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
-    coeffs[paste0(s,"young"),2:3] <- summary(lmest)$coefficients[2,1:2]
-    coeffs[s , 1] <- name
+     name <- unique(all$site)[s]  
+     if(nrow(all[all$site == name & all$ageclass == "young" ,]) > 0){
+     lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
+     coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
+     coeffs[s , 1] <-  "young"
+     coeffs[s,4] <- name
+     
+    } else{
+      #lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
+      coeffs[s,2:3] <- c(NA,NA)
+      coeffs[s , 1] <- "young"
+      coeffs[s,4] <- name
+    }
+     
+     if(nrow(all[all$site == name & all$ageclass == "old" ,]) > 0){
+     lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
+     coeffs[s+8, 2:3] <- summary(lmest2)$coefficients[2,1:2]
+     coeffs[s +8 , 1] <- 'old'
+     coeffs[s+8,4] <- name
+     }else{
+     #lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
+     coeffs[s+8, 2:3] <- c(NA,NA)
+     coeffs[s+8 , 1] <- "old"
+     coeffs[s+8,4] <- name
+     }
   }
   
   coeffs <- data.frame(coeffs)
-  colnames(coeffs) <- c("site", "slope.est", "std.err")
+  colnames(coeffs) <- c("age", "slope.est", "std.err","site")
   coeffs$site <- as.character(coeffs$site)
   coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
   coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
   coeffs
   
 }
+
+pdsi.age.sens <- get.clim.sens.age(all)
 
 # read in soil, xy characteristics
 locs <- read.csv("outputs/priority_sites_locs.csv")
@@ -377,6 +400,15 @@ prismt.alb<- projectRaster(prism.t, crs='+init=epsg:3175')
 # extract temp
 site.df$tm30yr <- extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
 
+
+#merge overalll slope and envt with the young and old slopes:
+a <- site.df
+colnames(a) <- c("site","full.slope.est", "full.std.err",  "Name","x",
+                  "y", "PDSI_time", "sand","ksat","awc",      
+                 "pr30yr"  ,  "tm30yr")
+
+sens.df <- merge(pdsi.age.sens, a, by = "site")
+
 #--------------------------------------------------------------
 # how does sensitivity to drought vary by climate, envtl factors?
 #---------------------------------------------------------------
@@ -392,10 +424,6 @@ summary(gam.sens) # explains 89.3% of deviance:
 
 
 pred <- predict(gam.sens)
-
-
-
-
 
 # set up matrix of z-values
 x <- seq(min(site.df$pr30yr),max(site.df$pr30yr),len=100)
@@ -413,28 +441,54 @@ segments(obs$x, obs$y, pred$x, pred$y)
 
 
 
-# other options for 3d graphs:
-plot.df <- expand.grid(pr30yr=x,tm30yr=y)
-plot.df$z <- predict(gam.sens,newdata=plot.df)
-library(reshape2)
-z <- dcast(plot.df, pr30yr~tm30yr ,value.var="z")[-1]
 
-# plot the points, the fitted surface, and droplines
-library(rgl)
-colors <- 2.5+0.5*sign(residuals(gam.sens))
-open3d(scale=c(1,1,0.2))
-points3d(site.df$pr30yr, site.df$tm30yr, site.df$slope.est,col=colors)
-surface3d(x,y,as.matrix(z),col="blue",alpha=.2)
-apply(df,1,function(row)lines3d(rep(row[1],2),rep(row[2],2),c(log(row[3]),row[4]),col=colors))
-axes3d()
-title3d(xlab="X",ylab="Y",zlab="log(Z)")
+#################################################
+#  make plots for young and old
+# prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
+ggplot(sens.df, aes(pr30yr, slope.est, color = age))+geom_point()
+ggplot(sens.df, aes(tm30yr, slope.est, color = age))+geom_point()
+ggplot(sens.df, aes(sand, slope.est, color = age))+geom_point()
 
+sens.young <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = sens.df[sens.df$age=="young",])
+summary(sens.young) # explains 47.7% of deviance:
 
+sens.old <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = sens.df[sens.df$age=="old",])
+summary(sens.old) # explains 90.5% of deviance:
 
+install.packages("plot3D")
+library(plot3D)
 
 
 
+plot3dsensitivity <- function(sens.df, age){
+  df <- sens.df[sens.df$age== age,]
+  df <- df[!is.na(df$slope.est),]
+# x, y, z variables
+  x <- df$pr30yr
+  y <- df$tm30yr
+  z <- df$slope.est
+# Compute the linear regression (z = ax + by + d)
+  fit <- lm(z ~ x + y)
+# predict values on regular xy grid
+  grid.lines = 26
+  x.pred <- seq(min(x), max(x), length.out = grid.lines)
+  y.pred <- seq(min(y), max(y), length.out = grid.lines)
+  xy <- expand.grid( x = x.pred, y = y.pred)
+  z.pred <- matrix(predict(fit, newdata = xy), 
+                 nrow = grid.lines, ncol = grid.lines)
+# fitted points for droplines to surface
+  fitpoints <- predict(fit)
+# scatter plot with regression plane
+  scatter3D(x, y, z, pch = 18, cex = 2, 
+          theta = 65, phi = 20, ticktype = "detailed",
+          xlab = "Precip", ylab = "Temp", zlab = "sensitvity",  
+          surf = list(x = x.pred, y = y.pred, z = z.pred,  
+                      facets = NA, fit = fitpoints), main = paste("sensitivity model", age))
 
+}
+
+plot3dsensitivity(sens.df, "old")
+plot3dsensitivity(sens.df, "young")
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
 glm1 <- glm(RWI~ PCP+
               TMIN +
