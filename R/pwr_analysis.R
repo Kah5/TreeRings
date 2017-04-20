@@ -118,59 +118,6 @@ print(pc4)
 # basic power analysis
 #-------------------------------------------------------
 
-#rm(list=ls())
-possible.ns <- seq(from=100, to=2000, by=50)
-powers <- rep(NA, length(possible.ns))
-powers.cov <- rep(NA, length(possible.ns))        # Need a second empty vector
-alpha <- 0.05
-sims <- 500
-for (j in 1:length(possible.ns)){
-  N <- possible.ns[j]
-  
-  significant.experiments <- rep(NA, sims)
-  significant.experiments.cov <- rep(NA, sims)      # Need a second empty vector here too
-  
-  for (i in 1:sims){
-    gender <- c(rep("F", N/2), rep("M", N/2))       # Generate "gender" covariate
-    age <- sample(x=18:65, size=N, replace=TRUE)    # Generate "age" covariate
-    effectofgender <- 10                            # Hypothesize the "effect" of gender on income
-    effectofage <- 2                                # Hypothesize the "effect" of age on income
-    
-    ## Hypothesize Control Outcome as a function of gender, age, and error
-    Y0 <- effectofgender*(gender=="M") + effectofage*age + rnorm(n=N, mean=100, sd=20)
-    
-    ## This is all the same ##
-    tau <- 5
-    Y1 <- Y0 + tau
-    Z.sim <- rbinom(n=N, size=1, prob=.5)
-    Y.sim <- Y1*Z.sim + Y0*(1-Z.sim)
-    fit.sim <- lm(Y.sim ~ Z.sim)
-    
-    ## This is the novel analysis -- including two covariates to increase precision ##
-    fit.sim.cov <- lm(Y.sim ~ Z.sim + (gender=="M") + age)
-    
-    ## extract p-values and calculate significance ##
-    p.value <- summary(fit.sim)$coefficients[2,4]
-    p.value.cov <- summary(fit.sim.cov)$coefficients[2,4]
-    significant.experiments[i] <- (p.value <= alpha)
-    significant.experiments.cov[i] <- (p.value.cov <= alpha)
-  }
-  
-  powers[j] <- mean(significant.experiments)
-  powers.cov[j] <- mean(significant.experiments.cov)
-}
-
-plot(possible.ns, powers, ylim=c(0,1))
-points(possible.ns, powers.cov, col="red")
-
-
-
-
-
-
-
-glm(RWI ~ WUE.fake + PDSI + year, data = all)
-
 
 # Power analysis for overall TREE ring model (not time varying)
 possible.ns <- seq(from=10, to=100, by=10) # needs to be an even no
@@ -239,7 +186,7 @@ for (j in 1:length(possible.ns)){
 }
 
 
-pdf("outputs/hyp_effects_pwr_analysis.R")
+pdf("outputs/hyp_effects_pwr_analysis.pdf")
 plot(possible.ns, powers.cov, ylim=c(0,1), 
      main = "Number of samples for hyp WUE effect of 0.1", xlab="Total number samples", ylab = "Power")
 #points(possible.ns, powers.cov, col="red")
@@ -348,20 +295,20 @@ plot(possible.ns, powers.covsite, ylim=c(0,1),
 abline(a = 0.8, b = 0, col = 'red')
 
 #-----------------------------------------------------------
-# Power for wue over time
+# Power for wue and time on RWI
 #-----------------------------------------------------------
 possible.ns <- seq(from=10, to=100, by=10) # needs to be an even no
-possible.times <- seq(from=1, to=100, by=5)
+possible.times <- seq(from=1, to=100, by=10)
 powers <- rep(NA, length(possible.ns))
 powers.cov <- rep(NA, length(possible.ns)) 
 powers.covyear <- rep(NA, length(possible.ns))# Need a second empty vector
 powers.covsite <- rep(NA, length(possible.ns))
 powers.covforest <- rep(NA, length(possible.ns))
 alpha <- 0.05
-sims <- 500
+sims <- 50
 
-for (j in 1:length(possible.ns)){
-  N <- possible.times[j]
+for (j in 1:length(possible.times)){
+  T <- possible.times[j]
   
   #significant.experiments <- rep(NA, sims)
   significant.experiments.cov <- rep(NA, sims)      # Need a second empty vector here too
@@ -380,10 +327,12 @@ for (j in 1:length(possible.ns)){
     RWI <- matrix(0, nrow = N, ncol = T)
     WUE <- matrix(0, nrow = N, ncol = T)
     year <- matrix(0, nrow = N, ncol = T)
-    site <- matrix(0, nrow = N, ncol = 1)
+    PDSI <- matrix(0, nrow = N, ncol = T)
+    #site <- matrix(0, nrow = N, ncol = 1)
    
     # create time series of WUE, RWI, etc from fake and real data distns  
-   for(t in 1:T){
+   
+  for(t in 1:T){
      for(n in 1:N){
       WUE[n,t] <- sample(all[all$year == (2014 - t),]$WUE.fake, size = 1) + rnorm(n = 1, mean = 0.15, sd = 1)
       RWI[n,t] <- sample(all[all$year == (2014 - t),]$RWI, size = 1) #RWI[t+1] <- rnorm(n = T, mean = 1, sd = 0.25)#WUE <- rnorm(n = N, mean = 10, sd = 2.5)
@@ -391,29 +340,33 @@ for (j in 1:length(possible.ns)){
       year[n,t] <- 2014-t
       }
    }
-  
-    for(n in 1:N){
-      site[n] <- sample(c("a", "b", "c", "d"), size = 1, replace = T) 
+   # for(n in 1:N){
+    #  site[n] <- sample(c("a", "b", "c", "d"), size = 1, replace = T) 
       
-    }
+    #}
     # melt the datframes to have only years and values
     WUE <- data.frame(WUE)
    # WUE$sample <- 1:N
     RWI <- data.frame(RWI)
+    PDSI <- data.frame(PDSI)
     #RWI$sample <- 1:N
     WUE <- data.frame(t(WUE))
     WUE$year <- c(year[1,])
     RWI <- data.frame(t(RWI))
     RWI$year<-  c(year[1,])
+    PDSI <- data.frame(t(PDSI))
+    PDSI$year<-  c(year[1,])
     
     WUE.m <- melt(WUE, id.vars = c("year"))
     RWI.m <- melt(RWI, id.vars = c("year"))
+    PDSI.m <- melt(PDSI, id.vars = c("year"))
     
     df <- data.frame(year = as.numeric(WUE.m$year),
                      RWI = RWI.m$value, 
-                     WUE = WUE.m$value)
+                     WUE = WUE.m$value, 
+                     PDSI = PDSI.m$value)
     ## This is the novel analysis -- including two covariates to increase precision ##
-    fit.sim.cov <- gam(RWI ~ year +  WUE , data = df) 
+    fit.sim.cov <- gam(RWI ~ PDSI +  WUE , data = df) 
     
     ## extract p-values and calculate significance ##
     
@@ -438,14 +391,127 @@ for (j in 1:length(possible.ns)){
   #powers.covforest[j] <- mean(significant.experiments.covforest)
 }
 
-png("outputs/pwr_year.png")
-plot(possible.ns, powers.cov, ylim=c(0,1), 
+png("outputs/pwr_years_for_WUE_sig.png")
+plot(possible.times, powers.cov, ylim=c(0,1), 
      main = "Number of years needed for hyp WUE significance", xlab="Total number years", ylab = "Power")
 #points(possible.ns, powers.cov, col="red")
 #points(possible.ns, powers.covPDSI, col="blue")
 abline(a = 0.8, b = 0, col = 'red')
 dev.off()
 
+#################################################################
+# detecting a change in WUE with time:
+############################################################
+possible.ns <- seq(from=10, to=100, by=10) # needs to be an even no
+possible.times <- seq(from=1, to=100, by=5)
+powers <- rep(NA, length(possible.ns))
+powers.cov <- rep(NA, length(possible.ns)) 
+powers.covyear <- rep(NA, length(possible.ns))# Need a second empty vector
+powers.covsite <- rep(NA, length(possible.ns))
+powers.covforest <- rep(NA, length(possible.ns))
+alpha <- 0.05
+sims <- 100
+
+
+for (j in 1:length(possible.times)){
+  T <- possible.times[j]
+  
+  #significant.experiments <- rep(NA, sims)
+  significant.experiments.cov <- rep(NA, sims)      # Need a second empty vector here too
+  significant.experiments.covyear <- rep(NA, sims) 
+  #significant.experiments.covsite <- rep(NA, sims)
+  #significant.experiments.covforest <- rep(NA, sims)
+  
+  
+  for (i in 1:sims){
+    #forest <- c(rep("F", N/2), rep("S", N/2))       # Generate "gender" covariate
+    #site <- sample (rep (1:4, N), size = N)
+    #site <- c(rep(1, N/4), rep(2, N/4), rep(3, N/4), rep(4, N/4))
+    
+    N <- 5 # five samples at a site
+    
+   # RWI <- matrix(0, nrow = N, ncol = T)
+    WUE <- matrix(0, nrow = N, ncol = T)
+    year <- matrix(0, nrow = N, ncol = T)
+    #site <- matrix(0, nrow = N, ncol = 1)
+    
+    # create time series of WUE, RWI, etc from fake and real data distns  
+    for(t in 1:T){
+      for(n in 1:N){
+        WUE[n,t] <- sample(all[all$year == (2014 - t),]$WUE.fake, size = 1) + rnorm(n = 1, mean = 0.15, sd = 1)
+        #RWI[n,t] <- sample(all[all$year == (2014 - t),]$RWI, size = 1) #RWI[t+1] <- rnorm(n = T, mean = 1, sd = 0.25)#WUE <- rnorm(n = N, mean = 10, sd = 2.5)
+        #PDSI[n,t] <- sample(all[all$year == (2014 - t),]$PDSI, size = 1) #RWI[t+1] <- rnorm(n = T, mean = 1, sd = 0.25)#WUE <- rnorm(n = N, mean = 10, sd = 2.5)
+        year[n,t] <- 2014-t
+      }
+    }
+    
+    # for(n in 1:N){
+    #  site[n] <- sample(c("a", "b", "c", "d"), size = 1, replace = T) 
+    
+    #}
+    # melt the datframes to have only years and values
+    WUE <- data.frame(WUE)
+    # WUE$sample <- 1:N
+    #RWI <- data.frame(RWI)
+    #RWI$sample <- 1:N
+    WUE <- data.frame(t(WUE))
+    WUE$year <- c(year[1,])
+    #RWI <- data.frame(t(RWI))
+    #RWI$year<-  c(year[1,])
+    
+    WUE.m <- melt(WUE, id.vars = c("year"))
+    #RWI.m <- melt(RWI, id.vars = c("year"))
+    
+    df <- data.frame(year = as.numeric(WUE.m$year),
+                     #RWI = RWI.m$value, 
+                     WUE = WUE.m$value)
+    ## This is the novel analysis -- including two covariates to increase precision ##
+    fit.sim.cov <- gam(WUE ~ year , data = df) 
+    
+    ## extract p-values and calculate significance ##
+    
+    #p.value <- summary(fit.sim)$coefficients[4]
+    p.value.cov <- summary(fit.sim.cov)$p.pv[2] # for WUE
+    #p.value.covyear <- summary(fit.sim.cov)$p.coeff[2]
+    #p.value.covsite <- summary(fit.sim.cov)$coefficients[5,4]
+    #p.value.covforest <- summary(fit.sim.cov)$coefficients[2,4]
+    
+    #significant.experiments[i] <- (p.value <= alpha)
+    significant.experiments.cov[i] <- (p.value.cov <= alpha)
+    #significant.experiments.covyear[i] <- (p.value.covyear <= alpha)
+    #significant.experiments.covsite[i] <- (p.value.covsite <= alpha)
+    #significant.experiments.covforest[i] <- (p.value.covforest <= alpha)
+    
+  }
+  
+  #powers[j] <- mean(significant.experiments)
+  powers.cov[j] <- mean(significant.experiments.cov)
+  #powers.covyear[j] <- mean(significant.experiments.covyear)
+  #powers.covsite[j] <- mean(significant.experiments.covsite)
+  #powers.covforest[j] <- mean(significant.experiments.covforest)
+}
+
+
+png("outputs/pwr_year_for_WUE_v_time.png")
+plot(possible.times, powers.cov, ylim=c(0,1), 
+     main = "Number of years needed for sig trend in WUE", xlab="Total number years", ylab = "Power")
+#points(possible.ns, powers.cov, col="red")
+#points(possible.ns, powers.covPDSI, col="blue")
+abline(a = 0.8, b = 0, col = 'red')
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+########################################################
 Model <- function(x = all,
                   type = c("normal","log","logit")){
   ## Transforms

@@ -1,6 +1,10 @@
 library(dplR)
 library(ggplot2)
 library(R2jags)
+library(plyr)
+library(raster)
+library(data.table)
+library(rgdal)
 # lets look at relationship to climate with age:
 setwd("C:/Users/JMac/Documents/Kelly/TreeRings")
 
@@ -23,20 +27,20 @@ read_detrend_year <- function( filename, method , rwiorbai){
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
 Hickory.bai <- read_detrend_year("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi")
 StCroix.bai <- read_detrend_year("./cofecha/STCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Bonanza.bai <- read_detrend_year("./cofecha/BONww.rwl", method = "ModNegExp", rwiorbai = "bai")
+Bonanza.bai <- read_detrend_year("./cofecha/BONww.rwl", method = "ModNegExp", rwiorbai = "rwi")
 #Hickory.bai <- read_detrend_year ("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
 #PleasantWolf.bai <- read_detrend_year('data/wi006.rwl', method = "ModNegExp", rwiorbai = "bai") #Pleasant prairie in southeast WI, from ITRDB
 #Sand.bai <- read_detrend_year("data/il001.rwl", method = "ModNegExp", rwiorbai = "bai") #Sandwich, il. Cook tree rings from the 1980's
 #Pulaski <- read_detrend_year("./in001.rwl", method = "ModNegExp", rwiorbai = "bai")
-Townsend.bai <- read_detrend_year('./cofecha/tow/TOWww.rwl', method = "ModNegExp", rwiorbai = "bai")#townsedn woods
+Townsend.bai <- read_detrend_year('./cofecha/tow/TOWww.rwl', method = "ModNegExp", rwiorbai = "rwi")#townsedn woods
 #YellowRiver <- read_detrend_year('data/ia029.rwl', method = "ModNegExp", rwiorbai = "bai") # had to fix a wrong year
-Pleasant.bai <- read_detrend_year('./cofecha/PLEww.rwl', method = "ModNegExp", rwiorbai = "bai") #Pleasant valley conservency
+Pleasant.bai <- read_detrend_year('./cofecha/PLEww.rwl', method = "ModNegExp", rwiorbai = "rwi") #Pleasant valley conservency
 #Desouix <- read_detrend_year('data/mn029.rwl', method = "ModNegExp", rwiorbai = "bai") #close to BONanza
-Coral.bai <- read_detrend_year('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl', method = "ModNegExp", rwiorbai = "bai")
-Uncas.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl", method = "ModNegExp", rwiorbai = "bai")
-Glacial.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl", method = "ModNegExp", rwiorbai = "bai")
-Englund.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl", method = "ModNegExp", rwiorbai = "bai")
-Mound.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl", method = "ModNegExp", rwiorbai = "bai")
+Coral.bai <- read_detrend_year('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl', method = "ModNegExp", rwiorbai = "rwi")
+Uncas.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Glacial.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Englund.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Mound.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl", method = "ModNegExp", rwiorbai = "rwi")
 
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
@@ -181,6 +185,7 @@ get.clim <- function(site.code, site.df){
   #melt(annuals.crn, id = c('ear','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
    #                        "JUNTmin","JUNTavg", 'JUNTmax',"Jul.pdsi"))
   df<- merge(site.df, annuals, by = "year")
+  df$site <- site.code
   df
 }
 
@@ -197,11 +202,6 @@ MOU_clim <- get.clim("MOU", Mou)
 
 #ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
 #ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-
-STC_clim$site <- "STC"
-HIC_clim$site <- "HIC"
-
-lm(HIC_clim$RWI~ HIC_clim$PDSI)
 
 
 # this function plots a scatter plot of a climate param vs. growth (RWI)
@@ -282,8 +282,10 @@ dev.off()
 
 
 
-all <- rbind(STC_clim, HIC_clim)
-ggplot(HIC_climate, aes(x = RWI, y = PCP, color = age.class))+geom_point()
+all <- rbind(STC_clim, HIC_clim, TOW_clim, BON_clim, PLE_clim,
+             COR_clim, UNC_clim, ENG_clim)
+
+
 ggplot(all, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
 
 
@@ -294,34 +296,71 @@ summary(lm(RWI~year:site, data = all))
 
 ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
 
-# ------------------------------------------------
-# Power analysis of general linear model 
-# ------------------------------------------------
+##########################################################################
+# get a function to extract the senstivity of Growth-climate relationship of each site
+##########################################################################
 
-library(pwr)
-library(nlme)
-
-Model <- function(x = all,
-                  type = c("normal","log","logit")){
-  ## Transforms
-  if (type[1] == "log")
-    x$RWI <- log(x$RWI)
-  else if (type[1] == "logit")
-    x$RWI <- log(x$RWI / (1 - x$RWI))
+get.clim.sensitivity <- function(df){
   
-  mod <- lme(RWI ~ year,
-             data = x,
-             random = ~ 1 | site/Age,
-             na.action = na.omit,
-             control = lmeControl(opt = "optim",
-                                  maxIter = 800, msMaxIter = 800)
-  )
-  mod$type <- type[1]
+  coeffs <- matrix ( 0, length(unique(all$site)), 3 ) # set up matrix for coefficients
   
-  return(mod)
+  # for loop
+  for(s in 1: length(unique(all$site))){
+    name <- unique(all$site)[s]  
+    lmest <- lm(RWI ~ PDSI, data = all[all$site == name ,])
+    coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
+    coeffs[s , 1] <- name
+  }
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("site", "slope.est", "std.err")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
+  coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
+  coeffs
+  
 }
-Model(x = all, type = "normal")
 
+# get all the sensitivities for pdsi
+pdsi.sens <- get.clim.sensitivity(all)
+
+# read in soil, xy characteristics
+locs <- read.csv("outputs/priority_sites_locs.csv")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+
+site.df <- merge(pdsi.sens, locs[,c('Name', "coords.x1", "coords.x2","code", "PDSI_time", "sand", "ksat", "awc")], by.x = 'site', by.y = 'code')
+
+
+
+plot(site.df$slope.est, site.df$ksat)
+
+#--------------------------------------------------------------
+# extract relevant climate from PRSIM 30 year mean precip and temp data:
+# dir where the precip data are
+workingdir <- "C:/Users/JMac/Documents/Kelly/biomodality/data/"
+
+# read in and average prism data (this is modern 30year normals)
+prism<- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
+prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+
+site.df$pr30yr <- extract(prism.alb, site.df[,c("coords.x1","coords.x2")])
+
+workingdir <- "C:/Users/JMac/Documents/Kelly/biomodality/data/"
+
+# read in and average prism temperature data (this is modern 30year normals)
+prism.t<- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
+prismt.alb<- projectRaster(prism.t, crs='+init=epsg:3175')
+
+# extract temp
+site.df$tm30yr <- extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
+
+#--------------------------------------------------------------
+# how does sensitivity to drought vary by climate, envtl factors?
+#---------------------------------------------------------------
+# prelimnary plots sugges that low precipitation and low T places might be less sensitive to PDSI
+ggplot(site.df, aes(pr30yr, slope.est))+geom_point()
+ggplot(site.df, aes(tm30yr, slope.est))+geom_point()
+ggplot(site.df, aes(sand, slope.est))+geom_point()
 
 
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
