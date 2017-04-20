@@ -458,9 +458,9 @@ summary(sens.old) # explains 90.5% of deviance:
 install.packages("plot3D")
 library(plot3D)
 
-
-
-plot3dsensitivity <- function(sens.df, age){
+# created  a funciton that takes the data of interest, fits the gam model:
+# gam(sensitivity ~ precip + temperature) and plots a 3d surface of it
+plot3dsensitivity <- function(sens.df, age,col, add ){
   df <- sens.df[sens.df$age== age,]
   df <- df[!is.na(df$slope.est),]
 # x, y, z variables
@@ -479,16 +479,19 @@ plot3dsensitivity <- function(sens.df, age){
 # fitted points for droplines to surface
   fitpoints <- predict(fit)
 # scatter plot with regression plane
-  scatter3D(x, y, z, pch = 18, cex = 2, 
+  scatter3D(x, y, z, pch = 18, cex = 2, col= col,
           theta = 65, phi = 20, ticktype = "detailed",
-          xlab = "Precip", ylab = "Temp", zlab = "sensitvity",  
+          xlab = "Precip", ylab = "Temp", zlab = "sensitvity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
                       facets = NA, fit = fitpoints), main = paste("sensitivity model", age))
 
 }
 
-plot3dsensitivity(sens.df, "old")
-plot3dsensitivity(sens.df, "young")
+# plot old and young predictive surfaces on the smae plot
+plot3dsensitivity(sens.df, "old", "red",FALSE)
+plot3dsensitivity(sens.df, "young", "blue",TRUE)
+
+
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
 glm1 <- glm(RWI~ PCP+
               TMIN +
