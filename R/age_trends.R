@@ -483,14 +483,17 @@ plot3dsensitivity <- function(sens.df, age,col, add ){
           theta = 65, phi = 20, ticktype = "detailed",
           xlab = "Precip", ylab = "Temp", zlab = "sensitvity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
-                      facets = NA, fit = fitpoints), main = paste("sensitivity model", age))
+                      facets = NA, fit = fitpoints), main = paste("sensitivity model", age),
+          ylim=c(5.8,9))
 
 }
 
+
 # plot old and young predictive surfaces on the smae plot
+png('outputs/sensitivity_surface3d_age.png')
 plot3dsensitivity(sens.df, "old", "red",FALSE)
 plot3dsensitivity(sens.df, "young", "blue",TRUE)
-
+dev.off()
 
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
 glm1 <- glm(RWI~ PCP+
