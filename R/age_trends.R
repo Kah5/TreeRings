@@ -5,6 +5,7 @@ library(plyr)
 library(raster)
 library(data.table)
 library(rgdal)
+library(mgcv)
 # lets look at relationship to climate with age:
 setwd("C:/Users/JMac/Documents/Kelly/TreeRings")
 
@@ -367,8 +368,57 @@ get.clim.sens.age <- function(df){
   coeffs
   
 }
-
 pdsi.age.sens <- get.clim.sens.age(all)
+
+# function to extrat the slope for all trees before and after 1950
+get.clim.sens.year <- function(all){
+  
+  coeffs <- matrix ( 0, length(unique(all$site))*2, 4 ) # set up matrix for coefficients
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  all$class <- '9999'
+  all[all$year %in% yr,]$class <- 'Pre-1950'
+  all[all$year %in% yr.post,]$class <- 'Post-1950'
+  
+  for(s in 1: length(unique(all$site))){
+    name <- unique(all$site)[s]  
+    if(nrow(all[all$site == name & all$class == "Pre-1950" ,]) > 0){
+      lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$class == "Pre-1950" ,])
+      coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
+      coeffs[s , 1] <-  "Pre-1950"
+      coeffs[s,4] <- name
+      
+    } else{
+      #lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
+      coeffs[s,2:3] <- c(NA,NA)
+      coeffs[s , 1] <- "Pre-1950"
+      coeffs[s,4] <- name
+    }
+    
+    if(nrow(all[all$site == name & all$class == "Post-1950" ,]) > 0){
+      lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$class == "Post-1950" ,])
+      coeffs[s+8, 2:3] <- summary(lmest2)$coefficients[2,1:2]
+      coeffs[s +8 , 1] <- 'Post-1950'
+      coeffs[s+8,4] <- name
+    }else{
+      #lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
+      coeffs[s+8, 2:3] <- c(NA,NA)
+      coeffs[s+8 , 1] <- "Post-1950"
+      coeffs[s+8,4] <- name
+    }
+  }
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("age", "slope.est", "std.err","site")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
+  coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
+  coeffs
+  
+}
+
+pdsi.yr.sens <- get.clim.sens.year(all)
+
 
 # read in soil, xy characteristics
 locs <- read.csv("outputs/priority_sites_locs.csv")
@@ -408,6 +458,7 @@ colnames(a) <- c("site","full.slope.est", "full.std.err",  "Name","x",
                  "pr30yr"  ,  "tm30yr")
 
 sens.df <- merge(pdsi.age.sens, a, by = "site")
+yr.sens.df <- merge(pdsi.yr.sens, a, by = "site")
 
 #--------------------------------------------------------------
 # how does sensitivity to drought vary by climate, envtl factors?
@@ -423,25 +474,6 @@ gam.sens <- gam(slope.est ~ pr30yr + tm30yr   , data = site.df)
 summary(gam.sens) # explains 89.3% of deviance:
 
 
-pred <- predict(gam.sens)
-
-# set up matrix of z-values
-x <- seq(min(site.df$pr30yr),max(site.df$pr30yr),len=100)
-y <- seq(min(site.df$tm30yr),max(site.df$tm30yr),len=100)
-
-z  <- outer(x,y,function(x,y){predict(gam.sens, data.frame(pr30yr=x, tm30yr=y))});
-
-p  <- persp(x,y,z, theta = 100, phi = 20,
-            col = "lightblue", shade = 0.8, ticktype = "detailed")
-
-obs  <- trans3d(site.df$pr30yr, site.df$pr30yr,site.df$slope.est, p);
-pred  <- trans3d(x, y, fitted(gam.sens), p);
-points(obs, col = "red", pch = 16);
-segments(obs$x, obs$y, pred$x, pred$y)
-
-
-
-
 #################################################
 #  make plots for young and old
 # prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
@@ -455,13 +487,28 @@ summary(sens.young) # explains 47.7% of deviance:
 sens.old <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = sens.df[sens.df$age=="old",])
 summary(sens.old) # explains 90.5% of deviance:
 
-install.packages("plot3D")
+##############################################################
+# make prelimnary plots for pre- and post- 1950
+###############################################################3
+ggplot(yr.sens.df, aes(pr30yr, slope.est, color = age))+geom_point()
+ggplot(yr.sens.df, aes(tm30yr, slope.est, color = age))+geom_point()
+ggplot(yr.sens.df, aes(sand, slope.est, color = age))+geom_point()
+
+sens.pre <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Pre-1950",])
+summary(sens.pre) # explains 33.4% of deviance:
+
+sens.post <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Post-1950",])
+summary(sens.post) # explains 36.8% of deviance:
+
+
+
+#install.packages("plot3D")
 library(plot3D)
 
 # created  a funciton that takes the data of interest, fits the gam model:
 # gam(sensitivity ~ precip + temperature) and plots a 3d surface of it
-plot3dsensitivity <- function(sens.df, age,col, add ){
-  df <- sens.df[sens.df$age== age,]
+plot3dsensitivity <- function(sens.df, age, class, col, add ){
+  df <- sens.df[sens.df[,c(age)] == class,]
   df <- df[!is.na(df$slope.est),]
 # x, y, z variables
   x <- df$pr30yr
@@ -470,7 +517,7 @@ plot3dsensitivity <- function(sens.df, age,col, add ){
 # Compute the linear regression (z = ax + by + d)
   fit <- lm(z ~ x + y)
 # predict values on regular xy grid
-  grid.lines = 26
+  grid.lines = 50
   x.pred <- seq(min(x), max(x), length.out = grid.lines)
   y.pred <- seq(min(y), max(y), length.out = grid.lines)
   xy <- expand.grid( x = x.pred, y = y.pred)
@@ -480,20 +527,47 @@ plot3dsensitivity <- function(sens.df, age,col, add ){
   fitpoints <- predict(fit)
 # scatter plot with regression plane
   scatter3D(x, y, z, pch = 18, cex = 2, col= col,
-          theta = 65, phi = 20, ticktype = "detailed",
-          xlab = "Precip", ylab = "Temp", zlab = "sensitvity", add= add ,
+          theta = 50, phi = 25,  bty="u", lwd.panel= 2, space = 0.15,ticktype = "detailed",
+          xlab = "\n\n\n\n Precip", ylab = "\n\n\n\n Temp", zlab = "\n\n\n\n drought sensitivity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
-                      facets = NA, fit = fitpoints), main = paste("sensitivity model", age),
+                      facets = NA, fit = fitpoints), main = paste("Drought Sensitvity by climate"),
           ylim=c(5.8,9))
-
+ 
 }
 
 
 # plot old and young predictive surfaces on the smae plot
-png('outputs/sensitivity_surface3d_age.png')
-plot3dsensitivity(sens.df, "old", "red",FALSE)
-plot3dsensitivity(sens.df, "young", "blue",TRUE)
+png(height = 5, width = 9, units = 'in', res= 300, 'outputs/sensitivity_surface3d_age.png')
+plot3dsensitivity(sens.df, "age","old", "red",FALSE)
+
+plot3dsensitivity(sens.df, "age","young", "blue",TRUE)
+legend("bottomleft", 
+       legend = c("Old", "Young"), 
+       col = c("red", 
+               "blue"), 
+       pch = c(18, 18), 
+       bty = "n", 
+       pt.cex = 2, 
+       cex = 1.2, 
+       text.col = "black", 
+       horiz = F , 
+       inset = c(0.1, 0.1))
+
 dev.off()
+
+# plot the pre and post 1950 sensitivity surfaces:
+
+png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d_pre_post_1950.png')
+plot3dsensitivity(yr.sens.df, "age","Pre-1950", "red",FALSE)
+plot3dsensitivity(yr.sens.df, "age","Post-1950", "blue",TRUE)
+dev.off()
+
+
+
+
+
+
+
 
 # typical tree ring model of growth has precip, temp, pdsi, ages, and sites
 glm1 <- glm(RWI~ PCP+
