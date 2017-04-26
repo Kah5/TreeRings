@@ -11,4 +11,12 @@ deltaTR<- read.csv("data/stable_isotopes/BON_7a_1996_2011.csv")
 deltas <- merge(deltaTR, deltaATM, by = "Year")
 
 # now calculate the WUE:
-Ca*(1-(Corr.d13C-delta13C + a))/(b-a)*0.625
+a <- 4.4
+b <- 27
+
+deltas$iWUE <- deltas$ppm*(1-(deltas$Corr.d13C-deltas$d13atm + a))/(b-a)*0.625
+summary(deltas$iWUE)
+
+ggplot(deltas, aes(x = Year, y = iWUE))+geom_point()
+ggplot(deltas, aes(x = ppm, y = iWUE))+geom_point()
+ggplot(deltas, aes(x = ppm, y = Corr.d13C))+geom_point()
