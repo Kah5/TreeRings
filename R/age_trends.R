@@ -530,7 +530,7 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
           theta = 50, phi = 25,  bty="u", lwd.panel= 2, space = 0.15,ticktype = "detailed",
           xlab = "\n\n\n\n Precip", ylab = "\n\n\n\n Temp", zlab = "\n\n\n\n drought sensitivity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
-                      facets = NA, fit = fitpoints), main = paste("Drought Sensitvity by climate"),
+                      facets = NA, fit = fitpoints), main = paste("Drought Sensitivity by climate"),
           ylim=c(5.8,9))
  
 }
@@ -541,8 +541,8 @@ png(height = 5, width = 9, units = 'in', res= 300, 'outputs/sensitivity_surface3
 plot3dsensitivity(sens.df, "age","old", "red",FALSE)
 
 plot3dsensitivity(sens.df, "age","young", "blue",TRUE)
-legend("bottomleft", 
-       legend = c("Old", "Young"), 
+legend(x = 0.5, y = 0 ,
+       legend = c(expression("Old (low CO"[2]*")"), expression("Young (high CO"[2]*")")), 
        col = c("red", 
                "blue"), 
        pch = c(18, 18), 
@@ -560,6 +560,18 @@ dev.off()
 png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d_pre_post_1950.png')
 plot3dsensitivity(yr.sens.df, "age","Pre-1950", "red",FALSE)
 plot3dsensitivity(yr.sens.df, "age","Post-1950", "blue",TRUE)
+legend(x = 0.5, y = 0 ,
+       legend = c(expression("Pre-1950 (low CO"[2]*")"), expression("Post-1950 (high CO"[2]*")")), 
+       col = c("red", 
+               "blue"), 
+       pch = c(18, 18), 
+       bty = "n", 
+       pt.cex = 2, 
+       cex = 1.2, 
+       text.col = "black", 
+       horiz = F , 
+       inset = c(0.1, 0.1))
+
 dev.off()
 
 

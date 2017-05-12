@@ -48,7 +48,7 @@ tr<- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
 
 pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
 
-tmin <- as.xts(val[,c( clim2 )], order.by = as.yearqtr(val$Year))
+#tmin <- as.xts(val[,c( clim2 )], order.by = as.yearqtr(val$Year))
 
 
 # Specifying a set model parameters
@@ -69,7 +69,7 @@ tvp.dlm[c("JFF","JV","JGG","JW")]
 #If we were to do a simple linear regression (Ordinary Least Square fit - constant equity beta), we would do something like
 
 
-ols.fit <- lm(tr ~ pdsi + tmin)
+ols.fit <- lm(tr ~ pdsi )
 summary(ols.fit)
 
 start.vals = c(0,0,0)
@@ -150,7 +150,8 @@ chart.TimeSeries(cbind(beta.s, b.l, b.u), main=paste("Smoothed estimates of beta
 
 #using molten outputs form climate_growth_reg_chron.R
 
-X11(width = 12)
+#X11(width = 12)
+pdf("outputs/Kalman_regressions.pdf")
 kalman.plot(val = molten.UNC, clim = "Jul.pdsi", site.code = "UNC")
 kalman.plot(val = molten.BON, clim = "Jul.pdsi", site.code = "BON")
 kalman.plot(val = molten.HIC, clim = "Jul.pdsi", site.code = "HIC")
@@ -159,17 +160,17 @@ kalman.plot(val = molten.TOW, clim = "Jul.pdsi", site.code = "TOW")
 kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
 kalman.plot(val = molten.ENG, clim = "Jul.pdsi", site.code = "ENG")
 kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
-
+dev.off()
 
 X11(width = 12)
-kalman.plot(val = molten.UNC, clim = "Jul.pdsi", site.code = "UNC")
-kalman.plot(val = molten.BON, clim = "Jul.pdsi", site.code = "BON")
-kalman.plot(val = molten.HIC, clim = "Jul.pdsi", site.code = "HIC")
-kalman.plot(val = molten.STC, clim = "Jul.pdsi", site.code = "STC")
-kalman.plot(val = molten.TOW, clim = "Jul.pdsi", site.code = "TOW")
-kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
-kalman.plot(val = molten.ENG, clim = "Jul.pdsi", site.code = "ENG")
-kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
+kalman.plot(val = molten.UNC, clim = "PDSI", site.code = "UNC")
+kalman.plot(val = molten.BON, clim = "PDSI", site.code = "BON")
+kalman.plot(val = molten.HIC, clim = "PDSI", site.code = "HIC")
+kalman.plot(val = molten.STC, clim = "PDSI", site.code = "STC")
+kalman.plot(val = molten.TOW, clim = "PDSI", site.code = "TOW")
+kalman.plot(val = molten.COR, clim = "PDSI", site.code = "COR")
+kalman.plot(val = molten.ENG, clim = "PDSI", site.code = "ENG")
+kalman.plot(val = molten.COR, clim = "PDSI", site.code = "COR")
 
 
 ```
