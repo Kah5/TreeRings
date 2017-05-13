@@ -8,8 +8,9 @@ library(ggplot2)
 deltaATM <- read.csv("data/stable_isotopes/Mccarrol_loader_deltaC_atm.csv") # data from mccarroll and loader patched with recent ppm an dneed to check the delta13atm values
 deltaTR<- read.csv("data/stable_isotopes/BON_7a_1996_2011.csv")
 deltaTR2 <- read.csv("data/stable_isotopes/BON_9a_13a_1996_2015.csv")
+deltaTR3 <- read.csv("data/stable_isotopes/BON_8b_14b_1996_2015.csv")
 
-deltaTR <- rbind(deltaTR, deltaTR2)
+deltaTR <- rbind(deltaTR, deltaTR2, deltaTR3)
 
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_d13_time.png")
 ggplot(deltaTR, aes(x = Year, y = Corr.d13C, color = Tree))+
