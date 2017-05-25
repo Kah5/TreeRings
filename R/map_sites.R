@@ -242,6 +242,14 @@ sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coo
                   point.padding = unit(1.5, "lines"))
 sites.map2
 
+sites.map3 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  scale_shape_manual(values=1:4)+theme(axis.text = element_blank(), axis.ticks=element_blank(),
+                                      legend.key.size = unit(2,'lines')
+                                      ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+
+  ggtitle("")
+
+sites.map3
+
 measured <- priority[!priority$PDSI_time %in% "Not measured",]
 sites.cor <- sites.map + geom_point(data = measured, aes(x = coords.x1, y = coords.x2, shape = Description, color = PDSI_time), cex = 2.5)+
   scale_shape_manual(values=c(15,16,17,3))+
@@ -252,6 +260,10 @@ sites.cor <- sites.map + geom_point(data = measured, aes(x = coords.x1, y = coor
 sites.cor
 png(height = 6, width = 6, units = 'in', res = 300, "outputs/PDSI_time_cor_map.png")              
 sites.cor
+dev.off()
+
+png(height = 6, width = 6, units = 'in', res = 300, "outputs/Tree_core_map_nolabels.png")              
+sites.map3
 dev.off()
 
 png("outputs/precip_only.png")              
