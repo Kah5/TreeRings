@@ -221,7 +221,7 @@ cbPalette <- c('#a6611a',
 
 sites.map <- ggplot()+ geom_raster(data=test.df, aes(x=x, y=y, fill = avg))+
   labs(x="easting", y="northing", title="A). Tree Core Sites 2015 & 2016") + 
-  scale_fill_gradientn(colours = cbPalette2, name ="MAP (mm/yr) ")+
+  scale_fill_gradientn(colours = cbPalette2, name =" Mean \n Annual \n Precipitation \n (mm/yr) ")+
   coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
 sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
                                      colour = "darkgrey", fill = NA)+theme_bw() +
