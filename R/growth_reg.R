@@ -140,12 +140,23 @@ half <- full[13:24,]
 cors.melt <- melt(half, id.vars = c('months', 'mono'))
 cors.melt$months <- factor(cors.melt$months, levels=full$months)
 cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
+sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", "MOU",
+                                 "TOW", "BON"), 
+                    Sites = c("Coral Woods, IL", "Hickory Grove, IL",
+                              "Glacial Park, IL", "St.Croix Savanna SNA, MN", 
+                              "Uncas Dunes SNA, MN","Englund Ecotone SNA, MN", 
+                              "Mound Prairie SNA, MN", "Townsend Woods SNA, MN", 
+                              "Bonanza Prairie SNA, MN"))
 cors.melt[order(cors.melt$months),]
-output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
+cors.melt <- merge(cors.melt, sitesnames, by = "variable")
+output<- ggplot(data = cors.melt, aes(months, value, fill = Sites))+
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
   #facet_grid(variable~.)+
   scale_size(range=c(5,20), guide="none")+
-  scale_fill_manual(values = rev(brewer.pal(n=9, "RdBu")))+
+  scale_fill_manual("Sites",values = brewer.pal(n=9, "RdBu"), 
+                    limits=c("Bonanza Prairie SNA, MN","Townsend Woods SNA, MN", "Mound Prairie SNA, MN",
+                             "Englund Ecotone SNA, MN", "Uncas Dunes SNA, MN", "St.Croix Savanna SNA, MN",
+                             "Glacial Park, IL", "Coral Woods, IL", "Hickory Grove, IL"))+
   theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
 output
 }
@@ -183,18 +194,20 @@ grid_arrange_shared_legend <- function(..., nrow = 1, ncol = length(list(...)), 
   
 }
 
-e<- sites.barplot('tavg')+ggtitle("E). Average Temperature")
-d<- sites.barplot('tmax')+ ggtitle("D). Maximum Temperature")
-c<- sites.barplot('tmin')+ ggtitle("C). Minimum Temperature")
-b<- sites.barplot('Precip')+ ggtitle("B). Precipitation")
-a<- sites.barplot('PDSI')+ ggtitle("A). Palmer Drought Severity Index")
+e <- sites.barplot('tavg')+ggtitle("E). Average Temperature")+ylab("correlation")
+c <- sites.barplot('tmax')+ ggtitle("C). Maximum Temperature")+ylab('correlation')
+d <- sites.barplot('tmin')+ ggtitle("D). Minimum Temperature")+ylab('correlation')
+b <- sites.barplot('Precip')+ ggtitle("B). Precipitation")+ylab('correlation')
+a <- sites.barplot('PDSI')+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
 
 #plot all barplots in png for interim report
 png(width = 8, height = 10, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_fig2.png')
 grid_arrange_shared_legend(a,b,c,d,e,nrow = 5, ncol = 1 )
 dev.off()
 
-
+png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_3panel.png')
+grid_arrange_shared_legend(a,b,c, nrow = 3, ncol = 1 )
+dev.off()
 
 
 #rank the correlations based on highest to lowest for each site
