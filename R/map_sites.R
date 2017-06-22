@@ -54,13 +54,27 @@ sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
 sites16.lat$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
 sites16$Description <- c("Forest", "Savanna", "Savanna", 
                          "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
+
+# read in the points from GLL, AVO, PVC
+GLL_PVC <- readOGR("data/GLL_PVC.kml", layer= "GLL_PVC")
+GLL_PVC.lat <- GLL_PVC
+GLL_PVC <- spTransform(GLL_PVC, CRSobj = CRS('+init=epsg:3175'))
+GLL_PVC <- data.frame(GLL_PVC)
+GLL_PVC.lat <- data.frame(GLL_PVC.lat)
+GLL_PVC$code <- c("GLL4", "GLL3", "GLL2", "GLL1", "PVC")
+GLL_PVC.lat$code <- c("GLL4", "GLL3", "GLL2", "GLL1", "PVC")
+GLL_PVC$Description <- c("Forest", "Savanna", "Savanna", 
+                         "Forest", "Savanna")
+
 # merge the two data sets using rbind
-priority <- rbind(mound, sites16)
+priority <- rbind(mound, sites16, GLL_PVC)
 priority$PDSI_time <- c("Not measured", "No Change", "Growth Change", "Not measured", 
                         "Not measured", "No Change", "Not measured", "Not measured", 
                         "Growth Change", "Not measured", "Not measured","Growth Change", "Slope Change","Slope Change","No Change",
                         "Growth Change", "Not measured", "No Change", "Not measured", 
-                        "Not measured", "Not measured", "Not measured", "Not measured")
+                        "Not measured", "Not measured", "Not measured", "Not measured",
+                        "UNK", "UNK", "UNK", "UNK", "UNK")
+write.csv(priority, "outputs/priority_sites.csv")
 #priority<- rbind(priority,mound[2,]) # just add mound prairie to priority
 #priority.lat <- rbind(priority.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")], mound.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")])
 #for NAPC, create a map with just these tree cores:

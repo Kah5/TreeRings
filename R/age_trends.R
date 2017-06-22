@@ -25,23 +25,24 @@ read_detrend_year <- function( filename, method , rwiorbai){
   detrended
 }
 
+
+
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
-Hickory.bai <- read_detrend_year("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-StCroix.bai <- read_detrend_year("./cofecha/STCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Bonanza.bai <- read_detrend_year("./cofecha/BONww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-#Hickory.bai <- read_detrend_year ("./cofecha/HICww.rwl", method = "ModNegExp", rwiorbai = "bai")
-#PleasantWolf.bai <- read_detrend_year('data/wi006.rwl', method = "ModNegExp", rwiorbai = "bai") #Pleasant prairie in southeast WI, from ITRDB
-#Sand.bai <- read_detrend_year("data/il001.rwl", method = "ModNegExp", rwiorbai = "bai") #Sandwich, il. Cook tree rings from the 1980's
-#Pulaski <- read_detrend_year("./in001.rwl", method = "ModNegExp", rwiorbai = "bai")
-Townsend.bai <- read_detrend_year('./cofecha/tow/TOWww.rwl', method = "ModNegExp", rwiorbai = "rwi")#townsedn woods
-#YellowRiver <- read_detrend_year('data/ia029.rwl', method = "ModNegExp", rwiorbai = "bai") # had to fix a wrong year
-Pleasant.bai <- read_detrend_year('./cofecha/PLEww.rwl', method = "ModNegExp", rwiorbai = "rwi") #Pleasant valley conservency
-#Desouix <- read_detrend_year('data/mn029.rwl', method = "ModNegExp", rwiorbai = "bai") #close to BONanza
-Coral.bai <- read_detrend_year('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl', method = "ModNegExp", rwiorbai = "rwi")
-Uncas.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Glacial.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Englund.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Mound.bai <- read_detrend_year("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Hickory.bai <- read_detrend_year("cleanrwl/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "ModNegExp", rwiorbai = "rwi")#townsedn woods
+Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "ModNegExp", rwiorbai = "rwi") #Pleasant valley conservency
+Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
 
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
@@ -53,10 +54,15 @@ Stc <- tree_age_agg(StCroix.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
 Bon <- tree_age_agg(Bonanza.bai, 2015, "BON", 50,"RWI_ModNegExp_detrended")
 Tow <- tree_age_agg(Townsend.bai, 2015, "TOW", 50,"RWI_ModNegExp_detrended")
 Ple <- tree_age_agg(Pleasant.bai, 2015, "PLE", 50,"RWI_ModNegExp_detrended")
-Cor <- tree_age_agg(Coral.bai, 2015, "COR", 50,"RWI_ModNegExp_detrended")
-Unc <- tree_age_agg(Uncas.bai, 2015, "UNC", 50,"RWI_ModNegExp_detrended")
+Cor <- tree_age_agg(Coral.bai, 2016, "COR", 50,"RWI_ModNegExp_detrended")
+Unc <- tree_age_agg(Uncas.bai, 2016, "UNC", 50,"RWI_ModNegExp_detrended")
 Eng <- tree_age_agg(Englund.bai, 2015, "ENG", 50,"RWI_ModNegExp_detrended")
 Mou <- tree_age_agg(Mound.bai, 2015, "MOU", 50,"RWI_ModNegExp_detrended")
+GLL1 <- tree_age_agg(GLL1.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
+GLL2 <- tree_age_agg(GLL2.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
+GLL3 <- tree_age_agg(GLL3.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
+GLL4 <- tree_age_agg(GLL4.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
+PVC <- tree_age_agg(PVC.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
 
 
 ###################################
@@ -68,15 +74,11 @@ IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Gl
 EC_MN.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 
 get.clim <- function(site.code, site.df){
-  if(site.code == "BON"){
+  if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
     MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
-  } else{ if(site.code == "HIC" ){
+  } else{ if(site.code %in% c("HIC", "COR","GLA", "PVC" )){
     MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-  } else{ if(site.code == "GLA" ){
-    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-  } else{ if(site.code == "COR" ){
-    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-  } else{ if(site.code == "W-R" ){
+  }  else{ if(site.code == "W-R" ){
     MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
   } else{ if(site.code == 'SAW'){
     MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
@@ -105,8 +107,7 @@ get.clim <- function(site.code, site.df){
   }
   }
   }
-  }
-  }
+  
   
   MNcd.clim$PCP <- MNcd.clim$PCP*25.54
   
@@ -200,9 +201,17 @@ COR_clim <- get.clim("COR", Cor)
 UNC_clim <- get.clim("UNC", Unc)
 ENG_clim <- get.clim("ENG", Eng)
 MOU_clim <- get.clim("MOU", Mou)
-
+GLL1_clim <- get.clim("GLL1", GLL1)
+GLL2_clim <- get.clim("GLL2", GLL2)
+GLL3_clim <- get.clim("GLL3", GLL3)
+GLL4_clim <- get.clim("GLL4", GLL4)
+PVC_clim <- get.clim("PVC", PVC)
 #ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-#ggplot(STC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+ggplot(GLL1_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+ggplot(GLL2_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+ggplot(GLL3_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+ggplot(GLL4_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+
 
 
 # this function plots a scatter plot of a climate param vs. growth (RWI)
@@ -275,6 +284,11 @@ plot.young.old(PLE_clim, "PDSI", "PDSI","BAI", "PLE")
 plot.young.old(COR_clim, "PDSI", "PDSI","BAI", "COR")
 plot.young.old(UNC_clim, "PDSI", "PDSI","BAI", "UNC")
 plot.young.old(ENG_clim, "PDSI", "PDSI","BAI", "ENG")
+plot.young.old(PVC_clim, "PDSI", "PDSI","BAI", "PVC")
+plot.young.old(GLL1_clim, "PDSI", "PDSI","BAI", "GLL1")
+plot.young.old(GLL2_clim, "PDSI", "PDSI","BAI", "GLL2")
+plot.young.old(GLL3_clim, "PDSI", "PDSI","BAI", "GLL3")
+plot.young.old(GLL4_clim, "PDSI", "PDSI","BAI", "GLL4")
 plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site = "MOU")
 dev.off()
 
@@ -284,7 +298,8 @@ dev.off()
 
 
 all <- rbind(STC_clim, HIC_clim, TOW_clim, BON_clim, PLE_clim,
-             COR_clim, UNC_clim, ENG_clim)
+             COR_clim, UNC_clim, ENG_clim, MOU_clim, GLL1_clim,
+             GLL2_clim, GLL3_clim, GLL4_clim, PVC_clim)
 
 
 ggplot(all, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
@@ -421,8 +436,8 @@ pdsi.yr.sens <- get.clim.sens.year(all)
 
 
 # read in soil, xy characteristics
-locs <- read.csv("outputs/priority_sites_locs.csv")
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+locs <- read.csv("outputs/priority_sites.csv")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC")
 
 site.df <- merge(pdsi.sens, locs[,c('Name', "coords.x1", "coords.x2","code", "PDSI_time", "sand", "ksat", "awc")], by.x = 'site', by.y = 'code')
 
@@ -471,7 +486,7 @@ ggplot(site.df, aes(sand, slope.est))+geom_point()
 # fit a gam on the slope estimate
 gam.sens <- gam(slope.est ~ pr30yr + tm30yr   , data = site.df)
 
-summary(gam.sens) # explains 89.3% of deviance:
+summary(gam.sens) # explains 27.4% of deviance:
 
 
 #################################################
@@ -531,7 +546,7 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
           xlab = "\n\n\n\n Precip", ylab = "\n\n\n\n Temp", zlab = "\n\n\n\n drought sensitivity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
                       facets = NA, fit = fitpoints), main = paste("Drought Sensitivity by climate"),
-          ylim=c(5.8,9))
+          ylim=c(3,9))
  
 }
 

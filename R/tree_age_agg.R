@@ -12,59 +12,59 @@ library(ggplot2)
 # this saves as a csv but also outputs a df
 tree_age_agg<- function(rwiorbai, sampleyear, site.code, age1950,type){
 
-# calculate record age
-treedata <- data.frame(ID = colnames(rwiorbai),
-                       sampleyr = sampleyear)
-
-
-Hic <- data.frame(rwiorbai)
-
-# Find tree age for each tree at the time of sampling
-for(i in unique(colnames(Hic))){
-  treedata[treedata$ID==i, "age"] <- treedata[treedata$ID == i, "sampleyr"] - as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
-}
-summary(treedata)  
-
-
-
-Hic.age <- data.frame(Hic)
-
-# code for calculating tree age in each year
-
-for(i in unique(colnames(Hic))){
+  # calculate record age
+  treedata <- data.frame(ID = colnames(rwiorbai),
+                         sampleyr = sampleyear)
   
-  firstyr <- as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
-  #Hic.age[Hic.age$year == firstyr,i] <- 1
-  yridx <- firstyr:sampleyear
-  for (yr in firstyr:sampleyear){
-    Hic.age[as.numeric(Hic.age$year)== yr,i] <- yr-firstyr
+  
+  Hic <- data.frame(rwiorbai)
+  
+  # Find tree age for each tree at the time of sampling
+  for(i in unique(colnames(Hic))){
+    treedata[treedata$ID==i, "age"] <- treedata[treedata$ID == i, "sampleyr"] - as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
   }
-}
-
-Hic.age$year <- rownames(Hic)
-
-# plot rwi vs. tree age:
-Age.m <- melt(Hic.age)
-colnames(Age.m) <- c("year", "ID", "Age")
-
-RWI.m <- melt(Hic)
-colnames(RWI.m) <- c("year", "ID", "RWI")
-
-site.m <- merge(Age.m, RWI.m, by = c('year', "ID"))
-
-ggplot(site.m, aes(x = Age, y = RWI, color = ID)) + geom_line()
-
-site.m$year <- as.numeric(site.m$year)
-site.m$ID <- as.character(site.m$ID)
-site.m$ageclass <- "young"
-# need to assign old trees then and old trees now
-for (i in unique(site.m$ID)){
-  ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 , site.m[site.m$ID %in% i, ]$ageclass <-  "young",  
-         ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age > age1950 ,site.m[site.m$ID %in% i, ]$ageclass<- "old", site.m[site.m$ID %in% i, ]$ageclass <-  "young"))
-                
-}
-write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-",type, ".csv"))
-site.m
+  summary(treedata)  
+  
+  
+  
+  Hic.age <- data.frame(Hic)
+  
+  # code for calculating tree age in each year
+  
+  for(i in unique(colnames(Hic))){
+    
+    firstyr <- as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
+    #Hic.age[Hic.age$year == firstyr,i] <- 1
+    yridx <- firstyr:sampleyear
+    for (yr in firstyr:sampleyear){
+      Hic.age[as.numeric(Hic.age$year)== yr,i] <- yr-firstyr
+    }
+  }
+  
+  Hic.age$year <- rownames(Hic)
+  
+  # plot rwi vs. tree age:
+  Age.m <- melt(Hic.age)
+  colnames(Age.m) <- c("year", "ID", "Age")
+  
+  RWI.m <- melt(Hic)
+  colnames(RWI.m) <- c("year", "ID", "RWI")
+  
+  site.m <- merge(Age.m, RWI.m, by = c('year', "ID"))
+  
+  ggplot(site.m, aes(x = Age, y = RWI, color = ID)) + geom_line()
+  
+  site.m$year <- as.numeric(site.m$year)
+  site.m$ID <- as.character(site.m$ID)
+  site.m$ageclass <- "young"
+  # need to assign old trees then and old trees now
+    for (i in unique(site.m$ID)){
+      ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 , site.m[site.m$ID %in% i, ]$ageclass <-  "young",  
+             ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age > age1950 ,site.m[site.m$ID %in% i, ]$ageclass<- "old", site.m[site.m$ID %in% i, ]$ageclass <-  "young"))
+                    
+    }
+  write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-",type, ".csv"))
+  site.m
 }
 
 
