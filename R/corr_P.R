@@ -1,5 +1,7 @@
 #Correlating ring widths to climate factors across sites
 # Author: Kelly Heilman
+
+# note: need to update the rwl sources to the files with corrected headers
 rm(list=ls())
 
 library(dplR)
@@ -39,11 +41,16 @@ if(wood == "EW"){
   Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
   Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
   Mound <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
+  GLL1 <- read.tucson("cleanrwl/GLL1ww.rwl")
+  GLL2 <- read.tucson("cleanrwl/GLL1ww.rwl")
+  GLL3 <- read.tucson("cleanrwl/GLL2ww.rwl")
+  GLL4 <- read.tucson("cleanrwl/GLL3ww.rwl")
+  PVC <- read.tucson("cleanrwl/GLL4ww.rwl")
   }}
 
 #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
-site <- Hickory
-site.code <- "HIC"
+site <- PVC
+site.code <- "PVC"
 
 
 ##################################################
@@ -82,11 +89,11 @@ write.csv(monthlys, paste0(site.code, "monthly-crn.csv"))
 ##############################################################################################
 # need to add climate for additional sites as needed*******
 
-if(site.code == "BON"){
+if(site.code %in% c("BON", "GL1", "GL2", "GL3", "GL4")){
 MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
 } else{ if(site.code == "HIC" ){
   MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-} else{ if(site.code == "GLA" ){
+} else{ if(site.code %in% c("GLA", "PVC") ){
   MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
 } else{ if(site.code == "COR" ){
     MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
@@ -186,7 +193,7 @@ tmean <- aggregate(TAVG ~ Month, data = MNcd.clim, FUN = mean, na.rm = T)
 
 
 #plot mean monthly precipitation & Temperature
-pdf(paste0(site.code, "mean.climate.pdf"))
+pdf(paste0("outputs/",site.code, "mean.climate.pdf"))
 plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
 
 op <- par(mar=c(5, 4, 4, 6) + 0.1)

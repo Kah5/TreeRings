@@ -45,7 +45,7 @@ output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
 output
 }
 
-site.cd <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU")
+site.cd <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 #run for loop and save plots to outputs/barplots
 
 for(i in 1:length(site.cd)){
@@ -64,12 +64,16 @@ cor.barplot('GLA')
 cor.barplot('ENG')
 cor.barplot('UNC')
 cor.barplot('MOU')
-
-
+cor.barplot('GL1')
+cor.barplot('GL2')
+cor.barplot('GL3')
+cor.barplot('GL4')
+cor.barplot('PVC')
 #now make a barplot for each climate factors with the sites on it using the sites.barplot funciton
 
 #This is a set up tocolor code sites by their total mean annual precip
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+sites <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
+
 precip <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   precip[i,1] <- sites[i]
@@ -117,6 +121,12 @@ ENG <- read.csv(paste0('ENG-WW', clim, 'cor.csv'))
 UNC <- read.csv(paste0('UNC-WW', clim, 'cor.csv'))
 BON <- read.csv(paste0('BON-WW', clim, 'cor.csv'))
 MOU <- read.csv(paste0('MOU-WW', clim, 'cor.csv'))
+GL1 <- read.csv(paste0('GL1-WW', clim, 'cor.csv'))
+GL2 <- read.csv(paste0('GL2-WW', clim, 'cor.csv'))
+GL3 <- read.csv(paste0('GL3-WW', clim, 'cor.csv'))
+GL4 <- read.csv(paste0('GL4-WW', clim, 'cor.csv'))
+PVC <- read.csv(paste0('PVC-WW', clim, 'cor.csv'))
+
 months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
             "pAug", "pSep", "pOct", "pNov", "pDec",
             "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -133,7 +143,11 @@ full$ENG <- ENG$V1
 full$UNC <- UNC$V1
 full$BON <- BON$V1
 full$MOU <- MOU$V1
-
+full$GL1 <- GL1$V1
+full$GL2 <- GL2$V1
+full$GL3 <- GL3$V1
+full$GL4 <- GL4$V1
+full$PVC <- PVC$V1
 
 half <- full[13:24,]
 
@@ -141,22 +155,27 @@ cors.melt <- melt(half, id.vars = c('months', 'mono'))
 cors.melt$months <- factor(cors.melt$months, levels=full$months)
 cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
 sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", "MOU",
-                                 "TOW", "BON"), 
+                                 "TOW", "BON", "GL1", "GL2", "GL3","GL4", "PVC"), 
                     Sites = c("Coral Woods, IL", "Hickory Grove, IL",
                               "Glacial Park, IL", "St.Croix Savanna SNA, MN", 
                               "Uncas Dunes SNA, MN","Englund Ecotone SNA, MN", 
                               "Mound Prairie SNA, MN", "Townsend Woods SNA, MN", 
-                              "Bonanza Prairie SNA, MN"))
+                              "Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
+                              "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN",
+                              "Pleasant Valley Conservancy, IL"))
 cors.melt[order(cors.melt$months),]
 cors.melt <- merge(cors.melt, sitesnames, by = "variable")
 output<- ggplot(data = cors.melt, aes(months, value, fill = Sites))+
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
   #facet_grid(variable~.)+
   scale_size(range=c(5,20), guide="none")+
-  scale_fill_manual("Sites",values = brewer.pal(n=9, "RdBu"), 
-                    limits=c("Bonanza Prairie SNA, MN","Townsend Woods SNA, MN", "Mound Prairie SNA, MN",
+  scale_fill_manual("Sites",values = c('#a6cee3','#1f78b4','#b2df8a',
+    '#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00',
+    '#cab2d6','#6a3d9a','#ffff99','#00441b','#800026','#49006a', 'black'), 
+                    limits=c("Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
+                             "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN","Townsend Woods SNA, MN", "Mound Prairie SNA, MN",
                              "Englund Ecotone SNA, MN", "Uncas Dunes SNA, MN", "St.Croix Savanna SNA, MN",
-                             "Glacial Park, IL", "Coral Woods, IL", "Hickory Grove, IL"))+
+                             "Glacial Park, IL", "Coral Woods, IL", "Hickory Grove, IL","Pleasant Valley Conservancy, IL"))+
   theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
 output
 }
@@ -238,12 +257,18 @@ highest.cor('STC', 1),
 highest.cor('ENG', 1),
 highest.cor('UNC', 1),
 highest.cor('TOW', 1),
-highest.cor('MOU', 1)
+highest.cor('MOU', 1),
+highest.cor('GL1', 1),
+highest.cor('GL2', 1),
+highest.cor('GL3', 1),
+highest.cor('GL4', 1),
+highest.cor('PVC', 1)
 )
 
-Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU")
+Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 
 write.csv(Highest, "outputs/highest_cors_table.csv")
+
 sec.highest<- rbind(
 highest.cor('HIC', 2),
 highest.cor('BON', 2),
@@ -253,14 +278,20 @@ highest.cor('STC', 2),
 highest.cor('ENG', 2),
 highest.cor('UNC', 2),
 highest.cor('TOW', 2),
-highest.cor('MOU', 2)
+highest.cor('MOU', 2),
+highest.cor('GL1', 2),
+highest.cor('GL2', 2),
+highest.cor('GL3', 2),
+highest.cor('GL4', 2),
+highest.cor('PVC', 2)
 )
+
 
 
 #now plot the correlations against their mean annual precips:
 cor.v.clim <- function(clim,mono, pre,var){
-  locs <- read.csv("outputs/priority_sites_locs.csv")
-  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+  locs <- read.csv("outputs/priority_sites.csv")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "")
 
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
