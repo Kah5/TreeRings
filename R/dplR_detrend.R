@@ -1,3 +1,4 @@
+# Author: Kelly Heilman
 # This Script goes over the basics of detrending using the dplr package
 # clear environment before using:
 rm(list=ls())
