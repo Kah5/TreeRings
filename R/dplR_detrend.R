@@ -9,11 +9,11 @@ library(ggplot2)
 library(plyr)
 
 #use the "read.tucson" function to to read in the rwl
-Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
+treeringfile <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
 
 
 #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
-site <- Bonanza # assigns site as the same object as bonanaza rwl file
+site <- treeringfile # assigns site as the same object as bonanaza rwl file
 site.code <- "BON" # for naming purposes
 
 ###########################################
@@ -48,7 +48,7 @@ rwl.stats(site[,1:10])
 
 
 # There are different methods of detrending & sometimes they produce different results
-#X11(width = 12) # open a new X11 window to view plots
+X11(width = 12) # open a new X11 window to view plots
 
 # detrend.series() is a function that will detrend an individual series using all possible methods
 # setting verbose = TRUE in this function will print the parameters estimated for each model
@@ -83,3 +83,4 @@ crn.plot(Trended.crn, add.spline = TRUE)
 site.code.crn$Year <- rownames(site.code.crn)
 #write the detrend chronology to text: This allows us to use it later
 write.csv(site.code.crn, paste0('data/crn/',site.code, "-crn.csv"))
+write.csv(site.code.rwi, paste0('data/crn/',site.code, "-rwi.csv"))

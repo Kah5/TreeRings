@@ -61,8 +61,8 @@ GLL_PVC.lat <- GLL_PVC
 GLL_PVC <- spTransform(GLL_PVC, CRSobj = CRS('+init=epsg:3175'))
 GLL_PVC <- data.frame(GLL_PVC)
 GLL_PVC.lat <- data.frame(GLL_PVC.lat)
-GLL_PVC$code <- c("GLL4", "GLL3", "GLL2", "GLL1", "PVC")
-GLL_PVC.lat$code <- c("GLL4", "GLL3", "GLL2", "GLL1", "PVC")
+GLL_PVC$code <- c("GL4", "GL3", "GL2", "GL1", "PVC")
+GLL_PVC.lat$code <- c("GL4", "GL3", "GL2", "GL1", "PVC")
 GLL_PVC$Description <- c("Forest", "Savanna", "Savanna", 
                          "Forest", "Savanna")
 
@@ -741,4 +741,4 @@ sites.et.map
 sites.pet.map
 dev.off()
 
-#write.csv(priority, "outputs/priority_sites.csv")
+write.csv(priority, "outputs/priority_sites.csv")

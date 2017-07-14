@@ -291,7 +291,7 @@ highest.cor('PVC', 2)
 #now plot the correlations against their mean annual precips:
 cor.v.clim <- function(clim,mono, pre,var){
   locs <- read.csv("outputs/priority_sites.csv")
-  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
@@ -332,7 +332,7 @@ print(summary(lm))
 ggplot(x, aes(env, cor, color = cor))+#geom_text_repel(aes(label = site))+
   scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+stat_smooth(method = 'lm')+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
   xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))+
-
+  theme_bw()
 }
 
 #plot these in pngs for may and august for MAP
@@ -349,17 +349,17 @@ for(i in 1:length(clim.cd)){
 
 
 pdf("outputs/cor_coef_v_MAP.pdf")
-cor.v.clim("tavg", 18,precip, var = "MAP")
+cor.v.clim("tavg", 18, precip, var = "MAP")
 cor.v.clim("Precip",18, precip, var = "MAP")
-cor.v.clim("tmin", 18,precip, var = "MAP")
-cor.v.clim("tmax", 18,precip, var = "MAP")
-cor.v.clim("PDSI", 18,precip, var = "MAP")
+cor.v.clim("tmin", 18, precip, var = "MAP")
+cor.v.clim("tmax", 18, precip, var = "MAP")
+cor.v.clim("PDSI", 18, precip, var = "MAP")
 dev.off()
 
 #can use the cor.v.clim function to plot correlations against soil characteristics
 #read in site xys
 locs <- read.csv("outputs/priority_sites_locs.csv")
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 precip <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   precip[i,1] <- sites[i]
@@ -432,8 +432,8 @@ dev.off()
 
 #plot correlations for savanna and forests
 cor.v.type <- function(clim,mono, pre,var){
-  locs <- read.csv("outputs/priority_sites_locs.csv")
-  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+  locs <- read.csv("outputs/priority_sites.csv")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
   
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
@@ -485,8 +485,8 @@ cor.v.type("Precip", 20,test, var = 'sand')
 
 
 mean.growth.barplot <- function(clim,mono, pre){
-  locs <- read.csv("outputs/priority_sites_locs.csv")
-  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU")
+  locs <- read.csv("outputs/priority_sites.csv")
+  sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
   
   meangrowth <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
@@ -517,7 +517,7 @@ mean.growth.barplot("Precip", 20,test)
 
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
-#compare climate coreelaitons c
+#compare climate corelations 
 plot.cor.clim <- function(x, Climate, xlab, Site){
   yr <- 1895:1950
   x$class <- '9999'
@@ -547,6 +547,7 @@ plot.cor.clim <- function(x, Climate, xlab, Site){
     ggtitle(Site)
   
 }
+
 plot.cor.clim(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie")
 plot.cor.clim(molten.HIC, molten.HIC$PDSI, "PDSI", "Hickory Grove")
 plot.cor.clim(molten.COR, molten.COR$PDSI, "PDSI", "Coral Woods")
