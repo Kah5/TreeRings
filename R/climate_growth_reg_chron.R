@@ -7,25 +7,27 @@ library(treeclim)
 
 #read in rwl & add site + year codes
 #read in records from my collections:
-Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
-Hickory <- read.tucson ("./cofecha/HICww.rwl")
-Bonanza <- read.tucson("./cofecha/BONww.rwl")
-Pleasant <- read.tucson('./cofecha/PLEww.rwl')
-Townsend <- read.tucson('./cofecha/tow/TOWww.rwl')
-StCroix <- read.tucson('./cofecha/STCww.rwl')
+Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
+Hickory <- read.tucson ("./cofecha/HICww.rwl", header = FALSE)
+PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
+StCroix <- read.tucson("./cofecha/STCww.rwl") #saint croix savanna, MN
+Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
+#Pulaski <- read.tucson("./in001.rwl", header = TRUE)
+Townsend <- read.tucson('./cofecha/tow/TOWww.rwl', header = TRUE)#townsedn woods
+YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
+Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = TRUE) #Pleasant valley conservency
+Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza
 Coral <- read.tucson('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl')
 Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
+Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
 Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
 Mound <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
+Glaciallk1 <- read.tucson("cleanrwl/GLL1ww.rwl")
+Glaciallk2 <- read.tucson("cleanrwl/GLL1ww.rwl")
+Glaciallk3 <- read.tucson("cleanrwl/GLL2ww.rwl")
+Glaciallk4 <- read.tucson("cleanrwl/GLL3ww.rwl")
+PVC <- read.tucson("cleanrwl/GLL4ww.rwl")
 
-#and some records from ITRDB:
-PleasantPrairie <- read.tucson('data/wi006.rwl')#Pleasant prairie site from IRTDB--not to be confused with KH collected from pleasant valley conservancy
-#Sandwich--south of Hickory grove *ed cook record from 1980's
-#note there are two records--one for Quercus macrocarpa (il002) and one for Quercus alba (il001)
-#here we use il002
-Sandwich <- read.tucson ("data/il002.rwl")
-Desoix <- read.tucson ("data/mn029.rwl") #Dubois de Souix record--north of bonanaza
-Yellow <- read.tucson ("data/ia029.rwl") #itrdb
 
 #this function uses dplr to read rwl files,plot spaghetti plots, detrend and plot chronologies
 read_detrend_rwl <- function(rwl, name){
@@ -58,8 +60,12 @@ Coral <- read_detrend_rwl(Coral, "Coral")
 Uncas <- read_detrend_rwl(Uncas, "Uncas")
 Englund <- read_detrend_rwl(Englund, "Englund")
 Mound <- read_detrend_rwl(Mound, "Mound")
-
-
+Glaciallk1 <- read_detrend_rwl(Glaciallk1, "GLL1")
+Glaciallk2 <- read_detrend_rwl(Glaciallk2, "GLL2")
+Glaciallk3 <- read_detrend_rwl(Glaciallk3, "GLL3")
+Glaciallk4 <- read_detrend_rwl(Glaciallk4, "GLL4")
+PVC <- read_detrend_rwl(PVC, "PVC")
+Uncas <- read_detrend_rwl(Uncas, "Uncas")
 
 #############################################
 #plot detrended time series across all sites#
@@ -78,16 +84,21 @@ Coral$type <- "Forest"
 Uncas$type <- "Savanna"
 Englund$type <- "Forest"
 Mound$type <- "Savanna"
-
-
+Glaciallk1$type <- "Woodland"
+Glaciallk2$type <- "Savanna"
+Glaciallk3$type <- "Savanna"
+Glaciallk4$type <- "Forest"
+PVC$type <- "Savanna"
 
 crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, Mound, #PleasantPrairie, 
-              Townsend, Glacial, Coral, Uncas, Englund)
+              Townsend, Glacial, Coral, Uncas, Englund, Glaciallk1, Glaciallk2, Glaciallk3, Glaciallk4, PVC)
 X11(width = 14)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = type)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 
-
+# create a df with year, and crons
+crn.cast <- dcast(crns[,c('xxxstd', "Year", "Site")], formula =  Year ~ Site,value.var = "xxxstd", na.rm=TRUE)
+write.csv(crn.cast, "outputs/Cronology_full_by_yr.csv", row.names = FALSE)
 
 #read climate
 IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Glacial park
