@@ -4,7 +4,6 @@
 library(ggplot2)
 library(sp)  # classes for spatial data
 library(raster)  # grids, rasters
-library(rasterVis)  # raster visualisation
 library(maptools)
 library(rgeos)
 library(rgdal)
@@ -26,7 +25,7 @@ loadings$site <- rownames(TR$loadings[1:14,1:14])
 loadings$code <- c("BON", "COR", "GLA", "GL1", "GL2", "GL3", "GL4",
                    "HIC", "MOU", "PLE", "PVC", "STC", "TOW", "UNC")
 loadings$species <- c("QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
-                      "QUAL/QUMA", "QURA", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA")
+                      "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA")
 
 # read the site level map data
 locs <- read.csv("outputs/priority_sites.csv")

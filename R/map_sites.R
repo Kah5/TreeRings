@@ -216,8 +216,9 @@ us = us[match(toupper(states),toupper(us$NAME_1)),]
 test<- crop(avg.alb, extent(mapdata))
 test.df <- as.data.frame(test, xy = TRUE)
 #avg.alb <- as.data.frame(avg.alb, xy = TRUE)
+priority$pr.av <- extract(test, priority[,c("coords.x1", 'coords.x2')])
 
-mapdata<-data.frame(mapdata)
+mapdata <- data.frame(mapdata)
 
 #make the map in GGPLOT
 
@@ -376,6 +377,7 @@ avg.t.rast <- raster(averages.t) #convert dataframe to a raster
 projection(avg.t.rast) <- CRS("+init=epsg:4326") # native projection for GHCN data
 avg.t.alb <- projectRaster(avg.t.rast, crs='+init=epsg:3175') # change to great lakes albers
 
+priority$avg.t.alb <- extract(avg.t.alb, priority[ ,c("coords.x1", "coords.x2")])
 #create states again
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
@@ -481,8 +483,8 @@ map<- ggplot(data = rast.table, aes(x = x, y = y)) +
   xlim(-97, -87) +
   ylim(36.5, 49.7) +
   xlab('') + ylab('')
-map <-map + geom_point(data = priority.lat, aes(x = coords.x1, y = coords.x2, shape = Description, label=code), cex = 2.5)+
-  geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label= code ),hjust = -0.5, vjust=0.25 )
+map <-map + geom_point(data = priority.lat, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)#+
+  #geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label= code ),hjust = -0.5, vjust=0.25 )
 
 map
 #coord_map(xlim= c(-100, -85),ylim= c(36.5, 49.7))
@@ -554,6 +556,8 @@ gridded(averages.e) <- TRUE
 avg.e.rast <- raster(averages.e) #convert dataframe to a raster
 projection(avg.e.rast) <- CRS("+init=epsg:4326") # native projection for GHCN data
 avg.e.alb <- projectRaster(avg.e.rast, crs='+init=epsg:3175') # change to great lakes albers
+
+priority$evap.av <- extract(avg.e.alb, priority[,c("coords.x1", "coords.x2")])
 
 #create states again
 all_states <- map_data("state")
@@ -634,6 +638,8 @@ avg.et.rast <- raster(averages.et) #convert dataframe to a raster
 projection(avg.et.rast) <- CRS("+init=epsg:4326") # native projection for GHCN data
 avg.et.alb <- projectRaster(avg.et.rast, crs='+init=epsg:3175') # change to great lakes albers
 
+priority$et.av <- extract(avg.et.alb, priority[,c("coords.x1", "coords.x2")])
+
 #create states again
 all_states <- map_data("state")
 states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin" ) )
@@ -706,6 +712,8 @@ gridded(averages.pet) <- TRUE
 avg.pet.rast <- raster(averages.pet) #convert dataframe to a raster
 projection(avg.pet.rast) <- CRS("+init=epsg:4326") # native projection for GHCN data
 avg.pet.alb <- projectRaster(avg.pet.rast, crs='+init=epsg:3175') # change to great lakes albers
+
+priority$PET.av <- extract(avg.pet.alb, priority[,c('coords.x1', 'coords.x2')])
 
 #create states again
 all_states <- map_data("state")
