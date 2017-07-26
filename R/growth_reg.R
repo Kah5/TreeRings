@@ -518,24 +518,27 @@ mean.growth.barplot("Precip", 20,test)
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
 #compare climate corelations 
-plot.cor.clim <- function(x, Climate, xlab, Site){
+plot.cor.clim <- function(x, Clim, xlab, Site){
+ # x <- x[x$Site %in% site,]
   yr <- 1895:1950
   x$class <- '9999'
   x[x$Year %in% yr,]$class <- 'clim_record'
   
   
   #if the dummy variable is significant, then the two slopes are different
-  print(summary( cor( Climate, x$value)))
+  print(summary( cor( x[,Clim], x$value)))
   
   # Extend the regression lines beyond the domain of the data
+  df <- data.frame(value <-  x$value, 
+                 Climate <- x[,Clim], 
+                 Year <- x$Year)
+  colnames(df)<- c("value", "Climate", "Year")
   
-  ggplot(x, aes(x=Climate, y=value)) + geom_point(shape=1) +
-    scale_colour_hue(l=50) +
-    #+ylim(-1.0,1.0)
-    #+xlim(-4,4)# Use a slightly darker palette than normal
-    geom_smooth(method=lm,   # Add linear regression lines
-                se=TRUE,    # add shaded confidence region
-                fullrange=FALSE)+# Extend regression lines
+  ggplot(df, aes(x=Climate, y= value)) + geom_point(shape=1) +
+   # scale_colour_hue(l=50) +
+    geom_smooth(method = 'lm') + #,   # Add linear regression lines
+                #se=TRUE,    # add shaded confidence region
+                #fullrange=FALSE)+# Extend regression lines
     
     #scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
     xlim(-8, 8)+
@@ -543,12 +546,13 @@ plot.cor.clim <- function(x, Climate, xlab, Site){
     theme_bw()+
     theme(text = element_text(size = 30))+
     ylab('Detrended Ring width Index') +
-    xlab( xlab ) +
+    #xlab( xlab ) +
     ggtitle(Site)
   
 }
 
-plot.cor.clim(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie")
+molten <- read.csv("./outputs/full_molten_chron.csv")
+plot.cor.clim(x = molten[molten$Site %in% "Bonanza",], Clim = 'PDSI', xlab = "PDSI", Site = "Bonanza Prairie")
 plot.cor.clim(molten.HIC, molten.HIC$PDSI, "PDSI", "Hickory Grove")
 plot.cor.clim(molten.COR, molten.COR$PDSI, "PDSI", "Coral Woods")
 plot.cor.clim(molten.GLA, molten.GLA$PDSI, "PDSI", "Glacial Park")

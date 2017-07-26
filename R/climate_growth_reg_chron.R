@@ -17,11 +17,11 @@ Townsend <- read.tucson('./cofecha/tow/TOWww.rwl', header = TRUE)#townsedn woods
 YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
 Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = TRUE) #Pleasant valley conservency
 Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza
-Coral <- read.tucson('C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl')
-Uncas <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
-Glacial <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
-Englund <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
-Mound <- read.tucson("C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
+Coral <- read.tucson('/Users/kah/Documents/crossdating/data/cofecha/COR.rwl')
+Uncas <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/UNC.rwl")
+Glacial <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/GLA.rwl")
+Englund <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/ENG.rwl")
+Mound <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/MOU.rwl")
 Glaciallk1 <- read.tucson("cleanrwl/GLL1ww.rwl")
 Glaciallk2 <- read.tucson("cleanrwl/GLL1ww.rwl")
 Glaciallk3 <- read.tucson("cleanrwl/GLL2ww.rwl")
@@ -30,15 +30,15 @@ PVC <- read.tucson("cleanrwl/GLL4ww.rwl")
 
 
 #this function uses dplr to read rwl files,plot spaghetti plots, detrend and plot chronologies
-read_detrend_rwl <- function(rwl, name){
-  pdf(paste0('outputs/spagplots/',name,'.pdf'))
-  plot(rwl, plot.type = 'spag')
-  dev.off()
+read_detrend_rwl <- function(rwl, name, det.method){
+  #pdf(paste0('outputs/spagplots/',name,'.pdf'))
+  #plot(rwl, plot.type = 'spag')
+  #dev.off()
   stats <- rwi.stats(rwl)
   #detrend
-  rwl.rwi <- detrend(rwl = rwl, method = "ModNegExp")
+  rwl.rwi <- detrend(rwl = rwl, method = det.method)
   rwl <- chron(rwl.rwi)
-  pdf(paste0('outputs/cronplots/', name, '.pdf'))
+  png(paste0('./outputs/cronplots/', name, '.png'))
   plot(rwl)
   dev.off()
   #rwl.bai <- chron(bai.out(rwl.rwi))
@@ -50,22 +50,22 @@ read_detrend_rwl <- function(rwl, name){
 }
 
 
-Glacial <- read_detrend_rwl(Glacial, "Glacial")
-Hickory <- read_detrend_rwl(Hickory, "Hickory")
-Bonanza <- read_detrend_rwl(Bonanza, "Bonanza")
-Pleasant <- read_detrend_rwl(Pleasant, "Pleasant")
-Townsend <- read_detrend_rwl(Townsend, "Townsend")
-StCroix <- read_detrend_rwl(StCroix, "StCroix")
-Coral <- read_detrend_rwl(Coral, "Coral")
-Uncas <- read_detrend_rwl(Uncas, "Uncas")
-Englund <- read_detrend_rwl(Englund, "Englund")
-Mound <- read_detrend_rwl(Mound, "Mound")
-Glaciallk1 <- read_detrend_rwl(Glaciallk1, "GLL1")
-Glaciallk2 <- read_detrend_rwl(Glaciallk2, "GLL2")
-Glaciallk3 <- read_detrend_rwl(Glaciallk3, "GLL3")
-Glaciallk4 <- read_detrend_rwl(Glaciallk4, "GLL4")
-PVC <- read_detrend_rwl(PVC, "PVC")
-Uncas <- read_detrend_rwl(Uncas, "Uncas")
+Glacial <- read_detrend_rwl(Glacial, "Glacial", "Spline")# spline bettern than modneg
+Hickory <- read_detrend_rwl(Hickory, "Hickory","Spline")
+Bonanza <- read_detrend_rwl(Bonanza, "Bonanza","Spline")
+Pleasant <- read_detrend_rwl(Pleasant, "Pleasant","Spline")
+Townsend <- read_detrend_rwl(Townsend, "Townsend","Spline")
+StCroix <- read_detrend_rwl(StCroix, "StCroix","Spline")
+Coral <- read_detrend_rwl(Coral, "Coral","Spline")
+Uncas <- read_detrend_rwl(Uncas, "Uncas","Spline")
+Englund <- read_detrend_rwl(Englund, "Englund","Spline")
+Mound <- read_detrend_rwl(Mound, "Mound","Spline")
+Glaciallk1 <- read_detrend_rwl(Glaciallk1, "GLL1","Spline")
+Glaciallk2 <- read_detrend_rwl(Glaciallk2, "GLL2","Spline")
+Glaciallk3 <- read_detrend_rwl(Glaciallk3, "GLL3","Spline")
+Glaciallk4 <- read_detrend_rwl(Glaciallk4, "GLL4","Spline")
+PVC <- read_detrend_rwl(PVC, "PVC", "Spline")
+Uncas <- read_detrend_rwl(Uncas, "Uncas", "Spline")
 
 #############################################
 #plot detrended time series across all sites#
@@ -92,7 +92,7 @@ PVC$type <- "Savanna"
 
 crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, Mound, #PleasantPrairie, 
               Townsend, Glacial, Coral, Uncas, Englund, Glaciallk1, Glaciallk2, Glaciallk3, Glaciallk4, PVC)
-X11(width = 14)
+quartz(width = 14)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = type)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 
@@ -108,6 +108,7 @@ WIsc.clim <- read.csv("data/south_central_WI_climdiv.csv") #pleasant valley cons
 MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #townsend woods 
 MNec.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv") #St. Croix savanna
 MNse.clim <- read.csv("data/South_East_MN_CDO.csv") # for mound prairie
+
 
 #this function merges relevant climate parameters with the rwi site chronologies
 merge.clim.chron <- function(MNcd.clim, chron){
@@ -203,10 +204,20 @@ molten.STC <- merge.clim.chron(MNec.clim, StCroix)
 molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
 molten.ENG <- merge.clim.chron(MNec.clim, Englund)
 molten.MOU <- merge.clim.chron(MNse.clim, Mound)
-
+molten.GL1 <- merge.clim.chron(MNwc.clim, Glaciallk1)
+molten.GL2 <- merge.clim.chron(MNwc.clim, Glaciallk2)
+molten.GL3 <- merge.clim.chron(MNwc.clim, Glaciallk3)
+molten.GL4 <- merge.clim.chron(MNwc.clim, Glaciallk4)
+molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
+molten.PVC <- merge.clim.chron(IL.clim, PVC)
 write.csv(molten.HIC, "data/molten.hic.csv")
 
+#want to plot all 
+molten.full <- rbind(molten.HIC, molten.BON, molten.STC, #molten.PLE,
+                     molten.TOW, molten.ENG, molten.UNC, molten.COR, molten.GLA, molten.MOU, molten.GL1, molten.GL2,
+                     molten.GL3, molten.GL4, molten.PLE, molten.PVC)
 
+write.csv(molten.full, "outputs/full_molten_chron.csv")
 
 ###############################################################
 #using the treeclim R pacakge to calculate moving correlations#
