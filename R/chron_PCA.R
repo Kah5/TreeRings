@@ -11,8 +11,10 @@ library(rgdal)
 
 # read in the detrended chrons:
 crn.full <- read.csv('outputs/Cronology_full_by_yr.csv')
+crn.m <- melt(crn.full, id.vars = c("Year"))
 summary(crn.full[crn.full$Year %in% 1901:2015,])
- 
+quartz()
+ggplot(crn.m, aes(Year, value, color = variable))+geom_line()+facet_wrap(~variable)
 common <- crn.full[crn.full$Year %in% 1901:2015,]
 
 TR <- princomp(scale(common[,!names(common) %in% c("Year", "Englund")]))
@@ -42,19 +44,43 @@ proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata<-data.frame(mapdata)
 
+# ------------Do the interannual growth varaitions goup by space, species, or climate?-------------
+# plot pc 1 and 2 loadings and color by average climate
 ggplot(load.loc, aes(x = Comp.1, y = Comp.2, color = species))+geom_point()
+
+ggplot(load.loc, aes(x = Comp.1, y = Comp.2, color = pr.av))+geom_point()
+
+ggplot(load.loc, aes(x = Comp.1, y = Comp.2, color = avg.t.alb))+geom_point()
+
+ggplot(load.loc, aes(x = Comp.1, y = Comp.2, color = evap.av))+geom_point()
+
+ggplot(load.loc, aes(x = Comp.1, y = Comp.2, color = et.av))+geom_point()
+
+
+
 
 a <- ggplot(load.loc, aes(x =coords.x1, y =coords.x2, color = Comp.1))+geom_point()
 a <- a + geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
                        colour = "darkgrey", fill = NA)+theme_bw() + coord_cartesian(xlim = c(-59495.64, 724000), ylim=c(68821.43, 1480021))
 
-b<- ggplot(load.loc, aes(coords.x1, coords.x2, color=Comp.2, shape=factor(Description) ))+geom_point()
-c<- ggplot(load.loc, aes(coords.x1, coords.x2, color=Comp.3))+geom_point()
-d<- ggplot(load.loc, aes(coords.x1, coords.x2, color=Comp.4))+geom_point()
+b <- ggplot(load.loc, aes(coords.x1, coords.x2, color=Comp.1, shape=factor(species) ))+geom_point()+scale_color_gradientn(colors= heat.colors(4))
+c <- ggplot(load.loc, aes(coords.x1, coords.x2, color=Comp.3))+geom_point()
+d <- ggplot(load.loc, aes(coords.x1, coords.x2, color=Comp.4))+geom_point()
 
-ggplot(load.loc,aes(sand, Comp.1))+geom_point()
-ggplot(load.loc,aes(sand, Comp.2))+geom_point()
-ggplot(load.loc,aes(sand, Comp.3))+geom_point()
+# basic plots of PC1 and 2 vs. climate
+ggplot(load.loc,aes(pr.av, Comp.1))+geom_point()
+ggplot(load.loc,aes(avg.t.alb, Comp.1))+geom_point()
+ggplot(load.loc,aes(evap.av, Comp.1))+geom_point()
+ggplot(load.loc,aes(et.av, Comp.1))+geom_point()
+ggplot(load.loc,aes(PET.av, Comp.1))+geom_point()
+
+ggplot(load.loc,aes(pr.av, Comp.2))+geom_point()
+ggplot(load.loc,aes(avg.t.alb, Comp.2))+geom_point()
+ggplot(load.loc,aes(evap.av, Comp.2))+geom_point()
+ggplot(load.loc,aes(et.av, Comp.2))+geom_point()
+ggplot(load.loc,aes(PET.av, Comp.2))+geom_point()
+
+
 
 summary(load.loc[load.loc$Description == "Savanna",])
 summary(load.loc[load.loc$Description == "Forest",])

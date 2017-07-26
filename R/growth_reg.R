@@ -546,20 +546,29 @@ plot.cor.clim <- function(x, Clim, xlab, Site){
     theme_bw()+
     theme(text = element_text(size = 30))+
     ylab('Detrended Ring width Index') +
-    #xlab( xlab ) +
+    xlab( xlab ) +
     ggtitle(Site)
   
 }
 
 molten <- read.csv("./outputs/full_molten_chron.csv")
 plot.cor.clim(x = molten[molten$Site %in% "Bonanza",], Clim = 'PDSI', xlab = "PDSI", Site = "Bonanza Prairie")
-plot.cor.clim(molten.HIC, molten.HIC$PDSI, "PDSI", "Hickory Grove")
-plot.cor.clim(molten.COR, molten.COR$PDSI, "PDSI", "Coral Woods")
-plot.cor.clim(molten.GLA, molten.GLA$PDSI, "PDSI", "Glacial Park")
-plot.cor.clim(molten.STC, molten.STC$PDSI, "PDSI", "St. Croix Savanna")
-plot.cor.clim(molten.TOW, molten.TOW$PDSI, "PDSI", "Townsend Woods")
-plot.cor.clim(molten.UNC, molten.UNC$PDSI, "PDSI", "Uncas Dunes")
-plot.cor.clim(molten.MOU, molten.MOU$PDSI, "PDSI", "Mound Prairie")
+plot.cor.clim(molten[molten$Site %in% "Hickory",], "PDSI", "PDSI", "Hickory Grove")
+plot.cor.clim(molten[molten$Site %in% "Coral",], "PDSI", "PDSI", "Coral Woods")
+plot.cor.clim(molten[molten$Site %in% "Glacial",], "PDSI", "PDSI", "Glacial Park")
+plot.cor.clim(molten[molten$Site %in% "StCroix",], "PDSI", "PDSI", "St. Croix Savanna")
+plot.cor.clim(molten[molten$Site %in% "Townsend",], "PDSI", "PDSI", "Townsend Woods")
+plot.cor.clim(molten[molten$Site %in% "Uncas",], "PDSI", "PDSI", "Uncas Dunes")
+plot.cor.clim(molten[molten$Site %in% "Mound",], "PDSI", "PDSI", "Mound Prairie")
+plot.cor.clim(molten[molten$Site %in% "Englund",], "PDSI", "PDSI", "Englund")
+plot.cor.clim(molten[molten$Site %in% "GLL1",], "PDSI", "PDSI", "GLL1")
+plot.cor.clim(molten[molten$Site %in% "GLL2",], "PDSI", "PDSI", "GLL2")
+plot.cor.clim(molten[molten$Site %in% "GLL3",], "PDSI", "PDSI", "GLL3")
+plot.cor.clim(molten[molten$Site %in% "GLL4",], "PDSI", "PDSI", "GLL4")
+plot.cor.clim(molten[molten$Site %in% "PVC",], "PDSI", "PDSI", "PVC")
+plot.cor.clim(molten[molten$Site %in% "Pleasant",], "PDSI", "PDSI", "Pleasant Valley")
+
+
 
 #let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
 
@@ -571,96 +580,75 @@ yr.post <- 1950:2014
 #this function runs the stats and makes plots for pre-1950 vs. post-1950
 # additionally plots are saved to outputs/correlations within the function
 plot.pre.post <- function(x, Climate, xlab, Site){
-yr <- 1895:1950
-yr.post <- 1950:2014
-x$class <- '9999'
-x[x$Year %in% yr,]$class <- 'Pre-1950'
-x[x$Year %in% yr.post,]$class <- 'Post-1950'
-#create dummy variable
-x$group <- 0
-x[x$Year %in% yr,]$group <- 1
-
-#if the dummy variable is significant, then the two slopes are different
-print(summary(aov(value ~ Climate * group, data = x)))
-#print(summary(lm(value ~ Climate:group, data = x)))
-#print(summary(aov(value~Climate*class, data=x)))
-print(anova(lm(value ~ Climate*group, data = x), lm(value ~ Climate, data = x))
-)#print(summary(lm(value~Climate/group-1, data=x)))
-#print(summary(aov(value~Climate/group, data = x)))
-# Extend the regression lines beyond the domain of the data
-
-p<- ggplot(x, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
-  scale_colour_hue(l=50) +
-  #+ylim(-1.0,1.0)
-  #+xlim(-4,4)# Use a slightly darker palette than normal
-  geom_smooth(method='lm',   # Add linear regression lines
-              se=TRUE,    # add shaded confidence region
-              fullrange=FALSE)+# Extend regression lines
-  
-  scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
-  xlim(-8, 8)+
-  ylim(0.5, 1.5) +
-  theme_bw()+
-  theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
-  ylab('Detrended RWI') +
-  xlab( xlab ) +
-  ggtitle(Site)
-p
-#ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
+    yr <- 1895:1950
+    yr.post <- 1950:2014
+    x$class <- '9999'
+    x[x$Year %in% yr,]$class <- 'Pre-1950'
+    x[x$Year %in% yr.post,]$class <- 'Post-1950'
+    #create dummy variable
+    x$group <- 0
+    x[x$Year %in% yr,]$group <- 1
+    
+    #yr <- 1895:1950
+    #x$grow <- '9999'
+    #x[x$Year %in% yr,]$class <- 'clim_record'
+    
+    
+    #if the dummy variable is significant, then the two slopes are different
+    print(summary( cor( x[,Clim], x$value)))
+    df <- data.frame(value <-  x$value, 
+                     Climate <- x[,Clim], 
+                     Year <- x$Year, 
+                     class <- x$class)
+    colnames(df)<- c("value", "Climate", "Year", "class")
+    
+    
+    #if the dummy variable is significant, then the two slopes are different
+    print(summary(aov(value ~ Climate * group, data = df)))
+    #print(summary(lm(value ~ Climate:group, data = x)))
+    #print(summary(aov(value~Climate*class, data=x)))
+    print(anova(lm(value ~ Climate*group, data = df), lm(value ~ Climate, data = df))
+    )#print(summary(lm(value~Climate/group-1, data=x)))
+    #print(summary(aov(value~Climate/group, data = x)))
+    # Extend the regression lines beyond the domain of the data
+    
+    p<- ggplot(df, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
+      scale_colour_hue(l=50) +
+      #+ylim(-1.0,1.0)
+      #+xlim(-4,4)# Use a slightly darker palette than normal
+      geom_smooth(method='lm',   # Add linear regression lines
+                  se=TRUE,    # add shaded confidence region
+                  fullrange=FALSE)+# Extend regression lines
+      
+      scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
+      xlim(-8, 8)+
+      ylim(0.5, 1.5) +
+      theme_bw()+
+      theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
+      ylab('Detrended RWI') +
+      xlab( xlab ) +
+      ggtitle(Site)
+    p
+    #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
 }
 
 
+plot.pre.post(x = molten[molten$Site %in% "Hickory",], "PDSI", "PDSI", "Hickory Grove")
+plot.pre.post(x = molten[molten$Site %in% "Bonanza",], "PDSI", "PDSI", "Bonanaza")
+plot.pre.post(x = molten[molten$Site %in% "StCroix",], "PDSI", "PDSI", "St. Croix Savanna")
+plot.pre.post(x = molten[molten$Site %in% "Townsend",], "PDSI", "PDSI", "Townsend")
+plot.pre.post(x = molten[molten$Site %in% "Englund",], "PDSI", "PDSI", "Englund")
+plot.pre.post(x = molten[molten$Site %in% "Uncas",], "PDSI", "PDSI", "Uncas")
+plot.pre.post(x = molten[molten$Site %in% "Coral",], "PDSI", "PDSI", "Coral")
+plot.pre.post(x = molten[molten$Site %in% "Glacial",], "PDSI", "PDSI", "Glacial Park")
+plot.pre.post(x = molten[molten$Site %in% "Mound",], "PDSI", "PDSI", "Mound Prairie")
+plot.pre.post(x = molten[molten$Site %in% "GLL1",], "PDSI", "PDSI", "Glacial Lakes 1")
+plot.pre.post(x = molten[molten$Site %in% "GLL2",], "PDSI", "PDSI", "Glacial Lakes 2")
+plot.pre.post(x = molten[molten$Site %in% "GLL3",], "PDSI", "PDSI", "Glacial Lakes 3")
+plot.pre.post(x = molten[molten$Site %in% "GLL4",], "PDSI", "PDSI", "Glacial Lakes 4")
+plot.pre.post(x = molten[molten$Site %in% "Pleasant",], "PDSI", "PDSI", "Pleasant")
+plot.pre.post(x = molten[molten$Site %in% "PVC",], "PDSI", "PDSI", "PVC")
 
-plot.pre.post(molten.HIC, molten.HIC$JJA.p, 'Summer Precipitation (mm)', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$JJA.p, 'Summer Precipitation (mm)', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$JJA.p, 'Summer Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
-plot.pre.post(molten.TOW, molten.TOW$JJA.p, 'Summer Precipitation (mm)', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$JJA.p, 'Summer Precipitation (mm)', "St.Croix Savanna, MN") #not significant
-plot.pre.post(molten.DES, molten.DES$JJA.p, 'Summer Precipitation (mm)', "Bois de Soix, MN") #significant
-plot.pre.post(molten.SAN, molten.SAN$JJA.p, 'Summer Precipitation (mm)', "Sandwich, IL") #significant
-plot.pre.post(molten.PLP, molten.PLP$JJA.p, 'Summer Precipitation (mm)', "Pleasant Prarie, WI") #significant
-
-
-plot.pre.post(molten.HIC, molten.HIC$MAY.p, 'May Precipitation (mm)', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$MAY.p, 'May Precipitation (mm)', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$MAY.p, 'May Precipitation (mm)', "Pleasant Valley Conservancy, WI") #significant
-plot.pre.post(molten.TOW, molten.TOW$MAY.p, 'May Precipitation (mm)', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$MAY.p, 'May Precipitation (mm)', "St.Croix Savanna, MN") #not significant
-plot.pre.post(molten.DES, molten.DES$MAY.p, 'May Precipitation (mm)', "Bois de Soix, MN") #significant
-plot.pre.post(molten.SAN, molten.SAN$MAY.p, 'May Precipitation (mm)', "Sandwich, IL") #significant
-plot.pre.post(molten.PLP, molten.PLP$MAY.p, 'May Precipitation (mm)', "Pleasant Prarie, WI") #significant
-
-
-plot.pre.post(molten.HIC, molten.HIC$JUNTmin, 'June Minimum Temperature', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$JUNTmin, 'June Minimum Temperature', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$JUNTmin, 'June Minimum Temperature', "Pleasant Valley Conservancy, WI") #significant
-plot.pre.post(molten.TOW, molten.TOW$JUNTmin, 'June Minimum Temperature', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$JUNTmin, 'June Minimum Temperature', "St.Croix Savanna, MN") #not significant
-plot.pre.post(molten.DES, molten.DES$JUNTmin, 'June Minimum Temperature', "Bois de Soix, MN") #significant
-plot.pre.post(molten.SAN, molten.SAN$JUNTmin, 'June Minimum Temperature', "Sandwich, IL") #significant
-plot.pre.post(molten.PLP, molten.PLP$JUNTmin, 'June Minimum Temperature', "Pleasant Prarie, WI") #significant
-
-
-plot.pre.post(molten.HIC, molten.HIC$JUNTmax, 'June Maximum Temperature', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$JUNTmax, 'June Maximum Temperature', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$JUNTmax, 'June Maximum Temperature', "Pleasant Valley Conservancy, WI") #significant
-plot.pre.post(molten.TOW, molten.TOW$JUNTmax, 'June Maximum Temperature', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$JUNTmax, 'June Maximum Temperature', "St.Croix Savanna, MN") #not significant
-plot.pre.post(molten.DES, molten.DES$JUNTmax, 'June Maximum Temperature', "Bois de Soix, MN") #significant
-plot.pre.post(molten.SAN, molten.SAN$JUNTmax, 'June Maximum Temperature', "Sandwich, IL") #significant
-plot.pre.post(molten.PLP, molten.PLP$JUNTmax, 'June Maximum Temperature', "Pleasant Prarie, WI") #significant
-
-
-plot.pre.post(molten.HIC, molten.HIC$JUNTavg, 'June Average Temperature', "Hickory Grove, IL") #significant
-plot.pre.post(molten.BON, molten.BON$JUNTavg, 'June Average Temperature', "Bonanza Prairie, MN") #significant
-plot.pre.post(molten.PLE, molten.PLE$JUNTavg, 'June Average Temperature', "Pleasant Valley Conservancy, WI") #significant
-plot.pre.post(molten.TOW, molten.TOW$JUNTavg, 'June Average Temperature', "Townsend Woods, MN") #not significant
-plot.pre.post(molten.STC, molten.STC$JUNTavg, 'June Average Temperature', "St.Croix Savanna, MN") #not significant
-plot.pre.post(molten.DES, molten.DES$JUNTavg, 'June Average Temperature', "Bois de Soix, MN") #significant
-plot.pre.post(molten.SAN, molten.SAN$JUNTavg, 'June Average Temperature', "Sandwich, IL") #significant
-plot.pre.post(molten.PLP, molten.PLP$JUNTavg, 'June Average Temperature', "Pleasant Prarie, WI") #significant
-
-#pdf('outputs/pdsi_pre_post_plots.pdf')
 
 e <- plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
 a <- plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
