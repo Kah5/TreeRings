@@ -43,7 +43,7 @@ dev.off()
 
 # read in the climate and tree ring growth for Bonanza prairie (only place where we have data currently):
 
-bon <- read.csv("data/tree_growth_age/BON-RWI_ModNegExp_detrended.csv")
+bon <- read.csv("data/tree_growth_age/BON-RWI_Spline_detrended.csv")
 
 get.clim <- function(site.code, site.df){
   if(site.code == "BON"){
@@ -139,11 +139,11 @@ get.clim <- function(site.code, site.df){
   
   
   #precip <- dcast(total.p, Year  ~ Month)
-  annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
-  annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1440,], FUN = 'mean', na.rm=T)
-  annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1440,], FUN = 'mean', na.rm = T)
-  annual.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
-  annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
+  annual.p <- aggregate(PCP~Year, data = MNp.df[1:1452,], FUN = sum, na.rm=T)
+  annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1452,], FUN = 'mean', na.rm=T)
+  annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1452,], FUN = 'mean', na.rm = T)
+  annual.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[1:1452,], FUN = 'mean', na.rm = T)
+  annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1452,], FUN = 'mean', na.rm = T)
   jul.pdsi <- annual.pdsi.m[annual.pdsi.m$Month == 7,] 
   
   annuals <- data.frame(Year = annual.p$Year, 
@@ -151,13 +151,12 @@ get.clim <- function(site.code, site.df){
                         TMIN = annual.mint$TMIN,
                         TAVG = annual.t$TAVG,
                         PDSI = annual.pdsi$PDSI,
-                        MAY.p = may.p[1:120,]$PCP,
-                        JJA.p = jja.p[1:120,]$PCP,
-                        JUNTmin = jun.tmin[1:120,]$TMIN,
-                        JUNTavg = jun.tavg[1:120,]$TAVG, 
-                        JUNTmax = jun.tmax[1:120,]$TMAX,
-                        Jul.pdsi = jul.pdsi[1:120,]$PDSI, 
-                        WUE.fake = seq(0,15, by = 15/119))
+                        MAY.p = may.p$PCP,
+                        JJA.p = jja.p$PCP,
+                        JUNTmin = jun.tmin$TMIN,
+                        JUNTavg = jun.tavg$TAVG, 
+                        JUNTmax = jun.tmax$TMAX,
+                        Jul.pdsi = jul.pdsi$PDSI)
   
   #merge annuals with rwl
   #annuals.crn <- merge(annuals, chron, by = "Year")
@@ -169,7 +168,12 @@ get.clim <- function(site.code, site.df){
 }
 bon.delt <- get.clim("BON",deltas)
 
+quartz()
+ggplot(bon.delt, aes(x = Year, y = Corr.d13C,color = Tree))+geom_line()+theme_bw()
+quartz()
+ggplot(bon.delt, aes(x = Year, y = TMIN,color = Tree))+geom_line()+theme_bw()
 
 ggplot(bon.delt, aes(x = PCP, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()
 ggplot(bon.delt, aes(x = JJA.p, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()
 ggplot(bon.delt, aes(x = Jul.pdsi, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()
+

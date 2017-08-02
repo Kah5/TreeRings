@@ -7,7 +7,7 @@ library(data.table)
 library(rgdal)
 library(mgcv)
 # lets look at relationship to climate with age:
-setwd("C:/Users/JMac/Documents/Kelly/TreeRings")
+setwd("/Users/kah/Documents/TreeRings")
 
 #####################################
 #read in rwl & add site + year codes#
@@ -15,54 +15,71 @@ setwd("C:/Users/JMac/Documents/Kelly/TreeRings")
 
 # quick function to read detrend and add the year as a column:
 # this function will also just calculate BAI instead
-read_detrend_year <- function( filename, method , rwiorbai){
+read_detrend_year <- function( filename, method , rwiorbai, site){
   newseries <- read.tucson( filename )
+  
+  # average the cores by tree (for the sites with multiple cores):
+  
+  #gp.ids <- read.ids(newseries, stc = autoread.ids(newseries))
+  
+  gp.treeMean <- treeMean(newseries, autoread.ids(newseries))
+  gp.treeMean2 <- treeMean(newseries, autoread.ids(newseries), na.rm=TRUE)
+  
+  
   ifelse(rwiorbai == "rwi", 
           detrended <- detrend(rwl = newseries, method = method),
           detrended <- bai.out(rwl = newseries))
   
-  detrended$year <- rownames(detrended)
-  detrended
+  
+  detrended.mean <- treeMean(detrended, autoread.ids(detrended), na.rm=TRUE)
+  
+  # plot spag plots:
+  png(paste0("outputs/spagplots/", site, "_", rwiorbai,"_mean_", method,"_detrended.png"))
+  plot(detrended.mean, "spag")
+  dev.off()
+  
+  detrended.mean$year <- rownames(detrended.mean)
+  detrended.mean
 }
 
 
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
-Hickory.bai <- read_detrend_year("cleanrwl/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "ModNegExp", rwiorbai = "rwi")#townsedn woods
-Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "ModNegExp", rwiorbai = "rwi") #Pleasant valley conservency
-Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "ModNegExp", rwiorbai = "rwi")
-PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "ModNegExp", rwiorbai = "rwi")
+Hickory.bai <- read_detrend_year("cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
+StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
+Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "rwi", site = "BON")
+Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "rwi", site = "TOW")#townsedn woods
+Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "Spline", rwiorbai = "rwi", site = "PLE") #Pleasant valley conservency
+Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "Spline", rwiorbai = "rwi", site = "COR")
+Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNC")
+Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLA")
+Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "rwi", site = "ENG")
+Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "rwi", site = "MOU")
+GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL1")
+GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL2")
+GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL3")
+GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL4")
+PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
 
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
 source("R/tree_age_agg.R")
 
-Hic <- tree_age_agg(rwiorbai = Hickory.bai, sampleyear = 2015, site.code= "HIC", age1950 = 50,type = "RWI_ModNegExp_detrended")
-Stc <- tree_age_agg(StCroix.bai, 2015, "STC", 50,"RWI_ModNegExp_detrended")
-Bon <- tree_age_agg(Bonanza.bai, 2015, "BON", 50,"RWI_ModNegExp_detrended")
-Tow <- tree_age_agg(Townsend.bai, 2015, "TOW", 50,"RWI_ModNegExp_detrended")
-Ple <- tree_age_agg(Pleasant.bai, 2015, "PLE", 50,"RWI_ModNegExp_detrended")
-Cor <- tree_age_agg(Coral.bai, 2016, "COR", 50,"RWI_ModNegExp_detrended")
-Unc <- tree_age_agg(Uncas.bai, 2016, "UNC", 50,"RWI_ModNegExp_detrended")
-Eng <- tree_age_agg(Englund.bai, 2015, "ENG", 50,"RWI_ModNegExp_detrended")
-Mou <- tree_age_agg(Mound.bai, 2015, "MOU", 50,"RWI_ModNegExp_detrended")
-GLL1 <- tree_age_agg(GLL1.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
-GLL2 <- tree_age_agg(GLL2.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
-GLL3 <- tree_age_agg(GLL3.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
-GLL4 <- tree_age_agg(GLL4.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
-PVC <- tree_age_agg(PVC.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
+Hic <- tree_age_agg(rwiorbai = Hickory.bai, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI_Spline_detrended")
+Stc <- tree_age_agg(StCroix.bai, 2015, "STC", 30,"RWI_Spline_detrended")
+Bon <- tree_age_agg(Bonanza.bai, 2015, "BON", 30,"RWI_Spline_detrended")
+Tow <- tree_age_agg(Townsend.bai, 2015, "TOW", 30,"RWI_Spline_detrended")
+Ple <- tree_age_agg(Pleasant.bai, 2015, "PLE", 30,"RWI_Spline_detrended")
+Cor <- tree_age_agg(Coral.bai, 2016, "COR", 30,"RWI_Spline_detrended")
+Unc <- tree_age_agg(Uncas.bai, 2016, "UNC", 30,"RWI_Spline_detrended")
+Eng <- tree_age_agg(Englund.bai, 2015, "ENG", 30,"RWI_Spline_detrended")
+Mou <- tree_age_agg(Mound.bai, 2015, "MOU", 30,"RWI_Spline_detrended")
+GLL1 <- tree_age_agg(GLL1.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL2 <- tree_age_agg(GLL2.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL3 <- tree_age_agg(GLL3.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL4 <- tree_age_agg(GLL4.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+PVC <- tree_age_agg(PVC.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
 
 
 ###################################
@@ -70,8 +87,6 @@ PVC <- tree_age_agg(PVC.bai, 2016, "MOU", 50,"RWI_ModNegExp_detrended")
 ####################################
 
 # read in the climate for each site
-IL.clim <- read.csv("data/NE_illinois_climdiv.csv") #Hickory Grove, Sandwich, Glacial park
-EC_MN.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
 
 get.clim <- function(site.code, site.df){
   if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
@@ -206,6 +221,7 @@ GLL2_clim <- get.clim("GLL2", GLL2)
 GLL3_clim <- get.clim("GLL3", GLL3)
 GLL4_clim <- get.clim("GLL4", GLL4)
 PVC_clim <- get.clim("PVC", PVC)
+
 #ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
 ggplot(GLL1_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
 ggplot(GLL2_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
@@ -222,12 +238,16 @@ plot.young.old <- function(x, Climate, xlab, ylab,Site){
   #create dummy variable
   x$group <- 0
   ifelse(x$ageclass %in% "old", x$group <- 1, x$group <- 0)
+  co2.low.yr <- x[x$year < 1950 & x$ageclass %in% 'old',]
+  co2.high.yr <- x[x$year >= 1950 & x$ageclass %in% 'young',]
+  
+  x <- rbind(co2.low.yr, co2.high.yr)
   
   #if the dummy variable is significant, then the two slopes are different
-  print(summary(aov(x$RWI ~ x[,c(Climate)] * x$group)))
+  print(summary(aov(x$RWI ~ x[,c(Climate)] * x$ageclass)))
   #print(summary(lm(value ~ Climate:group, data = x)))
   #print(summary(aov(value~Climate*class, data=x)))
-  print(anova(lm(x$RWI ~ x[,c(Climate)] * x$group), lm(x$RWI ~ x[,c(Climate)])))
+  print(anova(lm(x$RWI ~ x[,c(Climate)] * x$ageclass), lm(x$RWI ~ x[,c(Climate)])))
   #print(summary(lm(value~Climate/group-1, data=x)))
   #print(summary(aov(value~Climate/group, data = x)))
   # Extend the regression lines beyond the domain of the data
@@ -292,6 +312,24 @@ plot.young.old(GLL4_clim, "PDSI", "PDSI","BAI", "GLL4")
 plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site = "MOU")
 dev.off()
 
+# drought is really only important in the summer, so lest look at July pdsi
+
+plot.young.old(STC_clim, "Jul.pdsi", "PDSI","BAI", "STC")
+plot.young.old(HIC_clim, "Jul.pdsi", "PDSI","BAI", "HIC")
+plot.young.old(TOW_clim, "Jul.pdsi", "PDSI","BAI", "TOW")
+plot.young.old(BON_clim, "Jul.pdsi", "PDSI","BAI", "BON")
+plot.young.old(PLE_clim, "Jul.pdsi", "PDSI","BAI", "PLE")
+plot.young.old(COR_clim, "Jul.pdsi", "PDSI","BAI", "COR")
+plot.young.old(UNC_clim, "Jul.pdsi", "PDSI","BAI", "UNC")
+plot.young.old(ENG_clim, "Jul.pdsi", "PDSI","BAI", "ENG")
+plot.young.old(PVC_clim, "Jul.pdsi", "PDSI","BAI", "PVC")
+plot.young.old(GLL1_clim, "Jul.pdsi", "PDSI","BAI", "GLL1")
+plot.young.old(GLL2_clim, "Jul.pdsi", "PDSI","BAI", "GLL2")
+plot.young.old(GLL3_clim, "Jul.pdsi", "PDSI","BAI", "GLL3")
+plot.young.old(GLL4_clim, "Jul.pdsi", "PDSI","BAI", "GLL4")
+plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site = "MOU")
+
+
 # should create PNGS but that is for a later date
 
 
@@ -311,6 +349,24 @@ summary(lm(RWI~year, data = all))
 summary(lm(RWI~year:site, data = all))
 
 ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
+
+###################################################################
+# Lets directly compare old and young years with similar climates:
+##################################################################
+
+df <- aggregate(Jul.pdsi~year, data = BON_clim, FUN = mean )
+#names(df) <- BON_clim$year
+df.pre <- df[df$year < 1950,]
+df.post <- df[df$year >=1950,]
+sorted.pre1950 <- df.pre[order(df.pre$Jul.pdsi),]
+colnames(sorted.pre1950) <- c("year_pre", "Jul.pdsi_pre")
+sorted.post1950 <- df.post[order(df.post$Jul.pdsi),]
+colnames(sorted.post1950) <- c("year_post", "Jul.pdsi_post")
+comb <- cbind(sorted.pre1950, sorted.post1950)
+
+ggplot(df, aes(year, Jul.pdsi))+geom_point()+stat_smooth(method = "lm")
+test <- lm(Jul.pdsi~year, data = df)# no significant change
+
 
 ##########################################################################
 # get a function to extract the senstivity of Growth-climate relationship of each site
@@ -350,7 +406,7 @@ get.clim.sens.age <- function(df){
   for(s in 1: length(unique(all$site))){
      name <- unique(all$site)[s]  
      if(nrow(all[all$site == name & all$ageclass == "young" ,]) > 0){
-     lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
+     lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" & all$year >= 1950 ,])
      coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
      coeffs[s , 1] <-  "young"
      coeffs[s,4] <- name
@@ -363,7 +419,7 @@ get.clim.sens.age <- function(df){
     }
      
      if(nrow(all[all$site == name & all$ageclass == "old" ,]) > 0){
-     lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
+     lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" & all$year < 1950,])
      coeffs[s+8, 2:3] <- summary(lmest2)$coefficients[2,1:2]
      coeffs[s +8 , 1] <- 'old'
      coeffs[s+8,4] <- name
@@ -439,16 +495,16 @@ pdsi.yr.sens <- get.clim.sens.year(all)
 locs <- read.csv("outputs/priority_sites.csv")
 sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC")
 
-site.df <- merge(pdsi.sens, locs[,c('Name', "coords.x1", "coords.x2","code", "PDSI_time", "sand", "ksat", "awc")], by.x = 'site', by.y = 'code')
+site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
 
 
 
-plot(site.df$slope.est, site.df$ksat)
+plot(site.df$slope.est, site.df$pr.av)
 
 #--------------------------------------------------------------
 # extract relevant climate from PRSIM 30 year mean precip and temp data:
 # dir where the precip data are
-workingdir <- "C:/Users/JMac/Documents/Kelly/biomodality/data/"
+workingdir <- "./Users/kah/Documents/biomodality/data/"
 
 # read in and average prism data (this is modern 30year normals)
 prism<- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
