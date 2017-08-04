@@ -25,25 +25,33 @@ rat <- TRseriesew/TRserieslw
 
 rat$Year <- as.numeric(row.names(rat))
 rat.m <- melt(rat, id.vars = "Year")
+rat.m <- rat.m[rat.m$Year > 1700,] # gets rid of undated series (fix for now, but need to chech measurements)
 
 png(paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"))
-ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+ggplot(rat.m[rat.m$Year < sampleyr ,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
 dev.off()
 
 ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_point()+stat_smooth()+ggtitle(paste0(site, " average EW/LW in each tree"))
 
 
 if(avg == TRUE){
-    png(paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"))
-    ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
-    dev.off()
+    ggsave( file = paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"), ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+    )
+  ggsave( file = paste0("outputs/EWLW/", site, "_avg_EWLW_ts_reg.png"), ggplot(rat.m[rat.m$Year < sampleyr & rat.m$Year > 1895,], aes(Year, value))+geom_point()+stat_smooth(method = "lm")+ggtitle(paste0(site, " average EW/LW trend 1895-sampleyr"))
+  )
+  # calculation regression coefficients:
+  test <- summary(lm(value ~ Year, data = rat.m))$coefficients
+  write.csv(test, paste0("outputs/EWLW/", site, "EWLW_time_reg_coef.csv"))
+    #ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+    
     
     write.csv(rat, paste0("outputs/EWLW/",site, "EWLW_avg.csv"))
     
   }else{
-      png(paste0("outputs/EWLW/", site, "_EWLW_ts.png"))
-      ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
-      dev.off()
+      ggsave(paste0("outputs/EWLW/", site, "_EWLW_ts.png"), ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
+      )
+      #ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
+      #dev.off()
       write.csv(rat, paste0("outputs/EWLW/",site, "EWLW.csv"))
 }
 
@@ -68,3 +76,5 @@ GLL2.rat <- EWLW.ratio("GLL2", 2015, avg = TRUE)
 GLL3.rat <- EWLW.ratio("GLL3", 2015, avg = TRUE)
 GLL4.rat <- EWLW.ratio("GLL4", 2015, avg = TRUE)
 PVC.rat <- EWLW.ratio("PVC", 2015, avg = TRUE)
+
+
