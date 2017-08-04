@@ -6,75 +6,88 @@ library(dplR)
 library(ggplot2)
 setwd("/Users/kah/Documents/TreeRings")
 
-EWLW.ratio<- function(site, sampleyear, avg){
-TRseriesew <- read.tucson(paste0("/Users/kah/Documents/crossdating/data/cofecha/",site,"earlywood width.rwl"))
-TRserieslw <- read.tucson(paste0("/Users/kah/Documents/crossdating/data/cofecha/",site,"latewood width.rwl"))
+# this function does the following:
+  # reads in the early wood and late wood files, 
+  # takes the ration of EW:LW, 
+  # plots tree level interannual fluctuationsin in EW:LW
+  # calculates the trendline of EW:LW over time and saves output in "outputs/EWLW"
 
-if(avg == TRUE){ # if avg true, the average all cores in each tree
-    TRseriesew <- treeMean(TRseriesew, autoread.ids(TRseriesew), na.rm=TRUE)
-    TRserieslw <- treeMean(TRserieslw, autoread.ids(TRserieslw), na.rm=TRUE)
-  }else{ # if not, then don't avg
-    TRseriesew <- TRseriesew
-    TRserieslw <- TRserieslw
-}
-
-
-rat <- TRseriesew/TRserieslw
-
-
-
-rat$Year <- as.numeric(row.names(rat))
-rat.m <- melt(rat, id.vars = "Year")
-rat.m <- rat.m[rat.m$Year > 1700,] # gets rid of undated series (fix for now, but need to chech measurements)
-
-png(paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"))
-ggplot(rat.m[rat.m$Year < sampleyr ,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
-dev.off()
-
-ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_point()+stat_smooth()+ggtitle(paste0(site, " average EW/LW in each tree"))
-
-
-if(avg == TRUE){
-    ggsave( file = paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"), ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
-    )
-  ggsave( file = paste0("outputs/EWLW/", site, "_avg_EWLW_ts_reg.png"), ggplot(rat.m[rat.m$Year < sampleyr & rat.m$Year > 1895,], aes(Year, value))+geom_point()+stat_smooth(method = "lm")+ggtitle(paste0(site, " average EW/LW trend 1895-sampleyr"))
-  )
-  # calculation regression coefficients:
-  test <- summary(lm(value ~ Year, data = rat.m))$coefficients
-  write.csv(test, paste0("outputs/EWLW/", site, "EWLW_time_reg_coef.csv"))
-    #ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+EWLW.ratio <- function(site, sampleyear, avg){
+    TRseriesew <- read.tucson(paste0("/Users/kah/Documents/crossdating/data/cofecha/",site,"earlywood width.rwl"))
+    TRserieslw <- read.tucson(paste0("/Users/kah/Documents/crossdating/data/cofecha/",site,"latewood width.rwl"))
+    
+    if(avg == TRUE){ # if avg true, the average all cores in each tree
+        TRseriesew <- treeMean(TRseriesew, autoread.ids(TRseriesew), na.rm=TRUE)
+        TRserieslw <- treeMean(TRserieslw, autoread.ids(TRserieslw), na.rm=TRUE)
+      }else{ # if not, then don't avg
+        TRseriesew <- TRseriesew
+        TRserieslw <- TRserieslw
+    }
     
     
-    write.csv(rat, paste0("outputs/EWLW/",site, "EWLW_avg.csv"))
+    rat <- TRseriesew/TRserieslw
     
-  }else{
-      ggsave(paste0("outputs/EWLW/", site, "_EWLW_ts.png"), ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
+    
+    
+    rat$Year <- as.numeric(row.names(rat))
+    rat.m <- melt(rat, id.vars = "Year")
+    rat.m <- rat.m[rat.m$Year > 1700,] # gets rid of undated series (fix for now, but need to chech measurements)
+    
+    png(paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"))
+    ggplot(rat.m[rat.m$Year < sampleyr ,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+    dev.off()
+    
+    ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_point()+stat_smooth()+ggtitle(paste0(site, " average EW/LW in each tree"))
+    
+    
+    if(avg == TRUE){
+        ggsave( file = paste0("outputs/EWLW/", site, "_avg_EWLW_ts.png"), ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+        )
+      ggsave( file = paste0("outputs/EWLW/", site, "_avg_EWLW_ts_reg.png"), ggplot(rat.m[rat.m$Year < sampleyr & rat.m$Year > 1895,], aes(Year, value))+geom_point()+stat_smooth(method = "lm")+ggtitle(paste0(site, " average EW/LW trend 1895-sampleyr"))
       )
-      #ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
-      #dev.off()
-      write.csv(rat, paste0("outputs/EWLW/",site, "EWLW.csv"))
+      # calculation regression coefficients:
+      test <- summary(lm(value ~ Year, data = rat.m))$coefficients
+      write.csv(test, paste0("outputs/EWLW/", site, "EWLW_time_reg_coef.csv"))
+        #ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " average EW/LW in each tree"))
+        
+        
+        write.csv(rat, paste0("outputs/EWLW/",site, "EWLW_avg.csv"))
+        
+      }else{
+          ggsave(paste0("outputs/EWLW/", site, "_EWLW_ts.png"), ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
+          )
+          #ggplot(rat.m[rat.m$Year < sampleyr,], aes(Year, value, color = variable))+geom_line()+ggtitle(paste0(site, " EW/LW in each core"))
+          #dev.off()
+          write.csv(rat, paste0("outputs/EWLW/",site, "EWLW.csv"))
+    }
+    
+    rat
 }
 
-rat
-}
-
-
+# apply this function to the different sites
 BON.rat <- EWLW.ratio("BON", 2015, avg = TRUE)
 #HIC.rat <- EWLW.ratio("HIC", 2015, avg = TRUE) # need to get hic ew and lw 
 GLA.rat <- EWLW.ratio("GLA", 2015, avg = TRUE)
-COR.rat <- EWLW.ratio("COR", 2015, avg = TRUE)
+COR.rat <- EWLW.ratio("COR", 2016, avg = TRUE)
 TOW.rat <- EWLW.ratio("TOW", 2015, avg = TRUE)
 STC.rat <- EWLW.ratio("STC", 2015, avg = TRUE)
 ENG.rat <- EWLW.ratio("ENG", 2015, avg = TRUE)
-AVOo.rat <- EWLW.ratio("AVOo", 2015, avg = TRUE)
+AVOo.rat <- EWLW.ratio("AVOo", 2016, avg = TRUE)
 UNC.rat <- EWLW.ratio("UNC", 2015, avg = TRUE)
 PAM.rat <- EWLW.ratio("PAM", 2015, avg = TRUE)
 LED.rat <- EWLW.ratio("LED", 2015, avg = TRUE)
 UNI.rat <- EWLW.ratio("UNI", 2015, avg = TRUE)
-GLL1.rat <- EWLW.ratio("GLL1", 2015, avg = TRUE)
-GLL2.rat <- EWLW.ratio("GLL2", 2015, avg = TRUE)
-GLL3.rat <- EWLW.ratio("GLL3", 2015, avg = TRUE)
-GLL4.rat <- EWLW.ratio("GLL4", 2015, avg = TRUE)
-PVC.rat <- EWLW.ratio("PVC", 2015, avg = TRUE)
+GLL1.rat <- EWLW.ratio("GLL1", 2016, avg = TRUE)
+GLL2.rat <- EWLW.ratio("GLL2", 2016, avg = TRUE)
+GLL3.rat <- EWLW.ratio("GLL3", 2016, avg = TRUE)
+GLL4.rat <- EWLW.ratio("GLL4", 2016, avg = TRUE)
+PVC.rat <- EWLW.ratio("PVC", 2016, avg = TRUE)
+
+#------Are the sites with increasing EW:LW ratios also the ones with a change in drought sensitivity?-------
+
+# read all the coefficient CSV's in the "outputs/EWLW/" folder:
+file_names = list.files("outputs/EWLW")
+file_names = file_names[ grepl("reg_coef.csv",file_names)]
+#full_filenames <- paste0(workingdir, sitefolder,'/',file_names)
 
 
