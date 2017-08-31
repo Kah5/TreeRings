@@ -111,7 +111,7 @@ MNse.clim <- read.csv("data/South_East_MN_CDO.csv") # for mound prairie
 
 
 #this function merges relevant climate parameters with the rwi site chronologies
-merge.clim.chron <- function(MNcd.clim, chron){
+merge.clim.chron <- function(MNcd.clim, chron, site){
 MNcd.clim$PCP <- MNcd.clim$PCP*25.54
 
 keeps <- c("Year", "Month",  "PCP")
@@ -119,6 +119,7 @@ keepstavg <- c("Year", "Month", "TAVG")
 keepst <- c("Year", "Month",  "TMAX")
 keepstmin <- c("Year", "Month",  "TMIN")
 keepspdsi <- c("Year", "Month",  "PDSI")
+keepsspi <- c("Year", "Month","SP01", "SP02", "SP06", "SP09", "SP12", "SP24")
 #create a dataset for Precip
 MNp.df <- MNcd.clim[,keeps]
 MNp.df[MNp.df == -9999]<- NA
@@ -137,6 +138,10 @@ MNtavg.df[MNtavg.df == -9999]<- NA
 
 MNpdsi.df<- MNcd.clim[,keepspdsi]
 MNpdsi.df[MNpdsi.df == -9999]<- NA
+
+# for SPI
+MNspi.df <- MNcd.clim[, keepsspi]
+MNspi.df[MNspi.df == "-99.99"]<- NA
 #for precipitation
 
 
@@ -157,12 +162,27 @@ jun.tmin <- tmin.m[tmin.m$Month == 6, ]
 tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
 jun.tmax <- tmax.m[tmax.m$Month == 6, ]
 
+spi01.m <- aggregate(SP01 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+jun.spi01 <- spi01.m[spi01.m$Month == 6, ]
+
+spi02.m <- aggregate(SP02 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+jun.spi02 <- spi02.m[spi02.m$Month == 6, ]
+
+spi06.m <- aggregate(SP06 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+jun.spi06 <- spi06.m[spi06.m$Month == 6, ]
+
+spi09.m <- aggregate(SP09 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+jun.spi09 <- spi09.m[spi09.m$Month == 6, ]
+
+spi12.m <- aggregate(SP12 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+jun.spi12 <- spi12.m[spi12.m$Month == 6, ]
+
+spi24.m <- aggregate(SP24 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+jun.spi24 <- spi24.m[spi24.m$Month == 6, ]
 
 
-
-#pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
-#plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
-
+SPI.data <- Reduce(function(x, y) merge(x, y, all=TRUE), list(spi01.m,spi02.m, spi06.m, spi09.m, spi12.m, spi24.m))
+write.csv(SPI.data, paste0("outputs/data/", site, "-SPI_data.csv"), row.names = FALSE)
 
 #precip <- dcast(total.p, Year  ~ Month)
 annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
@@ -191,25 +211,25 @@ melt(annuals.crn, id = c('Year','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","J
 }
 
 #create molten dataframes with climate and rwi chronologies
-molten.HIC <- merge.clim.chron(IL.clim, Hickory)
-molten.COR <- merge.clim.chron(IL.clim, Coral)
-molten.GLA <- merge.clim.chron(IL.clim, Glacial)
-molten.SAN <- merge.clim.chron(IL.clim, Sandwich)
-molten.PLP <- merge.clim.chron(WIse.clim, PleasantPrairie)
-molten.BON <- merge.clim.chron(MNwc.clim, Bonanza)
-molten.DES <- merge.clim.chron(MNwc.clim, Desoix)
-molten.PLE <- merge.clim.chron(WIsc.clim, Pleasant)
-molten.TOW <- merge.clim.chron(MNec.clim, Townsend)
-molten.STC <- merge.clim.chron(MNec.clim, StCroix)
-molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
-molten.ENG <- merge.clim.chron(MNec.clim, Englund)
-molten.MOU <- merge.clim.chron(MNse.clim, Mound)
-molten.GL1 <- merge.clim.chron(MNwc.clim, Glaciallk1)
-molten.GL2 <- merge.clim.chron(MNwc.clim, Glaciallk2)
-molten.GL3 <- merge.clim.chron(MNwc.clim, Glaciallk3)
-molten.GL4 <- merge.clim.chron(MNwc.clim, Glaciallk4)
-molten.UNC <- merge.clim.chron(MNec.clim, Uncas)
-molten.PVC <- merge.clim.chron(IL.clim, PVC)
+molten.HIC <- merge.clim.chron(IL.clim, Hickory, "HIC")
+molten.COR <- merge.clim.chron(IL.clim, Coral, "COR")
+molten.GLA <- merge.clim.chron(IL.clim, Glacial, "GLA")
+#molten.SAN <- merge.clim.chron(IL.clim, Sandwich)
+#molten.PLP <- merge.clim.chron(WIse.clim, PleasantPrairie)
+molten.BON <- merge.clim.chron(MNwc.clim, Bonanza, "BON")
+#molten.DES <- merge.clim.chron(MNwc.clim, Desoix)
+molten.PLE <- merge.clim.chron(WIsc.clim, Pleasant, "BON")
+molten.TOW <- merge.clim.chron(MNec.clim, Townsend, "TOW")
+molten.STC <- merge.clim.chron(MNec.clim, StCroix, "STC")
+molten.UNC <- merge.clim.chron(MNec.clim, Uncas, "UNC")
+molten.ENG <- merge.clim.chron(MNec.clim, Englund, "ENG")
+molten.MOU <- merge.clim.chron(MNse.clim, Mound, "MOU")
+molten.GL1 <- merge.clim.chron(MNwc.clim, Glaciallk1, "GL1")
+molten.GL2 <- merge.clim.chron(MNwc.clim, Glaciallk2, "GL2")
+molten.GL3 <- merge.clim.chron(MNwc.clim, Glaciallk3, "GL3")
+molten.GL4 <- merge.clim.chron(MNwc.clim, Glaciallk4, "GL4")
+molten.UNC <- merge.clim.chron(MNec.clim, Uncas, "UNC")
+molten.PVC <- merge.clim.chron(IL.clim, PVC, "PVC")
 write.csv(molten.HIC, "data/molten.hic.csv")
 
 #want to plot all 

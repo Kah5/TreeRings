@@ -17,7 +17,7 @@ setwd("/Users/kah/Documents/TreeRings")
 # this function will also just calculate BAI instead
 read_detrend_year <- function( filename, method , rwiorbai, site){
   newseries <- read.tucson( filename )
-  
+  rwl.stats(newseries)
   # average the cores by tree (for the sites with multiple cores):
   
   #gp.ids <- read.ids(newseries, stc = autoread.ids(newseries))
@@ -25,6 +25,8 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   gp.treeMean <- treeMean(newseries, autoread.ids(newseries))
   gp.treeMean2 <- treeMean(newseries, autoread.ids(newseries), na.rm=TRUE)
   
+  mean.rwl.stat <- rwl.stats(gp.treeMean2)
+  write.csv(mean.rwl.stat, paste0("outputs/Stats/mean.rwl.stats.", site,".csv"))
   
   ifelse(rwiorbai == "rwi", 
           detrended <- detrend(rwl = newseries, method = method),
@@ -32,6 +34,9 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   
   
   detrended.mean <- treeMean(detrended, autoread.ids(detrended), na.rm=TRUE)
+  
+  mean.rwi.stat <- rwl.stats(detrended.mean)
+  write.csv(mean.rwi.stat, paste0("outputs/Stats/mean.rwi.stats.", site,".csv"))
   
   # plot spag plots:
   png(paste0("outputs/spagplots/", site, "_", rwiorbai,"_mean_", method,"_detrended.png"))
@@ -45,7 +50,7 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
 
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
-Hickory.bai <- read_detrend_year("cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
+Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
 StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
 Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "rwi", site = "BON")
 Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "rwi", site = "TOW")#townsedn woods
@@ -287,30 +292,30 @@ plot.young.old <- function(x, Climate, xlab, ylab,Site){
       #ylim(0.5, 1.5) +
       theme_bw()+
       theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
-      ylab(ylab) +
+      ylab("RWI") +
       xlab( xlab ) +
       ggtitle(Site)
   }
   p
-  #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
+  ggsave(filename = paste0('outputs/correlations/young_old_jul_pdsi_',Site,".png"), plot = p, width = 5, height = 3.5 )
 }
 
-pdf("outputs/correlations/BAI_young_old_figs.pdf")
-plot.young.old(STC_clim, "PDSI", "PDSI","BAI", "STC")
-plot.young.old(HIC_clim, "PDSI", "PDSI","BAI", "HIC")
-plot.young.old(TOW_clim, "PDSI", "PDSI","BAI", "TOW")
-plot.young.old(BON_clim, "PDSI", "PDSI","BAI", "BON")
-plot.young.old(PLE_clim, "PDSI", "PDSI","BAI", "PLE")
-plot.young.old(COR_clim, "PDSI", "PDSI","BAI", "COR")
-plot.young.old(UNC_clim, "PDSI", "PDSI","BAI", "UNC")
-plot.young.old(ENG_clim, "PDSI", "PDSI","BAI", "ENG")
-plot.young.old(PVC_clim, "PDSI", "PDSI","BAI", "PVC")
-plot.young.old(GLL1_clim, "PDSI", "PDSI","BAI", "GLL1")
-plot.young.old(GLL2_clim, "PDSI", "PDSI","BAI", "GLL2")
-plot.young.old(GLL3_clim, "PDSI", "PDSI","BAI", "GLL3")
-plot.young.old(GLL4_clim, "PDSI", "PDSI","BAI", "GLL4")
-plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site = "MOU")
-dev.off()
+#pdf("outputs/correlations/BAI_young_old_figs.pdf")
+plot.young.old(STC_clim, "PDSI", "PDSI","RWI", "STC")
+plot.young.old(HIC_clim, "PDSI", "PDSI","RWI", "HIC")
+plot.young.old(TOW_clim, "PDSI", "PDSI","RWI", "TOW")
+plot.young.old(BON_clim, "PDSI", "PDSI","RWI", "BON")
+plot.young.old(PLE_clim, "PDSI", "PDSI","RWI", "PLE")
+plot.young.old(COR_clim, "PDSI", "PDSI","RWI", "COR")
+plot.young.old(UNC_clim, "PDSI", "PDSI","RWI", "UNC")
+plot.young.old(ENG_clim, "PDSI", "PDSI","RWI", "ENG")
+plot.young.old(PVC_clim, "PDSI", "PDSI","RWI", "PVC")
+plot.young.old(GLL1_clim, "PDSI", "PDSI","RWI", "GLL1")
+plot.young.old(GLL2_clim, "PDSI", "PDSI","RWI", "GLL2")
+plot.young.old(GLL3_clim, "PDSI", "PDSI","RWI", "GLL3")
+plot.young.old(GLL4_clim, "PDSI", "PDSI","RWI", "GLL4")
+plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "RWI",Site = "MOU")
+#dev.off()
 
 # drought is really only important in the summer, so lest look at July pdsi
 
@@ -331,9 +336,64 @@ plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site 
 
 
 # should create PNGS but that is for a later date
+plot.pre.post <- function(x, Climate, xlab, ylab,Site){
+  
+  
+    #create dummy variable
+    x$time <- 0
+ 
+   x[x$year < 1950 ,]$time <- "Pre-1950"
+    x[x$year >= 1950 ,]$time <- "Post-1950"
+    
+    #x <- rbind(co2.low.yr, co2.high.yr)
+    
+    #if the dummy variable is significant, then the two slopes are different
+    print(summary(aov(x$RWI ~ x[,c(Climate)] * x$time)))
+    #print(summary(lm(value ~ Climate:group, data = x)))
+    #print(summary(aov(value~Climate*class, data=x)))
+    print(anova(lm(x$RWI ~ x[,c(Climate)] * x$time), lm(x$RWI ~ x[,c(Climate)])))
+    #print(summary(lm(value~Climate/group-1, data=x)))
+    #print(summary(aov(value~Climate/group, data = x)))
+    # Extend the regression lines beyond the domain of the data
+    
+    p<- ggplot(x, aes(x=x[,Climate], y=x$RWI, colour=x$time)) + geom_point(shape=1) +
+      #scale_colour_hue(l=50) +
+      #+ylim(-1.0,1.0)
+      #+xlim(-4,4)# Use a slightly darker palette than normal
+      geom_smooth(method='lm',   # Add linear regression lines
+                  se=TRUE,    # add shaded confidence region
+                  fullrange=FALSE)+# Extend regression lines
+      
+      scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
+      #xlim(-8, 8)+
+      #ylim(0.5, 1.5) +
+      theme_bw()+
+      theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5), legend.title=element_blank())+
+      ylab(ylab) +
+      xlab( xlab ) +
+      ggtitle(Site)
+ 
+   
 
+  p
+  ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 5, height = 3.5 )
+}
 
-
+plot.pre.post(GLL4_clim, "Jul.pdsi", "PDSI","RWI", "GLL4")
+plot.pre.post(STC_clim, "Jul.pdsi", "PDSI","RWI", "STC")
+plot.pre.post(HIC_clim, "Jul.pdsi", "PDSI","RWI", "HIC")
+plot.pre.post(TOW_clim, "Jul.pdsi", "PDSI","RWI", "TOW")
+plot.pre.post(BON_clim, "Jul.pdsi", "PDSI","RWI", "BON")
+plot.pre.post(PLE_clim, "Jul.pdsi", "PDSI","RWI", "PLE")
+plot.pre.post(COR_clim, "Jul.pdsi", "PDSI","RWI", "COR")
+plot.pre.post(UNC_clim, "Jul.pdsi", "PDSI","RWI", "UNC")
+plot.pre.post(ENG_clim, "Jul.pdsi", "PDSI","RWI", "ENG")
+plot.pre.post(PVC_clim, "Jul.pdsi", "PDSI","RWI", "PVC")
+plot.pre.post(GLL1_clim, "Jul.pdsi", "PDSI","RWI", "GLL1")
+plot.pre.post(GLL2_clim, "Jul.pdsi", "PDSI","RWI", "GLL2")
+plot.pre.post(GLL3_clim, "Jul.pdsi", "PDSI","RWI", "GLL3")
+plot.pre.post(GLL4_clim, "Jul.pdsi", "PDSI","RWI", "GLL4")
+plot.pre.post(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "RWI",Site = "MOU")
 
 all <- rbind(STC_clim, HIC_clim, TOW_clim, BON_clim, PLE_clim,
              COR_clim, UNC_clim, ENG_clim, MOU_clim, GLL1_clim,
@@ -375,7 +435,7 @@ test <- lm(Jul.pdsi~year, data = df)# no significant change
 # function to extract whole time series slope of lm(RWI ~ PDSI)
 get.clim.sensitivity <- function(df){
   
-  coeffs <- matrix ( 0, length(unique(all$site)), 3 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site)), 3 ) # set up matrix for coefficients
   
   # for loop
   for(s in 1: length(unique(all$site))){
@@ -400,7 +460,7 @@ pdsi.sens <- get.clim.sensitivity(all)
 # function to extract slopes for young an old trees of lm(RWI~PDSI)
 get.clim.sens.age <- function(df){
   
-  coeffs <- matrix ( 0, length(unique(all$site))*2, 4 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 4 ) # set up matrix for coefficients
   
   
   for(s in 1: length(unique(all$site))){
@@ -420,14 +480,14 @@ get.clim.sens.age <- function(df){
      
      if(nrow(all[all$site == name & all$ageclass == "old" ,]) > 0){
      lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" & all$year < 1950,])
-     coeffs[s+8, 2:3] <- summary(lmest2)$coefficients[2,1:2]
-     coeffs[s +8 , 1] <- 'old'
-     coeffs[s+8,4] <- name
+     coeffs[s+14, 2:3] <- summary(lmest2)$coefficients[2,1:2]
+     coeffs[s +14 , 1] <- 'old'
+     coeffs[s+14,4] <- name
      }else{
      #lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
-     coeffs[s+8, 2:3] <- c(NA,NA)
-     coeffs[s+8 , 1] <- "old"
-     coeffs[s+8,4] <- name
+     coeffs[s+14, 2:3] <- c(NA,NA)
+     coeffs[s+14 , 1] <- "old"
+     coeffs[s+14,4] <- name
      }
   }
   
@@ -468,14 +528,14 @@ get.clim.sens.year <- function(all){
     
     if(nrow(all[all$site == name & all$class == "Post-1950" ,]) > 0){
       lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$class == "Post-1950" ,])
-      coeffs[s+8, 2:3] <- summary(lmest2)$coefficients[2,1:2]
-      coeffs[s +8 , 1] <- 'Post-1950'
-      coeffs[s+8,4] <- name
+      coeffs[s+14, 2:3] <- summary(lmest2)$coefficients[2,1:2]
+      coeffs[s +14 , 1] <- 'Post-1950'
+      coeffs[s+14,4] <- name
     }else{
       #lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
-      coeffs[s+8, 2:3] <- c(NA,NA)
-      coeffs[s+8 , 1] <- "Post-1950"
-      coeffs[s+8,4] <- name
+      coeffs[s+14, 2:3] <- c(NA,NA)
+      coeffs[s+14 , 1] <- "Post-1950"
+      coeffs[s+14,4] <- name
     }
   }
   
@@ -493,13 +553,41 @@ pdsi.yr.sens <- get.clim.sens.year(all)
 
 # read in soil, xy characteristics
 locs <- read.csv("outputs/priority_sites.csv")
+locs$code <- as.character(locs$code)
+locs[24:27,]$code <- c("GLL4", "GLL3", "GLL2", "GLL1")
 sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC")
 
 site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
 
+# map out sensitivities in space:
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
+                                             "north dakota", 'michigan', 'missouri', 'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata<-data.frame(mapdata)
 
+site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
+site.df.age <- merge(pdsi.age.sens, locs, by.x = 'site', by.y = 'code')
+site.df.yr <- merge(pdsi.yr.sens, locs, by.x = 'site', by.y = 'code')
 
-plot(site.df$slope.est, site.df$pr.av)
+png("outputs/maps/Jul.pdsi_sensitivity.png")
+ggplot(site.df, aes(coords.x1, coords.x2, color = slope.est))+geom_point()+scale_color_gradient(low = "blue", high = "red")+ geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+            colour = "darkgrey", fill = NA)+theme_bw() + coord_cartesian(xlim = c(-59495.64, 724000), ylim=c(68821.43, 1480021))
+dev.off()
+
+png(width = 6, height = 4, units = 'in', res = 300,"outputs/maps/Jul.pdsi_sensitivity_age.png")
+ggplot(site.df.age, aes(coords.x1, coords.x2, color = slope.est))+geom_point()+ geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)+theme_bw() +facet_wrap(~age)+scale_color_gradient(low = "blue", high = "red")+ coord_cartesian(xlim = c(-59495.64, 724000), ylim=c(68821.43, 1480021)) 
+dev.off()
+
+png(width = 6, height = 4, units = 'in', res = 300,"outputs/maps/Jul.pdsi_sensitivity_year.png")
+
+ggplot(site.df.yr, aes(coords.x1, coords.x2, color = slope.est))+geom_point()+ geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),colour = "darkgrey", fill = NA)+theme_bw() +facet_wrap(~age)+scale_color_gradient(low = "blue", high = "red") + coord_cartesian(xlim = c(-59495.64, 724000), ylim=c(68821.43, 1480021))
+
+dev.off()
+
 
 #--------------------------------------------------------------
 # extract relevant climate from PRSIM 30 year mean precip and temp data:
@@ -512,7 +600,7 @@ prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
 
 site.df$pr30yr <- extract(prism.alb, site.df[,c("coords.x1","coords.x2")])
 
-workingdir <- "C:/Users/JMac/Documents/Kelly/biomodality/data/"
+workingdir <- "/Users/kah/Documents/biomodality/data/"
 
 # read in and average prism temperature data (this is modern 30year normals)
 prism.t<- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
@@ -524,9 +612,9 @@ site.df$tm30yr <- extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
 
 #merge overalll slope and envt with the young and old slopes:
 a <- site.df
-colnames(a) <- c("site","full.slope.est", "full.std.err",  "Name","x",
-                  "y", "PDSI_time", "sand","ksat","awc",      
-                 "pr30yr"  ,  "tm30yr")
+#colnames(a) <- c("site","full.slope.est", "full.std.err",  "Name","x",
+ #                 "y", "PDSI_time", "sand","ksat","awc",      
+  #               "pr30yr"  ,  "tm30yr")
 
 sens.df <- merge(pdsi.age.sens, a, by = "site")
 yr.sens.df <- merge(pdsi.yr.sens, a, by = "site")
@@ -580,15 +668,15 @@ library(plot3D)
 # gam(sensitivity ~ precip + temperature) and plots a 3d surface of it
 plot3dsensitivity <- function(sens.df, age, class, col, add ){
   df <- sens.df[sens.df[,c(age)] == class,]
-  df <- df[!is.na(df$slope.est),]
+  df <- df[!is.na(df$slope.est.x),]
 # x, y, z variables
   x <- df$pr30yr
   y <- df$tm30yr
-  z <- df$slope.est
+  z <- df$slope.est.x
 # Compute the linear regression (z = ax + by + d)
   fit <- lm(z ~ x + y)
 # predict values on regular xy grid
-  grid.lines = 50
+  grid.lines = 25
   x.pred <- seq(min(x), max(x), length.out = grid.lines)
   y.pred <- seq(min(y), max(y), length.out = grid.lines)
   xy <- expand.grid( x = x.pred, y = y.pred)
@@ -602,7 +690,7 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
           xlab = "\n\n\n\n Precip", ylab = "\n\n\n\n Temp", zlab = "\n\n\n\n drought sensitivity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
                       facets = NA, fit = fitpoints), main = paste("Drought Sensitivity by climate"),
-          ylim=c(3,9))
+          zlim=c(0,0.1))
  
 }
 

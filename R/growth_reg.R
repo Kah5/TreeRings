@@ -183,7 +183,7 @@ clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
 
 #automate savaing these barplots to individual png files
 for(i in 1:length(clim.cd)){
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/barplots",paste("full_site_barplots_", clim.cd[i], ".png", sep = ""))
+  mypath <- file.path("/Users/kah/Documents/TreeRings/",paste("full_site_barplots_", clim.cd[i], ".png", sep = ""))
   sites.barplot(clim.cd[i])
   ggsave(filename=mypath)
 }
@@ -514,6 +514,10 @@ mean.growth.barplot <- function(clim,mono, pre){
 }
 mean.growth.barplot("Precip", 20,test)
 
+molten$ecotype <- ifelse(molten$Site %in% c("Townsend", "Englund", "Coral", "GLL4"), "Forest", "Savanna")
+
+bycover <- aov(value ~ PDSI+ecotype, data = molten)
+
 
 #molten.full comes from climate_growth_reg_chron.R
 ###################################################
@@ -533,7 +537,7 @@ plot.cor.clim <- function(x, Clim, xlab, Site){
                  Climate <- x[,Clim], 
                  Year <- x$Year)
   colnames(df)<- c("value", "Climate", "Year")
-  
+  print(summary(lm(value ~ Climate, data = df)))
   ggplot(df, aes(x=Climate, y= value)) + geom_point(shape=1) +
    # scale_colour_hue(l=50) +
     geom_smooth(method = 'lm') + #,   # Add linear regression lines
@@ -631,23 +635,36 @@ plot.pre.post <- function(x, Climate, xlab, Site){
     p
     #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
 }
+yr <- 1895:1950
+yr.post <- 1950:2014
+molten$class <- '9999'
+molten[molten$Year %in% yr,]$class <- 'Pre-1950'
+molten[molten$Year %in% yr.post,]$class <- 'Post-1950'
+#create dummy variable
+molten$group <- 0
+molten[molten$Year %in% yr,]$group <- 1
 
+sav<- aov(value ~ PDSI*class, data = molten[molten$ecotype %in% "Savanna",])
 
-plot.pre.post(x = molten[molten$Site %in% "Hickory",], "PDSI", "PDSI", "Hickory Grove")
+fores<- aov(value ~ PDSI*class, data = molten[molten$ecotype %in% "Forest",])
+
+plot.pre.post(x = molten[molten$Site %in% "Hickory",], "PDSI", "PDSI", "Hickory Grove")#sig
 plot.pre.post(x = molten[molten$Site %in% "Bonanza",], "PDSI", "PDSI", "Bonanaza")
-plot.pre.post(x = molten[molten$Site %in% "StCroix",], "PDSI", "PDSI", "St. Croix Savanna")
+plot.pre.post(x = molten[molten$Site %in% "StCroix",], "PDSI", "PDSI", "St. Croix Savanna")#sig
 plot.pre.post(x = molten[molten$Site %in% "Townsend",], "PDSI", "PDSI", "Townsend")
 plot.pre.post(x = molten[molten$Site %in% "Englund",], "PDSI", "PDSI", "Englund")
 plot.pre.post(x = molten[molten$Site %in% "Uncas",], "PDSI", "PDSI", "Uncas")
-plot.pre.post(x = molten[molten$Site %in% "Coral",], "PDSI", "PDSI", "Coral")
-plot.pre.post(x = molten[molten$Site %in% "Glacial",], "PDSI", "PDSI", "Glacial Park")
+plot.pre.post(x = molten[molten$Site %in% "Coral",], "PDSI", "PDSI", "Coral")#sig
+plot.pre.post(x = molten[molten$Site %in% "Glacial",], "PDSI", "PDSI", "Glacial Park")#sig at 0.1
 plot.pre.post(x = molten[molten$Site %in% "Mound",], "PDSI", "PDSI", "Mound Prairie")
-plot.pre.post(x = molten[molten$Site %in% "GLL1",], "PDSI", "PDSI", "Glacial Lakes 1")
-plot.pre.post(x = molten[molten$Site %in% "GLL2",], "PDSI", "PDSI", "Glacial Lakes 2")
+plot.pre.post(x = molten[molten$Site %in% "GLL1",], "PDSI", "PDSI", "Glacial Lakes 1")#sig
+plot.pre.post(x = molten[molten$Site %in% "GLL2",], "PDSI", "PDSI", "Glacial Lakes 2")#sig
 plot.pre.post(x = molten[molten$Site %in% "GLL3",], "PDSI", "PDSI", "Glacial Lakes 3")
-plot.pre.post(x = molten[molten$Site %in% "GLL4",], "PDSI", "PDSI", "Glacial Lakes 4")
-plot.pre.post(x = molten[molten$Site %in% "Pleasant",], "PDSI", "PDSI", "Pleasant")
+plot.pre.post(x = molten[molten$Site %in% "GLL4",], "PDSI", "PDSI", "Glacial Lakes 4")#sig
+plot.pre.post(x = molten[molten$Site %in% "Pleasant",], "PDSI", "PDSI", "Pleasant")#sig
 plot.pre.post(x = molten[molten$Site %in% "PVC",], "PDSI", "PDSI", "PVC")
+
+
 
 
 e <- plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
