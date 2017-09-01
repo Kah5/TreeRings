@@ -51,7 +51,7 @@ for (file in file_list){
   
 }
 
-
+ggplot(dataset[datset$month, ], aes())
 # for AVO:
 test <- dataset[dataset$site %in% "AVO",]
 mydata <- test[test$Month == '07' ,4:7]
@@ -90,14 +90,31 @@ mydata2$cluster6 <- km6$cluster
 mydata2$cluster7 <- km7$cluster
 mydata2$cluster8 <- km8$cluster
 
-# plot out clusters by year:
-ggplot(mydata2, aes(x=as.numeric(Year), y=cluster2, color = as.character(cluster2)))+geom_point()
-ggplot(test, aes(x=as.numeric(Year), y=as.numeric(Month), color = as.character(cluster3)))+geom_point()
-ggplot(test, aes(x=as.numeric(Year), y=as.numeric(Month), color = as.character(cluster4)))+geom_point()
-ggplot(test, aes(x=as.numeric(Year), y=as.numeric(Month), color = as.character(cluster5)))+geom_point()
+# plot out clusters by year: 
+ggplot(mydata2, aes(x=ppt..inches., y=tmean..degrees.F., color = as.character(cluster2)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=tmean..degrees.F., color = as.character(cluster3)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=tmean..degrees.F., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=tmean..degrees.F., color = as.character(cluster5)))+geom_point()
 
 
+#four clusters is what the elbow method would distinguish:
+ggplot(mydata2, aes(x=ppt..inches., y=tmean..degrees.F., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=vpdmin..hPa., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=vpdmax..hPa., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=tmax..degrees.F., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=ppt..inches., y=tmin..degrees.F., color = as.character(cluster4)))+geom_point()
 
+ggplot(mydata2, aes(x=vpdmin..hPa., y=tmean..degrees.F., color = as.character(cluster4)))+geom_point()
+#ggplot(mydata2, aes(x=vpdmin..hPa., y=vpdmin..hPa., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=vpdmin..hPa., y=vpdmax..hPa., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=vpdmin..hPa., y=tmax..degrees.F., color = as.character(cluster4)))+geom_point()
+ggplot(mydata2, aes(x=vpdmin..hPa., y=tmin..degrees.F., color = as.character(cluster4)))+geom_point()
+
+# clusters are distinguished by tmean, 
+summary(mydata2[mydata2$cluster4 %in% "1", 1:10])
+summary(mydata2[mydata2$cluster4 %in% "2", 1:10])
+summary(mydata2[mydata2$cluster4 %in% "3", 1:10])
+summary(mydata2[mydata2$cluster4 %in% "4", 1:10])
 
 # setwd back:
 setwd("/Users/kah/Documents/TreeRings")

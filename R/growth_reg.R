@@ -164,6 +164,8 @@ sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", 
                               "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN",
                               "Pleasant Valley Conservancy, IL"))
 cors.melt[order(cors.melt$months),]
+
+
 cors.melt <- merge(cors.melt, sitesnames, by = "variable")
 output<- ggplot(data = cors.melt, aes(months, value, fill = Sites))+
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
@@ -218,6 +220,71 @@ c <- sites.barplot('tmax')+ ggtitle("C). Maximum Temperature")+ylab('correlation
 d <- sites.barplot('tmin')+ ggtitle("D). Minimum Temperature")+ylab('correlation')
 b <- sites.barplot('Precip')+ ggtitle("B). Precipitation")+ylab('correlation')
 a <- sites.barplot('PDSI')+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
+
+# instead of barplots, lets create tiles:
+sites.tile <- function(clim) {
+  COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
+  HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
+  GLA <- read.csv(paste0('GLA-WW', clim, 'cor.csv'))
+  STC <- read.csv(paste0('STC-WW', clim, 'cor.csv'))
+  TOW <- read.csv(paste0('TOW-WW', clim, 'cor.csv'))
+  ENG <- read.csv(paste0('ENG-WW', clim, 'cor.csv'))
+  UNC <- read.csv(paste0('UNC-WW', clim, 'cor.csv'))
+  BON <- read.csv(paste0('BON-WW', clim, 'cor.csv'))
+  MOU <- read.csv(paste0('MOU-WW', clim, 'cor.csv'))
+  GL1 <- read.csv(paste0('GL1-WW', clim, 'cor.csv'))
+  GL2 <- read.csv(paste0('GL2-WW', clim, 'cor.csv'))
+  GL3 <- read.csv(paste0('GL3-WW', clim, 'cor.csv'))
+  GL4 <- read.csv(paste0('GL4-WW', clim, 'cor.csv'))
+  PVC <- read.csv(paste0('PVC-WW', clim, 'cor.csv'))
+  
+  months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+              "pAug", "pSep", "pOct", "pNov", "pDec",
+              "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+              "Aug", "Sep", "Oct", "Nov", "Dec")
+  
+  COR$months <- months
+  colnames(COR) <- c('mono', 'COR', 'months')
+  full <- COR
+  full$HIC <- HIC$V1
+  full$GLA <- GLA$V1
+  full$STC <- STC$V1
+  full$TOW <- TOW$V1
+  full$ENG <- ENG$V1
+  full$UNC <- UNC$V1
+  full$BON <- BON$V1
+  full$MOU <- MOU$V1
+  full$GL1 <- GL1$V1
+  full$GL2 <- GL2$V1
+  full$GL3 <- GL3$V1
+  full$GL4 <- GL4$V1
+  full$PVC <- PVC$V1
+  
+
+  
+  cors.melt <- melt(full, id.vars = c('months', 'mono'))
+  cors.melt$months <- factor(cors.melt$months, levels=full$months)
+  cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
+  sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", "MOU",
+                                        "TOW", "BON", "GL1", "GL2", "GL3","GL4", "PVC"), 
+                           Sites = c("Coral Woods, IL", "Hickory Grove, IL",
+                                     "Glacial Park, IL", "St.Croix Savanna SNA, MN", 
+                                     "Uncas Dunes SNA, MN","Englund Ecotone SNA, MN", 
+                                     "Mound Prairie SNA, MN", "Townsend Woods SNA, MN", 
+                                     "Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
+                                     "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN",
+                                     "Pleasant Valley Conservancy, IL"))
+  cors.melt[order(cors.melt$months),]
+  
+  
+  cors.melt <- merge(cors.melt, sitesnames, by = "variable")
+  output<- ggplot(cors.melt, aes(months, variable, fill = value))+geom_tile()+scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                                                                                                   midpoint = 0, limit = c(-1,1), space = "Lab", 
+                                                                                                   name="Pearson\nCorrelation")+ ggtitle(paste0(clim, " site correlations"))
+  output
+}
+clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
+sites.tile("tavg")
 
 #plot all barplots in png for interim report
 png(width = 8, height = 10, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_fig2.png')
