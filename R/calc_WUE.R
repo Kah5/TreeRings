@@ -12,6 +12,8 @@ deltaTR3 <- read.csv("data/stable_isotopes/BON_8b_14b_1996_2015.csv")
 
 deltaTR <- rbind(deltaTR, deltaTR2, deltaTR3)
 
+deltaTR <- deltaTR[! is.na(deltaTR$Year), ]
+
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_d13_time.png")
 ggplot(deltaTR, aes(x = Year, y = Corr.d13C, color = Tree))+
   geom_point()+geom_line(data = deltaTR, aes(x = Year, y = Corr.d13C, color = Tree))+
@@ -37,6 +39,9 @@ png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_i
 ggplot(deltas, aes(x = ppm, y = iWUE,color = Tree))+geom_point()+geom_line(data = deltas, aes(x = ppm, y = iWUE,color = Tree))+theme_bw()
 dev.off()
 
+png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_delta13C_ppm.png")
+ggplot(deltas, aes(x = ppm, y = Corr.d13C, color = Tree))+geom_point()+geom_line(data = deltas, aes(x = ppm, y = Corr.d13C,color = Tree))+theme_bw()
+dev.off()
 
 #ggplot(deltas, aes(x = ppm, y = Corr.d13C, color = Tree))+geom_point()+geom_line(data= deltas, aes(x = ppm, y = Corr.d13C, color = Tree))+theme_bw()
 
@@ -173,7 +178,7 @@ ggplot(bon.delt, aes(x = Year, y = Corr.d13C,color = Tree))+geom_line()+theme_bw
 quartz()
 ggplot(bon.delt, aes(x = Year, y = TMIN,color = Tree))+geom_line()+theme_bw()
 
-ggplot(bon.delt, aes(x = PCP, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()
-ggplot(bon.delt, aes(x = JJA.p, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()
-ggplot(bon.delt, aes(x = Jul.pdsi, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()
+ggplot(bon.delt, aes(x = PCP, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()+stat_smooth(method= "lm")
+ggplot(bon.delt, aes(x = JJA.p, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()+stat_smooth(method = "lm")
+ggplot(bon.delt, aes(x = Jul.pdsi, y = Corr.d13C,color = Tree))+geom_point()+theme_bw()+stat_smooth(method="lm")
 

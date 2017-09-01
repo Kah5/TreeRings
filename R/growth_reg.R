@@ -221,7 +221,18 @@ d <- sites.barplot('tmin')+ ggtitle("D). Minimum Temperature")+ylab('correlation
 b <- sites.barplot('Precip')+ ggtitle("B). Precipitation")+ylab('correlation')
 a <- sites.barplot('PDSI')+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
 
-# instead of barplots, lets create tiles:
+
+
+#plot all barplots in png for interim report
+png(width = 8, height = 10, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_fig2.png')
+grid_arrange_shared_legend(a,b,c,d,e,nrow = 5, ncol = 1 )
+dev.off()
+
+png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_3panel.png')
+grid_arrange_shared_legend(a,b,c, nrow = 3, ncol = 1 )
+dev.off()
+
+# instead of barplots, lets create tile plots:
 sites.tile <- function(clim) {
   COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
   HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
@@ -260,7 +271,7 @@ sites.tile <- function(clim) {
   full$GL4 <- GL4$V1
   full$PVC <- PVC$V1
   
-
+  
   
   cors.melt <- melt(full, id.vars = c('months', 'mono'))
   cors.melt$months <- factor(cors.melt$months, levels=full$months)
@@ -278,23 +289,25 @@ sites.tile <- function(clim) {
   
   
   cors.melt <- merge(cors.melt, sitesnames, by = "variable")
-  output<- ggplot(cors.melt, aes(months, variable, fill = value))+geom_tile()+scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                                                                                                   midpoint = 0, limit = c(-1,1), space = "Lab", 
-                                                                                                   name="Pearson\nCorrelation")+ ggtitle(paste0(clim, " site correlations"))
+  output<- ggplot(cors.melt, aes(months, variable, fill = value))+geom_tile()+
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                        name="Pearson\nCorrelation")+ ggtitle(paste0(clim, " site correlations"))+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
   output
 }
 clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
 sites.tile("tavg")
 
-#plot all barplots in png for interim report
-png(width = 8, height = 10, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_fig2.png')
-grid_arrange_shared_legend(a,b,c,d,e,nrow = 5, ncol = 1 )
-dev.off()
+e <- sites.tile('tavg')+ggtitle("E). Average Temperature")+ylab("correlation")
+c <- sites.tile('tmax')+ ggtitle("C). Maximum Temperature")+ylab('correlation')
+d <- sites.tile('tmin')+ ggtitle("D). Minimum Temperature")+ylab('correlation')
+b <- sites.tile('Precip')+ ggtitle("B). Precipitation")+ylab('correlation')
+a <- sites.tile('PDSI')+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
 
-png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/barplots_all_sites_3panel.png')
-grid_arrange_shared_legend(a,b,c, nrow = 3, ncol = 1 )
+png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_cors_all_sites_3panel.png')
+grid_arrange_shared_legend(a,b,c,d,e, nrow = 3, ncol = 2 )
 dev.off()
-
 
 #rank the correlations based on highest to lowest for each site
 highest.cor <- function(site, i){

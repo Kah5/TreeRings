@@ -19,6 +19,7 @@ tree_age_agg<- function(rwiorbai, sampleyear, site.code, age1950,type){
   
   Hic <- data.frame(rwiorbai)
   
+  
   # Find tree age for each tree at the time of sampling
   for(i in unique(colnames(Hic))){
     treedata[treedata$ID==i, "age"] <- treedata[treedata$ID == i, "sampleyr"] - as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))
@@ -57,6 +58,7 @@ tree_age_agg<- function(rwiorbai, sampleyear, site.code, age1950,type){
   site.m$year <- as.numeric(site.m$year)
   site.m$ID <- as.character(site.m$ID)
   site.m$ageclass <- "young"
+  
   # need to assign old trees then and old trees now
     for (i in unique(site.m$ID)){
       ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 , site.m[site.m$ID %in% i, ]$ageclass <-  "young",  

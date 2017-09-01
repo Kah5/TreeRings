@@ -163,21 +163,27 @@ tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
 jun.tmax <- tmax.m[tmax.m$Month == 6, ]
 
 spi01.m <- aggregate(SP01 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+colnames(spi01.m) <- c("Year", "Month", paste0(site, '-SP01'))
 jun.spi01 <- spi01.m[spi01.m$Month == 6, ]
 
 spi02.m <- aggregate(SP02 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+colnames(spi02.m) <- c("Year", "Month", paste0(site, '-SP02'))
 jun.spi02 <- spi02.m[spi02.m$Month == 6, ]
 
 spi06.m <- aggregate(SP06 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+colnames(spi06.m) <- c("Year", "Month", paste0(site, '-SP06'))
 jun.spi06 <- spi06.m[spi06.m$Month == 6, ]
 
 spi09.m <- aggregate(SP09 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+colnames(spi09.m) <- c("Year", "Month", paste0(site, '-SP09'))
 jun.spi09 <- spi09.m[spi09.m$Month == 6, ]
 
 spi12.m <- aggregate(SP12 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+colnames(spi12.m) <- c("Year", "Month", paste0(site, '-SP12'))
 jun.spi12 <- spi12.m[spi12.m$Month == 6, ]
 
 spi24.m <- aggregate(SP24 ~ Year + Month, data = MNspi.df, FUN = sum, na.rm = T)
+colnames(spi24.m) <- c("Year", "Month", paste0(site, '-SP24'))
 jun.spi24 <- spi24.m[spi24.m$Month == 6, ]
 
 

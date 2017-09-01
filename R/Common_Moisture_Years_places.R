@@ -51,7 +51,9 @@ for (file in file_list){
   
 }
 
-ggplot(dataset[datset$month, ], aes())
+ggplot(dataset[dataset$Month %in% '07', ], aes(as.numeric(Year), ppt..inches.))+geom_point()+stat_smooth(method= "lm")
+
+
 # for AVO:
 test <- dataset[dataset$site %in% "AVO",]
 mydata <- test[test$Month == '07' ,4:7]
@@ -134,5 +136,27 @@ ggplot(sp01.m, aes(Month, value, color = variable))+geom_point()
 summary(df.01)
 test <- sp01.m[sp01.m$variable %in% "UNC.SP01.y",]
 test$timeperiod <- ifelse(test$Year %in% 1895:1950, "pre-1950", "post-1950")
+
+#---------------------------- calculate ET-------------:
+
+# Thornthwaite:
+# Ep = 16*(L/30)*(N/30)*(10*Ta/I)^a
+
+# L = daylenght(hrs)
+# N = # of days in the month
+# Ta is mean monthy air tmeperature (degC)
+# a = 6.75 E-7 *I^3 - 7.71E-5*I^2 +1.79E-2*I +0.49
+# I = sum(Ta/5)^1.514 (for months Ta > 0 deg C)
+
+L <- 14 # daylength
+N <- 30
+Taf <- 59.19
+Ta <- (Taf - 32)*5/9
+I <- sum(Ta/5)^1.514 #(for months Ta > 0 deg C)
+a <- 6.75E-7 *I^3 - 7.71E-5*I^2 +1.79E-2*I +0.49
+  
+Ep <- 16*(L/30)*(N/30)*(10*Ta/I)^a
+
+# Get P-ET for the months of June, July, August
 
 # what we should do is get all the climate data together, then do a cluster analysis
