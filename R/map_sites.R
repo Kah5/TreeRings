@@ -65,6 +65,7 @@ GLL_PVC$code <- c("GL4", "GL3", "GL2", "GL1", "PVC")
 GLL_PVC.lat$code <- c("GL4", "GL3", "GL2", "GL1", "PVC")
 GLL_PVC$Description <- c("Forest", "Savanna", "Savanna", 
                          "Forest", "Savanna")
+GLL_PVC<- GLL_PVC[GLL_PVC$code %in% c("GL4", "GL3", "GL2", "GL1"),]
 
 # merge the two data sets using rbind
 priority <- rbind(mound, sites16, GLL_PVC)
@@ -75,6 +76,26 @@ priority$PDSI_time <- c("Not measured", "No Change", "Growth Change", "Not measu
                         "Not measured", "Not measured", "Not measured", "Not measured",
                         "UNK", "UNK", "UNK", "UNK", "UNK")
 write.csv(priority, "outputs/priority_sites.csv")
+
+#--------------- What was the tree density in the PLS data? -------------------------
+# read in the version 1.7-5 data (pls) merged with the upper midwest data:
+dens <- read.csv("/Users/kah/Documents/bimodality/data/midwest_pls_full_density_alb1.7-5.csv")
+dens <- dens[names(dens) %in% c("x", "y", "PLSdensity")]
+ggplot(dens, aes(x, y, fill = PLSdensity) ) + geom_raster()
+
+# need to convert density data to a raster:
+coordinates(dens)<- ~x+y
+gridded(dens) <- TRUE
+dens.rast <- raster(dens)
+plot(dens.rast)
+proj4string(dens.rast) <- '+init=epsg:3175'
+priority$PLSdensity <- extract(dens.rast, priority[,c("coords.x1", "coords.x2")])
+priority$PLSclass <- ifelse(priority$PLSdensity < 0.5, "Prairie", ifelse(priority$PLSdensity <= 47, "Savanna", "Forest"))
+dens <- as.data.frame(dens)
+
+
+#now extract the priority values
+
 #priority<- rbind(priority,mound[2,]) # just add mound prairie to priority
 #priority.lat <- rbind(priority.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")], mound.lat[,c('Name', "Description", "coords.x1", "coords.x2", "code")])
 #for NAPC, create a map with just these tree cores:
@@ -289,20 +310,6 @@ png("outputs/precip_sites_full.png")
 sites.map2
 dev.off()
 
-#now make a map for sites cored in 2015 only:
-
-map2015 <- sites.map + geom_point(data = mound, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
-  scale_shape_manual(values=c(1,2,3))+
-  geom_text_repel(data = mound, aes(x = coords.x1, y = coords.x2,label=code),
-                  fontface = 'bold', color = 'black',
-                  box.padding = unit(1.5, "lines"),
-                  point.padding = unit(1.5, "lines"))+
-  labs(x="easting", y="northing", title="B). Tree Core Sites 2015") 
-
-png("outputs/precip_sites_2015.png")
-map2015
-dev.off()
-
 # map of sites cored in 2016 only:
 map2016 <- sites.map + geom_point(data = sites16, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
   scale_shape_manual(values=c(1,2,4))+
@@ -316,14 +323,35 @@ png("outputs/precip_sites_2016.png")
 map2016
 dev.off()
 
+# now lets map out in PLS density space:
 
-png(width = 8, height = 8, units = 'in', res = 300, 'outputs/precip_sites_map_fig1.png')
-pushViewport(viewport(layout = grid.layout(2, 2)))
-print(sites.map2, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(map2015, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(map2016, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+
+sites.map.pls <- ggplot()+ geom_raster(data=dens, aes(x=x, y=y, fill = PLSdensity))+
+  labs(x="easting", y="northing", title="A). Tree Core Sites 2015 & 2016") + 
+  scale_fill_gradientn(colours = cbpalette, name ="PLS Tree density (trees/ha)")+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map.pls <- sites.map.pls +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                     colour = "darkgrey", fill = NA)+theme_bw() +
+  theme(axis.text = element_text(size = 14),
+        axis.text.y = element_text(angle = 90, size = rel(0.7), hjust = 0.75),
+        legend.key = element_rect(),
+        legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+sites.map.pls <- sites.map.pls + geom_point(data = priority[complete.cases(priority),], aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
+  scale_shape_manual(values=1:4)+theme(axis.text = element_blank(), axis.ticks=element_blank(),
+                                       legend.key.size = unit(2,'lines')
+                                       ,legend.background = element_rect(fill=alpha('transparent', 0.4)),panel.grid.major = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=1))+
+  ggtitle("")+
+  geom_text_repel(data = priority[complete.cases(priority),], aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black')
+sites.map.pls
+png("outputs/PLS_density_TRsites.png")
+sites.map.pls
 dev.off()
-
 
 # now map for temperature from GHCN data
 air_temp.1900<- read.table("./data/air_temp_2014/air_temp.1900")
@@ -412,84 +440,7 @@ png("outputs/temp_map_full.png")
 sites.t.map2
 dev.off()
 
-#making natural earth maps (from simon gorings blog)
 
-library(raster)
-library(rgdal)
-library(ggplot2)
-library(reshape2)
-library(plyr)
-library(rgeos)
-
-#  Assuming you have a path 'Maps' that you store your spatial files in.  This
-#  is all downloaded from <a href="http://www.naturalearthdata.com/downloads/">http://www.naturalearthdata.com/downloads/</a> using the
-#  1:50m "Medium" scale data.
-
-nat.earth <- stack('data/NE2_50m_SR_W/NE2_50M_SR_W/NE2_50M_SR_W.tif')
-
-ne_lakes <- readOGR('data/ne_50m_lakes/ne_50m_lakes.shp',
-                    'ne_50m_lakes')
-
-ne_rivers <- readOGR('data/ne_50m_rivers_lake_centerlines/ne_50m_rivers_lake_centerlines.shp',
-                     'ne_50m_rivers_lake_centerlines')
-
-ne_coast <- readOGR('data/ne_50m_coastline/ne_50m_coastline.shp',
-                    'ne_50m_coastline')
-ne_states <- readOGR('data/ne_50m_admin_1_states_provinces_lakes/ne_50m_admin_1_states_provinces_lakes.shp',
-                     'ne_50m_admin_1_states_provinces_lakes')
-
-#  I have a domain I'm interested in, but there's no reason you can't define something else:
-quick.subset <- function(x, longlat){
-  
-  # longlat should be a vector of four values: c(xmin, xmax, ymin, ymax)
-  x@data$id <- rownames(x@data)
-  
-  x.f = fortify(x, region="id")
-  x.join = join(x.f, x@data, by="id")
-  
-  x.subset <- subset(x.join, x.join$long > longlat[1] & x.join$long < longlat[2] &
-                       x.join$lat > longlat[3] & x.join$lat < longlat[4])
-  
-  x.subset
-}
-
-domain <- c(-100, -85, 36.5, 49.7)
-#lakes.subset <- quick.subset(ne_lakes, domain)
-river.subset <- quick.subset(ne_rivers, domain)
-coast.subset <- quick.subset(ne_coast, domain)
-#states.subset <- quick.subset(ne_states, domain)
-
-nat.crop <- crop(nat.earth, y=extent(domain))
-
-rast.table <- data.frame(xyFromCell(nat.crop, 1:ncell(nat.crop)),
-                         getValues(nat.crop/255))
-
-rast.table$rgb <- with(rast.table, rgb(NE2_50M_SR_W.1,
-                                       NE2_50M_SR_W.2,
-                                       NE2_50M_SR_W.3,
-                                       1))
-# et voila!
-
-map<- ggplot(data = rast.table, aes(x = x, y = y)) +
-  geom_tile(fill = rast.table$rgb) +
-  geom_polygon(data=ne_lakes, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
-  #geom_polygon(data = ne_states, aes(x = long, y = lat, group = group), color = 'black')+
-  scale_alpha_discrete(range=c(1,0)) +
-  
-  geom_path(data=ne_lakes, aes(x = long, y = lat, group = group), color = 'blue') +
-  geom_path(data=river.subset, aes(x = long, y = lat, group = group), color = 'blue') +
-  geom_path(data = ne_states, aes(x = long, y = lat, group = group), color = 'black')+
-  #geom_path(data=coast.subset, aes(x = long, y = lat, group = group), color = 'blue') +
-  xlim(-97, -87) +
-  ylim(36.5, 49.7) +
-  xlab('') + ylab('')
-map <-map + geom_point(data = priority.lat, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)#+
-  #geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label= code ),hjust = -0.5, vjust=0.25 )
-
-map
-#coord_map(xlim= c(-100, -85),ylim= c(36.5, 49.7))
-
-#pdf('outputs/NAPC_sites_2015_temp.pdf')
 sites.t.map
 sites.t.map2
 #dev.off()
@@ -749,4 +700,4 @@ sites.et.map
 sites.pet.map
 dev.off()
 
-write.csv(priority, "outputs/priority_sites.csv")
+write.csv(priority, "outputs/priority_sites_full_envt.csv")
