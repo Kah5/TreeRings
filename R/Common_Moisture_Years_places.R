@@ -45,7 +45,7 @@ for (file in file_list){
     colnames(m) <- c("Year", "Month")
     temp_dataset <- data.frame(m, temp_dataset)
     
-    SP.dataset<-rbind(dataset, temp_dataset)
+    dataset<-rbind(dataset, temp_dataset)
     rm(temp_dataset)
   }
   
@@ -54,13 +54,17 @@ for (file in file_list){
 ggplot(dataset[dataset$Month %in% '07', ], aes(as.numeric(Year), ppt..inches.))+geom_point()+stat_smooth(method= "lm")
 
 
-# finding the most similar climate years for each site:
+# --------------------------finding the most similar climate years for each site------------------------:
 setwd("/Users/kah/Documents/TreeRings")
-sites <- unique(SP.dataset$site)
+sites <- unique(dataset$site)
 
-# need to fix this loop:
-for(i in 1:length(sites)){
-      dataset.t <- SP.dataset[SP.dataset$site %in% sites[i],]
+# this loop does a pca for each site's climate time series, 
+# finds the euclidian distance bewteen PC1 and PC2 for each year,
+# then finds the years before and after 1950 that have the smallest distance bewteen them
+# outputs them into outputs/data/Isotope_climate
+
+for(p in 1:length(sites)){
+      dataset.t <- dataset[dataset$site %in% sites[p],]
 
       # using PRSIM data:
       # need a df with monthly climate as columns and site year as the row identifier for each site
@@ -113,7 +117,7 @@ for(i in 1:length(sites)){
       ordered <- post.pre[order(post.pre$distance),]
       years.to.do <- ordered[1:15,]
       
-      write.csv(years.to.do, paste0("outputs/data/Isotope_climate/", sites[i],"-most-similar-years.csv"))
+      write.csv(years.to.do, file =  paste0("outputs/data/Isotope_climate/", sites[p],"_most_similar_years.csv"))
 }      
 
 # clustering:
