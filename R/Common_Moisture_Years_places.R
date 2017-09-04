@@ -137,6 +137,47 @@ summary(df.01)
 test <- sp01.m[sp01.m$variable %in% "UNC.SP01.y",]
 test$timeperiod <- ifelse(test$Year %in% 1895:1950, "pre-1950", "post-1950")
 
+# need a df with monthly climate as columns and site year as the row identifier for each site
+dataset.mo <- dataset[dataset$Month %in% c("06","07","08"),]
+
+data.mo <- melt(dataset.mo, id.vars= c("Year", "Month", "site", "Date"))
+
+# get JJA means:
+JJA.means <- dcast(data.mo, Year ~ variable, mean)
+JJA.means <- data.frame(JJA.means[2:nrow(JJA.means),], JJA.means[1:121,2:7])
+colnames(JJA.means) <- c('Year',"PPT" ,"tmin" ,"tmean" ,"tmax" ,"tdmean",  
+                          "vpdmin","vpdmax" , "ppt_prev",      
+                          "tmin_prev",   "tmean_prev" , "tmax_prev",  
+                         "tdmean_prev" ,"vpdmin_prev"   )
+
+JJA.pca<- princomp(scale(JJA.means[,2:14]))
+
+plot(JJA.pca)
+biplot(JJA.pca)
+scores <- JJA.pca$scores
+
+# add scores to pls.full:
+JJA.means$pc1 <- scores[,1]
+JJA.means$pc2 <- scores[,2]
+JJA.means$Year <- as.numeric(as.character(JJA.means$Year))
+JJA.means$class <- ifelse(JJA.means$Year >= 1950, "post-1950", "pre-1950")
+
+# plot out the climate spaces:
+ggplot(JJA.means, aes(pc1, pc2, color = class)) + geom_point()
+dists <- dist(JJA.means[,15:16], by.rows  = FALSE)
+
+# need to find years that are close to each other:
+library(sp)
+df<- spDists(as.matrix(JJA.means[,15:16]))
+i <- apply(df,2, function (x) which(x %in% min(x[x != 0])))
+closest <- data.frame(Year = JJA.means$Year, closest = i)
+
+# print out the closest year:
+closest$nearestyear <- closest[closest$closest,]$Year 
+
+
+
+ggplot(JJA.means[neighbors,], aes(pc1, pc2, color = class)) + geom_point()
 #---------------------------- calculate ET-------------:
 
 # Thornthwaite:
