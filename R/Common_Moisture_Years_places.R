@@ -170,14 +170,27 @@ dists <- dist(JJA.means[,15:16], by.rows  = FALSE)
 library(sp)
 df<- spDists(as.matrix(JJA.means[,15:16]))
 i <- apply(df,2, function (x) which(x %in% min(x[x != 0])))
-closest <- data.frame(Year = JJA.means$Year, closest = i)
+dist <- apply(df,2, function (x) min(x[x != 0]))
+closest <- data.frame(Year = JJA.means$Year, distance = dist, closest = i)
 
-# print out the closest year:
+# print out the closest year into a column:
 closest$nearestyear <- closest[closest$closest,]$Year 
 
+# get the class of each year in the closest pairings
+closest$class_1 <- ifelse(closest$Year > 1950, "post-1950", "pre-1950")
+closest$class_2 <- ifelse(closest$nearestyear > 1950, "post-1950", "pre-1950")
+post.pre <- closest[closest$class_1 %in% "post-1950" & closest$class_2 %in% "pre-1950",]
+pre.post <- closest[closest$class_1 %in% "pre-1950" & closest$class_2 %in% "post-1950",]
+
+allpairs <- rbind(post.pre, pre.post)
+
+# order the dataframe and take the top 10 pairs of years (or 20 here)
+ordered <- allpairs[order(allpairs$distance),]
+years.to.do<- ordered[1:20,]
 
 
-ggplot(JJA.means[neighbors,], aes(pc1, pc2, color = class)) + geom_point()
+
+
 #---------------------------- calculate ET-------------:
 
 # Thornthwaite:
