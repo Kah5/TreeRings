@@ -309,6 +309,7 @@ png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_
 grid_arrange_shared_legend(a,b,c,d,e, nrow = 3, ncol = 2 )
 dev.off()
 
+
 #rank the correlations based on highest to lowest for each site
 highest.cor <- function(site, i){
   precip <- read.csv(paste0(site,'-WW', 'Precip', 'cor.csv'))

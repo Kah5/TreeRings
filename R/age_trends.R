@@ -701,7 +701,7 @@ plot3dsensitivity(sens.df, "age","old", "red",FALSE)
 
 plot3dsensitivity(sens.df, "age","young", "blue",TRUE)
 legend(x = 0.5, y = 0 ,
-       legend = c(expression("Old (low CO"[2]*")"), expression("Young (high CO"[2]*")")), 
+       legend = c(expression(atop("Young pre-1950", "(low CO"[2]*")")), expression(atop("Young post-1950", "(high CO"[2]*")"))), 
        col = c("red", 
                "blue"), 
        pch = c(18, 18), 
@@ -720,7 +720,7 @@ png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d
 plot3dsensitivity(yr.sens.df, "age","Pre-1950", "red",FALSE)
 plot3dsensitivity(yr.sens.df, "age","Post-1950", "blue",TRUE)
 legend(x = 0.5, y = 0 ,
-       legend = c(expression("Pre-1950 (low CO"[2]*")"), expression("Post-1950 (high CO"[2]*")")), 
+       legend = c(expression(atop("All trees Pre-1950", "(low CO"[2]*")")), expression(atop("All trees Post-1950", "(high CO"[2]*")"))), 
        col = c("red", 
                "blue"), 
        pch = c(18, 18), 
