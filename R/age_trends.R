@@ -734,214 +734,58 @@ legend(x = 0.5, y = 0 ,
 dev.off()
 
 
+###########################################################################
+# Plot pith date vs. mean growth (within each tree)
+# use tree_age_agg.R with raw RWI:
+source("R/tree_age_agg_mean.R")
+
+Hic <- tree_age_agg_mean(rwiorbai = Hickory.test, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI_Spline_detrended")
+Stc <- tree_age_agg_mean(StCroix.bai, 2015, "STC", 30,"RWI_Spline_detrended")
+Bon <- tree_age_agg_mean(Bonanza.bai, 2015, "BON", 30,"RWI_Spline_detrended")
+Tow <- tree_age_agg_mean(Townsend.bai, 2015, "TOW", 30,"RWI_Spline_detrended")
+Ple <- tree_age_agg_mean(Pleasant.bai, 2015, "PLE", 30,"RWI_Spline_detrended")
+Cor <- tree_age_agg_mean(Coral.bai, 2016, "COR", 30,"RWI_Spline_detrended")
+Unc <- tree_age_agg_mean(Uncas.bai, 2016, "UNC", 30,"RWI_Spline_detrended")
+Eng <- tree_age_agg_mean(Englund.bai, 2015, "ENG", 30,"RWI_Spline_detrended")
+Mou <- tree_age_agg_mean(Mound.bai, 2015, "MOU", 30,"RWI_Spline_detrended")
+GLL1 <- tree_age_agg_mean(GLL1.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL2 <- tree_age_agg_mean(GLL2.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL3 <- tree_age_agg_mean(GLL3.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL4 <- tree_age_agg_mean(GLL4.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+PVC <- tree_age_agg_mean(PVC.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+
+# now plot mean with STDEV
+
+ggplot(Hic, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Stc, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Tow, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Unc, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Bon, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Ple, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Cor, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Eng, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(Mou, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(GLL1, aes(Age, Mean))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(GLL2, aes(Age, RWI))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(GLL3, aes(Age, RWI))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+ggplot(GLL4, aes(Age, RWI))+geom_point()+ 
+  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+
+# Plot age vs. mean growth (across trees)
 
 
 
-
-
-
-# typical tree ring model of growth has precip, temp, pdsi, ages, and sites
-glm1 <- glm(RWI~ PCP+
-              TMIN +
-              TAVG +
-              PDSI + Age + site,
-            data=all)
-
-
-gam1 <- gam(RWI~ s(PCP)+
-              s(TMIN) +
-              s(TAVG) +
-              s(PDSI) + s(Age) + s(site),
-            data=all)
-
-
-gam1
-plot(gam1)
-
-summary(gam1)$r.sq # R-squared
-summary(gam1)$dev.expl # explained deviance
-anova(gam1)
-AIC(gam1)
-
-
-scaledlinear <- "model{
-  for(i in 1:Ntotal){
-    zy[i] ~ dt(mu[i], 1/zsigma^2, nu)
-    mu[i] <- zbeta0 + zbeta * zx[i]
-  }
-
-#priors
-  zbeta0 ~ dnorm(0,1/(10)^2)
-  zbeta1 ~ dnorm(0,1/(10)^2)
-  zsigma ~ dunif(1.0E-3,1.0E-3)
-  nu <- nuMinusOne+1
-  nuMinusOne ~ dexp(1/29)
-  
-  }
-}"
-
-
-# data for linear reg
-HIC_clim <- HIC_clim[!is.na(HIC_clim$RWI),]
-myData = HIC_clim
-xName = "PDSI" ; yName = "RWI"
-
-#function to generate mcmc chains in the linear regression model
-genMCMC = function( data , xName="x" , yName="y" , 
-                    numSavedSteps=50000 , saveName=NULL ) { 
-  require(rjags)
-  #-----------------------------------------------------------------------------
-  # THE DATA.
-  y = data[,yName]
-  x = data[,xName]
-  # Do some checking that data make sense:
-  if ( any( !is.finite(y) ) ) { stop("All y values must be finite.") }
-  if ( any( !is.finite(x) ) ) { stop("All x values must be finite.") }
-  #Ntotal = length(y)
-  # Specify the data in a list, for later shipment to JAGS:
-  dataList = list(
-    x = x ,
-    y = y 
-  )
-  #-----------------------------------------------------------------------------
-  # THE MODEL.
-  modelString = "
-  # Standardize the data:
-  data {
-  Ntotal <- length(y)
-  xm <- mean(x)
-  ym <- mean(y)
-  xsd <- sd(x)
-  ysd <- sd(y)
-  for ( i in 1:length(y) ) {
-  zx[i] <- ( x[i] - xm ) / xsd
-  zy[i] <- ( y[i] - ym ) / ysd
-  }
-  }
-  # Specify the model for standardized data:
-  model {
-  for ( i in 1:Ntotal ) {
-  zy[i] ~ dt( zbeta0 + zbeta1 * zx[i] , 1/zsigma^2 , nu )
-  }
-  # Priors vague on standardized scale:
-  zbeta0 ~ dnorm( 0 , 1/(10)^2 )  
-  zbeta1 ~ dnorm( 0 , 1/(10)^2 )
-  zsigma ~ dunif( 1.0E-3 , 1.0E+3 )
-  nu ~ dexp(1/30.0)
-  # Transform to original scale:
-  beta1 <- zbeta1 * ysd / xsd  
-  beta0 <- zbeta0 * ysd  + ym - zbeta1 * xm * ysd / xsd 
-  sigma <- zsigma * ysd
-  }
-  " # close quote for modelString
-  # Write out modelString to a text file
-  writeLines( modelString , con="TEMPmodel.txt" )
-  #-----------------------------------------------------------------------------
-  # INTIALIZE THE CHAINS.
-  # Let JAGS do it...
-  #-----------------------------------------------------------------------------
-  # RUN THE CHAINS
-  parameters = c( "beta0" ,  "beta1" ,  "sigma", 
-                  "zbeta0" , "zbeta1" , "zsigma", "nu" )
-  adaptSteps = 500  # Number of steps to "tune" the samplers
-  burnInSteps = 1000
-  nChains = 4 
-  thinSteps = 1
-  nIter = ceiling( ( numSavedSteps * thinSteps ) / nChains )
-  # Create, initialize, and adapt the model:
-  jagsModel = jags.model( "TEMPmodel.txt" , data=dataList , #inits=initsList , 
-                          n.chains=nChains , n.adapt=adaptSteps )
-  # Burn-in:
-  cat( "Burning in the MCMC chain...\n" )
-  update( jagsModel , n.iter=burnInSteps )
-  # The saved MCMC chain:
-  cat( "Sampling final MCMC chain...\n" )
-  codaSamples = coda.samples( jagsModel , variable.names=parameters , 
-                              n.iter=nIter , thin=thinSteps )
-  # resulting codaSamples object has these indices: 
-  #   codaSamples[[ chainIdx ]][ stepIdx , paramIdx ]
-  if ( !is.null(saveName) ) {
-    save( codaSamples , file=paste(saveName,"Mcmc.Rdata",sep="") )
-  }
-  return( codaSamples )
-} # end function
-
-
-startTime = proc.time()
-mcmcCoda = genMCMC( data=myData , xName=xName , yName=yName , 
-                    numSavedSteps=20000 , saveName=fileNameRoot )
-stopTime = proc.time()
-duration = stopTime - startTime
-show(duration)
-
-source("R/useful_jags_output_summary.R")
-# Display diagnostics of chain, for specified parameters:
-parameterNames = varnames(mcmcCoda) # get all parameter names
-for ( parName in parameterNames ) {
-  diagMCMC( codaObject=mcmcCoda , parName=parName , 
-            saveName=fileNameRoot , saveType=graphFileType )
-}
-#------------------------------------------------------------------------------- 
-# Get summary statistics of chain: functions from 
-summaryInfo = smryMCMC( mcmcCoda , 
-                        compValBeta1=0.0 , ropeBeta1=c(-0.5,0.5) ,
-                        saveName=fileNameRoot )
-show(summaryInfo)
-# Display posterior information:
-plotMCMC( mcmcCoda , data=myData , xName=xName , yName=yName , 
-          compValBeta1=0.0 , ropeBeta1=c(-0.5,0.5) ,
-          pairsPlot=TRUE , showCurve=FALSE ,
-          saveName=fileNameRoot , saveType=graphFileType )
-#------------------------------------------------------------------------------- 
-
-#####################################################################################
-# lets now add in a heirarchical regression that includes the subject/the tree:
-#####################################################################################
-# this code takes way too long ~ 2 hrs! but it eventually ran, I was getting plots, but strange errors occured
-source("R/growth_PDSI_robust_heir_reg_by_tree.R")
-
-HIC_clim <- HIC_clim[!is.na(HIC_clim$RWI),]
-myData = HIC_clim # looking at hickory grove climate and TR growth
-
-xName = "Jul.pdsi" ; yName = "RWI" ; sName="ID"
-fileNameRoot = "HierLinRegressTree-Jags-" 
-
-# myData = read.csv( file="IncomeFamszState.csv" )
-# xName = "Famsz" ; yName = "Income" ; sName="State"
-# fileNameRoot = "IncomeFamszState-Lin-Jags-" 
-
-# myData = read.csv( file="BugsRatsData.csv" )
-# xName = "Day" ; yName = "Weight" ; sName="Subj"
-# fileNameRoot = "BugsRatsData-Jags-" 
-
-graphFileType = "jpg" 
-#------------------------------------------------------------------------------- 
-# Load the relevant model into R's working memory:
-source("R/growth_PDSI_robust_heir_reg_by_tree.R")
-#------------------------------------------------------------------------------- 
-# Generate the MCMC chain:
-#startTime = proc.time()
-mcmcCoda = genMCMC( data=myData , xName=xName , yName=yName , sName=sName ,
-                    numSavedSteps=20000 , thinSteps=15 , saveName=fileNameRoot )
-#stopTime = proc.time()
-#duration = stopTime - startTime
-#show(duration)
-# #------------------------------------------------------------------------------- 
-# # Display diagnostics of chain, for specified parameters:
-parameterNames = varnames(mcmcCoda) # get all parameter names
-for ( parName in c("beta0mu","beta1mu","nu","sigma","beta0[1]","beta1[1]") ) {
-  diagMCMC( codaObject=mcmcCoda , parName=parName , 
-            saveName=fileNameRoot , saveType=graphFileType )
-}
-#------------------------------------------------------------------------------- 
-# Get summary statistics of chain:
-summaryInfo = smryMCMC( mcmcCoda , saveName=fileNameRoot )
-show(summaryInfo)
-# Display posterior information:
-plotMCMC( mcmcCoda , data=myData , xName=xName , yName=yName , sName=sName ,
-          compValBeta1=0.0 , ropeBeta1=c(-0.5,0.5) ,
-          pairsPlot=TRUE , showCurve=FALSE ,
-          saveName=fileNameRoot , saveType=graphFileType )
-#------------------------------------------------------------------------------- 
 
 
