@@ -851,8 +851,8 @@ GLL3.pith <- tree_pith_agg_mean(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrende
 GLL4.pith <- tree_pith_agg_mean(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
 PVC.pith <- tree_pith_agg_mean(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
 
-rwi.pith<- function(df, site){
-  ggplot(df, aes(Pith, Mean))+geom_point()+ 
+rwi.pith <- function(df, site){
+  ggplot(df, aes(Pith, Mean, color = ageclass))+geom_point()+ 
     geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.9) +ggtitle(site)+theme_bw()+ylab("Mean RWI (mm)")+xlab("Pith date")
 }
 
@@ -870,23 +870,5 @@ rwi.pith(GLL2.pith, "GLL2")
 rwi.pith(GLL3.pith, "GLL3")
 rwi.pith(GLL4.pith, "GLL4")
 rwi.pith(PVC.pith, "PVC")
-
-
-#------------------Plot pith date vs. mean growth (within each tree) by class
-
-Hic.pith <- tree_pith_agg_mean_class(rwiorbai = HICww.rwl, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI")
-Stc.pith <- tree_pith_agg_mean_class(STCww.rwl, 2015, "STC", 30,"RWI_Spline_detrended")
-Bon.pith <- tree_pith_agg_mean_class(BONww.rwl, 2015, "BON", 30,"RWI_Spline_detrended")
-Tow.pith <- tree_pith_agg_mean_class(TOWww.rwl, 2015, "TOW", 30,"RWI_Spline_detrended")
-Ple.pith <- tree_pith_agg_mean_class(PLEww.rwl, 2015, "PLE", 30,"RWI_Spline_detrended")
-Cor.pith <- tree_pith_agg_mean_class(CORww.rwl, 2016, "COR", 30,"RWI_Spline_detrended")
-Unc.pith <- tree_pith_agg_mean_class(UNCww.rwl, 2016, "UNC", 30,"RWI_Spline_detrended")
-Eng.pith <- tree_pith_agg_mean_class(ENGww.rwl, 2015, "ENG", 30,"RWI_Spline_detrended")
-Mou.pith <- tree_pith_agg_mean_class(MOUww.rwl, 2015, "MOU", 30,"RWI_Spline_detrended")
-GLL1.pith <- tree_pith_agg_mean_class(GLL1ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL2.pith <- tree_pith_agg_mean_class(GLL2ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL3.pith <- tree_pith_agg_mean_class(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL4.pith <- tree_pith_agg_mean_class(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-PVC.pith <- tree_pith_agg_mean_class(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
 
 

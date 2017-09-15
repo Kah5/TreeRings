@@ -151,6 +151,7 @@ tree_age_agg_mean_class <- function(rwiorbai, sampleyear, site.code, age1950,typ
 }
 
 # claculate mean growth by pith date
+# calculate mean growth by pith date and color by class
 tree_pith_agg_mean <- function(rwiorbai, sampleyear, site.code, age1950,type){
   
   # calculate record age
@@ -214,10 +215,10 @@ tree_pith_agg_mean <- function(rwiorbai, sampleyear, site.code, age1950,type){
   
   
   # calculate mean for each tree age:
-  site.mean <- aggregate(RWI ~ Pith, data = site.m, mean)
-  site.std <- aggregate(RWI ~ Pith, data = site.m, sd)
-  site.m <- merge(site.mean, site.std, by = "Pith")
-  colnames(site.m) <- c("Pith", "Mean", "Std")
+  site.mean <- aggregate(RWI ~ Pith + ageclass, data = site.m, mean)
+  site.std <- aggregate(RWI ~ Pith + ageclass, data = site.m, sd)
+  site.m <- merge(site.mean, site.std, by = c("Pith", "ageclass"))
+  colnames(site.m) <- c("Pith", 'ageclass', "Mean", "Std")
   write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-raw-meanRWI-pith",type, ".csv"))
   site.m
   
