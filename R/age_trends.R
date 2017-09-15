@@ -735,24 +735,37 @@ dev.off()
 
 
 ###########################################################################
-# Plot pith date vs. mean growth (within each tree)
+# # Plot age vs. mean growth (across trees)
+# read in all raw cleaned data:
+require(plyr)
+require(dostats)
+
+files <- list.files("/Users/kah/Documents/TreeRings/cleanrwl/",pattern = ".rwl")
+
+# read each rwl file and name the robject XXXww.rwl 
+for (i in seq_along(files)) {
+ 
+  assign(paste(files[i]), read.rwl(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",files[i])))
+  
+}
+
 # use tree_age_agg.R with raw RWI:
 source("R/tree_age_agg_mean.R")
 
-Hic <- tree_age_agg_mean(rwiorbai = Hickory.test, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI_Spline_detrended")
-Stc <- tree_age_agg_mean(StCroix.bai, 2015, "STC", 30,"RWI_Spline_detrended")
-Bon <- tree_age_agg_mean(Bonanza.bai, 2015, "BON", 30,"RWI_Spline_detrended")
-Tow <- tree_age_agg_mean(Townsend.bai, 2015, "TOW", 30,"RWI_Spline_detrended")
-Ple <- tree_age_agg_mean(Pleasant.bai, 2015, "PLE", 30,"RWI_Spline_detrended")
-Cor <- tree_age_agg_mean(Coral.bai, 2016, "COR", 30,"RWI_Spline_detrended")
-Unc <- tree_age_agg_mean(Uncas.bai, 2016, "UNC", 30,"RWI_Spline_detrended")
-Eng <- tree_age_agg_mean(Englund.bai, 2015, "ENG", 30,"RWI_Spline_detrended")
-Mou <- tree_age_agg_mean(Mound.bai, 2015, "MOU", 30,"RWI_Spline_detrended")
-GLL1 <- tree_age_agg_mean(GLL1.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL2 <- tree_age_agg_mean(GLL2.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL3 <- tree_age_agg_mean(GLL3.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL4 <- tree_age_agg_mean(GLL4.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-PVC <- tree_age_agg_mean(PVC.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+Hic <- tree_age_agg_mean(rwiorbai = HICww.rwl, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI")
+Stc <- tree_age_agg_mean(STCww.rwl, 2015, "STC", 30,"RWI_Spline_detrended")
+Bon <- tree_age_agg_mean(BONww.rwl, 2015, "BON", 30,"RWI_Spline_detrended")
+Tow <- tree_age_agg_mean(TOWww.rwl, 2015, "TOW", 30,"RWI_Spline_detrended")
+Ple <- tree_age_agg_mean(PLEww.rwl, 2015, "PLE", 30,"RWI_Spline_detrended")
+Cor <- tree_age_agg_mean(CORww.rwl, 2016, "COR", 30,"RWI_Spline_detrended")
+Unc <- tree_age_agg_mean(UNCww.rwl, 2016, "UNC", 30,"RWI_Spline_detrended")
+Eng <- tree_age_agg_mean(ENGww.rwl, 2015, "ENG", 30,"RWI_Spline_detrended")
+Mou <- tree_age_agg_mean(MOUww.rwl, 2015, "MOU", 30,"RWI_Spline_detrended")
+GLL1 <- tree_age_agg_mean(GLL1ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL2 <- tree_age_agg_mean(GLL2ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL3 <- tree_age_agg_mean(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL4 <- tree_age_agg_mean(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+PVC <- tree_age_agg_mean(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
 
 # now plot mean with STDEV
 
@@ -776,15 +789,17 @@ ggplot(Mou, aes(Age, Mean))+geom_point()+
   geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
 ggplot(GLL1, aes(Age, Mean))+geom_point()+ 
   geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL2, aes(Age, RWI))+geom_point()+ 
+ggplot(GLL2, aes(Age, Mean))+geom_point()+ 
   geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL3, aes(Age, RWI))+geom_point()+ 
+ggplot(GLL3, aes(Age, Mean))+geom_point()+ 
   geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL4, aes(Age, RWI))+geom_point()+ 
+ggplot(GLL4, aes(Age, Mean))+geom_point()+ 
   geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
 
-# Plot age vs. mean growth (across trees)
+# find the means for trees established before before 1920 and those established after:
 
+
+#Plot pith date vs. mean growth (within each tree)
 
 
 
