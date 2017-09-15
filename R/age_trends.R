@@ -796,7 +796,43 @@ ggplot(GLL3, aes(Age, Mean))+geom_point()+
 ggplot(GLL4, aes(Age, Mean))+geom_point()+ 
   geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
 
-# find the means for trees established before before 1920 and those established after:
+#------------ find the means for trees established before before 1920 and those established after:
+Hic.age <- tree_age_agg_mean_class(rwiorbai = HICww.rwl, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI")
+Stc.age <- tree_age_agg_mean_class(STCww.rwl, 2015, "STC", 30,"RWI_Spline_detrended")
+Bon.age <- tree_age_agg_mean_class(BONww.rwl, 2015, "BON", 30,"RWI_Spline_detrended")
+Tow.age <- tree_age_agg_mean_class(TOWww.rwl, 2015, "TOW", 30,"RWI_Spline_detrended")
+Ple.age <- tree_age_agg_mean_class(PLEww.rwl, 2015, "PLE", 30,"RWI_Spline_detrended")
+Cor.age <- tree_age_agg_mean_class(CORww.rwl, 2016, "COR", 30,"RWI_Spline_detrended")
+Unc.age <- tree_age_agg_mean_class(UNCww.rwl, 2016, "UNC", 30,"RWI_Spline_detrended")
+Eng.age <- tree_age_agg_mean_class(ENGww.rwl, 2015, "ENG", 30,"RWI_Spline_detrended")
+Mou.age <- tree_age_agg_mean_class(MOUww.rwl, 2015, "MOU", 30,"RWI_Spline_detrended")
+GLL1.age <- tree_age_agg_mean_class(GLL1ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL2.age <- tree_age_agg_mean_class(GLL2ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL3.age <- tree_age_agg_mean_class(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL4.age <- tree_age_agg_mean_class(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+PVC.age <- tree_age_agg_mean_class(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+
+# now plot mean with STDEV
+# made a function to plot out mean RWI vs. age
+rwi.age.class<- function(df, site){
+  ggplot(df, aes(Age, Mean, color = Ageclass))+geom_point()+ 
+    geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) +ggtitle(site)
+}
+
+rwi.age.class(Hic.age, "HIC")
+rwi.age.class(Stc.age, "STC")
+rwi.age.class(Tow.age, "TOW")
+rwi.age.class(Unc.age, "UNC")
+rwi.age.class(Bon.age, "BON")
+rwi.age.class(Ple.age, "PLE")
+rwi.age.class(Cor.age, "COR")
+rwi.age.class(Eng.age, "ENG")
+rwi.age.class(Mou.age, "MOU")
+rwi.age.class(GLL1.age, "GLL1")
+rwi.age.class(GLL2.age, "GLL2")
+rwi.age.class(GLL3.age, "GLL3")
+rwi.age.class(GLL4.age, "GLL4")
+rwi.age.class(PVC.age, "PVC")
 
 
 #Plot pith date vs. mean growth (within each tree)
