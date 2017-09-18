@@ -1,4 +1,7 @@
-# This script finds potential releases within a tree:
+# This script finds potential releases within a tree using the TRADER package:
+# Altman J, Fibich P, Dolezal J & Aakala T (2014). TRADER: a package for Tree Ring Analysis of Disturbance Events in R. Dendrochonologia 32: 107-112, URL http://www.sciencedirect.com/science/article/pii/S1125786514000058 .
+# This script also uses dplR package
+
 library(TRADER)
 library(ggplot2)
 library(dplR)
@@ -24,9 +27,8 @@ for (i in seq_along(files)) {
 # set dir to wd that we want to save all the files in:
 setwd("/Users/kah/Documents/TreeRings/outputs/release/")
  
-#dfs <- c(BONww.rwl, TOWww.rwl, STCww.rwl, PVCww.rwl)
 
-
+# use the growthAveragenALL function to find releases based on Nowacki and Abrams growth averageing
 growthAveragingALL(BONww.rwl , releases=NULL, m1=10, m2=10, buffer=10, drawing=TRUE, criteria=0.25, criteria2=0.5, prefix="BON", gfun=mean, length=5)
 growthAveragingALL(TOWww.rwl , releases=NULL, m1=10, m2=10, buffer=10, drawing=TRUE, criteria=0.25, criteria2=0.5, prefix='TOW', gfun=mean, length=5)
 growthAveragingALL(STCww.rwl , releases=NULL, m1=10, m2=10, buffer=10, drawing=TRUE, criteria=0.25, criteria2=0.5, prefix='STC', gfun=mean, length=5)
