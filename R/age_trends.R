@@ -737,8 +737,7 @@ dev.off()
 ###########################################################################
 # # Plot age vs. mean growth (across trees)
 # read in all raw cleaned data:
-require(plyr)
-require(dostats)
+
 
 files <- list.files("/Users/kah/Documents/TreeRings/cleanrwl/",pattern = ".rwl")
 
@@ -856,6 +855,7 @@ rwi.pith <- function(df, site){
     geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.9) +ggtitle(site)+theme_bw()+ylab("Mean RWI (mm)")+xlab("Pith date")
 }
 
+
 rwi.pith(Hic.pith, "HIC")
 rwi.pith(Stc.pith, "STC")
 rwi.pith(Tow.pith, "TOW")
@@ -872,3 +872,49 @@ rwi.pith(GLL4.pith, "GLL4")
 rwi.pith(PVC.pith, "PVC")
 
 
+#------------------------Does growth climate response really vary by age???-----------------
+# generate age classes and age-dependant climate response functions:
+# use the "all" dataframe created on line 398
+
+summary(all$Age) # ages range from 0 to 246
+label.breaks <- function(beg, end, splitby){
+  labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
+  labels.test <- paste (labels.test$first, '-' , labels.test$second)
+  labels.test
+}
+
+# create classes of age groups by 25 years:
+all$agebreaks <- cut(all$Age, breaks = seq(0, 250, by = 25), labels = label.breaks(0,225,25))
+
+X11(width = 12)
+ggplot(all, aes(Jul.pdsi, RWI))+geom_point()+stat_smooth(method = 'lm')+facet_grid(~agebreaks)
+
+coef.list <- list()
+for(i in 1:length(unique(all$agebreaks))){
+  lm.agebreak <- lm(RWI ~ Jul.pdsi, data = all[all$agebreaks %in% unique(all$agebreaks)[i],])
+  coef.list[[i]] <- lm.agebreak$coefficients
+}
+
+coef <- do.call(rbind, coef.list)
+coef.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
+                            intercept = coef[,1], 
+                      Jul.pdsislope = coef[,2])
+
+# get correlation coefficient for each group
+cor.list <- list()
+for(i in 1:length(unique(all$agebreaks))){
+  cor.list[[i]] <- cor(all[all$agebreaks %in% unique(all$agebreaks)[i],]$RWI, all[all$agebreaks %in% unique(all$agebreaks)[i],]$Jul.pdsi)
+
+}
+
+cors <- do.call(rbind, cor.list)
+cors.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
+                      cor = cors[,1])
+
+# rearrang factor lists
+cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 25", "25 - 50", "50 - 75", "75 - 100",
+                                                      "100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
+                                                      "225 - 250", "NA"))
+
+# plot based on correlation coefficient:
+ggplot(cors.df, aes(agebreaks_f, cor))+geom_bar(stat= "identity")
