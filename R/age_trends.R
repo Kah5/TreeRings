@@ -889,32 +889,52 @@ all$agebreaks <- cut(all$Age, breaks = seq(0, 250, by = 25), labels = label.brea
 X11(width = 12)
 ggplot(all, aes(Jul.pdsi, RWI))+geom_point()+stat_smooth(method = 'lm')+facet_grid(~agebreaks)
 
-coef.list <- list()
-for(i in 1:length(unique(all$agebreaks))){
-  lm.agebreak <- lm(RWI ~ Jul.pdsi, data = all[all$agebreaks %in% unique(all$agebreaks)[i],])
-  coef.list[[i]] <- lm.agebreak$coefficients
+# make a function to plot age based correlations with July PDSI climate of each site:
+plot.cor.by.age.site <- function(df, site.names){
+    coef.list <- list()
+    
+    all <- df[df$site %in% site.names,]
+    for(i in 1:length(unique(all$agebreaks))){
+      lm.agebreak <- lm(RWI ~ Jul.pdsi, data = all[all$agebreaks %in% unique(all$agebreaks)[i],])
+      coef.list[[i]] <- lm.agebreak$coefficients
+    }
+    
+    coef <- do.call(rbind, coef.list)
+    coef.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
+                                intercept = coef[,1], 
+                          Jul.pdsislope = coef[,2])
+    
+    # get correlation coefficient for each group
+    cor.list <- list()
+    for(i in 1:length(unique(all$agebreaks))){
+      cor.list[[i]] <- cor(all[all$agebreaks %in% unique(all$agebreaks)[i],]$RWI, all[all$agebreaks %in% unique(all$agebreaks)[i],]$Jul.pdsi)
+    
+    }
+    
+    cors <- do.call(rbind, cor.list)
+    cors.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
+                          cor = cors[,1])
+    
+    # rearrang factor lists
+    cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 25", "25 - 50", "50 - 75", "75 - 100",
+                                                          "100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
+                                                          "225 - 250", "NA"))
+    
+    # plot based on correlation coefficient:
+    ggplot(cors.df, aes(agebreaks_f, cor))+geom_bar(stat= "identity")+theme_bw()+ylab("correlation with July PDSI")+xlab("Tree Age Classes")+ggtitle(site.names)
 }
 
-coef <- do.call(rbind, coef.list)
-coef.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
-                            intercept = coef[,1], 
-                      Jul.pdsislope = coef[,2])
-
-# get correlation coefficient for each group
-cor.list <- list()
-for(i in 1:length(unique(all$agebreaks))){
-  cor.list[[i]] <- cor(all[all$agebreaks %in% unique(all$agebreaks)[i],]$RWI, all[all$agebreaks %in% unique(all$agebreaks)[i],]$Jul.pdsi)
-
-}
-
-cors <- do.call(rbind, cor.list)
-cors.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
-                      cor = cors[,1])
-
-# rearrang factor lists
-cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 25", "25 - 50", "50 - 75", "75 - 100",
-                                                      "100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
-                                                      "225 - 250", "NA"))
-
-# plot based on correlation coefficient:
-ggplot(cors.df, aes(agebreaks_f, cor))+geom_bar(stat= "identity")
+plot.cor.by.age.site(df = all, site.names = "BON")
+plot.cor.by.age.site(df = all, site.names = "HIC")
+plot.cor.by.age.site(df = all, site.names = "STC")
+plot.cor.by.age.site(df = all, site.names = "COR")
+plot.cor.by.age.site(df = all, site.names = "UNC")
+plot.cor.by.age.site(df = all, site.names = "GLL1")
+plot.cor.by.age.site(df = all, site.names = "GLL2")
+plot.cor.by.age.site(df = all, site.names = "GLL3")
+plot.cor.by.age.site(df = all, site.names = "GLL4")
+plot.cor.by.age.site(df = all, site.names = "PLE")
+plot.cor.by.age.site(df = all, site.names = "PVC")
+plot.cor.by.age.site(df = all, site.names = "TOW")
+plot.cor.by.age.site(df = all, site.names = "MOU")
+plot.cor.by.age.site(df = all, site.names = "ENG")
