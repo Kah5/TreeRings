@@ -884,30 +884,30 @@ label.breaks <- function(beg, end, splitby){
 }
 
 # create classes of age groups by 25 years:
-all$agebreaks <- cut(all$Age, breaks = seq(0, 250, by = 25), labels = label.breaks(0,225,25))
+all$agebreaks <- cut(all$Age, breaks = seq(0, 250, by = 50), labels = label.breaks(0,200,50))
 
 X11(width = 12)
 ggplot(all, aes(Jul.pdsi, RWI))+geom_point()+stat_smooth(method = 'lm')+facet_grid(~agebreaks)
 
 # make a function to plot age based correlations with July PDSI climate of each site:
-plot.cor.by.age.site <- function(df, site.names){
+plot.cor.by.age.site <- function(df, site.names, clim){
     coef.list <- list()
     
     all <- df[df$site %in% site.names,]
     for(i in 1:length(unique(all$agebreaks))){
-      lm.agebreak <- lm(RWI ~ Jul.pdsi, data = all[all$agebreaks %in% unique(all$agebreaks)[i],])
+      lm.agebreak <- lm(all[all$agebreaks %in% unique(all$agebreaks)[i],]$RWI ~ all[all$agebreaks %in% unique(all$agebreaks)[i],c(clim)])
       coef.list[[i]] <- lm.agebreak$coefficients
     }
     
     coef <- do.call(rbind, coef.list)
     coef.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
                                 intercept = coef[,1], 
-                          Jul.pdsislope = coef[,2])
+                          slope = coef[,2])
     
     # get correlation coefficient for each group
     cor.list <- list()
     for(i in 1:length(unique(all$agebreaks))){
-      cor.list[[i]] <- cor(all[all$agebreaks %in% unique(all$agebreaks)[i],]$RWI, all[all$agebreaks %in% unique(all$agebreaks)[i],]$Jul.pdsi)
+      cor.list[[i]] <- cor(all[all$agebreaks %in% unique(all$agebreaks)[i],]$RWI, all[all$agebreaks %in% unique(all$agebreaks)[i],c(clim)])
     
     }
     
@@ -916,25 +916,43 @@ plot.cor.by.age.site <- function(df, site.names){
                           cor = cors[,1])
     
     # rearrang factor lists
-    cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 25", "25 - 50", "50 - 75", "75 - 100",
-                                                          "100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
-                                                          "225 - 250", "NA"))
+    #cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 25", "25 - 50", "50 - 75", "75 - 100",
+     #"100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
+      #                                                    "225 - 250", "NA"))
     
+    cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 50", "50 - 100", "100 - 150", "150 - 200", "200 - 250"))
+                                                               #"100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
+                                                               #                                                    "225 - 250", "NA"))
     # plot based on correlation coefficient:
-    ggplot(cors.df, aes(agebreaks_f, cor))+geom_bar(stat= "identity")+theme_bw()+ylab("correlation with July PDSI")+xlab("Tree Age Classes")+ggtitle(site.names)
+    ggplot(cors.df, aes(agebreaks_f, cor))+geom_bar(stat= "identity")+theme_bw()+ylab(paste("correlation with", clim))+xlab("Tree Age Classes")+ggtitle(site.names)
 }
 
-plot.cor.by.age.site(df = all, site.names = "BON")
-plot.cor.by.age.site(df = all, site.names = "HIC")
-plot.cor.by.age.site(df = all, site.names = "STC")
-plot.cor.by.age.site(df = all, site.names = "COR")
-plot.cor.by.age.site(df = all, site.names = "UNC")
-plot.cor.by.age.site(df = all, site.names = "GLL1")
-plot.cor.by.age.site(df = all, site.names = "GLL2")
-plot.cor.by.age.site(df = all, site.names = "GLL3")
-plot.cor.by.age.site(df = all, site.names = "GLL4")
-plot.cor.by.age.site(df = all, site.names = "PLE")
-plot.cor.by.age.site(df = all, site.names = "PVC")
-plot.cor.by.age.site(df = all, site.names = "TOW")
-plot.cor.by.age.site(df = all, site.names = "MOU")
-plot.cor.by.age.site(df = all, site.names = "ENG")
+plot.cor.by.age.site(df = all, site.names = "BON", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "HIC", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "STC", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "COR", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "UNC", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "GLL1", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "GLL2", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "GLL3", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "GLL4", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "PLE", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "PVC", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "TOW", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "MOU", clim = "PDSI")
+plot.cor.by.age.site(df = all, site.names = "ENG", clim = "PDSI")
+
+plot.cor.by.age.site(df = all, site.names = "BON", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "HIC", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "STC", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "COR", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "UNC", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "GLL1", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "GLL2", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "GLL3", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "GLL4", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "PLE", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "PVC", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "TOW", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "MOU", clim = "TMIN")
+plot.cor.by.age.site(df = all, site.names = "ENG", clim = "TMIN")
