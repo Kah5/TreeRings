@@ -8,6 +8,7 @@ library(dplR)
 library(reshape2)
 library(ggplot2)
 library(plyr)
+library(boot)
 
 wood <- "WW"
 #read in whole ring width file for site
@@ -49,8 +50,8 @@ if(wood == "EW"){
   }}
 
 #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
-site <- PVC
-site.code <- "PVC"
+site <- Townsend
+site.code <- "TOW"
 
 
 ##################################################
@@ -213,14 +214,41 @@ axis(4, col = "red", col.axis = "red")
 mtext("Temperature (degF)", side = 4, line=3, cex = par("cex.lab"), col = "red")
 dev.off()
 
-#plot annual precip
 
 
-
+# calculation correlations
 
 record.MN <- merge(precip, site.code.crn, by = "Year")
+boot.cor <- function(d,i=c(1:n), colno ){
+  d2 <- d[i,2:14]
+  
+  
+  return(cor(d2[,colno], d2[,13], use = "pairwise.complete.obs"))
+}
+pcors <- matrix(0, nrow = 12, ncol = 3)
+colnos <- 1:12
 
-site.code.Pcors <- cor(record.MN[,2:13], record.MN[,14], use = "pairwise.complete.obs")
+for(mo in 1:length(colnos)){
+
+    boot.results<- boot(d = record.MN,colno=mo , boot.cor, R= 500)
+    
+    cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+    ci.mo <- cis$normal[2:3]
+    t <- boot.results$t0
+    pcors[mo,1] <- t
+    pcors[mo,2]<- ci.mo[1]
+    pcors[mo,3]<- ci.mo[2]
+
+
+}
+
+# do correlation for previous years climatecors
+pprevcors <- matrix(0, nrow = 12, ncol = 3)
+colnos <- 1:12
+
+
+
+site.code.Pcors <- pcors
 site.code.Pprev <- cor(record.MN[1:120,2:13], record.MN[2:121,14], use = "pairwise.complete.obs")
 site.code.Pcors
 site.code.Pprev
