@@ -38,13 +38,13 @@ library(dlm)
 
 val <- molten.BON
 clim <- "Jul.pdsi"
-
+site.code<- "BON"
 kalman.plot <- function(val, clim, site.code){
 
   
   
     # convert to xts objects
-    tr<- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
+    tr <- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
     
     pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
     
@@ -56,11 +56,11 @@ kalman.plot <- function(val, clim, site.code){
     s2_alpha = 0.0001 # Variance of the alpha regression parameter
     s2_beta = 0.0001  # Variance of the beta regression parameter
     s2_beta2 = 0.0001 
-    
-    # Construct a regression model
+  
+   
     tvp.dlm = dlmModReg(X=pdsi, addInt=TRUE, dV=s2_obs, dW=c(s2_alpha, s2_beta))
     
-    #Now that we have define a model, we can view its different component:
+    #Now that we have defined a model, we can view its different component:
     
     # looking at the various component
     tvp.dlm[c("FF","V","GG","W","m0","C0")]
