@@ -30,18 +30,47 @@ months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
             "Aug", "Sep", "Oct", "Nov", "Dec")
 
 tavg$months <- months
-colnames(tavg) <- c('mono', 'tavg', 'months')
-full <- tavg
-full$tmin <- tmin$V1
-full$tmax <- tmax$V1
-full$precip <- precip$V1
-full$PDSI <- PDSI$V1
+colnames(tavg) <- c('mono', 'tavg', 'months', "ci.min", "ci.max")
+full <- tavg[,c('mono', "tavg", "months")]
+cimin <- tavg[c('mono', 'months', "ci.min")]
+colnames(cimin) <- c('mono', 'months', "tavg")
+cimax <- tavg[c('mono', 'months', "ci.max")]
+colnames(cimax) <- c('mono', 'months', "tavg")
+
+full$tmin <- tmin$cor
+cimin$tmin <- tmin$ci.min
+cimax$tmin <- tmin$ci.max
+
+full$tmax <- tmax$cor
+cimin$tmax <- tmax$ci.min
+cimax$tmax <- tmax$ci.max
+
+full$precip <- precip$cor
+cimin$precip <- precip$ci.min
+cimax$precip <- precip$ci.max
+
+full$PDSI <- PDSI$cor
+cimin$PDSI <- PDSI$ci.min
+cimax$PDSI <- PDSI$ci.max
+
 cors.melt <- melt(full, id.vars = c('months', 'mono'))
-cors.melt$months <- factor(cors.melt$months, levels=full$months)
-cors.melt[order(cors.melt$months),]
-output<- ggplot(data = cors.melt, aes(months, value, fill = variable))+
+cimin.melt <- melt(cimin, id.vars = c("months", "mono"))
+cimax.melt <- melt(cimax, id.vars = c("months", "mono"))
+colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.min")
+colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.max")
+m1 <- merge(cors.melt, cimin.melt, by = c("months", "mono", "variable"))
+m2 <- merge(m1, cimax.melt, by = c("months", "mono", "variable"))
+colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
+m2$months <- factor(m2$months, levels=full$months)
+m2[order(m2$months),]
+
+# plot all the barplots in the same plot:
+output<- ggplot(data = m2, aes(months, cor, fill = variable))+
   geom_bar(stat = 'identity', position = position_dodge()) + 
-  facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))
+  facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))+
+  geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                 width=.2,                    # Width of the error bars
+                 position=position_dodge(.9))
 output
 }
 
