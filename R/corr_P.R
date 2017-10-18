@@ -216,50 +216,57 @@ dev.off()
 
 
 
-# calculation correlations
+# calculate bootstrapped correlations correlations of precip
 
+# need to create data frame of the current year precip & previous years precip:
 record.MN <- merge(precip, site.code.crn, by = "Year")
+prevs <- cbind(record.MN[2:121,1], record.MN[1:120,2:13])
+# rename with appropriate months
+colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+colnames(record.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+#merge previous and current together:
+record.MN <- merge(prevs, record.MN, by = "Year")
+
+# function to do the bootstrapping correlations
 boot.cor <- function(d,i=c(1:n), colno ){
-  d2 <- d[i,2:14]
+  d2 <- d[i,2:26]
   
   
-  return(cor(d2[,colno], d2[,13], use = "pairwise.complete.obs"))
+  return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
 }
-pcors <- matrix(0, nrow = 12, ncol = 3)
-colnos <- 1:12
 
-for(mo in 1:length(colnos)){
+pcors <- matrix(0, nrow = 24, ncol = 4)
+colnos <- 1:24
 
-    boot.results<- boot(d = record.MN,colno=mo , boot.cor, R= 500)
+# run the bootstrapped correlation function over all the months and calculate CI:
+for(mo in 2:length(colnos)){
+
+    boot.results <- boot(d = record.MN, colno=mo , boot.cor, R= 500)
     
     cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
     ci.mo <- cis$normal[2:3]
     t <- boot.results$t0
     pcors[mo,1] <- t
-    pcors[mo,2]<- ci.mo[1]
-    pcors[mo,3]<- ci.mo[2]
-
+    pcors[mo,2] <- mo
+    pcors[mo,3]<- ci.mo[1]
+    pcors[mo,4]<- ci.mo[2]
+    pcors <-  data.frame(pcors)
+    colnames(pcors) <- c("cor", "month","ci.min", "ci.max")
 
 }
 
-# do correlation for previous years climatecors
-pprevcors <- matrix(0, nrow = 12, ncol = 3)
-colnos <- 1:12
+# make a basic barplot with the bootstrapped CI as errorbars:
+ggplot(pcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                width=.2,                    # Width of the error bars
+                position=position_dodge(.9))
 
+# write for later use
+write.csv(pcors, paste0("data/BootCors/",site.code, "-", wood, "Precipcor.csv"))
 
+#----------------------------------TMAX---------------------------------------
 
-site.code.Pcors <- pcors
-site.code.Pprev <- cor(record.MN[1:120,2:13], record.MN[2:121,14], use = "pairwise.complete.obs")
-site.code.Pcors
-site.code.Pprev
-
-precip <- rbind(site.code.Pcors, site.code.Pprev)
-write.csv(precip, paste0(site.code, "-", wood, "Precipcor.csv"))
-#plot the correlations by month 
-barplot(t(site.code.Pcors),ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with Precip."))
-barplot(t(site.code.Pprev), ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year Precip"))
-##
-#now with max T
+#now find bootstrapped correlations with TMAX
 mean.t <- aggregate(TMAX~Year + Month, data=MNt.df, FUN=sum, na.rm = T) 
 mean.t
 
@@ -276,17 +283,55 @@ site.code.crn$Year <- rownames(site.code.crn)
 temp.MN <- merge(temp, site.code.crn, by = "Year")
 
 #correlate the chronology with temperature
-site.code.Tcors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
-site.code.Tmaxprev<- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
+# need to create data frame of the current year precip & previous years precip:
 
-temps <- rbind(site.code.Tmaxprev, site.code.Tcors)
-write.csv(temps, paste0(site.code, "-", wood, "tmaxcor.csv"))
+prevs <- cbind(temp.MN[2:121,1], temp.MN[1:120,2:13])
+# rename with appropriate months
+colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+colnames(temp.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
-#plot the correlations by month 
-barplot(t(site.code.Tcors), ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with Maximum Temperature"))
-barplot(t(site.code.Tmaxprev), ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year Maximum Temperature"))
+#merge previous and current together:
+temp.MN <- merge(prevs,temp.MN, by = "Year")
 
-#now with Tmin
+# function to do the bootstrapping correlations
+boot.cor <- function(d,i=c(1:n), colno ){
+  d2 <- d[i,2:26]
+  
+  
+  return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+}
+
+tcors <- matrix(0, nrow = 24, ncol = 4)
+colnos <- 1:24
+
+# run the bootstrapped correlation function over all the months and calculate CI:
+for(mo in 2:length(colnos)){
+  
+  boot.results <- boot(d = temp.MN, colno=mo , boot.cor, R= 500)
+  
+  cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+  ci.mo <- cis$normal[2:3]
+  t <- boot.results$t0
+  tcors[mo,1] <- t
+  tcors[mo,2] <- mo
+  tcors[mo,3]<- ci.mo[1]
+  tcors[mo,4]<- ci.mo[2]
+  tcors <-  data.frame(tcors)
+  colnames(tcors) <- c("cor", "month","ci.min", "ci.max")
+  
+}
+
+# make a basic barplot with the bootstrapped CI as errorbars:
+ggplot(tcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                                                                       width=.2,                    # Width of the error bars
+                                                                       position=position_dodge(.9))
+
+# write for later use
+
+write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tmaxcor.csv"))
+
+
+#-------------------------------------- Tmin -----------------------------------------
 min.t <- aggregate(TMIN~Year + Month, data=MNtmin.df, FUN=sum, na.rm = T) 
 min.t
 
@@ -302,22 +347,54 @@ site.code.crn$Year <- rownames(site.code.crn)
 
 temp.MN <- merge(temp.min, site.code.crn, by = "Year")
 
-#correlate the chronology with temperature
-site.code.Tmincors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
-site.code.Tminprev <- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
+prevs <- cbind(temp.MN[2:121,1], temp.MN[1:120,2:13])
+# rename with appropriate months
+colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+colnames(temp.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
-tmin <- rbind( site.code.Tminprev, site.code.Tmincors)
-write.csv(tmin, paste0(site.code, "-", wood, "tmincor.csv"))
+#merge previous and current together:
+temp.MN <- merge(prevs,temp.MN, by = "Year")
+
+# function to do the bootstrapping correlations
+boot.cor <- function(d,i=c(1:n), colno ){
+  d2 <- d[i,2:26]
+  
+  
+  return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+}
+
+tcors <- matrix(0, nrow = 24, ncol = 4)
+colnos <- 1:24
+
+# run the bootstrapped correlation function over all the months and calculate CI:
+for(mo in 2:length(colnos)){
+  
+  boot.results <- boot(d = temp.MN, colno=mo , boot.cor, R= 500)
+  
+  cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+  ci.mo <- cis$normal[2:3]
+  t <- boot.results$t0
+  tcors[mo,1] <- t
+  tcors[mo,2] <- mo
+  tcors[mo,3]<- ci.mo[1]
+  tcors[mo,4]<- ci.mo[2]
+  tcors <-  data.frame(tcors)
+  colnames(tcors) <- c("cor", "month","ci.min", "ci.max")
+  
+}
+
+# make a basic barplot with the bootstrapped CI as errorbars:
+ggplot(tcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                                                                       width=.2,                    # Width of the error bars
+                                                                       position=position_dodge(.9))
+
+write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tmincor.csv"))
 
 
-#plot the correlations by month 
-site.codetmin.p <- barplot(t(site.code.Tmincors), ylim= c(-0.25, 0.5), main = paste(site.code, "Correlation with Minimum Temperature"))
-site.codetminprev.p<- barplot(t(site.code.Tminprev),ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year Minimum Temperature"))
-
-
+#-----------------------------------------TAVG----------------------------------------
 
 #average temperature
-#now with Tmin
+
 avg.t <- aggregate(TAVG~Year + Month, data=MNtavg.df, FUN=sum, na.rm = T) 
 avg.t
 
@@ -333,15 +410,51 @@ site.code.crn$Year <- rownames(site.code.crn)
 
 temp.MN <- merge(temp.avg, site.code.crn, by = "Year")
 
-#correlate the chronology with temperature
-site.code.Tavgcors <- cor(temp.MN[,2:13], temp.MN[,14], use = "pairwise.complete.obs")
-site.code.Tavgprev <- cor(temp.MN[1:120,2:13], temp.MN[2:121,14], use = "pairwise.complete.obs")
+prevs <- cbind(temp.MN[2:121,1], temp.MN[1:120,2:13])
+# rename with appropriate months
+colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+colnames(temp.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
-tavg <- rbind(site.code.Tavgprev, site.code.Tavgcors )
-write.csv(tavg, paste0(site.code, "-", wood, "tavgcor.csv"))
+#merge previous and current together:
+temp.MN <- merge(prevs,temp.MN, by = "Year")
+
+# function to do the bootstrapping correlations
+boot.cor <- function(d,i=c(1:n), colno ){
+  d2 <- d[i,2:26]
+  
+  
+  return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+}
+
+tcors <- matrix(0, nrow = 24, ncol = 4)
+colnos <- 1:24
+
+# run the bootstrapped correlation function over all the months and calculate CI:
+for(mo in 2:length(colnos)){
+  
+  boot.results <- boot(d = temp.MN, colno=mo , boot.cor, R= 500)
+  
+  cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+  ci.mo <- cis$normal[2:3]
+  t <- boot.results$t0
+  tcors[mo,1] <- t
+  tcors[mo,2] <- mo
+  tcors[mo,3]<- ci.mo[1]
+  tcors[mo,4]<- ci.mo[2]
+  tcors <-  data.frame(tcors)
+  colnames(tcors) <- c("cor", "month","ci.min", "ci.max")
+  
+}
+
+# make a basic barplot with the bootstrapped CI as errorbars:
+ggplot(tcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                                                                       width=.2,                    # Width of the error bars
+                                                                       position=position_dodge(.9))
+
+write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tavgcor.csv"))
 
 
-##now with PDSI
+#------------------------------------PDSI--------------------------------------------
 pdsi <- aggregate(PDSI~Year + Month, data=MNpdsi.df, FUN=sum, na.rm = T) 
 pdsi
 
@@ -357,16 +470,48 @@ site.code.crn$Year <- rownames(site.code.crn)
 
 pdsi.MN <- merge(drought, site.code.crn, by = "Year")
 
-#correlate the chronology with temperature
-site.code.PDSIcors <- cor(pdsi.MN[,2:13], pdsi.MN[,14], use = "pairwise.complete.obs")
-site.code.PDSIprev <- cor(pdsi.MN[1:120,2:13], pdsi.MN[2:121,14], use = "pairwise.complete.obs")
+prevs <- cbind(pdsi.MN[2:121,1], pdsi.MN[1:120,2:13])
+# rename with appropriate months
+colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+colnames(pdsi.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
-pdsis <- rbind(site.code.PDSIprev,site.code.PDSIcors)
-write.csv(pdsis, paste0(site.code, "-", wood, "PDSIcor.csv"))
+#merge previous and current together:
+pdsi.MN <- merge(prevs, pdsi.MN, by = "Year")
 
-#plot the correlations by month 
-PDSI.b<- barplot(t(site.code.PDSIcors),ylim = c(-0.25, 0.5), main = paste(site.code,"Correlation with PDSI"))
-pdsi.prev <- barplot(t(site.code.PDSIprev),ylim = c(-0.25, 0.5), main = paste(site.code, "Correlation with previous year PDSI"))
+# function to do the bootstrapping correlations
+boot.cor <- function(d,i=c(1:n), colno ){
+  d2 <- d[i,2:26]
+  
+  
+  return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+}
+
+pdsicors <- matrix(0, nrow = 24, ncol = 4)
+colnos <- 1:24
+
+# run the bootstrapped correlation function over all the months and calculate CI:
+for(mo in 2:length(colnos)){
+  
+  boot.results <- boot(d = pdsi.MN, colno=mo , boot.cor, R= 500)
+  
+  cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+  ci.mo <- cis$normal[2:3]
+  t <- boot.results$t0
+  pdsicors[mo,1] <- t
+  pdsicors[mo,2] <- mo
+  pdsicors[mo,3]<- ci.mo[1]
+  pdsicors[mo,4]<- ci.mo[2]
+  pdsicors <-  data.frame(pdsicors)
+  colnames(pdsicors) <- c("cor", "month","ci.min", "ci.max")
+  
+}
+
+# make a basic barplot with the bootstrapped CI as errorbars:
+ggplot(pdsicors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                                                                       width=.2,                    # Width of the error bars
+                                                                       position=position_dodge(.9))
+
+write.csv(pdsicors, paste0("data/BootCors/",site.code, "-", wood, "PDSIcor.csv"))
 
 
 
