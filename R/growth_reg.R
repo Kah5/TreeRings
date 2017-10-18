@@ -18,11 +18,11 @@ library(gridExtra)
 #read in growth crns and make individual barplot correlations for each site
 
 cor.barplot <- function(site.code){
-tavg <- read.csv(paste0(site.code, '-WWtavgcor.csv'))
-tmin <- read.csv(paste0(site.code, '-WWtmincor.csv'))
-tmax <- read.csv(paste0(site.code, '-WWtmaxcor.csv'))
-precip <- read.csv(paste0(site.code, '-WWPrecipcor.csv'))
-PDSI <- read.csv(paste0(site.code, '-WWPDSIcor.csv'))
+tavg <- read.csv(paste0("data/BootCors/",site.code, '-WWtavgcor.csv'))
+tmin <- read.csv(paste0("data/BootCors/",site.code, '-WWtmincor.csv'))
+tmax <- read.csv(paste0("data/BootCors/",site.code, '-WWtmaxcor.csv'))
+precip <- read.csv(paste0("data/BootCors/",site.code, '-WWPrecipcor.csv'))
+PDSI <- read.csv(paste0("data/BootCors/",site.code, '-WWPDSIcor.csv'))
 
 months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
             "pAug", "pSep", "pOct", "pNov", "pDec",
