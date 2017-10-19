@@ -235,7 +235,7 @@ clim.PRISM.corrs <- function(site, site.code){
                     position=position_dodge(.9))
     
     # write for later use
-    write.csv(pcors, paste0("data/BootCors/",site.code, "-", wood, "Precipcor.csv"))
+    write.csv(pcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "Precipcor.csv"))
     
     #----------------------------------TMAX---------------------------------------
     
@@ -301,7 +301,7 @@ clim.PRISM.corrs <- function(site, site.code){
     
     # write for later use
     
-    write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tmaxcor.csv"))
+    write.csv(tcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "tmaxcor.csv"))
     
     
     #-------------------------------------- Tmin -----------------------------------------
@@ -361,7 +361,7 @@ clim.PRISM.corrs <- function(site, site.code){
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tmincor.csv"))
+    write.csv(tcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "tmincor.csv"))
     
     
     #-----------------------------------------TAVG----------------------------------------
@@ -424,7 +424,7 @@ clim.PRISM.corrs <- function(site, site.code){
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tavgcor.csv"))
+    write.csv(tcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "tavgcor.csv"))
     
     
     #---------------------------Monthly Water Balance (P-PET)--------------------------------------------
@@ -484,11 +484,128 @@ clim.PRISM.corrs <- function(site, site.code){
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(BALcors, paste0("data/BootCors/",site.code, "-", wood, "BALcor.csv"))
+    write.csv(BALcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "BALcor.csv"))
 
     
     # ----------------------------- VPD min -------------------------------
     
+    vpdmin <- aggregate(VPDmin~Year + Month, data=MNvpdmin.df, FUN=sum, na.rm = T) 
+    vpdmin
+    
+    drought <- dcast(vpdmin, Year  ~ Month)
+    
+    
+    #create violin plot of monthly precip
+    ggplot(vpdmin, aes(x = factor(Month), y = VPDmin))+ geom_violin(fill = "orange") +
+      geom_point( colour= "blue")
+    
+    site.code.crn$Year <- rownames(site.code.crn)
+    
+    
+    vpdmin.MN <- merge(drought, site.code.crn, by = "Year")
+    
+    prevs <- cbind(vpdmin.MN[2:121,1], vpdmin.MN[1:120,2:13])
+    # rename with appropriate months
+    colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+    colnames(vpdmin.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    
+    #merge previous and current together:
+    vpdmin.MN <- merge(prevs, vpdmin.MN, by = "Year")
+    
+    # function to do the bootstrapping correlations
+    boot.cor <- function(d,i=c(1:n), colno ){
+      d2 <- d[i,2:26]
+      
+      
+      return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+    }
+    
+    vpdmincors <- matrix(0, nrow = 24, ncol = 4)
+    colnos <- 1:24
+    
+    # run the bootstrapped correlation function over all the months and calculate CI:
+    for(mo in 2:length(colnos)){
+      
+      boot.results <- boot(d = vpdmin.MN, colno=mo , boot.cor, R= 500)
+      
+      cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+      ci.mo <- cis$normal[2:3]
+      t <- boot.results$t0
+      vpdmincors[mo,1] <- t
+      vpdmincors[mo,2] <- mo
+      vpdmincors[mo,3]<- ci.mo[1]
+      vpdmincors[mo,4]<- ci.mo[2]
+      vpdmincors <-  data.frame(vpdmincors)
+      colnames(vpdmincors) <- c("cor", "month","ci.min", "ci.max")
+      
+    }
+    
+    # make a basic barplot with the bootstrapped CI as errorbars:
+    ggplot(vpdmincors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                                                                             width=.2,                    # Width of the error bars
+                                                                             position=position_dodge(.9))
+    
+    write.csv(vpdmincors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "BALcor.csv"))
+    
     # ----------------------------- VPD max ------------------------------
+    
+    vpdmax <- aggregate(VPDmax~Year + Month, data=MNvpdmax.df, FUN=sum, na.rm = T) 
+    vpdmax
+    
+    drought <- dcast(vpdmax, Year  ~ Month)
+    
+    
+    #create violin plot of monthly precip
+    ggplot(vpdmax, aes(x = factor(Month), y = VPDmax))+ geom_violin(fill = "orange") +
+      geom_point( colour= "blue")
+    
+    site.code.crn$Year <- rownames(site.code.crn)
+    
+    
+    vpdmax.MN <- merge(drought, site.code.crn, by = "Year")
+    
+    prevs <- cbind(vpdmax.MN[2:121,1], vpdmax.MN[1:120,2:13])
+    # rename with appropriate months
+    colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
+    colnames(vpdmax.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    
+    #merge previous and current together:
+    vpdmax.MN <- merge(prevs, vpdmax.MN, by = "Year")
+    
+    # function to do the bootstrapping correlations
+    boot.cor <- function(d,i=c(1:n), colno ){
+      d2 <- d[i,2:26]
+      
+      
+      return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+    }
+    
+    vpdmaxcors <- matrix(0, nrow = 24, ncol = 4)
+    colnos <- 1:24
+    
+    # run the bootstrapped correlation function over all the months and calculate CI:
+    for(mo in 2:length(colnos)){
+      
+      boot.results <- boot(d = vpdmax.MN, colno=mo , boot.cor, R= 500)
+      
+      cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
+      ci.mo <- cis$normal[2:3]
+      t <- boot.results$t0
+      vpdmaxcors[mo,1] <- t
+      vpdmaxcors[mo,2] <- mo
+      vpdmaxcors[mo,3]<- ci.mo[1]
+      vpdmaxcors[mo,4]<- ci.mo[2]
+      vpdmaxcors <-  data.frame(vpdmaxcors)
+      colnames(vpdmaxcors) <- c("cor", "month","ci.min", "ci.max")
+      
+    }
+    
+    # make a basic barplot with the bootstrapped CI as errorbars:
+    ggplot(vpdmaxcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                                                                                width=.2,                    # Width of the error bars
+                                                                                position=position_dodge(.9))
+    
+    write.csv(vpdmaxcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "BALcor.csv"))
+    
 }
 

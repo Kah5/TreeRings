@@ -78,7 +78,7 @@ if(wood == "EW"){
 
 # run the R/corr_P.R script over all of the sites:
 source("R/corr_P.R")
-woods <- c( "EW", "LW")
+woods <- c("WW" ,"EW", "LW")
 
 for(w in 1:length(woods)){
   wood <- woods[w] # run script over all wood types

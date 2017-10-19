@@ -223,7 +223,7 @@ clim.corrs <- function(site, site.code){
                     position=position_dodge(.9))
     
     # write for later use
-    write.csv(pcors, paste0("data/BootCors/",site.code, "-", wood, "Precipcor.csv"))
+    write.csv(pcors, paste0("data/BootCors/GHCN/",site.code, "-", wood, "Precipcor.csv"))
     
     #----------------------------------TMAX---------------------------------------
     
@@ -289,7 +289,7 @@ clim.corrs <- function(site, site.code){
     
     # write for later use
     
-    write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tmaxcor.csv"))
+    write.csv(tcors, paste0("data/BootCors/GHCN/",site.code, "-", wood, "tmaxcor.csv"))
     
     
     #-------------------------------------- Tmin -----------------------------------------
@@ -349,7 +349,7 @@ clim.corrs <- function(site, site.code){
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tmincor.csv"))
+    write.csv(tcors, paste0("data/BootCors/GHCN/",site.code, "-", wood, "tmincor.csv"))
     
     
     #-----------------------------------------TAVG----------------------------------------
@@ -412,7 +412,7 @@ clim.corrs <- function(site, site.code){
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tavgcor.csv"))
+    write.csv(tcors, paste0("data/BootCors/GHCN/",site.code, "-", wood, "tavgcor.csv"))
     
     
     #------------------------------------PDSI--------------------------------------------
@@ -472,7 +472,7 @@ clim.corrs <- function(site, site.code){
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(pdsicors, paste0("data/BootCors/",site.code, "-", wood, "PDSIcor.csv"))
+    write.csv(pdsicors, paste0("data/BootCors/GHCN/",site.code, "-", wood, "PDSIcor.csv"))
 
 }
 
