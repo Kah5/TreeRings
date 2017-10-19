@@ -5,7 +5,8 @@
 library(dplR)
 
 # This function renames many of the early tree ring records recorded (we had inconsistant naming structure at the beginning)
-clean_rwl <- function(site, rwl.file){
+
+clean_rwl <- function(site, rwl.file, wood){
   if(site == "HIC"){
     newseries <- read.rwl(rwl.file)
     new <- colnames(newseries)
@@ -18,14 +19,14 @@ clean_rwl <- function(site, rwl.file){
       }
     colnames(newseries) <- new
     #read.ids(newseries,stc = c(3,3,3))
-    write.rwl(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson")
+    write.rwl(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson")
   }else{
     if(site == "STC"){
       newseries <- read.rwl(rwl.file)
       colnames(newseries) <- c("STC2c11", "STC2b11", "STC2a11", "STC4b11", "STC4c11", "STC5a11", 
                               "STC5b11", "STC5c11", "STC6a11", "STC6c11", "STC6b11", "STC7b11",
                               "STC7c11", "STC8a11", "STC8b11", "STC8c11", "STC9a11", "STC9c11", "STC9b11")
-      write.rwl(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson")
+      write.rwl(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson")
       
     }else{
       if(site == "BON"){
@@ -36,7 +37,7 @@ clean_rwl <- function(site, rwl.file){
         
       
         read.ids(newseries, "auto")
-        write.rwl(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson")
+        write.rwl(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson")
         
       }else{
         if(site == "MOU"){
@@ -44,7 +45,7 @@ clean_rwl <- function(site, rwl.file){
           # check these for MOU:
           colnames(newseries) <- c("MOU1a1", "MOU2a1", "MOU2b1" ,"MOU2c1", "MOU311", "MOU3a1", "MOU3b1", "MOU3c1", "MOU440", "MOU441", "MOU4b1", "MOU511",
                                     "MOU5a1", "MOU611", "MOU6a1", "MOU6b1", "MOU6c1")
-            write.rwl(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson")
+            write.rwl(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson")
           
         }else{
           if(site == "GLA"){
@@ -53,13 +54,13 @@ clean_rwl <- function(site, rwl.file){
                                     "GLA609a1", "GLA0609b", "GLA609c", "GLA0867a", "GLA0869a", "GLA0869b", "GLA0869c" ,"GLA0870c", "GLA0870a", "GLA0870b",
                                     "GLA870c1", "GLA0871a", "GLA0871b", "GLA0871c1", "GLA0872b", "GLA0872c", "GLA0873c" ,"GLA0873a", "GLA999a")
           #read.ids(newseries, "auto")
-          write.tucson(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson", long.names=TRUE)
+          write.tucson(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson", long.names=TRUE)
           
           
           }else{
             if(site %in% c("UNC", "TOW", "ENG", "PLE","GLL1", "GLL2", "GLL3", "GLL4", "PVC")){
             newseries <- read.rwl(rwl.file)
-            write.tucson(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson", long.names=TRUE)
+            write.tucson(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson", long.names=TRUE)
             
             }else{
               if(site == "COR"){
@@ -77,7 +78,7 @@ clean_rwl <- function(site, rwl.file){
                 colnames(newseries) <- new
                 
               }else{cat("NA")}
-              write.tucson(newseries, fname = paste0("./cleanrwl/",site,"ww.rwl") , format="tucson", long.names=TRUE)
+              write.tucson(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson", long.names=TRUE)
               
             }}
           
@@ -89,21 +90,56 @@ clean_rwl <- function(site, rwl.file){
 
 
 # run the function on all the sites we have measured:
-clean_rwl(site = "HIC", rwl.file = "./cofecha/HICww.rwl")
-clean_rwl(site = "BON", rwl.file = "./cofecha/BONww.rwl")
-clean_rwl(site = "STC", rwl.file = "./cofecha/STCww.rwl")
-clean_rwl(site = "TOW", rwl.file = './cofecha/tow/TOWww.rwl')
-clean_rwl(site = "MOU", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/MOU.rwl")
-clean_rwl(site = "ENG", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/ENG.rwl")
-clean_rwl(site = "UNC", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/UNC.rwl")
-clean_rwl(site = "GLA", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLA.rwl")
-clean_rwl(site = "COR", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/COR.rwl")
-clean_rwl(site = "GLL1", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLL1.rwl")
-clean_rwl(site = "GLL2", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLL2.rwl")
-clean_rwl(site = "GLL3", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLL3.rwl")
-clean_rwl(site = "GLL4", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/GLL4.rwl")
-clean_rwl(site = "PLE", rwl.file = './cofecha/PLEww.rwl')
-clean_rwl(site = "PVC", rwl.file = "C:/Users/JMac/Documents/Kelly/crossdating/data/cofecha/PVC.rwl")
+# for Whole Ring widths:
+clean_rwl(site = "HIC", rwl.file = "./cofecha/HICww.rwl", "ww")
+clean_rwl(site = "BON", rwl.file = "./cofecha/BONww.rwl", "ww")
+clean_rwl(site = "STC", rwl.file = "./cofecha/STCww.rwl", "ww")
+clean_rwl(site = "TOW", rwl.file = './cofecha/tow/TOWww.rwl', "ww")
+clean_rwl(site = "MOU", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/MOU.rwl", "ww")
+clean_rwl(site = "ENG", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/ENG.rwl", "ww")
+clean_rwl(site = "UNC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/UNC.rwl", "ww")
+clean_rwl(site = "GLA", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLA.rwl", "ww")
+clean_rwl(site = "COR", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/COR.rwl", "ww")
+clean_rwl(site = "GLL1", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL1.rwl", "ww")
+clean_rwl(site = "GLL2", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL2.rwl", "ww")
+clean_rwl(site = "GLL3", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL3.rwl", "ww")
+clean_rwl(site = "GLL4", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL4.rwl", "ww")
+clean_rwl(site = "PLE", rwl.file = './cofecha/PLEww.rwl', "ww")
+clean_rwl(site = "PVC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/PVC.rwl", "ww")
 
+# for Earlywood
+clean_rwl(site = "HIC", rwl.file = "./cofecha/HICew.rwl", "ew")
+clean_rwl(site = "BON", rwl.file = "./cofecha/BONew.rwl", "ew")
+# clean_rwl(site = "STC", rwl.file = "./cofecha/STCew.rwl", "ew")
+clean_rwl(site = "TOW", rwl.file = './cofecha/tow/TOWew.rwl', "ew")
+clean_rwl(site = "MOU", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/MOUearlywood width.rwl", "ew")
+clean_rwl(site = "ENG", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/ENGearlywood width.rwl", "ew")
+clean_rwl(site = "UNC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/UNCearlywood width.rwl", "ew")
+clean_rwl(site = "GLA", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLAearlywood width.rwl", "ew")
+clean_rwl(site = "COR", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/CORearlywood width.rwl", "ew")
+clean_rwl(site = "GLL1", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL1earlywood width.rwl", "ew")
+clean_rwl(site = "GLL2", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL2earlywood width.rwl", "ew")
+clean_rwl(site = "GLL3", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL3earlywood width.rwl", "ew")
+clean_rwl(site = "GLL4", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL4earlywood width.rwl", "ew")
+clean_rwl(site = "PLE", rwl.file = './cofecha/PLEew.rwl', "ew")
+clean_rwl(site = "PVC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/PVCearlywood width.rwl", "ew")
+
+
+# for latewood:
+clean_rwl(site = "HIC", rwl.file = "./cofecha/HIClw.rwl", "lw")
+clean_rwl(site = "BON", rwl.file = "./cofecha/BONlw.rwl", "lw")
+# clean_rwl(site = "STC", rwl.file = "./cofecha/STCew.rwl", "ew")
+clean_rwl(site = "TOW", rwl.file = './cofecha/tow/TOWlw.rwl', "lw")
+clean_rwl(site = "MOU", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/MOUlatewood width.rwl", "lw")
+#clean_rwl(site = "ENG", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/ENGlatewood width.rwl", "lw")
+clean_rwl(site = "UNC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/UNClatewood width.rwl", "lw")
+clean_rwl(site = "GLA", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLAlatewood width.rwl", "lw")
+clean_rwl(site = "COR", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/CORlatewood width.rwl", "lw")
+clean_rwl(site = "GLL1", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL1latewood width.rwl", "lw")
+clean_rwl(site = "GLL2", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL2latewood width.rwl", "lw")
+clean_rwl(site = "GLL3", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL3latewood width.rwl", "lw")
+clean_rwl(site = "GLL4", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL4latewood width.rwl", "lw")
+clean_rwl(site = "PLE", rwl.file = './cofecha/PLEew.rwl', "lw")
+clean_rwl(site = "PVC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/PVClatewood width.rwl", "lw")
 
 
