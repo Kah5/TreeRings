@@ -78,7 +78,7 @@ site.cd <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU", "GL1
 #run for loop and save plots to outputs/barplots
 
 for(i in 1:length(site.cd)){
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/barplots",paste("barplots_", site.cd[i], ".png", sep = ""))
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/barplots",paste("barplots_", site.cd[i], ".png", sep = ""))
   cor.barplot(site.cd[i]) 
   ggsave(filename=mypath)
 }

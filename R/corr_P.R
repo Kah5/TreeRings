@@ -132,11 +132,11 @@ clim.corrs <- function(site, site.code){
     annual.maxt <- aggregate(TMAX ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
     annual.PDSI <- aggregate(PDSI ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
     
-    write.csv(annual.p, paste0(site.code, '-annualP.csv'))
-    write.csv(annual.t, paste0(site.code, '-annualtavg.csv'))
-    write.csv(annual.mint, paste0(site.code, '-annualtmin.csv'))
-    write.csv(annual.maxt, paste0(site.code, '-annualtmax.csv'))
-    write.csv(annual.PDSI, paste0(site.code, '-annualPDSI.csv'))
+    write.csv(annual.p, paste0('data/climate/',site.code, '-annualP.csv'))
+    write.csv(annual.t, paste0('data/climate/',site.code, '-annualtavg.csv'))
+    write.csv(annual.mint, paste0('data/climate/',site.code, '-annualtmin.csv'))
+    write.csv(annual.maxt, paste0('data/climate/',site.code, '-annualtmax.csv'))
+    write.csv(annual.PDSI, paste0('data/climate/',site.code, '-annualPDSI.csv'))
     
     par(mfrow=c(2,1))
     plot(annual.p, type = "l")
@@ -154,7 +154,7 @@ clim.corrs <- function(site, site.code){
     
     
     #plot mean monthly precipitation & Temperature
-    pdf(paste0("outputs/",site.code, "mean.climate.pdf"))
+    pdf(paste0('data/climate/',site.code, "mean.climate.pdf"))
     plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
     
     op <- par(mar=c(5, 4, 4, 6) + 0.1)
