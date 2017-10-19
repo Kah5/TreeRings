@@ -50,9 +50,9 @@ clim.PRISM.corrs <- function(site, site.code){
     ##############################################################################################
     #now using climate division data from the respective climate division for each tree ring site#
     ##############################################################################################
-    # need to add climate for additional sites as needed*******
+    # pulls in the climate data for the site based on 'site.code'
     
-    MNcd.clim <- read.csv("data/PRISM/PRISM_stable_4km_TOW_44.2452_-93.5165.csv", header = TRUE, skip = 10 )
+    MNcd.clim <- read.csv(paste0("data/PRISM/",list.files("data/PRISM/", pattern = site.code)), header = TRUE, skip = 10 )
     colnames(MNcd.clim) <- c("Date", "PCP", "TMIN", "TAVG", "TMAX", "TdAVG", "VPDmin", "VPDmax" )
     
     # get latitude (need for PET calculation):
@@ -427,29 +427,29 @@ clim.PRISM.corrs <- function(site, site.code){
     write.csv(tcors, paste0("data/BootCors/",site.code, "-", wood, "tavgcor.csv"))
     
     
-    #------------------------------------PDSI--------------------------------------------
-   pet <- aggregate(PET~Year + Month, data=MNPET.df, FUN=sum, na.rm = T) 
-    pet
+    #---------------------------Monthly Water Balance (P-PET)--------------------------------------------
+    BAL <- aggregate(BAL~Year + Month, data=MNBAL.df, FUN=sum, na.rm = T) 
+    BAL
     
-    drought <- dcast(pet, Year  ~ Month)
+    drought <- dcast(BAL, Year  ~ Month)
     
     
     #create violin plot of monthly precip
-    ggplot(pet, aes(x = factor(Month), y = PDSI))+ geom_violin(fill = "orange") +
+    ggplot(BAL, aes(x = factor(Month), y = BAL))+ geom_violin(fill = "orange") +
       geom_point( colour= "blue")
     
     site.code.crn$Year <- rownames(site.code.crn)
     
     
-    pet.MN <- merge(drought, site.code.crn, by = "Year")
+    BAL.MN <- merge(drought, site.code.crn, by = "Year")
     
-    prevs <- cbind(pet.MN[2:121,1], pet.MN[1:120,2:13])
+    prevs <- cbind(BAL.MN[2:121,1], BAL.MN[1:120,2:13])
     # rename with appropriate months
     colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
-    colnames(pet.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    colnames(BAL.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     
     #merge previous and current together:
-    pet.MN <- merge(prevs, pet.MN, by = "Year")
+    BAL.MN <- merge(prevs, BAL.MN, by = "Year")
     
     # function to do the bootstrapping correlations
     boot.cor <- function(d,i=c(1:n), colno ){
@@ -459,32 +459,36 @@ clim.PRISM.corrs <- function(site, site.code){
       return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
     }
     
-    petcors <- matrix(0, nrow = 24, ncol = 4)
+    BALcors <- matrix(0, nrow = 24, ncol = 4)
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
     for(mo in 2:length(colnos)){
       
-      boot.results <- boot(d = pet.MN, colno=mo , boot.cor, R= 500)
+      boot.results <- boot(d = BAL.MN, colno=mo , boot.cor, R= 500)
       
       cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
       ci.mo <- cis$normal[2:3]
       t <- boot.results$t0
-      petcors[mo,1] <- t
-      petcors[mo,2] <- mo
-      petcors[mo,3]<- ci.mo[1]
-      petcors[mo,4]<- ci.mo[2]
-      petcors <-  data.frame(petcors)
-      colnames(petcors) <- c("cor", "month","ci.min", "ci.max")
+      BALcors[mo,1] <- t
+      BALcors[mo,2] <- mo
+      BALcors[mo,3]<- ci.mo[1]
+      BALcors[mo,4]<- ci.mo[2]
+      BALcors <-  data.frame(BALcors)
+      colnames(BALcors) <- c("cor", "month","ci.min", "ci.max")
       
     }
     
     # make a basic barplot with the bootstrapped CI as errorbars:
-    ggplot(petcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+    ggplot(BALcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     
-    write.csv(pdsicors, paste0("data/BootCors/",site.code, "-", wood, "PDSIcor.csv"))
+    write.csv(BALcors, paste0("data/BootCors/",site.code, "-", wood, "BALcor.csv"))
 
+    
+    # ----------------------------- VPD min -------------------------------
+    
+    # ----------------------------- VPD max ------------------------------
 }
 
