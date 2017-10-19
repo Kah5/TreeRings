@@ -2,14 +2,15 @@
 # Author: Kelly Heilman
 
 # note: need to update the rwl sources to the files with corrected headers
-clim.corrs <- function(site, site.code){
+clim.PRISM.corrs <- function(site, site.code){
   
     library(dplR)
     library(reshape2)
     library(ggplot2)
     library(plyr)
     library(boot)
-    
+    library(tidyr)
+    library(SPEI)
    
     #change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
     
@@ -51,52 +52,49 @@ clim.corrs <- function(site, site.code){
     ##############################################################################################
     # need to add climate for additional sites as needed*******
     
-    if(site.code %in% c("BON", "GL1", "GL2", "GL3", "GL4")){
-    MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
-    } else{ if(site.code == "HIC" ){
-      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-    } else{ if(site.code %in% c("GLA", "PVC") ){
-      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-    } else{ if(site.code == "COR" ){
-        MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-    } else{ if(site.code == "W-R" ){
-      MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
-    } else{ if(site.code == 'SAW'){
-      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-    }else{ if(site.code == "STC"){
-      MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
-    }else{ if(site.code == "ENG"){
-      MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
-    }else{ if(site.code == "TOW"){
-      MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
-    }else{ if(site.code == "MOU"){
-      MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
-    }else{ if(site.code == "UNC"){
-      MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
-    }else { if(site.code == 'PLE'){
-      MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
-    }else { if(site.code == 'YRF'){
-      MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
-      #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
+    MNcd.clim <- read.csv("data/PRISM/PRISM_stable_4km_TOW_44.2452_-93.5165.csv", header = TRUE, skip = 10 )
+    colnames(MNcd.clim) <- c("Date", "PCP", "TMIN", "TAVG", "TMAX", "TdAVG", "VPDmin", "VPDmax" )
     
+    # get latitude (need for PET calculation):
+    lat <- as.numeric(unlist(strsplit("data/PRISM/PRISM_stable_4km_TOW_44.2452_-93.5165.csv", "_"))[5])
+    
+    #split date into month and year:
+    MNcd.clim <- MNcd.clim %>% separate(Date, c("Year", "Month"), "-")
+    
+    # conversions to metric b/c PRISM still uses Farenheit and inches \_O_/
     MNcd.clim$PCP <- MNcd.clim$PCP*25.54 # convert to mm
+    # convert temperatures to celcius
+    MNcd.clim$TMIN <- (MNcd.clim$TMIN - 32)/1.8
+    MNcd.clim$TMAX <- (MNcd.clim$TMAX - 32)/1.8
+    MNcd.clim$TAVG <- (MNcd.clim$TAVG - 32)/1.8
+    MNcd.clim$TdAVG <- (MNcd.clim$TdAVG - 32)/1.8
+    
+    
+    # calculate PET using thornthwaite method:
+    
+    MNcd.clim$PET <- as.numeric(thornthwaite(MNcd.clim$TAVG, lat))
+    
+    # now calculate SPI and SPEI (using spei package):
+    
+    #spi montly, 6 monthly, 12 montly, 24 monthly
+    #test <- spi(MNcd.clim$PCP, scale = 1)
+    #MNcd.clim$spi6 <- spi(MNcd.clim$PCP, scale = 6)
+    #MNcd.clim$spi12 <- spi(MNcd.clim$PCP, scale = 12)
+    #MNcd.clim$spi24 <- spi(MNcd.clim$PCP, scale = 24)
+   
+    #calculate water balance for each month:
+    MNcd.clim$BAL <- MNcd.clim$PCP - MNcd.clim$PET
+    
+    # make separate DF for each of the variables:
     keeps <- c("Year", "Month",  "PCP")
     keepstavg <- c("Year", "Month", "TAVG")
     keepst <- c("Year", "Month",  "TMAX")
     keepstmin <- c("Year", "Month",  "TMIN")
-    keepspdsi <- c("Year", "Month",  "PDSI")
+    keepsvpdmin <- c("Year", "Month",  "VPDmin")
+    keepsvpdmax <- c("Year", "Month",  "VPDmax")
+    keepsPET <- c("Year", "Month",  "PET")
+    keepsBAL <- c("Year", "Month", "BAL")
+    
     #create a dataset for Precip
     MNp.df <- MNcd.clim[,keeps]
     MNp.df[MNp.df == -9999]<- NA
@@ -113,11 +111,24 @@ clim.corrs <- function(site, site.code){
     MNtavg.df <- MNcd.clim[,keepstavg]
     MNtavg.df[MNtavg.df == -9999]<- NA
     
-    MNpdsi.df<- MNcd.clim[,keepspdsi]
-    MNpdsi.df[MNpdsi.df == -9999]<- NA
-    #for precipitation
+    # for vpdmin
+    MNvpdmin.df<- MNcd.clim[,keepsvpdmin]
+    MNvpdmin.df[MNvpdmin.df == -9999]<- NA
+    
+    # for vpdmax
+    MNvpdmax.df<- MNcd.clim[,keepsvpdmax]
+    MNvpdmax.df[MNvpdmax.df == -9999]<- NA
+    
+    #for PET (thornthwaite):
+    MNPET.df<- MNcd.clim[,keepsPET]
+    MNPET.df[MNPET.df == -9999]<- NA
+    
+    #for water balance (P- PET)
+    MNBAL.df <- MNcd.clim[,keepsBAL]
+    MNBAL.df[MNBAL.df == -9999] <- NA
     
     
+    # aggregation and correlation  for precipiation 
     total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
     total.p
     
@@ -145,6 +156,7 @@ clim.corrs <- function(site, site.code){
     plot(annual.mint, type = "l")
     tmin.lm <- lm(annual.mint$TMIN ~ annual.mint$Year)
     dev.off()
+    
     #create violin plot of monthly precip
     ggplot(total.p, aes(x = factor(Month), y = PCP))+ geom_violin(fill = "orange") +
       geom_point( colour= "blue")
@@ -416,28 +428,28 @@ clim.corrs <- function(site, site.code){
     
     
     #------------------------------------PDSI--------------------------------------------
-    pdsi <- aggregate(PDSI~Year + Month, data=MNpdsi.df, FUN=sum, na.rm = T) 
-    pdsi
+   pet <- aggregate(PET~Year + Month, data=MNPET.df, FUN=sum, na.rm = T) 
+    pet
     
-    drought <- dcast(pdsi, Year  ~ Month)
+    drought <- dcast(pet, Year  ~ Month)
     
     
     #create violin plot of monthly precip
-    ggplot(pdsi, aes(x = factor(Month), y = PDSI))+ geom_violin(fill = "orange") +
+    ggplot(pet, aes(x = factor(Month), y = PDSI))+ geom_violin(fill = "orange") +
       geom_point( colour= "blue")
     
     site.code.crn$Year <- rownames(site.code.crn)
     
     
-    pdsi.MN <- merge(drought, site.code.crn, by = "Year")
+    pet.MN <- merge(drought, site.code.crn, by = "Year")
     
-    prevs <- cbind(pdsi.MN[2:121,1], pdsi.MN[1:120,2:13])
+    prevs <- cbind(pet.MN[2:121,1], pet.MN[1:120,2:13])
     # rename with appropriate months
     colnames(prevs) <- c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec")
-    colnames(pdsi.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    colnames(pet.MN)[1:13] <- c("Year", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     
     #merge previous and current together:
-    pdsi.MN <- merge(prevs, pdsi.MN, by = "Year")
+    pet.MN <- merge(prevs, pet.MN, by = "Year")
     
     # function to do the bootstrapping correlations
     boot.cor <- function(d,i=c(1:n), colno ){
@@ -447,28 +459,28 @@ clim.corrs <- function(site, site.code){
       return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
     }
     
-    pdsicors <- matrix(0, nrow = 24, ncol = 4)
+    petcors <- matrix(0, nrow = 24, ncol = 4)
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
     for(mo in 2:length(colnos)){
       
-      boot.results <- boot(d = pdsi.MN, colno=mo , boot.cor, R= 500)
+      boot.results <- boot(d = pet.MN, colno=mo , boot.cor, R= 500)
       
       cis <- boot.ci(boot.out = boot.results, type = c("norm", "basic", "perc", "bca"))
       ci.mo <- cis$normal[2:3]
       t <- boot.results$t0
-      pdsicors[mo,1] <- t
-      pdsicors[mo,2] <- mo
-      pdsicors[mo,3]<- ci.mo[1]
-      pdsicors[mo,4]<- ci.mo[2]
-      pdsicors <-  data.frame(pdsicors)
-      colnames(pdsicors) <- c("cor", "month","ci.min", "ci.max")
+      petcors[mo,1] <- t
+      petcors[mo,2] <- mo
+      petcors[mo,3]<- ci.mo[1]
+      petcors[mo,4]<- ci.mo[2]
+      petcors <-  data.frame(petcors)
+      colnames(petcors) <- c("cor", "month","ci.min", "ci.max")
       
     }
     
     # make a basic barplot with the bootstrapped CI as errorbars:
-    ggplot(pdsicors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+    ggplot(petcors, aes(month, cor))+geom_bar(stat="identity")+geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
                                                                            width=.2,                    # Width of the error bars
                                                                            position=position_dodge(.9))
     

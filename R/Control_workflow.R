@@ -78,45 +78,77 @@ if(wood == "EW"){
 
 # run the R/corr_P.R script over all of the sites:
 source("R/corr_P.R")
-woods <- c("WW", "EW", "LW")
+woods <- c( "EW", "LW")
 
 for(w in 1:length(woods)){
   wood <- woods[w] # run script over all wood types
   
   if(wood == "EW"){
-    Bonanza <- read.tucson("./cofecha/BONew.rwl", header = T)
-    Hickory <- read.tucson("./cofecha/HICew.rwl", header = F)
-    #Glacial <- read.tucson("./cofecha/GLAew.rwl")
-    Townsend <- read.tucson('./cofecha/tow/TOWew.rwl', header = T)
-    Pleasant <- read.tucson('./cofecha/PLEew.rwl', header = T)
-  }else{if(wood == "LW"){
-    Bonanza <- read.tucson("./cofecha/BONlw.rwl")
-    Hickory <- read.tucson("./cofecha/HIClw.rwl", header = F)
-    #Glacial <- read.tucson("./cofecha/GLAlw.rwl")
-    Townsend <- read.tucson('./cofecha/tow/TOWlw.rwl', header = T)
-    Pleasant <- read.tucson('./cofecha/PLElw.rwl', header = T)
-  }else{
-    Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
-    Hickory <- read.tucson ("./cofecha/HICww.rwl", header = FALSE)
-    PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
-    StCroix <- read.tucson("./cofecha/STCww.rwl") #saint croix savanna, MN
-    Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
+    Bonanza <- read.tucson("cleanrwl/BONew.rwl", header = TRUE)
+    Hickory <- read.tucson ("cleanrwl/HICew.rwl", header = FALSE)
+    #PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
+    StCroix <- read.tucson("cleanrwl/STCew.rwl") #saint croix savanna, MN
+    #Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
     #Pulaski <- read.tucson("./in001.rwl", header = TRUE)
-    Townsend <- read.tucson('./cofecha/tow/TOWww.rwl', header = TRUE)#townsedn woods
-    YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
-    Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = TRUE) #Pleasant valley conservency
-    Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza
-    Coral <- read.tucson('/Users/kah/Documents/crossdating/data/cofecha/COR.rwl')
-    Uncas <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/UNC.rwl")
-    Glacial <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/GLA.rwl")
-    Englund <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/ENG.rwl")
-    Mound <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/MOU.rwl")
-    GLL1 <- read.tucson("cleanrwl/GLL1ww.rwl")
-    GLL2 <- read.tucson("cleanrwl/GLL1ww.rwl")
-    GLL3 <- read.tucson("cleanrwl/GLL2ww.rwl")
-    GLL4 <- read.tucson("cleanrwl/GLL3ww.rwl")
-    PVC <- read.tucson("cleanrwl/GLL4ww.rwl")
-  }}
+    Townsend <- read.tucson('cleanrwl/TOWew.rwl', header = TRUE)#townsedn woods
+    #YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
+    #Pleasant <- read.tucson('./cofecha/PLEew.rwl', header = TRUE) #Pleasant valley conservency
+    #Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza, in ITRDB
+    Coral <- read.tucson('cleanrwl/CORew.rwl')
+    Uncas <- read.tucson("cleanrwl/UNCew.rwl")
+    Glacial <- read.tucson("cleanrwl/GLAew.rwl")
+    Englund <- read.tucson("cleanrwl/ENGew.rwl")
+    Mound <- read.tucson("cleanrwl/MOUew.rwl")
+    GLL1 <- read.tucson("cleanrwl/GLL1ew.rwl")
+    GLL2 <- read.tucson("cleanrwl/GLL1ew.rwl")
+    GLL3 <- read.tucson("cleanrwl/GLL2ew.rwl")
+    GLL4 <- read.tucson("cleanrwl/GLL3ew.rwl")
+    PVC <- read.tucson("cleanrwl/PVCew.rwl")
+    
+  }else{if(wood == "LW"){
+    Bonanza <- read.tucson("cleanrwl/BONlw.rwl", header = TRUE)
+    Hickory <- read.tucson ("cleanrwl/HIClw.rwl", header = FALSE)
+    #PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
+    StCroix <- read.tucson("cleanrwl/STClw.rwl") #saint croix savanna, MN
+    #Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
+    #Pulaski <- read.tucson("./in001.rwl", header = TRUE)
+    Townsend <- read.tucson('cleanrwl/TOWlw.rwl', header = TRUE)#townsedn woods
+    #YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
+    #Pleasant <- read.tucson('./cofecha/PLElw.rwl', header = TRUE) #Pleasant valley conservency
+    #Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza, in ITRDB
+    Coral <- read.tucson('cleanrwl/CORlw.rwl')
+    Uncas <- read.tucson("cleanrwl/UNClw.rwl")
+    Glacial <- read.tucson("cleanrwl/GLAlw.rwl")
+    Englund <- read.tucson("cleanrwl/ENGlw.rwl")
+    Mound <- read.tucson("cleanrwl/MOUlw.rwl")
+    GLL1 <- read.tucson("cleanrwl/GLL1lw.rwl")
+    GLL2 <- read.tucson("cleanrwl/GLL1lw.rwl")
+    GLL3 <- read.tucson("cleanrwl/GLL2lw.rwl")
+    GLL4 <- read.tucson("cleanrwl/GLL3lw.rwl")
+    PVC <- read.tucson("cleanrwl/PVClw.rwl")}
+    else{
+      Bonanza <- read.tucson("cleanrwl/BONww.rwl", header = TRUE)
+      Hickory <- read.tucson ("cleanrwl/HICww.rwl", header = FALSE)
+      #PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
+      StCroix <- read.tucson("cleanrwl/STCww.rwl") #saint croix savanna, MN
+      #Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
+      #Pulaski <- read.tucson("./in001.rwl", header = TRUE)
+      Townsend <- read.tucson('cleanrwl/TOWww.rwl', header = TRUE)#townsedn woods
+      #YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
+      #Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = TRUE) #Pleasant valley conservency
+      #Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza, in ITRDB
+      Coral <- read.tucson('cleanrwl/CORww.rwl')
+      Uncas <- read.tucson("cleanrwl/UNCww.rwl")
+      Glacial <- read.tucson("cleanrwl/GLAww.rwl")
+      Englund <- read.tucson("cleanrwl/ENGww.rwl")
+      Mound <- read.tucson("cleanrwl/MOUww.rwl")
+      GLL1 <- read.tucson("cleanrwl/GLL1ww.rwl")
+      GLL2 <- read.tucson("cleanrwl/GLL1ww.rwl")
+      GLL3 <- read.tucson("cleanrwl/GLL2ww.rwl")
+      GLL4 <- read.tucson("cleanrwl/GLL3ww.rwl")
+      PVC <- read.tucson("cleanrwl/PVCww.rwl")
+    }}
+  
   
   sites <- list(Townsend, Hickory, Bonanza, StCroix, Coral, Uncas, Glacial, Englund, Mound, GLL1, GLL2, GLL3, GLL4, PVC )
   
