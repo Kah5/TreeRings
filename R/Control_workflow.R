@@ -14,7 +14,7 @@ if(wood == "EW"){
   StCroix <- read.tucson("cleanrwl/STCew.rwl") #saint croix savanna, MN
   #Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
   #Pulaski <- read.tucson("./in001.rwl", header = TRUE)
-  Townsend <- read.tucson('cleanrwl/TOeww.rwl', header = TRUE)#townsedn woods
+  Townsend <- read.tucson('cleanrwl/TOWww.rwl', header = TRUE)#townsedn woods
   #YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
   #Pleasant <- read.tucson('./cofecha/PLEew.rwl', header = TRUE) #Pleasant valley conservency
   #Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza, in ITRDB
@@ -153,7 +153,7 @@ for(w in 1:length(woods)){
   sites <- list(Townsend, Hickory, Bonanza, StCroix, Coral, Uncas, Glacial, Englund, Mound, GLL1, GLL2, GLL3, GLL4, PVC )
   
   # create a list of codes for site names
-  site.codes <- c("TOW", "HIC", "BON", "STC","COR", "UNC", "ENG", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
+  site.codes <- c("TOW", "HIC", "BON", "STC","COR", "UNC", "GLA","ENG", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
   
   
   
@@ -243,7 +243,7 @@ for(w in 1:length(woods)){
   sites <- list(Townsend, Hickory, Bonanza, StCroix, Coral, Uncas, Glacial, Englund, Mound, GLL1, GLL2, GLL3, GLL4, PVC )
   
   # create a list of codes for site names
-  site.codes <- c("TOW", "HIC", "BON", "STC","COR", "UNC", "ENG", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
+  site.codes <- c("TOW", "HIC", "BON", "STC","COR", "UNC","GLA", "ENG", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
   
   
   
@@ -253,3 +253,5 @@ for(w in 1:length(woods)){
     clim.PRISM.corrs(site, site.code)
   }
 }
+
+

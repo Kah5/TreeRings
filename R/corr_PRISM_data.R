@@ -142,20 +142,20 @@ clim.PRISM.corrs <- function(site, site.code){
     annual.t <- aggregate(TAVG ~ Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm=T)
     annual.mint <- aggregate(TMIN ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
     annual.maxt <- aggregate(TMAX ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
-    annual.PDSI <- aggregate(PDSI ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
+    #annual.PDSI <- aggregate(PDSI ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
     
     write.csv(annual.p, paste0('data/climate/',site.code, '-annualP.csv'))
     write.csv(annual.t, paste0('data/climate/',site.code, '-annualtavg.csv'))
     write.csv(annual.mint, paste0('data/climate/',site.code, '-annualtmin.csv'))
     write.csv(annual.maxt, paste0('data/climate/',site.code, '-annualtmax.csv'))
-    write.csv(annual.PDSI, paste0('data/climate/',site.code, '-annualPDSI.csv'))
+   # write.csv(annual.PDSI, paste0('data/climate/',site.code, '-annualPDSI.csv'))
     
-    par(mfrow=c(2,1))
-    plot(annual.p, type = "l")
-    plot(annual.t, type = "l")
-    plot(annual.mint, type = "l")
-    tmin.lm <- lm(annual.mint$TMIN ~ annual.mint$Year)
-    dev.off()
+    #par(mfrow=c(2,1))
+    #plot(annual.p, type = "l")
+    #plot(annual.t, type = "l")
+    #plot(annual.mint, type = "l")
+    #tmin.lm <- lm(annual.mint$TMIN ~ annual.mint$Year)
+    #dev.off()
     
     #create violin plot of monthly precip
     ggplot(total.p, aes(x = factor(Month), y = PCP))+ geom_violin(fill = "orange") +
@@ -167,25 +167,26 @@ clim.PRISM.corrs <- function(site, site.code){
     
     
     #plot mean monthly precipitation & Temperature
-    pdf(paste0('data/climate/',site.code, "mean.climate.pdf"))
-    plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
+    #pdf(paste0('data/climate/',site.code, "mean.climate.pdf"))
+    #plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
     
-    op <- par(mar=c(5, 4, 4, 6) + 0.1)
-    b.plot <- barplot(height = prmeans$PCP, names.arg = prmeans$Month,
-                      xlab="Month", ylab="Mean Precipitation (mm)")
-    bar.x <- b.plot[prmeans$Month]
+    #op <- par(mar=c(5, 4, 4, 6) + 0.1)
+    #b.plot <- barplot(height = prmeans$PCP, names.arg = prmeans$Month,
+     #                 xlab="Month", ylab="Mean Precipitation (mm)")
     
-    par(new = TRUE)
-    plot(x = bar.x, y = tmean$TAVG, xlab = "", ylab = "", pch = 16,
-         ylim = c(0, 100),
-         axes = FALSE, col = "red")
-    par(new = TRUE)
-    plot(x = bar.x, y = tmean$TAVG, xlab = "", ylab = "", type = "l",
-         ylim = c(0, 100),
-         axes = FALSE, col = "red")
-    axis(4, col = "red", col.axis = "red")
-    mtext("Temperature (degF)", side = 4, line=3, cex = par("cex.lab"), col = "red")
-    dev.off()
+    #bar.x <- b.plot[prmeans$Month]
+    
+    
+    #plot(x = bar.x, y = tmean$TAVG, xlab = "", ylab = "", pch = 16,
+     #    ylim = c(0, 100),
+      #   axes = TRUE, col = "red")
+  #  par(new = TRUE)
+   # plot(x = bar.x, y = tmean$TAVG, xlab = "", ylab = "", type = "l",
+    #     ylim = c(0, 100),
+     #    axes = FALSE, col = "red")
+    #axis(4, col = "red", col.axis = "red")
+    #mtext("Temperature (degF)", side = 4, line=3, cex = par("cex.lab"), col = "red")
+    #dev.off()
     
     
     

@@ -121,6 +121,10 @@ cor.barplot <- function(site.code, climatedata){
     cimin$h20bal <- h20bal$ci.min
     cimax$h20bal <- h20bal$ci.max
     
+    full$VPDmax <- VPDmax$cor
+    cimin$VPDmax <- VPDmax$ci.min
+    cimax$VPDmax <- VPDmax$ci.max
+    
     cors.melt <- melt(full, id.vars = c('months', 'mono'))
     cimin.melt <- melt(cimin, id.vars = c("months", "mono"))
     cimax.melt <- melt(cimax, id.vars = c("months", "mono"))
