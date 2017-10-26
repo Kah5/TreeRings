@@ -17,69 +17,149 @@ library(gridExtra)
 
 #read in growth crns and make individual barplot correlations for each site
 
-cor.barplot <- function(site.code){
-tavg <- read.csv(paste0("data/BootCors/",site.code, '-WWtavgcor.csv'))
-tmin <- read.csv(paste0("data/BootCors/",site.code, '-WWtmincor.csv'))
-tmax <- read.csv(paste0("data/BootCors/",site.code, '-WWtmaxcor.csv'))
-precip <- read.csv(paste0("data/BootCors/",site.code, '-WWPrecipcor.csv'))
-PDSI <- read.csv(paste0("data/BootCors/",site.code, '-WWPDSIcor.csv'))
-
-months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
-            "pAug", "pSep", "pOct", "pNov", "pDec",
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-            "Aug", "Sep", "Oct", "Nov", "Dec")
-
-tavg$months <- months
-colnames(tavg) <- c('mono', 'tavg', 'months', "ci.min", "ci.max")
-full <- tavg[,c('mono', "tavg", "months")]
-cimin <- tavg[c('mono', 'months', "ci.min")]
-colnames(cimin) <- c('mono', 'months', "tavg")
-cimax <- tavg[c('mono', 'months', "ci.max")]
-colnames(cimax) <- c('mono', 'months', "tavg")
-
-full$tmin <- tmin$cor
-cimin$tmin <- tmin$ci.min
-cimax$tmin <- tmin$ci.max
-
-full$tmax <- tmax$cor
-cimin$tmax <- tmax$ci.min
-cimax$tmax <- tmax$ci.max
-
-full$precip <- precip$cor
-cimin$precip <- precip$ci.min
-cimax$precip <- precip$ci.max
-
-full$PDSI <- PDSI$cor
-cimin$PDSI <- PDSI$ci.min
-cimax$PDSI <- PDSI$ci.max
-
-cors.melt <- melt(full, id.vars = c('months', 'mono'))
-cimin.melt <- melt(cimin, id.vars = c("months", "mono"))
-cimax.melt <- melt(cimax, id.vars = c("months", "mono"))
-colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.min")
-colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.max")
-m1 <- merge(cors.melt, cimin.melt, by = c("months", "mono", "variable"))
-m2 <- merge(m1, cimax.melt, by = c("months", "mono", "variable"))
-colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
-m2$months <- factor(m2$months, levels=full$months)
-m2[order(m2$months),]
-
-# plot all the barplots in the same plot:
-output<- ggplot(data = m2, aes(months, cor, fill = variable))+
-  geom_bar(stat = 'identity', position = position_dodge()) + 
-  facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))+
-  geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
-                 width=.2,                    # Width of the error bars
-                 position=position_dodge(.9))
-output
+cor.barplot <- function(site.code, climatedata){
+  # since the different climate datasets have different variables, we need to make a separate set of barplots for each:
+  
+  #-------------------------GHCN data correlations---------------------------------
+  if(climatedata == "GHCN")
+  {
+  # read in the bootstrapped corrlations for each climate variable:
+  tavg <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtavgcor.csv'))
+  tmin <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtmincor.csv'))
+  tmax <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtmaxcor.csv'))
+  precip <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWPrecipcor.csv'))
+  PDSI <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWPDSIcor.csv'))
+  
+  months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+              "pAug", "pSep", "pOct", "pNov", "pDec",
+              "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+              "Aug", "Sep", "Oct", "Nov", "Dec")
+  
+  tavg$months <- months
+  colnames(tavg) <- c('mono', 'tavg', 'months', "ci.min", "ci.max")
+  full <- tavg[,c('mono', "tavg", "months")]
+  cimin <- tavg[c('mono', 'months', "ci.min")]
+  colnames(cimin) <- c('mono', 'months', "tavg")
+  cimax <- tavg[c('mono', 'months', "ci.max")]
+  colnames(cimax) <- c('mono', 'months', "tavg")
+  
+  full$tmin <- tmin$cor
+  cimin$tmin <- tmin$ci.min
+  cimax$tmin <- tmin$ci.max
+  
+  full$tmax <- tmax$cor
+  cimin$tmax <- tmax$ci.min
+  cimax$tmax <- tmax$ci.max
+  
+  full$precip <- precip$cor
+  cimin$precip <- precip$ci.min
+  cimax$precip <- precip$ci.max
+  
+  full$PDSI <- PDSI$cor
+  cimin$PDSI <- PDSI$ci.min
+  cimax$PDSI <- PDSI$ci.max
+  
+  cors.melt <- melt(full, id.vars = c('months', 'mono'))
+  cimin.melt <- melt(cimin, id.vars = c("months", "mono"))
+  cimax.melt <- melt(cimax, id.vars = c("months", "mono"))
+  colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.min")
+  colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.max")
+  m1 <- merge(cors.melt, cimin.melt, by = c("months", "mono", "variable"))
+  m2 <- merge(m1, cimax.melt, by = c("months", "mono", "variable"))
+  colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
+  m2$months <- factor(m2$months, levels=full$months)
+  m2[order(m2$months),]
+  
+  # plot all the barplots in the same plot:
+  output<- ggplot(data = m2, aes(months, cor, fill = variable))+
+    geom_bar(stat = 'identity', position = position_dodge()) + 
+    facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))+
+    geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                   width=.2,                    # Width of the error bars
+                   position=position_dodge(.9))
+  output
+  
+  
+  }else{
+    
+    #-------------------------PRISM data correlations---------------------------------
+    
+    # read in the bootstrapped corrlations for each climate variable:
+    tavg <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtavgcor.csv'))
+    tmin <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtmincor.csv'))
+    tmax <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtmaxcor.csv'))
+    precip <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWPrecipcor.csv'))
+    h2obal <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWBALcor.csv'))
+    vpdmax <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWVPDmaxcor.csv'))
+    
+    months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+                "pAug", "pSep", "pOct", "pNov", "pDec",
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                "Aug", "Sep", "Oct", "Nov", "Dec")
+    
+    tavg$months <- months
+    colnames(tavg) <- c('mono', 'tavg', 'months', "ci.min", "ci.max")
+    full <- tavg[,c('mono', "tavg", "months")]
+    cimin <- tavg[c('mono', 'months', "ci.min")]
+    colnames(cimin) <- c('mono', 'months', "tavg")
+    cimax <- tavg[c('mono', 'months', "ci.max")]
+    colnames(cimax) <- c('mono', 'months', "tavg")
+    
+    full$tmin <- tmin$cor
+    cimin$tmin <- tmin$ci.min
+    cimax$tmin <- tmin$ci.max
+    
+    full$tmax <- tmax$cor
+    cimin$tmax <- tmax$ci.min
+    cimax$tmax <- tmax$ci.max
+    
+    full$precip <- precip$cor
+    cimin$precip <- precip$ci.min
+    cimax$precip <- precip$ci.max
+    
+    full$h2obal <- h20bal$cor
+    cimin$h20bal <- h20bal$ci.min
+    cimax$h20bal <- h20bal$ci.max
+    
+    cors.melt <- melt(full, id.vars = c('months', 'mono'))
+    cimin.melt <- melt(cimin, id.vars = c("months", "mono"))
+    cimax.melt <- melt(cimax, id.vars = c("months", "mono"))
+    colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.min")
+    colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.max")
+    m1 <- merge(cors.melt, cimin.melt, by = c("months", "mono", "variable"))
+    m2 <- merge(m1, cimax.melt, by = c("months", "mono", "variable"))
+    colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
+    m2$months <- factor(m2$months, levels=full$months)
+    m2[order(m2$months),]
+    
+    # plot all the barplots in the same plot:
+    output<- ggplot(data = m2, aes(months, cor, fill = variable))+
+      geom_bar(stat = 'identity', position = position_dodge()) + 
+      facet_grid(variable~.)+theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(site.code, " Correlations"))+
+      geom_errorbar(aes(ymin=ci.min, ymax=ci.max),
+                    width=.2,                    # Width of the error bars
+                    position=position_dodge(.9))
+    output
+  }
+  
 }
 
 site.cd <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 #run for loop and save plots to outputs/barplots
 
+# lets do this for GHCN data
 for(i in 1:length(site.cd)){
-  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/barplots",paste("barplots_", site.cd[i], ".png", sep = ""))
-  cor.barplot(site.cd[i]) 
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/barplots/GHCN/",paste("barplots_GHCN", site.cd[i], ".png", sep = ""))
+  cor.barplot(site.cd[i], "GHCN") 
+  ggsave(filename=mypath)
+}
+
+# make the barplots with Prism Data:
+site.prism <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
+
+for(i in 1:length(site.prism)){
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/barplots/PRISM/",paste("barplots_PRISM", site.cd[i], ".png", sep = ""))
+  cor.barplot(site.cd[i], "PRISM") 
   ggsave(filename=mypath)
 }
 

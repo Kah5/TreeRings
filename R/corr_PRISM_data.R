@@ -605,7 +605,7 @@ clim.PRISM.corrs <- function(site, site.code){
                                                                                 width=.2,                    # Width of the error bars
                                                                                 position=position_dodge(.9))
     
-    write.csv(vpdmaxcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "BALcor.csv"))
+    write.csv(vpdmaxcors, paste0("data/BootCors/PRISM/",site.code, "-", wood, "VPDmaxcor.csv"))
     
 }
 
