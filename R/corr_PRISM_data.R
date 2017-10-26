@@ -56,7 +56,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnames(MNcd.clim) <- c("Date", "PCP", "TMIN", "TAVG", "TMAX", "TdAVG", "VPDmin", "VPDmax" )
     
     # get latitude (need for PET calculation):
-    lat <- as.numeric(unlist(strsplit("data/PRISM/PRISM_stable_4km_TOW_44.2452_-93.5165.csv", "_"))[5])
+    lat <- as.numeric(unlist(strsplit(list.files("data/PRISM/", pattern = site.code), split = "_"))[5])
     
     #split date into month and year:
     MNcd.clim <- MNcd.clim %>% separate(Date, c("Year", "Month"), "-")
