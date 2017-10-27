@@ -605,30 +605,41 @@ Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU",
 write.csv(Highest, "outputs/highest_cors_GHCN_table.csv")
 
 #---------- Does correlation with climate vary according to mean climate?-------------
-#now plot the correlations against their mean annual precips:
-cor.v.clim <- function(clim,mono, pre,var){
+#now plot the correlations against their mean annual precips MAP from GHCN, but can use prism data for correlations:
+cor.v.clim <- function(climatedata, mo, climatevar, var){
+  
   locs <- read.csv("outputs/priority_sites.csv")
   sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
   for (i in 1:length(sites)){
     precip[i,1] <- sites[i]
-    a <- read.csv(paste0(sites[i], "-annualP.csv"))
+    a <- read.csv(paste0("data/climate/", sites[i], "-annualP.csv"))
     precip[i,2] <- mean(a$PCP)
   }
+  
   precip <- precip[order(as.numeric(precip[,2])),]
   site.order <- rev(precip[,1])
   precip <- data.frame(precip)
   colnames(precip) <- c("site", "MAP")
   precip <- merge(precip, locs, by.x = 'site', by.y = 'code')
-month.coef <- matrix(NA, nrow = length(precip[,1]), ncol = 1)
-for(i in 1:length(precip[,1])){
-cors <- read.csv(paste0(precip[i,1], "-WW", clim, "cor.csv"))
-month.coef[i,] <- cors[mono,]$V1
-}
+  month.coef <- matrix(NA, nrow = length(precip[,1]), ncol = 3)
+  
+  for(i in 1:length(precip[,1])){
+  cors <- read.csv(paste0("data/BootCors/",climatedata,"/", as.character(precip[i,]$site),"-WW", climatevar, "cor.csv"))
+  cors$month <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+                            "pAug", "pSep", "pOct", "pNov", "pDec",
+                            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                            "Aug", "Sep", "Oct", "Nov", "Dec")
+  month.coef[i,1] <- cors[cors$month %in% mo,]$cor
+  month.coef[i,2] <- cors[cors$month %in% mo,]$ci.max
+  month.coef[i,3] <- cors[cors$month %in% mo,]$ci.min
+  }
+  
 x <- as.data.frame(precip)
-x$cor <- as.vector(month.coef)
-colnames(x[,1:3]) <- c('site', "MAP", "cor")
+x$cor <- as.vector(month.coef[,1])
+x$ci.max <- as.vector(month.coef[,2])
+x$ci.min <- as.vector(month.coef[,3])
 if(var %in% "MAP"){
   x$env <- as.numeric(as.character(x$MAP))
 }else{if (var %in% "awc"){
@@ -646,20 +657,20 @@ x$env <- pre$ksat
 
 lm <- lm(formula = cor ~ env, data = x)
 print(summary(lm))
-ggplot(x, aes(env, cor, color = cor))+#geom_text_repel(aes(label = site))+
+ggplot(x, aes(env, cor, color = cor))+geom_errorbar(aes(ymin = ci.min, ymax = ci.max))+
   scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+stat_smooth(method = 'lm')+theme_bw()+ggtitle(paste0(clim, " correlation with ", var))+
-  xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))+
+  xlab(var)+ylab(paste0(climatevar," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))+
   theme_bw()
 }
 
-#plot these in pngs for may and august for MAP
+#plot these in pngs for may and august for MAP:
 for(i in 1:length(clim.cd)){
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_MAP_jun", clim.cd[i], ".png", sep = ""))
-  cor.v.clim(clim.cd[i], 18, precip, var = "MAP")
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/correlations/static_site_cors/GHCN",paste("site_cor_MAP_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim("GHCN","Jun", climatevar = clim.cd[i], var = "MAP")
   ggsave(filename=mypath)
-  
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_MAP_aug", clim.cd[i], ".png", sep = ""))
-  cor.v.clim(clim.cd[i], 20, precip, var = "MAP")
+
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/correlations/static_site_cors/PRISM",paste("site_cor_MAP_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim("PRISM","Jun", climatevar = clim.cd[i], var = "MAP")
   ggsave(filename=mypath)
 }
 
