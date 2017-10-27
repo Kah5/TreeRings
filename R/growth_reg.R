@@ -538,16 +538,38 @@ png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_
 grid_arrange_shared_legend(a,b,c,d,e, nrow = 3, ncol = 2 )
 dev.off()
 
-
-#rank the correlations based on highest to lowest for each site
-highest.cor <- function(site, i){
-  precip <- read.csv(paste0(site,'-WW', 'Precip', 'cor.csv'))
-  tavg <- read.csv(paste0(site,'-WW', 'tavg', 'cor.csv'))
-  tmin <- read.csv(paste0(site,'-WW', 'tmin', 'cor.csv'))
-  tmax <- read.csv(paste0(site,'-WW', 'tmax', 'cor.csv'))
-  PDSI <- read.csv(paste0(site,'-WW', 'PDSI', 'cor.csv'))
+# ------------Is there a variable/month that has highest correlation across all sites?
+#------------------rank the correlations based on highest to lowest for each site
+highest.cor <- function(site, climatedata,i){
   
-  clim.cors <- cbind(precip, tavg[,2], tmin[,2], tmax[,2], PDSI[,2])
+  if(climatedata == "PRISM"){
+  # read in the bootstrapped corrlations for each climate variable:
+  tavg <- read.csv(paste0("data/BootCors/PRISM/",site, '-WWtavgcor.csv'))
+  tmin <- read.csv(paste0("data/BootCors/PRISM/",site, '-WWtmincor.csv'))
+  tmax <- read.csv(paste0("data/BootCors/PRISM/",site, '-WWtmaxcor.csv'))
+  precip <- read.csv(paste0("data/BootCors/PRISM/",site, '-WWPrecipcor.csv'))
+  h20bal <- read.csv(paste0("data/BootCors/PRISM/",site, '-WWBALcor.csv'))
+  VPDmax <- read.csv(paste0("data/BootCors/PRISM/",site, '-WWVPDmaxcor.csv'))
+  clim.cors <- cbind(precip[,1:2], tavg[,2], tmin[,2], tmax[,2], h20bal[,2], VPDmax[,2])
+  colnames(clim.cors) <- c("mono", "Precip", "tavg", "tmin", "tmax", "P-PET", "VPDmax")
+  clim.cors$months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+                        "pAug", "pSep", "pOct", "pNov", "pDec",
+                        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                        "Aug", "Sep", "Oct", "Nov", "Dec")
+  
+  melted.cors <- melt(clim.cors, id.vars = c('mono', "months"))
+  reorded.cors <- melted.cors[rev(order(abs(melted.cors[, "value"]))),]
+  reorded.cors[i,] # get the highest corrlated variable
+  
+  }else{
+  precip <- read.csv(paste0("data/BootCors/GHCN/",site,'-WW', 'Precip', 'cor.csv'))
+  tavg <- read.csv(paste0("data/BootCors/GHCN/",site,'-WW', 'tavg', 'cor.csv'))
+  tmin <- read.csv(paste0("data/BootCors/GHCN/",site,'-WW', 'tmin', 'cor.csv'))
+  tmax <- read.csv(paste0("data/BootCors/GHCN/",site,'-WW', 'tmax', 'cor.csv'))
+  PDSI <- read.csv(paste0("data/BootCors/GHCN/",site,'-WW', 'PDSI', 'cor.csv'))
+  
+  
+  clim.cors <- cbind(precip[,1:2], tavg[,2], tmin[,2], tmax[,2], PDSI[,2])
   colnames(clim.cors) <- c("mono", "Precip", "tavg", "tmin", "tmax", "PDSI")
   clim.cors$months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
                         "pAug", "pSep", "pOct", "pNov", "pDec",
@@ -556,48 +578,33 @@ highest.cor <- function(site, i){
   
   melted.cors <- melt(clim.cors, id.vars = c('mono', "months"))
   reorded.cors <- melted.cors[rev(order(abs(melted.cors[, "value"]))),]
-  reorded.cors[i,]
+  reorded.cors[i,] # get the highest corrlated variable
+  }
 }
-Highest<- rbind(
-highest.cor('HIC', 1),
-highest.cor('BON', 1),
-highest.cor('COR', 1),
-highest.cor('GLA', 1),
-highest.cor('STC', 1),
-highest.cor('ENG', 1),
-highest.cor('UNC', 1),
-highest.cor('TOW', 1),
-highest.cor('MOU', 1),
-highest.cor('GL1', 1),
-highest.cor('GL2', 1),
-highest.cor('GL3', 1),
-highest.cor('GL4', 1),
-highest.cor('PVC', 1)
-)
+# for GHCN Data
+Highest <- list()
+for(j in 1:length(site.cd)){
+  Highest[[j]] <- highest.cor(site.cd[j], "GHCN", 1)
+}
+
+Highest <- do.call(rbind, Highest)
 
 Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 
-write.csv(Highest, "outputs/highest_cors_table.csv")
+write.csv(Highest, "outputs/highest_cors_GHCN_table.csv")
 
-sec.highest<- rbind(
-highest.cor('HIC', 2),
-highest.cor('BON', 2),
-highest.cor('COR', 2),
-highest.cor('GLA', 2),
-highest.cor('STC', 2),
-highest.cor('ENG', 2),
-highest.cor('UNC', 2),
-highest.cor('TOW', 2),
-highest.cor('MOU', 2),
-highest.cor('GL1', 2),
-highest.cor('GL2', 2),
-highest.cor('GL3', 2),
-highest.cor('GL4', 2),
-highest.cor('PVC', 2)
-)
+# for PRISM data
+Highest <- list()
+for(j in 1:length(site.cd)){
+  Highest[[j]] <- highest.cor(site.cd[j], "PRISM", 1)
+}
 
+Highest <- do.call(rbind, Highest) #bind together in a table
 
+Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
+write.csv(Highest, "outputs/highest_cors_GHCN_table.csv")
 
+#---------- Does correlation with climate vary according to mean climate?-------------
 #now plot the correlations against their mean annual precips:
 cor.v.clim <- function(clim,mono, pre,var){
   locs <- read.csv("outputs/priority_sites.csv")
