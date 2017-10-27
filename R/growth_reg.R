@@ -1,3 +1,4 @@
+# this script makes a variety of climate-growth plots, as an initial data exploration:
 library(lme4)
 library(dplR)
 library(ggplot2)
@@ -16,7 +17,7 @@ library(grid)
 library(gridExtra)
 
 #read in growth crns and make individual barplot correlations for each site
-
+# note these functions are for Whole Wood currently, but we could make plots for EW and LW
 cor.barplot <- function(site.code, climatedata){
   # since the different climate datasets have different variables, we need to make a separate set of barplots for each:
   
@@ -89,8 +90,8 @@ cor.barplot <- function(site.code, climatedata){
     tmin <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtmincor.csv'))
     tmax <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWtmaxcor.csv'))
     precip <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWPrecipcor.csv'))
-    h2obal <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWBALcor.csv'))
-    vpdmax <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWVPDmaxcor.csv'))
+    h20bal <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWBALcor.csv'))
+    VPDmax <- read.csv(paste0("data/BootCors/",climatedata,"/",site.code, '-WWVPDmaxcor.csv'))
     
     months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
                 "pAug", "pSep", "pOct", "pNov", "pDec",
@@ -168,29 +169,32 @@ for(i in 1:length(site.prism)){
 }
 
 #also can run them by themselves
-cor.barplot("COR")
-cor.barplot('STC')
-cor.barplot('BON')
-cor.barplot('HIC')
-cor.barplot('TOW')
-cor.barplot('GLA')
-cor.barplot('ENG')
-cor.barplot('UNC')
-cor.barplot('MOU')
-cor.barplot('GL1')
-cor.barplot('GL2')
-cor.barplot('GL3')
-cor.barplot('GL4')
-cor.barplot('PVC')
+cor.barplot("COR", "PRISM")
+cor.barplot('STC', "PRISM")
+cor.barplot('BON', "PRISM")
+cor.barplot('HIC', "PRISM")
+cor.barplot('TOW', "PRISM")
+cor.barplot('GLA', "PRISM")
+cor.barplot('ENG', "PRISM")
+cor.barplot('UNC', "PRISM")
+cor.barplot('MOU', "PRISM")
+cor.barplot('GL1', "PRISM")
+cor.barplot('GL2', "PRISM")
+cor.barplot('GL3', "PRISM")
+cor.barplot('GL4', "PRISM")
+cor.barplot('PVC', "PRISM")
+
+
+#--------------------------------Plot by climate variables-------------------------
 #now make a barplot for each climate factors with the sites on it using the sites.barplot funciton
 
-#This is a set up tocolor code sites by their total mean annual precip
+#This is a set up tocolor code sites by their total mean annual precip (using GHCN data)
 sites <- c("COR", "STC", "BON", "HIC", "TOW", "GLA", "ENG", "UNC", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 
 precip <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   precip[i,1] <- sites[i]
-  a <- read.csv(paste0(sites[i], "-annualP.csv"))
+  a <- read.csv(paste0("data/climate/GHCN/", sites[i], "-annualP.csv"))
   precip[i,2] <- mean(a$PCP)
 }
 precip <- precip[order(as.numeric(precip[,2])),]
@@ -199,7 +203,7 @@ site.order <- rev(precip[,1])
 tmax <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   tmax[i,1] <- sites[i]
-  a <- read.csv(paste0(sites[i], "-annualtmax.csv"))
+  a <- read.csv(paste0("data/climate/GHCN/",sites[i], "-annualtmax.csv"))
   tmax[i,2] <- mean(a$TMAX)
 }
 tmax <- tmax[order(as.numeric(tmax[,2])),]
@@ -208,7 +212,7 @@ site.order <- rev(tmax[,1])
 tmin <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   tmin[i,1] <- sites[i]
-  a <- read.csv(paste0(sites[i], "-annualtmin.csv"))
+  a <- read.csv(paste0("data/climate/GHCN/",sites[i], "-annualtmin.csv"))
   tmin[i,2] <- mean(a$TMIN)
 }
 tmin <- tmin[order(as.numeric(tmin[,2])),]
@@ -217,89 +221,145 @@ site.order <- rev(tmin[,1])
 PDSI <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   PDSI[i,1] <- sites[i]
-  a <- read.csv(paste0(sites[i], "-annualPDSI.csv"))
+  a <- read.csv(paste0("data/climate/GHCN/",sites[i], "-annualPDSI.csv"))
   PDSI[i,2] <- mean(a$PDSI)
 }
 PDSI <- PDSI[order(as.numeric(PDSI[,2])),]
 site.order <- rev(PDSI[,1])
 
 #this function plots all the sites on the same barplot and color codes from driest to wettest
-sites.barplot <- function(clim) {
-COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
-HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
-GLA <- read.csv(paste0('GLA-WW', clim, 'cor.csv'))
-STC <- read.csv(paste0('STC-WW', clim, 'cor.csv'))
-TOW <- read.csv(paste0('TOW-WW', clim, 'cor.csv'))
-ENG <- read.csv(paste0('ENG-WW', clim, 'cor.csv'))
-UNC <- read.csv(paste0('UNC-WW', clim, 'cor.csv'))
-BON <- read.csv(paste0('BON-WW', clim, 'cor.csv'))
-MOU <- read.csv(paste0('MOU-WW', clim, 'cor.csv'))
-GL1 <- read.csv(paste0('GL1-WW', clim, 'cor.csv'))
-GL2 <- read.csv(paste0('GL2-WW', clim, 'cor.csv'))
-GL3 <- read.csv(paste0('GL3-WW', clim, 'cor.csv'))
-GL4 <- read.csv(paste0('GL4-WW', clim, 'cor.csv'))
-PVC <- read.csv(paste0('PVC-WW', clim, 'cor.csv'))
-
-months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
-            "pAug", "pSep", "pOct", "pNov", "pDec",
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-            "Aug", "Sep", "Oct", "Nov", "Dec")
-
-COR$months <- months
-colnames(COR) <- c('mono', 'COR', 'months')
-full <- COR
-full$HIC <- HIC$V1
-full$GLA <- GLA$V1
-full$STC <- STC$V1
-full$TOW <- TOW$V1
-full$ENG <- ENG$V1
-full$UNC <- UNC$V1
-full$BON <- BON$V1
-full$MOU <- MOU$V1
-full$GL1 <- GL1$V1
-full$GL2 <- GL2$V1
-full$GL3 <- GL3$V1
-full$GL4 <- GL4$V1
-full$PVC <- PVC$V1
-
-half <- full[13:24,]
-
-cors.melt <- melt(half, id.vars = c('months', 'mono'))
-cors.melt$months <- factor(cors.melt$months, levels=full$months)
-cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
-sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", "MOU",
-                                 "TOW", "BON", "GL1", "GL2", "GL3","GL4", "PVC"), 
-                    Sites = c("Coral Woods, IL", "Hickory Grove, IL",
-                              "Glacial Park, IL", "St.Croix Savanna SNA, MN", 
-                              "Uncas Dunes SNA, MN","Englund Ecotone SNA, MN", 
-                              "Mound Prairie SNA, MN", "Townsend Woods SNA, MN", 
-                              "Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
-                              "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN",
-                              "Pleasant Valley Conservancy, IL"))
-cors.melt[order(cors.melt$months),]
-
-
-cors.melt <- merge(cors.melt, sitesnames, by = "variable")
-output<- ggplot(data = cors.melt, aes(months, value, fill = Sites))+
-  geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
-  #facet_grid(variable~.)+
-  scale_size(range=c(5,20), guide="none")+
-  scale_fill_manual("Sites",values = c('#a6cee3','#1f78b4','#b2df8a',
-    '#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00',
-    '#cab2d6','#6a3d9a','#ffff99','#00441b','#800026','#49006a', 'black'), 
-                    limits=c("Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
-                             "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN","Townsend Woods SNA, MN", "Mound Prairie SNA, MN",
-                             "Englund Ecotone SNA, MN", "Uncas Dunes SNA, MN", "St.Croix Savanna SNA, MN",
-                             "Glacial Park, IL", "Coral Woods, IL", "Hickory Grove, IL","Pleasant Valley Conservancy, IL"))+
-  theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
-output
+sites.barplot <- function(clim, climatedata) {
+    COR <- read.csv(paste0('data/BootCors/',climatedata,'/COR-WW', clim, 'cor.csv'))
+    HIC <- read.csv(paste0('data/BootCors/',climatedata,'/HIC-WW', clim, 'cor.csv'))
+    GLA <- read.csv(paste0('data/BootCors/',climatedata,'/GLA-WW', clim, 'cor.csv'))
+    STC <- read.csv(paste0('data/BootCors/',climatedata,'/STC-WW', clim, 'cor.csv'))
+    TOW <- read.csv(paste0('data/BootCors/',climatedata,'/TOW-WW', clim, 'cor.csv'))
+    ENG <- read.csv(paste0('data/BootCors/',climatedata,'/ENG-WW', clim, 'cor.csv'))
+    UNC <- read.csv(paste0('data/BootCors/',climatedata,'/UNC-WW', clim, 'cor.csv'))
+    BON <- read.csv(paste0('data/BootCors/',climatedata,'/BON-WW', clim, 'cor.csv'))
+    MOU <- read.csv(paste0('data/BootCors/',climatedata,'/MOU-WW', clim, 'cor.csv'))
+    GL1 <- read.csv(paste0('data/BootCors/',climatedata,'/GL1-WW', clim, 'cor.csv'))
+    GL2 <- read.csv(paste0('data/BootCors/',climatedata,'/GL2-WW', clim, 'cor.csv'))
+    GL3 <- read.csv(paste0('data/BootCors/',climatedata,'/GL3-WW', clim, 'cor.csv'))
+    GL4 <- read.csv(paste0('data/BootCors/',climatedata,'/GL4-WW', clim, 'cor.csv'))
+    PVC <- read.csv(paste0('data/BootCors/',climatedata,'/PVC-WW', clim, 'cor.csv'))
+    
+    months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
+                "pAug", "pSep", "pOct", "pNov", "pDec",
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                "Aug", "Sep", "Oct", "Nov", "Dec")
+    
+    COR$months <- months
+    colnames(COR) <- c('mono', 'COR', 'months', "ci.min", "ci.max", "months")
+    ci.min <- COR[c('mono', 'months', "ci.min")]
+    colnames(ci.min) <- c('mono', 'months', "COR")
+    ci.max <- COR[c('mono', 'months', "ci.max")]
+    colnames(ci.max) <- c('mono', 'months', "COR")
+    
+    
+    ci.min$COR <- COR$ci.min
+    ci.max$COR <- COR$ci.max
+    
+    full <- COR[,c('mono', 'months', "COR")]
+    full$HIC <- HIC$cor
+    full$GLA <- GLA$cor
+    full$STC <- STC$cor
+    full$TOW <- TOW$cor
+    full$ENG <- ENG$cor
+    full$UNC <- UNC$cor
+    full$BON <- BON$cor
+    full$MOU <- MOU$cor
+    full$GL1 <- GL1$cor
+    full$GL2 <- GL2$cor
+    full$GL3 <- GL3$cor
+    full$GL4 <- GL4$cor
+    full$PVC <- PVC$cor
+    
+   
+    ci.min$HIC <- HIC$ci.min
+    ci.min$GLA <- GLA$ci.min
+    ci.min$STC <- STC$ci.min
+    ci.min$TOW <- TOW$ci.min
+    ci.min$ENG <- ENG$ci.min
+    ci.min$UNC <- UNC$ci.min
+    ci.min$BON <- BON$ci.min
+    ci.min$MOU <- MOU$ci.min
+    ci.min$GL1 <- GL1$ci.min
+    ci.min$GL2 <- GL2$ci.min
+    ci.min$GL3 <- GL3$ci.min
+    ci.min$GL4 <- GL4$ci.min
+    ci.min$PVC <- PVC$ci.min
+    ci.min$months <- months
+    
+    ci.max$HIC <- HIC$ci.max
+    ci.max$GLA <- GLA$ci.max
+    ci.max$STC <- STC$ci.max
+    ci.max$TOW <- TOW$ci.max
+    ci.max$ENG <- ENG$ci.max
+    ci.max$UNC <- UNC$ci.max
+    ci.max$BON <- BON$ci.max
+    ci.max$MOU <- MOU$ci.max
+    ci.max$GL1 <- GL1$ci.max
+    ci.max$GL2 <- GL2$ci.max
+    ci.max$GL3 <- GL3$ci.max
+    ci.max$GL4 <- GL4$ci.max
+    ci.max$PVC <- PVC$ci.max
+    ci.max$months <- months
+    
+    half <- full[13:24,]
+    half$months <- months[13:24]
+    
+    cors.melt <- melt(half, id.vars = c('months', 'mono'))
+    #cors.melt$months <- factor(cors.melt$months, levels=full$months)
+    cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
+    sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", "MOU",
+                                     "TOW", "BON", "GL1", "GL2", "GL3","GL4", "PVC"), 
+                        Sites = c("Coral Woods, IL", "Hickory Grove, IL",
+                                  "Glacial Park, IL", "St.Croix Savanna SNA, MN", 
+                                  "Uncas Dunes SNA, MN","Englund Ecotone SNA, MN", 
+                                  "Mound Prairie SNA, MN", "Townsend Woods SNA, MN", 
+                                  "Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
+                                  "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN",
+                                  "Pleasant Valley Conservancy, IL"))
+    
+    ci.min.melt <- melt(ci.min, id.vars = c("months", "mono"))
+    ci.max.melt <- melt(ci.max, id.vars = c( "months","mono"))
+    colnames(ci.min.melt) <- c('months', 'mono', "variable", "ci.min")
+    colnames(ci.max.melt) <- c('months', 'mono', "variable", "ci.max")
+    m1 <- merge(cors.melt, ci.min.melt[,c('months', "variable", "ci.min")], by = c("months", "variable"))
+    m2 <- merge(m1, ci.max.melt[,c('months', "variable", "ci.max")], by = c("months", "variable"))
+    colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
+    
+    
+    
+    m2 <- merge(m2, sitesnames, by = "variable")
+    m2$cor <- as.numeric(m2$cor)
+    m2$months <- factor(m2$months, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                                                        "Aug", "Sep", "Oct", "Nov", "Dec"))
+    output <- ggplot(data = m2, aes(months, cor, fill = Sites))+
+      geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) + 
+      #facet_grid(variable~.)+
+      scale_size(range=c(5,20), guide="none")+
+      scale_fill_manual("Sites",values = c('#a6cee3','#1f78b4','#b2df8a',
+        '#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00',
+        '#cab2d6','#6a3d9a','#ffff99','#00441b','#800026','#49006a', 'black'), 
+                        limits=c("Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
+                                 "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN","Townsend Woods SNA, MN", "Mound Prairie SNA, MN",
+                                 "Englund Ecotone SNA, MN", "Uncas Dunes SNA, MN", "St.Croix Savanna SNA, MN",
+                                 "Glacial Park, IL", "Coral Woods, IL", "Hickory Grove, IL","Pleasant Valley Conservancy, IL"))+
+      geom_errorbar(aes(ymin=ci.min, ymax=ci.max),                    # Width of the error bars
+                    position=position_dodge(.9))+
+      theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1)) + ggtitle(paste0(clim, " site correlations"))
+    output
 }
+
+# climate variables for GHCN that I want to loop through:
 clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
 
 #automate savaing these barplots to individual png files
 for(i in 1:length(clim.cd)){
-  mypath <- file.path("/Users/kah/Documents/TreeRings/",paste("full_site_barplots_", clim.cd[i], ".png", sep = ""))
-  sites.barplot(clim.cd[i])
+  mypath <- file.path("/Users/kah/Documents/TreeRings/",paste("full_site_barplots_GHCN", clim.cd[i], ".png", sep = ""))
+  sites.barplot(clim.cd[i], "GHCN")
   ggsave(filename=mypath)
 }
 
@@ -328,11 +388,11 @@ grid_arrange_shared_legend <- function(..., nrow = 1, ncol = length(list(...)), 
   
 }
 
-e <- sites.barplot('tavg')+ggtitle("E). Average Temperature")+ylab("correlation")
-c <- sites.barplot('tmax')+ ggtitle("C). Maximum Temperature")+ylab('correlation')
-d <- sites.barplot('tmin')+ ggtitle("D). Minimum Temperature")+ylab('correlation')
-b <- sites.barplot('Precip')+ ggtitle("B). Precipitation")+ylab('correlation')
-a <- sites.barplot('PDSI')+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
+e <- sites.barplot('tavg',"GHCN")+ggtitle("E). Average Temperature")+ylab("correlation")
+c <- sites.barplot('tmax',"GHCN")+ ggtitle("C). Maximum Temperature")+ylab('correlation')
+d <- sites.barplot('tmin',"GHCN")+ ggtitle("D). Minimum Temperature")+ylab('correlation')
+b <- sites.barplot('Precip',"GHCN")+ ggtitle("B). Precipitation")+ylab('correlation')
+a <- sites.barplot('PDSI',"GHCN")+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
 
 
 
@@ -346,21 +406,22 @@ grid_arrange_shared_legend(a,b,c, nrow = 3, ncol = 1 )
 dev.off()
 
 # instead of barplots, lets create tile plots:
-sites.tile <- function(clim) {
-  COR <- read.csv(paste0('COR-WW', clim, 'cor.csv'))
-  HIC <- read.csv(paste0('HIC-WW', clim, 'cor.csv'))
-  GLA <- read.csv(paste0('GLA-WW', clim, 'cor.csv'))
-  STC <- read.csv(paste0('STC-WW', clim, 'cor.csv'))
-  TOW <- read.csv(paste0('TOW-WW', clim, 'cor.csv'))
-  ENG <- read.csv(paste0('ENG-WW', clim, 'cor.csv'))
-  UNC <- read.csv(paste0('UNC-WW', clim, 'cor.csv'))
-  BON <- read.csv(paste0('BON-WW', clim, 'cor.csv'))
-  MOU <- read.csv(paste0('MOU-WW', clim, 'cor.csv'))
-  GL1 <- read.csv(paste0('GL1-WW', clim, 'cor.csv'))
-  GL2 <- read.csv(paste0('GL2-WW', clim, 'cor.csv'))
-  GL3 <- read.csv(paste0('GL3-WW', clim, 'cor.csv'))
-  GL4 <- read.csv(paste0('GL4-WW', clim, 'cor.csv'))
-  PVC <- read.csv(paste0('PVC-WW', clim, 'cor.csv'))
+sites.tile <- function(clim, climatedata) {
+  
+  COR <- read.csv(paste0('data/BootCors/',climatedata,'/COR-WW', clim, 'cor.csv'))
+  HIC <- read.csv(paste0('data/BootCors/',climatedata,'/HIC-WW', clim, 'cor.csv'))
+  GLA <- read.csv(paste0('data/BootCors/',climatedata,'/GLA-WW', clim, 'cor.csv'))
+  STC <- read.csv(paste0('data/BootCors/',climatedata,'/STC-WW', clim, 'cor.csv'))
+  TOW <- read.csv(paste0('data/BootCors/',climatedata,'/TOW-WW', clim, 'cor.csv'))
+  ENG <- read.csv(paste0('data/BootCors/',climatedata,'/ENG-WW', clim, 'cor.csv'))
+  UNC <- read.csv(paste0('data/BootCors/',climatedata,'/UNC-WW', clim, 'cor.csv'))
+  BON <- read.csv(paste0('data/BootCors/',climatedata,'/BON-WW', clim, 'cor.csv'))
+  MOU <- read.csv(paste0('data/BootCors/',climatedata,'/MOU-WW', clim, 'cor.csv'))
+  GL1 <- read.csv(paste0('data/BootCors/',climatedata,'/GL1-WW', clim, 'cor.csv'))
+  GL2 <- read.csv(paste0('data/BootCors/',climatedata,'/GL2-WW', clim, 'cor.csv'))
+  GL3 <- read.csv(paste0('data/BootCors/',climatedata,'/GL3-WW', clim, 'cor.csv'))
+  GL4 <- read.csv(paste0('data/BootCors/',climatedata,'/GL4-WW', clim, 'cor.csv'))
+  PVC <- read.csv(paste0('data/BootCors/',climatedata,'/PVC-WW', clim, 'cor.csv'))
   
   months <- c("pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul",
               "pAug", "pSep", "pOct", "pNov", "pDec",
@@ -368,26 +429,67 @@ sites.tile <- function(clim) {
               "Aug", "Sep", "Oct", "Nov", "Dec")
   
   COR$months <- months
-  colnames(COR) <- c('mono', 'COR', 'months')
-  full <- COR
-  full$HIC <- HIC$V1
-  full$GLA <- GLA$V1
-  full$STC <- STC$V1
-  full$TOW <- TOW$V1
-  full$ENG <- ENG$V1
-  full$UNC <- UNC$V1
-  full$BON <- BON$V1
-  full$MOU <- MOU$V1
-  full$GL1 <- GL1$V1
-  full$GL2 <- GL2$V1
-  full$GL3 <- GL3$V1
-  full$GL4 <- GL4$V1
-  full$PVC <- PVC$V1
+  colnames(COR) <- c('mono', 'COR', 'months', "ci.min", "ci.max", "months")
+  ci.min <- COR[c('mono', 'months', "ci.min")]
+  colnames(ci.min) <- c('mono', 'months', "COR")
+  ci.max <- COR[c('mono', 'months', "ci.max")]
+  colnames(ci.max) <- c('mono', 'months', "COR")
   
   
+  ci.min$COR <- COR$ci.min
+  ci.max$COR <- COR$ci.max
   
-  cors.melt <- melt(full, id.vars = c('months', 'mono'))
-  cors.melt$months <- factor(cors.melt$months, levels=full$months)
+  full <- COR[,c('mono', 'months', "COR")]
+  full$HIC <- HIC$cor
+  full$GLA <- GLA$cor
+  full$STC <- STC$cor
+  full$TOW <- TOW$cor
+  full$ENG <- ENG$cor
+  full$UNC <- UNC$cor
+  full$BON <- BON$cor
+  full$MOU <- MOU$cor
+  full$GL1 <- GL1$cor
+  full$GL2 <- GL2$cor
+  full$GL3 <- GL3$cor
+  full$GL4 <- GL4$cor
+  full$PVC <- PVC$cor
+  
+  
+  ci.min$HIC <- HIC$ci.min
+  ci.min$GLA <- GLA$ci.min
+  ci.min$STC <- STC$ci.min
+  ci.min$TOW <- TOW$ci.min
+  ci.min$ENG <- ENG$ci.min
+  ci.min$UNC <- UNC$ci.min
+  ci.min$BON <- BON$ci.min
+  ci.min$MOU <- MOU$ci.min
+  ci.min$GL1 <- GL1$ci.min
+  ci.min$GL2 <- GL2$ci.min
+  ci.min$GL3 <- GL3$ci.min
+  ci.min$GL4 <- GL4$ci.min
+  ci.min$PVC <- PVC$ci.min
+  ci.min$months <- months
+  
+  ci.max$HIC <- HIC$ci.max
+  ci.max$GLA <- GLA$ci.max
+  ci.max$STC <- STC$ci.max
+  ci.max$TOW <- TOW$ci.max
+  ci.max$ENG <- ENG$ci.max
+  ci.max$UNC <- UNC$ci.max
+  ci.max$BON <- BON$ci.max
+  ci.max$MOU <- MOU$ci.max
+  ci.max$GL1 <- GL1$ci.max
+  ci.max$GL2 <- GL2$ci.max
+  ci.max$GL3 <- GL3$ci.max
+  ci.max$GL4 <- GL4$ci.max
+  ci.max$PVC <- PVC$ci.max
+  ci.max$months <- months
+  
+  half <- full[13:24,]
+  half$months <- months[13:24]
+  
+  cors.melt <- melt(half, id.vars = c('months', 'mono'))
+  #cors.melt$months <- factor(cors.melt$months, levels=full$months)
   cors.melt$variable <- factor(cors.melt$variable, levels = site.order)
   sitesnames <- data.frame(variable = c("COR", "HIC", "GLA", "STC", "UNC", "ENG", "MOU",
                                         "TOW", "BON", "GL1", "GL2", "GL3","GL4", "PVC"), 
@@ -398,25 +500,39 @@ sites.tile <- function(clim) {
                                      "Bonanza Prairie SNA, MN","Glacial Lakes 1, MN",
                                      "Glacial Lakes 2, MN", "Glacial Lakes 3, MN", "Glacial Lakes 4, MN",
                                      "Pleasant Valley Conservancy, IL"))
-  cors.melt[order(cors.melt$months),]
+  
+  ci.min.melt <- melt(ci.min, id.vars = c("months", "mono"))
+  ci.max.melt <- melt(ci.max, id.vars = c( "months","mono"))
+  colnames(ci.min.melt) <- c('months', 'mono', "variable", "ci.min")
+  colnames(ci.max.melt) <- c('months', 'mono', "variable", "ci.max")
+  m1 <- merge(cors.melt, ci.min.melt[,c('months', "variable", "ci.min")], by = c("months", "variable"))
+  m2 <- merge(m1, ci.max.melt[,c('months', "variable", "ci.max")], by = c("months", "variable"))
+  colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
   
   
-  cors.melt <- merge(cors.melt, sitesnames, by = "variable")
-  output<- ggplot(cors.melt, aes(months, variable, fill = value))+geom_tile()+
+  
+  m2 <- merge(m2, sitesnames, by = "variable")
+  m2$cor <- as.numeric(m2$cor)
+  m2$months <- factor(m2$months, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+                                            "Aug", "Sep", "Oct", "Nov", "Dec"))
+  
+  output<- ggplot(m2, aes(months, variable, fill = cor))+geom_tile()+
     scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
                         name="Pearson\nCorrelation")+ ggtitle(paste0(clim, " site correlations"))+
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
   output
 }
-clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
-sites.tile("tavg")
 
-e <- sites.tile('tavg')+ggtitle("E). Average Temperature")+ylab("correlation")
-c <- sites.tile('tmax')+ ggtitle("C). Maximum Temperature")+ylab('correlation')
-d <- sites.tile('tmin')+ ggtitle("D). Minimum Temperature")+ylab('correlation')
-b <- sites.tile('Precip')+ ggtitle("B). Precipitation")+ylab('correlation')
-a <- sites.tile('PDSI')+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
+# climate variables to loop over
+clim.cd <- c('tavg', 'tmax', 'tmin', 'Precip', 'PDSI')
+sites.tile("tavg", "GHCN")
+
+e <- sites.tile('tavg', "GHCN")+ggtitle("E). Average Temperature")+ylab("correlation")
+c <- sites.tile('tmax', "GHCN")+ ggtitle("C). Maximum Temperature")+ylab('correlation')
+d <- sites.tile('tmin', "GHCN")+ ggtitle("D). Minimum Temperature")+ylab('correlation')
+#b <- sites.tile('Precip', "GCHN")+ ggtitle("B). Precipitation")+ylab('correlation')
+a <- sites.tile('PDSI', "GHCN")+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
 
 png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_cors_all_sites_3panel.png')
 grid_arrange_shared_legend(a,b,c,d,e, nrow = 3, ncol = 2 )
