@@ -121,8 +121,10 @@ clim.corrs <- function(site, site.code){
     total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
     total.p
     
+    # aggregate by year
     pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
     plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
+    
     
     
     precip <- dcast(total.p, Year  ~ Month)
@@ -133,11 +135,11 @@ clim.corrs <- function(site, site.code){
     annual.maxt <- aggregate(TMAX ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
     annual.PDSI <- aggregate(PDSI ~Year, data = MNcd.clim[1:1440,], FUN = mean, na.rm = T)
     
-    write.csv(annual.p, paste0('data/climate/',site.code, '-annualP.csv'))
-    write.csv(annual.t, paste0('data/climate/',site.code, '-annualtavg.csv'))
-    write.csv(annual.mint, paste0('data/climate/',site.code, '-annualtmin.csv'))
-    write.csv(annual.maxt, paste0('data/climate/',site.code, '-annualtmax.csv'))
-    write.csv(annual.PDSI, paste0('data/climate/',site.code, '-annualPDSI.csv'))
+    write.csv(annual.p, paste0('data/climate/GHCN/',site.code, '-annualP.csv'))
+    write.csv(annual.t, paste0('data/climate/GHCN/',site.code, '-annualtavg.csv'))
+    write.csv(annual.mint, paste0('data/climate/GHCN/',site.code, '-annualtmin.csv'))
+    write.csv(annual.maxt, paste0('data/climate/GHCN/',site.code, '-annualtmax.csv'))
+    write.csv(annual.PDSI, paste0('data/climate/GHCN/',site.code, '-annualPDSI.csv'))
     
     par(mfrow=c(2,1))
     plot(annual.p, type = "l")

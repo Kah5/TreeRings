@@ -253,5 +253,3 @@ for(w in 1:length(woods)){
     clim.PRISM.corrs(site, site.code)
   }
 }
-
-
