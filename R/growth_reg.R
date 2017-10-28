@@ -640,6 +640,7 @@ x <- as.data.frame(precip)
 x$cor <- as.vector(month.coef[,1])
 x$ci.max <- as.vector(month.coef[,2])
 x$ci.min <- as.vector(month.coef[,3])
+
 if(var %in% "MAP"){
   x$env <- as.numeric(as.character(x$MAP))
 }else{if (var %in% "awc"){
@@ -677,11 +678,12 @@ for(i in 1:length(clim.cd)){
 
 
 pdf("outputs/cor_coef_v_MAP.pdf")
-cor.v.clim("tavg", 18, precip, var = "MAP")
-cor.v.clim("Precip",18, precip, var = "MAP")
-cor.v.clim("tmin", 18, precip, var = "MAP")
-cor.v.clim("tmax", 18, precip, var = "MAP")
-cor.v.clim("PDSI", 18, precip, var = "MAP")
+cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "MAP")
+cor.v.clim("PRISM","Jun", climatevar = "tmin", var = "MAP")
+cor.v.clim("PRISM","Jun", climatevar = "tmax", var = "MAP")
+cor.v.clim("PRISM","Jun", climatevar = "precip", var = "MAP")
+cor.v.clim("PRISM","Jun", climatevar = "BAL", var = "MAP")
+cor.v.clim("PRISM","Jun", climatevar = "VPDmax", var = "MAP")
 dev.off()
 
 #can use the cor.v.clim function to plot correlations against soil characteristics
@@ -691,58 +693,59 @@ sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1",
 precip <- matrix(NA ,nrow = length(sites), ncol = 2)
 for (i in 1:length(sites)){
   precip[i,1] <- sites[i]
-  a <- read.csv(paste0(sites[i], "-annualP.csv"))
+  a <- read.csv(paste0("data/climate/",sites[i], "-annualP.csv"))
   precip[i,2] <- mean(a$PCP)
 }
 precip <- precip[order(as.numeric(precip[,2])),]
 site.order <- rev(precip[,1])
 precip <- data.frame(precip)
 colnames(precip) <- c("site", "MAP")
-test <- merge(precip, locs, by.x = 'site', by.y = 'code')
+pre <- merge(precip, locs, by.x = 'site', by.y = 'code')
 
+# fix the below plots
 #plot correlation coefficients with July climate variables against ksat
 for(i in 1:length(clim.cd)){
+  
   #for awc
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_awc_jun", clim.cd[i], ".png", sep = ""))
-  cor.v.clim(clim.cd[i], 18, test, var = "awc")
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_awc_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "awc")
   ggsave(filename=mypath)
   
   #for ksat
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_ksat_jun", clim.cd[i], ".png", sep = ""))
-  cor.v.clim(clim.cd[i], 18, test, var = "ksat")
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_ksat_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "ksat")
   ggsave(filename=mypath)
   
   #for sand
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_sand_jun", clim.cd[i], ".png", sep = ""))
-  cor.v.clim(clim.cd[i], 18, test, var = "sand")
+  mypath <- file.path("/Users/kah/Documents/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_sand_jun", clim.cd[i], ".png", sep = ""))
+  cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "sand")
   ggsave(filename=mypath)
   
-  #for sand
-  mypath <- file.path("C:/Users/JMac/Documents/Kelly/TreeRings/outputs/correlations/static_site_cors",paste("site_cor_sand_aug", clim.cd[i], ".png", sep = ""))
-  cor.v.clim(clim.cd[i], 20, test, var = "sand")
-  ggsave(filename=mypath)
+
   
 }
 
-pdf("outputs/cor_coef_v_ksat.pdf")
-cor.v.clim("PDSI", 18,test, var = "ksat")
-cor.v.clim("tavg", 18,test, var = 'ksat')
-cor.v.clim("tmin", 18,test, var = 'ksat')
-cor.v.clim("tmax", 18,test, var = 'ksat')
-cor.v.clim("Precip", 18,test, var = 'ksat')
+pdf("outputs/cor_PRISM_coef_v_ksat.pdf")
+cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "ksat")
+cor.v.clim("PRISM","Jun", climatevar = "tmin", var = "ksat")
+cor.v.clim("PRISM","Jun", climatevar = "tmax", var = "ksat")
+cor.v.clim("PRISM","Jun", climatevar = "Precip", var = "ksat")
+cor.v.clim("PRISM","Jun", climatevar = "VPDmax", var = "ksat")
+cor.v.clim("PRISM","Jun", climatevar = "BAL", var = "ksat")
 dev.off()
 
 #plot correlation coefficients with July climate variabes with awc
-pdf("outputs/cor_coef_v_awc.pdf")
-cor.v.clim("PDSI", 18,test, var = "awc")
-cor.v.clim("tavg", 18,test, var = 'awc')
-cor.v.clim("tmin", 18,test, var = 'awc')
-cor.v.clim("tmax", 18,test, var = 'awc')
-cor.v.clim("Precip", 18,test, var = 'awc')
+pdf("outputs/cor_PRISM_coef_v_awc.pdf")
+cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "awc")
+cor.v.clim("PRISM","Jun", climatevar = "tmin", var = "awc")
+cor.v.clim("PRISM","Jun", climatevar = "tmax", var = "awc")
+cor.v.clim("PRISM","Jun", climatevar = "Precip", var = "awc")
+cor.v.clim("PRISM","Jun", climatevar = "VPDmax", var = "awc")
+cor.v.clim("PRISM","Jun", climatevar = "BAL", var = "awc")
 dev.off()
 
 #pdf("outputs/cor_coef_v_sand.pdf")
-cor.v.clim("PDSI", 18,test, var = "sand") + ylab('June PDSI correlation coefficient') + ggtitle('June PDSI correlation')
+cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "sand") + ylab('June PDSI correlation coefficient') + ggtitle('June PDSI correlation')
 b <- cor.v.clim("tavg", 18,test, var = 'sand')+ ylab('Correlation coefficient') + ggtitle('B). June Avg. Temperature')
 cor.v.clim("tmin", 18,test, var = 'sand')
 c <- cor.v.clim("tmax", 18,test, var = 'sand')+ ylab('Correlation coefficient') + ggtitle('C). June Max. Temperature')
