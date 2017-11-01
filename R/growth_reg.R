@@ -118,7 +118,7 @@ cor.barplot <- function(site.code, climatedata){
     cimin$precip <- precip$ci.min
     cimax$precip <- precip$ci.max
     
-    full$h2obal <- h20bal$cor
+    full$h20bal <- h20bal$cor
     cimin$h20bal <- h20bal$ci.min
     cimax$h20bal <- h20bal$ci.max
     
@@ -130,7 +130,7 @@ cor.barplot <- function(site.code, climatedata){
     cimin.melt <- melt(cimin, id.vars = c("months", "mono"))
     cimax.melt <- melt(cimax, id.vars = c("months", "mono"))
     colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.min")
-    colnames(cimin.melt) <- c('months', 'mono', "variable", "ci.max")
+    colnames(cimax.melt) <- c('months', 'mono', "variable", "ci.max")
     m1 <- merge(cors.melt, cimin.melt, by = c("months", "mono", "variable"))
     m2 <- merge(m1, cimax.melt, by = c("months", "mono", "variable"))
     colnames(m2)[4:6] <- c("cor","ci.min", "ci.max")
