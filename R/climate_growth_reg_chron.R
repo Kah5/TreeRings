@@ -575,3 +575,419 @@ plot(df.list$annualclim$TMIN, df.list$rwi$HIC397)
 molten.full <- rbind(molten.HIC, molten.BON, molten.STC, #molten.PLE,
                      molten.TOW, molten.ENG, molten.UNC, molten.COR, molten.GLA, molten.MOU)
 
+
+
+
+#molten.full comes from climate_growth_reg_chron.R
+###################################################
+#compare climate corelations 
+plot.cor.clim <- function(x, Clim, xlab, Site){
+  # x <- x[x$Site %in% site,]
+  yr <- 1895:1950
+  x$class <- '9999'
+  x[x$Year %in% yr,]$class <- 'clim_record'
+  
+  
+  #if the dummy variable is significant, then the two slopes are different
+  print(summary( cor( x[,Clim], x$value)))
+  
+  # Extend the regression lines beyond the domain of the data
+  df <- data.frame(value <-  x$value, 
+                   Climate <- x[,Clim], 
+                   Year <- x$Year)
+  colnames(df)<- c("value", "Climate", "Year")
+  print(summary(lm(value ~ Climate, data = df)))
+  ggplot(df, aes(x=Climate, y= value)) + geom_point(shape=1) +
+    # scale_colour_hue(l=50) +
+    geom_smooth(method = 'lm') + #,   # Add linear regression lines
+    #se=TRUE,    # add shaded confidence region
+    #fullrange=FALSE)+# Extend regression lines
+    
+    #scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
+    xlim(-8, 8)+
+    ylim(0.5, 1.5) +
+    theme_bw()+
+    theme(text = element_text(size = 30))+
+    ylab('Detrended Ring width Index') +
+    xlab( xlab ) +
+    ggtitle(Site)
+  
+}
+
+molten <- read.csv("./outputs/full_molten_chron.csv")
+plot.cor.clim(x = molten[molten$Site %in% "Bonanza",], Clim = 'PDSI', xlab = "PDSI", Site = "Bonanza Prairie")
+plot.cor.clim(molten[molten$Site %in% "Hickory",], "PDSI", "PDSI", "Hickory Grove")
+plot.cor.clim(molten[molten$Site %in% "Coral",], "PDSI", "PDSI", "Coral Woods")
+plot.cor.clim(molten[molten$Site %in% "Glacial",], "PDSI", "PDSI", "Glacial Park")
+plot.cor.clim(molten[molten$Site %in% "StCroix",], "PDSI", "PDSI", "St. Croix Savanna")
+plot.cor.clim(molten[molten$Site %in% "Townsend",], "PDSI", "PDSI", "Townsend Woods")
+plot.cor.clim(molten[molten$Site %in% "Uncas",], "PDSI", "PDSI", "Uncas Dunes")
+plot.cor.clim(molten[molten$Site %in% "Mound",], "PDSI", "PDSI", "Mound Prairie")
+plot.cor.clim(molten[molten$Site %in% "Englund",], "PDSI", "PDSI", "Englund")
+plot.cor.clim(molten[molten$Site %in% "GLL1",], "PDSI", "PDSI", "GLL1")
+plot.cor.clim(molten[molten$Site %in% "GLL2",], "PDSI", "PDSI", "GLL2")
+plot.cor.clim(molten[molten$Site %in% "GLL3",], "PDSI", "PDSI", "GLL3")
+plot.cor.clim(molten[molten$Site %in% "GLL4",], "PDSI", "PDSI", "GLL4")
+plot.cor.clim(molten[molten$Site %in% "PVC",], "PDSI", "PDSI", "PVC")
+plot.cor.clim(molten[molten$Site %in% "Pleasant",], "PDSI", "PDSI", "Pleasant Valley")
+
+
+
+#let's see if wyckoff and bower's findings of a decreased relationship between PDSI & growth are correct
+
+# conduct f-test to see if the relationship pre-1950 is same as post 1950
+
+yr <- 1895:1950
+yr.post <- 1950:2014
+
+#this function runs the stats and makes plots for pre-1950 vs. post-1950
+# additionally plots are saved to outputs/correlations within the function
+plot.pre.post <- function(x, Climate, xlab, Site){
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  x$class <- '9999'
+  x[x$Year %in% yr,]$class <- 'Pre-1950'
+  x[x$Year %in% yr.post,]$class <- 'Post-1950'
+  #create dummy variable
+  x$group <- 0
+  x[x$Year %in% yr,]$group <- 1
+  
+  #yr <- 1895:1950
+  #x$grow <- '9999'
+  #x[x$Year %in% yr,]$class <- 'clim_record'
+  
+  
+  #if the dummy variable is significant, then the two slopes are different
+  print(summary( cor( x[,Clim], x$value)))
+  df <- data.frame(value <-  x$value, 
+                   Climate <- x[,Clim], 
+                   Year <- x$Year, 
+                   class <- x$class)
+  colnames(df)<- c("value", "Climate", "Year", "class")
+  
+  
+  #if the dummy variable is significant, then the two slopes are different
+  print(summary(aov(value ~ Climate * group, data = df)))
+  #print(summary(lm(value ~ Climate:group, data = x)))
+  #print(summary(aov(value~Climate*class, data=x)))
+  print(anova(lm(value ~ Climate*group, data = df), lm(value ~ Climate, data = df))
+  )#print(summary(lm(value~Climate/group-1, data=x)))
+  #print(summary(aov(value~Climate/group, data = x)))
+  # Extend the regression lines beyond the domain of the data
+  
+  p<- ggplot(df, aes(x=Climate, y=value, colour=class)) + geom_point(shape=1) +
+    scale_colour_hue(l=50) +
+    #+ylim(-1.0,1.0)
+    #+xlim(-4,4)# Use a slightly darker palette than normal
+    geom_smooth(method='lm',   # Add linear regression lines
+                se=TRUE,    # add shaded confidence region
+                fullrange=FALSE)+# Extend regression lines
+    
+    scale_color_manual(values=c('Pre-1950'="red",'Post-1950'="blue"))+
+    xlim(-8, 8)+
+    ylim(0.5, 1.5) +
+    theme_bw()+
+    theme(text = element_text(size = 10), plot.title = element_text(hjust = 0.5))+
+    ylab('Detrended RWI') +
+    xlab( xlab ) +
+    ggtitle(Site)
+  p
+  #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 10, height = 7 )
+}
+yr <- 1895:1950
+yr.post <- 1950:2014
+molten$class <- '9999'
+molten[molten$Year %in% yr,]$class <- 'Pre-1950'
+molten[molten$Year %in% yr.post,]$class <- 'Post-1950'
+#create dummy variable
+molten$group <- 0
+molten[molten$Year %in% yr,]$group <- 1
+
+sav<- aov(value ~ PDSI*class, data = molten[molten$ecotype %in% "Savanna",])
+
+fores<- aov(value ~ PDSI*class, data = molten[molten$ecotype %in% "Forest",])
+
+plot.pre.post(x = molten[molten$Site %in% "Hickory",], "PDSI", "PDSI", "Hickory Grove")#sig
+plot.pre.post(x = molten[molten$Site %in% "Bonanza",], "PDSI", "PDSI", "Bonanaza")
+plot.pre.post(x = molten[molten$Site %in% "StCroix",], "PDSI", "PDSI", "St. Croix Savanna")#sig
+plot.pre.post(x = molten[molten$Site %in% "Townsend",], "PDSI", "PDSI", "Townsend")
+plot.pre.post(x = molten[molten$Site %in% "Englund",], "PDSI", "PDSI", "Englund")
+plot.pre.post(x = molten[molten$Site %in% "Uncas",], "PDSI", "PDSI", "Uncas")
+plot.pre.post(x = molten[molten$Site %in% "Coral",], "PDSI", "PDSI", "Coral")#sig
+plot.pre.post(x = molten[molten$Site %in% "Glacial",], "PDSI", "PDSI", "Glacial Park")#sig at 0.1
+plot.pre.post(x = molten[molten$Site %in% "Mound",], "PDSI", "PDSI", "Mound Prairie")
+plot.pre.post(x = molten[molten$Site %in% "GLL1",], "PDSI", "PDSI", "Glacial Lakes 1")#sig
+plot.pre.post(x = molten[molten$Site %in% "GLL2",], "PDSI", "PDSI", "Glacial Lakes 2")#sig
+plot.pre.post(x = molten[molten$Site %in% "GLL3",], "PDSI", "PDSI", "Glacial Lakes 3")
+plot.pre.post(x = molten[molten$Site %in% "GLL4",], "PDSI", "PDSI", "Glacial Lakes 4")#sig
+plot.pre.post(x = molten[molten$Site %in% "Pleasant",], "PDSI", "PDSI", "Pleasant")#sig
+plot.pre.post(x = molten[molten$Site %in% "PVC",], "PDSI", "PDSI", "PVC")
+
+
+
+
+e <- plot.pre.post(molten.HIC, molten.HIC$Jul.pdsi, 'July PDSI', "Hickory Grove, IL") #significant
+a <- plot.pre.post(molten.BON, molten.BON$Jul.pdsi, 'July PDSI', "Bonanza Prairie, MN") #significant
+d <- plot.pre.post(molten.PLE, molten.PLE$Jul.pdsi, 'July PDSI', "Pleasant Valley Conservancy, WI") #not significant (only sig @ 0.15 )
+h <- plot.pre.post(molten.TOW, molten.TOW$Jul.pdsi, 'July PDSI', "Townsend Woods, MN") #not significant
+c <- plot.pre.post(molten.STC, molten.STC$Jul.pdsi, 'July PDSI', "St.Croix Savanna, MN") #significant
+f <- plot.pre.post(molten.GLA, molten.GLA$Jul.pdsi, 'July PDSI', "Glacial Park, IL") #significant
+g <- plot.pre.post(molten.COR, molten.COR$Jul.pdsi, 'July PDSI', "Coral Woods, IL") #significant
+b <- plot.pre.post(molten.UNC, molten.UNC$Jul.pdsi, 'July PDSI', "Uncas Dunes, MN") #significant
+i <- plot.pre.post(molten.ENG, molten.ENG$Jul.pdsi, 'July PDSI', "Englund Ecotone, MN") #significant
+j <- plot.pre.post(molten.MOU, molten.MOU$Jul.pdsi, 'July PDSI', "Mound Prairie, MN") #significant
+
+source("R/grid_arrange_shared_legend.R")
+png(width = 6, height = 9, units = 'in', res = 300, 'outputs/correlations/all_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(a,b,c,d,e,f,g,h,i,j,nrow = 5, ncol = 2 )
+dev.off()
+
+# plot the 
+#png(width = 6, height = 9, units = 'in', res = 300, 'outputs/correlations/all_site_pre_post_fig3.png')
+#grid_arrange_shared_legend(a,b,c,d,e,f,g,h,i,j,nrow = 5, ncol = 2 )
+#dev.off()
+
+# plot out sites with slope change:
+# St Croix savanna (c),
+png(width = 6, height = 5, units = 'in', res = 300, 'outputs/correlations/slopechange_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(c,d,nrow = 2, ncol = 2 )
+dev.off()
+
+# plot out sites with intercept change:
+# hickory grove (e), bonanza prairie (a), 
+# pleasant valley, glacial park, coral woods
+
+png(width = 6, height = 5, units = 'in', res = 300, 'outputs/correlations/interceptchange_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(a,e,f,g,nrow = 2, ncol = 2 )
+dev.off()
+
+# plot out sites with no changes:
+# mound prairie (j), Townsend woods (h), 
+#englund ecotone(i), Uncas dunes (b)
+png(width = 6, height = 5, units = 'in', res = 300, 'outputs/correlations/nochange_site_pre_post_fig3-ModNegExp.png')
+grid_arrange_shared_legend(j,b,h,i,nrow = 2, ncol = 2 )
+dev.off()
+
+
+
+plot.pre.post(molten.HIC, molten.HIC$JULTavg, 'July Average Temperature (DegF)', "Hickory Grove, IL") #significant
+
+
+
+
+pdf("outputs/pre_post_1950_plots.pdf")
+plot.pre.post(molten.HIC, molten.HIC$PDSI, 'PDSI', "Hickory Grove, IL") #significant
+plot.pre.post(molten.HIC, molten.HIC$PCP, "Annual Precipitation", "Hickory Grove, IL") #sig
+plot.pre.post(molten.HIC, molten.HIC$TMIN/10, "Mean Minimum Temperature", "Hickory Grove, IL") #sig
+plot.pre.post(molten.HIC, molten.HIC$TAVG/10, "Mean Temperature", "Hickory Grove, IL") #sig
+plot.pre.post(molten.BON, molten.BON$PDSI, "PDSI", "Bonanza Prairie, MN") #sig *
+plot.pre.post(molten.BON, molten.BON$PCP, "Annual Precipitation", "Bonanza Prairie, MN") #sig 
+plot.pre.post(molten.BON, molten.BON$TMIN, "Mean Minimum Temperature", "Bonanza Prairie, MN") #sig
+plot.pre.post(molten.BON, molten.BON$TAVG, "Mean Temperature", "Bonanza Prairie, MN") #***
+plot.pre.post(molten.PLE, molten.PLE$PDSI, "PDSI", "Pleasant Valley Conservancy, WI") #**
+plot.pre.post(molten.PLE, molten.PLE$PCP, "Annual Precipitation", "Pleasant Valley Conservancy, WI") #***
+plot.pre.post(molten.PLE, molten.PLE$TMIN,"Mean Minimum", "Pleasant Valley Conservancy, WI")#***
+plot.pre.post(molten.PLE, molten.PLE$TAVG,"Mean Temperature","Pleasant Valley Conservancy, WI")#***
+plot.pre.post(molten.TOW, molten.TOW$PDSI, "PDSI", "Townsend Woods, MN") #**
+plot.pre.post(molten.TOW, molten.TOW$PCP, "Annual Precipitaiton", "Townsend Woods, MN") #not signficant
+plot.pre.post(molten.TOW, molten.TOW$TMIN, "Minimum Temperature", "Townsend Woods, MN") #not significant
+plot.pre.post(molten.TOW, molten.TOW$TAVG, "Average Temperature" ,"Townsend Woods, MN") #not significant
+dev.off()
+
+
+
+#################################################
+# Linear regressions by group with bootstrapping#
+#################################################
+library(boot)
+
+# are the residuals increasing over time?
+test <- lm(molten.HIC$value~molten.HIC$PDSI)
+plot(molten.HIC$Year, test$residuals, type = "l")
+summary(lm(test$residuals ~ molten.HIC$Year))
+
+print(summary(aov(data$value~data$PDSI*data$class)))
+
+growth_reg = function(data, indices){
+  climate <- "Jul.pdsi"
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  data$class <- '9999'
+  data[data$Year %in% yr,]$class <- 'Pre-1950'
+  data[data$Year %in% yr.post,]$class <- 'Post-1950'
+  #create dummy variable
+  data$group <- 0
+  data[data$Year %in% yr,]$group <- 1
+  d = data[indices, ]
+  H_relationship = lm(d$value~d[,c(climate)], data = d)
+  H_r_sq = coefficients(H_relationship)
+  #H_p = summary(H_relationship)$coefficients[,4]
+  G_relationship = lm(d$value~d[,c(climate)]*d$group, data = d)
+  G_r_sq = coefficients(G_relationship)
+  #G_p = summary(G_relationship)$coefficients[,4]
+  relationships = c(H_r_sq, #H_p, 
+                    G_r_sq #, G_p
+  )
+  return(relationships)
+}
+
+# bootstrapping
+results = boot(data = molten.HIC, statistic = growth_reg, R = 5000)
+print (results) # view bootstrapped coefficients
+
+
+plot(results, index = 1) # plot boot strapped intercept
+plot(results, index = 2) # beta reg. coefficient
+plot(results, index = 3) # boot strapped intercept with grouping
+plot(results, index = 4) # beta reg coefficient
+plot(results, index = 5) # class 1 reg coefficient
+plot(results, index = 6) # class 2 reg coefficient
+
+# still not sure which class is which in this
+
+# the idea is to compare distributions of slope to 0 (if CI doesnt include 0, it should be different from 0)
+# also compare the two slope distributions to determine if they are statistically different from each other (ftest/anova)
+
+
+
+confidence_interval_H = boot.ci(results, index = 2, conf = 0.95, type = 'bca')
+print(confidence_interval_H)
+ci_H = confidence_interval_H$bca[ , c(4, 5)]
+print(ci_H) # if ciH doesnt contain 0, then the reg coefficient is >0 significant
+
+hist(results$t[,1], main = 'intercept', xlab = 'int',
+     col = 'grey')
+hist(results$t[,2], main = 'Beta: PDSI', xlab = 'beta',
+     col = 'grey', prob = T)
+lines(density(results$t[,2]), col = 'blue')
+abline(v = ci_H, col = 'red')
+
+#####################################
+#plot correlations against soil type#
+#####################################'
+
+#read in soil rasters from gssurgo data
+library(raster)
+ksat <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif')
+ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
+
+awc <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif')
+awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
+
+
+priority <- readOGR('data/Treecores.kml', layer = "NAPCsites")
+priority <- spTransform(priority, CRSobj = CRS('+init=epsg:3175'))
+priority <- data.frame(priority)
+priority$code <- c("PVC", "STC", "TOW", "HIC", "BON")
+priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
+
+
+
+priority$ksat <- extract(ksat.alb, priority[,c("coords.x1", "coords.x2")])
+priority$awc <- extract(awc.alb, priority[,c("coords.x1", "coords.x2")])
+
+BON.pdsi <- read.csv("BON-WWPDSIcor.csv")
+HIC.pdsi <- read.csv("HIC-WWPDSIcor.csv")
+STC.pdsi <- read.csv("STC-WWPDSIcor.csv")
+TOW.pdsi <- read.csv("TOW-WWPDSIcor.csv")
+PLE.pdsi <- read.csv("PLE-WWPDSIcor.csv")
+
+
+
+priority$pdsiJul <- 0
+priority[priority$code %in% "BON", ]$pdsiJul <- BON.pdsi[19,2]
+priority[priority$code %in% "HIC", ]$pdsiJul <- HIC.pdsi[19,2]
+priority[priority$code %in% "STC", ]$pdsiJul <- STC.pdsi[19,2]
+priority[priority$code %in% "TOW", ]$pdsiJul <- TOW.pdsi[19,2]
+priority[priority$code %in% "PVC", ]$pdsiJul <- PLE.pdsi[19,2]
+
+
+plot(priority$ksat, priority$pdsiJul)
+plot(priority$awc, priority$pdsiJul)
+
+
+#dataset from http://scrippsco2.ucsd.edu/data/atmospheric_co2
+#CO2 <- read.csv('data/merged_ice_core_yearly.csv')
+
+CO2 <- read.csv('data/spline_merged_ice_core_yearly2.csv', header = TRUE)
+
+#colnames(CO2) <- c('YearCE', 'ppm', 'Year')
+
+compare.CO2<- function(CO2, x){
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  x$class <- '9999'
+  x[x$Year %in% yr,]$class <- 'Pre-1950'
+  x[x$Year %in% yr.post,]$class <- 'Post-1950'
+  #create dummy variable
+  x$group <- 0
+  x[x$Year %in% yr,]$group <- 1
+  
+  CO2.m <- merge(x, CO2, by = 'Year')
+  print(summary( lm(value ~ ppm, data = CO2.m)))
+  
+  
+  # Extend the regression lines beyond the domain of the data
+  ggplot(CO2.m, aes(x=ppm, y=value)) + geom_point(shape=1) +
+    scale_colour_hue(l=50) + # Use a slightly darker palette than normal
+    geom_smooth(method=loess,   # Add linear regression lines
+                se=TRUE,    # add shaded confidence region
+                fullrange=FALSE)+# Extend regression lines
+    ylab('Detrended Ring width Index') +
+    xlab( 'ppm') +
+    ggtitle('CO2 vs growth')
+}
+
+pdf('outputs/CO2_growth_splines.pdf')
+compare.CO2(CO2, molten.BON)
+compare.CO2(CO2, molten.HIC)
+compare.CO2(CO2, molten.TOW)
+compare.CO2(CO2, molten.PLE)
+compare.CO2(CO2, molten.STC)
+compare.CO2(CO2, molten.SAN)
+compare.CO2(CO2, molten.DES)
+compare.CO2(CO2, molten.COR)
+compare.CO2(CO2, molten.ENG)
+compare.CO2(CO2, molten.MOU)
+compare.CO2(CO2, molten.GLA)
+dev.off()
+
+
+compare.CO2.PDSI<- function(CO2, x){
+  CO2.m <- merge(x, CO2, by = 'Year')
+  plot(CO2.m$PDSI, CO2.m$ppm)
+}
+
+
+
+compare.CO2.PDSI(CO2, molten.BON)
+compare.CO2.PDSI(CO2, molten.HIC)
+compare.CO2.PDSI(CO2, molten.TOW)
+compare.CO2.PDSI(CO2, molten.PLE)
+compare.CO2.PDSI(CO2, molten.STC)
+
+#plot theses
+plot(molten.HIC[molten.HIC$Year== 1895:1950,]$PDSI, molten.HIC[molten.HIC$Year== 1895:1950,]$value)
+abline(preHIClm)
+points(molten.HIC[molten.HIC$Year== 1951:2014,]$PDSI, molten.HIC[molten.HIC$Year== 1951:2014,]$value, col = 'red')
+abline(postHIClm, col = 'red')
+
+var.test( lm(value ~ PDSI, data = molten.BON[molten.BON$Year %in% yr,]),
+          lm(value ~ PDSI, data = molten.BON[molten.BON$Year %in% yr.post,]))
+#F = 1.5127, num df = 222, denom df = 190, p-value = 0.003411
+
+var.test( lm(value ~ PDSI, data = molten.PLE[molten.PLE$Year %in% yr,]),
+          lm(value ~ PDSI, data = molten.PLE[molten.PLE$Year %in% yr.post,]))
+# F = 0.82271, num df = 166, denom df = 126, p-value = 0.2389
+
+var.test( lm(value ~ PDSI, data = molten.TOW[molten.TOW$Year %in% yr,]),
+          lm(value ~ PDSI, data = molten.TOW[molten.TOW$Year %in% yr,]))
+
+# F = 1.7999, num df = 173, denom df = 190, p-value = 8.101e-05
+
+
+
+
+
+
