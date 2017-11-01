@@ -822,6 +822,7 @@ cor.v.type <- function(climatedata, mo, climatevar, var){
    # xlab(var)+ylab(paste0(clim," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))
   
 }
+
 cor.v.type("PRISM","Jun", climatevar = "tavg", var = "awc")
 cor.v.type("PRISM","Jun", climatevar = "tmin", var = "awc")
 cor.v.type("PRISM","Jun", climatevar = "tmax", var = "awc")

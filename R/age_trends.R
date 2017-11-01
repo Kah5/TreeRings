@@ -44,12 +44,14 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   dev.off()
   
   detrended.mean$year <- rownames(detrended.mean)
+  detrended.mean$site<- site
   detrended.mean
 }
 
 
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
+
 Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
 StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
 Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "rwi", site = "BON")
@@ -66,25 +68,35 @@ GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai
 GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL4")
 PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
 
+detrended.list <- list(Hickory.bai, StCroix.bai, Bonanza.bai,Townsend.bai,Pleasant.bai, Coral.bai,
+                 Uncas.bai, Glacial.bai, Englund.bai, Mound.bai, GLL1.bai, GLL2.bai, 
+                 GLL3.bai, GLL4.bai, PVC.bai)
+
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
 source("R/tree_age_agg.R")
 
-Hic <- tree_age_agg(rwiorbai = Hickory.bai, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI_Spline_detrended")
-Stc <- tree_age_agg(StCroix.bai, 2015, "STC", 30,"RWI_Spline_detrended")
-Bon <- tree_age_agg(Bonanza.bai, 2015, "BON", 30,"RWI_Spline_detrended")
-Tow <- tree_age_agg(Townsend.bai, 2015, "TOW", 30,"RWI_Spline_detrended")
-Ple <- tree_age_agg(Pleasant.bai, 2015, "PLE", 30,"RWI_Spline_detrended")
-Cor <- tree_age_agg(Coral.bai, 2016, "COR", 30,"RWI_Spline_detrended")
-Unc <- tree_age_agg(Uncas.bai, 2016, "UNC", 30,"RWI_Spline_detrended")
-Eng <- tree_age_agg(Englund.bai, 2015, "ENG", 30,"RWI_Spline_detrended")
-Mou <- tree_age_agg(Mound.bai, 2015, "MOU", 30,"RWI_Spline_detrended")
-GLL1 <- tree_age_agg(GLL1.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL2 <- tree_age_agg(GLL2.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL3 <- tree_age_agg(GLL3.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL4 <- tree_age_agg(GLL4.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
-PVC <- tree_age_agg(PVC.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
+# apply the tree_age_agg function on all of the detrended tree ring series
+detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 30,type = "RWI_Spline_detrended" )
+
+# use do.calll to make these a dataframe
+detrended.age.df <- do.call(rbind, detrended.age)
+
+#Hic <- tree_age_agg(rwiorbai = Hickory.bai, age1950 = 30,type = "RWI_Spline_detrended")
+#Stc <- tree_age_agg(rwiorbai = StCroix.bai, age1950=30,type = "RWI_Spline_detrended")
+#Bon <- tree_age_agg(Bonanza.bai, 30,"RWI_Spline_detrended")
+#Tow <- tree_age_agg(Townsend.bai,  30,"RWI_Spline_detrended")
+#Ple <- tree_age_agg(Pleasant.bai,  30,"RWI_Spline_detrended")
+#Cor <- tree_age_agg(Coral.bai,30,"RWI_Spline_detrended")
+#Unc <- tree_age_agg(Uncas.bai, 30,"RWI_Spline_detrended")
+#Eng <- tree_age_agg(Englund.bai, 30,"RWI_Spline_detrended")
+#Mou <- tree_age_agg(Mound.bai,   30,"RWI_Spline_detrended")
+#GLL1 <- tree_age_agg(GLL1.bai,   30,"RWI_Spline_detrended")
+#GLL2 <- tree_age_agg(GLL2.bai,   30,"RWI_Spline_detrended")
+#GLL3 <- tree_age_agg(GLL3.bai,   30,"RWI_Spline_detrended")
+#GLL4 <- tree_age_agg(GLL4.bai,  30,"RWI_Spline_detrended")
+#PVC <- tree_age_agg(PVC.bai,  30,"RWI_Spline_detrended")
 
 
 ###################################
@@ -93,7 +105,8 @@ PVC <- tree_age_agg(PVC.bai, 2016, "MOU", 30,"RWI_Spline_detrended")
 
 # read in the climate for each site
 
-get.clim <- function(site.code, site.df){
+get.clim <- function(site.df){
+  site.code <- site.df[1,]$site
   if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
     MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
   } else{ if(site.code %in% c("HIC", "COR","GLA", "PVC" )){
@@ -199,39 +212,37 @@ get.clim <- function(site.code, site.df){
                         JUNTmin = jun.tmin[1:120,]$TMIN,
                         JUNTavg = jun.tavg[1:120,]$TAVG, 
                         JUNTmax = jun.tmax[1:120,]$TMAX,
-                        Jul.pdsi = jul.pdsi[1:120,]$PDSI, 
-                        WUE.fake = seq(0,15, by = 15/119))
+                        Jul.pdsi = jul.pdsi[1:120,]$PDSI) 
+                        #WUE.fake = seq(0,15, by = 15/119))
   
-  #merge annuals with rwl
-  #annuals.crn <- merge(annuals, chron, by = "Year")
-  #melt(annuals.crn, id = c('ear','Site', 'PCP', "TMIN", "TAVG", "PDSI","MAY.p","JJA.p", 
-   #                        "JUNTmin","JUNTavg", 'JUNTmax',"Jul.pdsi"))
-  df<- merge(site.df, annuals, by = "year")
-  df$site <- site.code
+  df <- merge(site.df, annuals, by = "year")
+  
   df
 }
 
+det.age.clim <-lapply(detrended.age, get.clim)
+det.age.clim.df <- do.call(rbind,det.age.clim)
 # get climate and merge with the existing dataframes:
-HIC_clim <- get.clim("HIC", Hic)
-STC_clim <- get.clim("STC", Stc)
-BON_clim <- get.clim("BON", Bon)
-TOW_clim <- get.clim("TOW", Tow)
-PLE_clim <- get.clim("PLE", Ple)
-COR_clim <- get.clim("COR", Cor)
-UNC_clim <- get.clim("UNC", Unc)
-ENG_clim <- get.clim("ENG", Eng)
-MOU_clim <- get.clim("MOU", Mou)
-GLL1_clim <- get.clim("GLL1", GLL1)
-GLL2_clim <- get.clim("GLL2", GLL2)
-GLL3_clim <- get.clim("GLL3", GLL3)
-GLL4_clim <- get.clim("GLL4", GLL4)
-PVC_clim <- get.clim("PVC", PVC)
+#HIC_clim <- get.clim("HIC", Hic)
+#STC_clim <- get.clim("STC", Stc)
+#BON_clim <- get.clim("BON", Bon)
+#TOW_clim <- get.clim("TOW", Tow)
+#PLE_clim <- get.clim("PLE", Ple)
+#COR_clim <- get.clim("COR", Cor)
+#UNC_clim <- get.clim("UNC", Unc)
+#ENG_clim <- get.clim("ENG", Eng)
+#MOU_clim <- get.clim("MOU", Mou)
+#GLL1_clim <- get.clim("GLL1", GLL1)
+#GLL2_clim <- get.clim("GLL2", GLL2)
+#GLL3_clim <- get.clim("GLL3", GLL3)
+#GLL4_clim <- get.clim("GLL4", GLL4)
+#PVC_clim <- get.clim("PVC", PVC)
 
 #ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-ggplot(GLL1_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-ggplot(GLL2_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-ggplot(GLL3_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-ggplot(GLL4_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+ggplot(det.age.clim.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
+#ggplot(GLL2_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+#ggplot(GLL3_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+#ggplot(GLL4_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
 
 
 
