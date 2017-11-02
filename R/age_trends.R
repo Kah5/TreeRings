@@ -572,28 +572,52 @@ test <- lm(Jul.pdsi~year, data = df)# no significant change
 # function to extract whole time series slope of lm(RWI ~ PDSI)
 get.clim.sensitivity <- function(df){
   
-  coeffs <- matrix ( 0, length(unique(df$site)), 3 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site)), 7 ) # set up matrix for coefficients
   
   # for loop
-  for(s in 1: length(unique(all$site))){
-    name <- unique(all$site)[s]  
-    lmest <- lm(RWI ~ PDSI, data = all[all$site == name ,])
-    coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
+  for(s in 1: length(unique(df$site))){
+    
+    
+      name <- unique(df$site)[s]  
+      site.data<- na.omit(df[df$site == name ,])
+  
+    
+    bs <- function(formula, data, indices) {
+      d <- data[indices,] # allows boot to select sample 
+      fit <- lm(formula, data=d)
+      return(coef(fit)) 
+    } 
+    
+    
+      results <- boot(data=site.data, statistic=bs, 
+                    R=2000, formula=RWI ~ PDSI)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+    coeffs[s,2:3] <- results$t0
     coeffs[s , 1] <- name
+    coeffs[s,4] <- as.data.frame(int.cis$normal)$V2
+    coeffs[s,5] <- as.data.frame(int.cis$normal)$V3
+    coeffs[s,6] <- as.data.frame(slope.cis$normal)$V2
+    coeffs[s,7] <- as.data.frame(slope.cis$normal)$V3
   }
   
   coeffs <- data.frame(coeffs)
-  colnames(coeffs) <- c("site", "slope.est", "std.err")
+  colnames(coeffs) <- c("site",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
   coeffs$site <- as.character(coeffs$site)
   coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
-  coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
+  coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
+  coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
+  coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
+  coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
   coeffs
   
 }
 
 # get all the sensitivities for pdsi:
 
-pdsi.sens <- get.clim.sensitivity(df = det.age.clim.prism.df)
+pdsi.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df)
 
 # function to extract slopes for young an old trees of lm(RWI~PDSI)
 get.clim.sens.age <- function(df){
