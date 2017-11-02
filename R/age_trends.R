@@ -100,157 +100,269 @@ detrended.age.df <- do.call(rbind, detrended.age)
 
 
 ###################################
-#add climate onto the age trends
+# add climate data to the age trends
 ####################################
 
-# read in the climate for each site
 
-get.clim <- function(site.df){
+# this function reads in climate data from each site and adds it to the appropriate site
+get.clim <- function(site.df, climatedata){
   site.code <- site.df[1,]$site
-  if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
-    MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
-  } else{ if(site.code %in% c("HIC", "COR","GLA", "PVC" )){
-    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-  }  else{ if(site.code == "W-R" ){
-    MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
-  } else{ if(site.code == 'SAW'){
-    MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
-  }else{ if(site.code == "STC"){
-    MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
-  }else{ if(site.code == "ENG"){
-    MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
-  }else{ if(site.code == "TOW"){
-    MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
-  }else{ if(site.code == "MOU"){
-    MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
-  }else{ if(site.code == "UNC"){
-    MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
-  }else { if(site.code == 'PLE'){
-    MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
-  }else { if(site.code == 'YRF'){
-    MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
-    #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
+  
+  if(climatedata == "GHCN"){
+          if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
+            MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+          } else{ if(site.code %in% c("HIC", "COR","GLA", "PVC" )){
+            MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+          }  else{ if(site.code == "W-R" ){
+            MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+          } else{ if(site.code == 'SAW'){
+            MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+          }else{ if(site.code == "STC"){
+            MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+          }else{ if(site.code == "ENG"){
+            MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
+          }else{ if(site.code == "TOW"){
+            MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
+          }else{ if(site.code == "MOU"){
+            MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
+          }else{ if(site.code == "UNC"){
+            MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+          }else { if(site.code == 'PLE'){
+            MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
+          }else { if(site.code == 'YRF'){
+            MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
+            #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
+          }
+          }
+          }
+          }
+          }
+          }
+          }
+          }
+          }
+          }
+          
+          
+          MNcd.clim$PCP <- MNcd.clim$PCP*25.54
+          
+          keeps <- c("Year", "Month",  "PCP")
+          keepstavg <- c("Year", "Month", "TAVG")
+          keepst <- c("Year", "Month",  "TMAX")
+          keepstmin <- c("Year", "Month",  "TMIN")
+          keepspdsi <- c("Year", "Month",  "PDSI")
+          
+          #create a dataset for Precip
+          MNp.df <- MNcd.clim[,keeps]
+          MNp.df[MNp.df == -9999]<- NA
+          
+          #for tmax
+          MNt.df <- MNcd.clim[,keepst]
+          MNt.df[MNt.df == -9999]<- NA
+          
+          #for tmin
+          MNtmin.df<- MNcd.clim[,keepstmin]
+          MNtmin.df[MNtmin.df == -9999]<- NA
+          
+          #for tavg
+          MNtavg.df <- MNcd.clim[,keepstavg]
+          MNtavg.df[MNtavg.df == -9999]<- NA
+          
+          MNpdsi.df <- MNcd.clim[,keepspdsi]
+          MNpdsi.df[MNpdsi.df == -9999]<- NA
+          #for precipitation
+          
+          
+          total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+          months <- 6:9
+          MNpjja.df <- MNp.df[MNp.df$Month %in% months,]
+          jja.p <- aggregate(PCP ~ Year, data = MNpjja.df, FUN = sum, na.rm = T)
+          
+          total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+          may.p <- total.p[total.p$Month == 5, ]
+          
+          tavg.m <- aggregate(TAVG ~ Year + Month, data=MNtavg.df, FUN=sum, na.rm = T) 
+          jun.tavg <- tavg.m[tavg.m$Month == 6,]
+          
+          tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
+          jun.tmin <- tmin.m[tmin.m$Month == 6, ]
+          
+          tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+          jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+          
+          
+          
+          
+          #pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
+          #plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
+          
+          
+          #precip <- dcast(total.p, Year  ~ Month)
+          annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
+          annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1440,], FUN = 'mean', na.rm=T)
+          annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1440,], FUN = 'mean', na.rm = T)
+          annual.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
+          annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
+          jul.pdsi <- annual.pdsi.m[annual.pdsi.m$Month == 7,] 
+          
+          annuals <- data.frame(year = annual.p$Year, 
+                                PCP = annual.p$PCP,
+                                TMIN = annual.mint$TMIN,
+                                TAVG = annual.t$TAVG,
+                                PDSI = annual.pdsi$PDSI,
+                                MAY.p = may.p[1:120,]$PCP,
+                                JJA.p = jja.p[1:120,]$PCP,
+                                JUNTmin = jun.tmin[1:120,]$TMIN,
+                                JUNTavg = jun.tavg[1:120,]$TAVG, 
+                                JUNTmax = jun.tmax[1:120,]$TMAX,
+                                Jul.pdsi = jul.pdsi[1:120,]$PDSI) 
+                                
+          
+          df <- merge(site.df, annuals, by = "year")
+          
+          df
+  }else{
+    
+    MNcd.clim <- read.csv(paste0("data/PRISM/",list.files("data/PRISM/", pattern = site.code)), header = TRUE, skip = 10 )
+    colnames(MNcd.clim) <- c("Date", "PCP", "TMIN", "TAVG", "TMAX", "TdAVG", "VPDmin", "VPDmax" )
+    
+    # get latitude (need for PET calculation):
+    lat <- as.numeric(unlist(strsplit(list.files("data/PRISM/", pattern = site.code), split = "_"))[5])
+    
+    #split date into month and year:
+    MNcd.clim <- MNcd.clim %>% separate(Date, c("Year", "Month"), "-")
+    
+    # conversions to metric b/c PRISM still uses Farenheit and inches \_O_/
+    MNcd.clim$PCP <- MNcd.clim$PCP*25.54 # convert to mm
+    # convert temperatures to celcius
+    MNcd.clim$TMIN <- (MNcd.clim$TMIN - 32)/1.8
+    MNcd.clim$TMAX <- (MNcd.clim$TMAX - 32)/1.8
+    MNcd.clim$TAVG <- (MNcd.clim$TAVG - 32)/1.8
+    MNcd.clim$TdAVG <- (MNcd.clim$TdAVG - 32)/1.8
+    
+    
+    # calculate PET using thornthwaite method:
+    
+    MNcd.clim$PET <- as.numeric(thornthwaite(MNcd.clim$TAVG, lat))
+    
+    #calculate water balance for each month:
+    MNcd.clim$BAL <- MNcd.clim$PCP - MNcd.clim$PET
+    
+    MNcd.clim$Month<- as.numeric(MNcd.clim$Month)
+    # make separate DF for each of the variables:
+    keeps <- c("Year", "Month",  "PCP")
+    keepstavg <- c("Year", "Month", "TAVG")
+    keepst <- c("Year", "Month",  "TMAX")
+    keepstmin <- c("Year", "Month",  "TMIN")
+    keepsvpdmin <- c("Year", "Month",  "VPDmin")
+    keepsvpdmax <- c("Year", "Month",  "VPDmax")
+    keepsPET <- c("Year", "Month",  "PET")
+    keepsBAL <- c("Year", "Month", "BAL")
+    
+    #create a dataset for Precip
+    MNp.df <- MNcd.clim[,keeps]
+    MNp.df[MNp.df == -9999]<- NA
+    
+    #for tmax
+    MNt.df <- MNcd.clim[,keepst]
+    MNt.df[MNt.df == -9999]<- NA
+    
+    #for tmin
+    MNtmin.df<- MNcd.clim[,keepstmin]
+    MNtmin.df[MNtmin.df == -9999]<- NA
+    
+    #for tavg
+    MNtavg.df <- MNcd.clim[,keepstavg]
+    MNtavg.df[MNtavg.df == -9999]<- NA
+    
+    # for vpdmin
+    MNvpdmin.df<- MNcd.clim[,keepsvpdmin]
+    MNvpdmin.df[MNvpdmin.df == -9999]<- NA
+    
+    # for vpdmax
+    MNvpdmax.df<- MNcd.clim[,keepsvpdmax]
+    MNvpdmax.df[MNvpdmax.df == -9999]<- NA
+    
+    #for PET (thornthwaite):
+    MNPET.df<- MNcd.clim[,keepsPET]
+    MNPET.df[MNPET.df == -9999]<- NA
+    
+    #for water balance (P- PET)
+    MNBAL.df <- MNcd.clim[,keepsBAL]
+    MNBAL.df[MNBAL.df == -9999] <- NA
+    
+    
+    total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+    months <- 6:9
+    
+    MNpjja.df <- MNp.df[as.numeric(MNp.df$Month) %in% months,]
+    jja.p <- aggregate(PCP ~ Year, data = MNpjja.df, FUN = sum, na.rm = T)
+    
+    total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
+    may.p <- total.p[total.p$Month == 5, ]
+    
+    tavg.m <- aggregate(TAVG ~ Year + Month, data=MNtavg.df, FUN=sum, na.rm = T) 
+    jun.tavg <- tavg.m[tavg.m$Month == 6,]
+    
+    tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
+    jun.tmin <- tmin.m[tmin.m$Month == 6, ]
+    
+    tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
+    jun.tmax <- tmax.m[tmax.m$Month == 6, ]
+    
+    VPDmax.m <- aggregate(VPDmax ~ Year + Month, data = MNvpdmax.df, FUN = sum, na.rm = T)
+    jul.VPDmax <- VPDmax.m[VPDmax.m$Month == 7, ]
+    
+    BAL.m <- aggregate(BAL ~ Year + Month, data = MNBAL.df[1:1440,], FUN = sum, na.rm = T)
+    jul.BAL <- BAL.m[BAL.m$Month == 7, ]
+    
+    annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
+    annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1440,], FUN = 'mean', na.rm=T)
+    annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1440,], FUN = 'mean', na.rm = T)
+    annual.VPDmax <- aggregate(VPDmax ~ Year, data = MNvpdmax.df[1:1440,], FUN = 'mean', na.rm = T)
+    annual.BAL <- aggregate(BAL ~ Year, data = MNBAL.df[1:1440,], FUN = 'sum', na.rm = T)
+    
+    
+    annuals <- data.frame(year = annual.p$Year, 
+                          PCP = annual.p$PCP,
+                          TMIN = annual.mint$TMIN,
+                          TAVG = annual.t$TAVG,
+                          VPDmax = annual.VPDmax$VPDmax,
+                          BAL = annual.BAL$BAL,
+                          MAY.p = may.p[1:120,]$PCP,
+                          JJA.p = jja.p[1:120,]$PCP,
+                          JUNTmin = jun.tmin[1:120,]$TMIN,
+                          JUNTavg = jun.tavg[1:120,]$TAVG, 
+                          JUNTmax = jun.tmax[1:120,]$TMAX,
+                          jul.VPDmax = jul.VPDmax[1:120,]$VPDmax, 
+                          jul.BAL = jul.BAL[1:120,]$BAL) 
+   
+    
+    df <- merge(site.df, annuals, by = "year")
+    
+    df
+  
+    
   }
-  }
-  }
-  }
-  }
-  }
-  }
-  }
-  }
-  }
-  
-  
-  MNcd.clim$PCP <- MNcd.clim$PCP*25.54
-  
-  keeps <- c("Year", "Month",  "PCP")
-  keepstavg <- c("Year", "Month", "TAVG")
-  keepst <- c("Year", "Month",  "TMAX")
-  keepstmin <- c("Year", "Month",  "TMIN")
-  keepspdsi <- c("Year", "Month",  "PDSI")
-  #create a dataset for Precip
-  MNp.df <- MNcd.clim[,keeps]
-  MNp.df[MNp.df == -9999]<- NA
-  
-  #for tmax
-  MNt.df <- MNcd.clim[,keepst]
-  MNt.df[MNt.df == -9999]<- NA
-  
-  #for tmin
-  MNtmin.df<- MNcd.clim[,keepstmin]
-  MNtmin.df[MNtmin.df == -9999]<- NA
-  
-  #for tavg
-  MNtavg.df <- MNcd.clim[,keepstavg]
-  MNtavg.df[MNtavg.df == -9999]<- NA
-  
-  MNpdsi.df<- MNcd.clim[,keepspdsi]
-  MNpdsi.df[MNpdsi.df == -9999]<- NA
-  #for precipitation
-  
-  
-  total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
-  months <- 6:9
-  MNpjja.df <- MNp.df[MNp.df$Month %in% months,]
-  jja.p <- aggregate(PCP ~ Year, data = MNpjja.df, FUN = sum, na.rm = T)
-  
-  total.p <- aggregate(PCP ~ Year + Month, data=MNp.df, FUN=sum, na.rm = T) 
-  may.p <- total.p[total.p$Month == 5, ]
-  
-  tavg.m <- aggregate(TAVG ~ Year + Month, data=MNtavg.df, FUN=sum, na.rm = T) 
-  jun.tavg <- tavg.m[tavg.m$Month == 6,]
-  
-  tmin.m <- aggregate(TMIN ~ Year + Month, data = MNtmin.df, FUN = sum, na.rm = T)
-  jun.tmin <- tmin.m[tmin.m$Month == 6, ]
-  
-  tmax.m <- aggregate(TMAX ~ Year + Month, data = MNt.df, FUN = sum, na.rm = T)
-  jun.tmax <- tmax.m[tmax.m$Month == 6, ]
-  
-  
-  
-  
-  #pr.yr <- aggregate(PCP ~ Year , data=MNp.df, FUN=sum, na.rm = T) 
-  #plot(pr.yr[1:120,1], pr.yr[1:120,2], type = "l", xlab = "Year", ylab = "Annual Precip (mm)")
-  
-  
-  #precip <- dcast(total.p, Year  ~ Month)
-  annual.p <- aggregate(PCP~Year, data = MNp.df[1:1440,], FUN = sum, na.rm=T)
-  annual.t <- aggregate(TAVG ~ Year, data = MNtavg.df[1:1440,], FUN = 'mean', na.rm=T)
-  annual.mint <- aggregate(TMIN ~Year, data = MNtmin.df[1:1440,], FUN = 'mean', na.rm = T)
-  annual.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
-  annual.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[1:1440,], FUN = 'mean', na.rm = T)
-  jul.pdsi <- annual.pdsi.m[annual.pdsi.m$Month == 7,] 
-  
-  annuals <- data.frame(year = annual.p$Year, 
-                        PCP = annual.p$PCP,
-                        TMIN = annual.mint$TMIN,
-                        TAVG = annual.t$TAVG,
-                        PDSI = annual.pdsi$PDSI,
-                        MAY.p = may.p[1:120,]$PCP,
-                        JJA.p = jja.p[1:120,]$PCP,
-                        JUNTmin = jun.tmin[1:120,]$TMIN,
-                        JUNTavg = jun.tavg[1:120,]$TAVG, 
-                        JUNTmax = jun.tmax[1:120,]$TMAX,
-                        Jul.pdsi = jul.pdsi[1:120,]$PDSI) 
-                        #WUE.fake = seq(0,15, by = 15/119))
-  
-  df <- merge(site.df, annuals, by = "year")
-  
-  df
 }
 
-det.age.clim <-lapply(detrended.age, get.clim)
-det.age.clim.df <- do.call(rbind,det.age.clim)
-# get climate and merge with the existing dataframes:
-#HIC_clim <- get.clim("HIC", Hic)
-#STC_clim <- get.clim("STC", Stc)
-#BON_clim <- get.clim("BON", Bon)
-#TOW_clim <- get.clim("TOW", Tow)
-#PLE_clim <- get.clim("PLE", Ple)
-#COR_clim <- get.clim("COR", Cor)
-#UNC_clim <- get.clim("UNC", Unc)
-#ENG_clim <- get.clim("ENG", Eng)
-#MOU_clim <- get.clim("MOU", Mou)
-#GLL1_clim <- get.clim("GLL1", GLL1)
-#GLL2_clim <- get.clim("GLL2", GLL2)
-#GLL3_clim <- get.clim("GLL3", GLL3)
-#GLL4_clim <- get.clim("GLL4", GLL4)
-#PVC_clim <- get.clim("PVC", PVC)
+det.age.clim.prism <-lapply(detrended.age, get.clim, climatedata = "PRISM")
+det.age.clim.prism.df <- do.call(rbind,det.age.clim.prism)
 
-#ggplot(HIC_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-ggplot(det.age.clim.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
-#ggplot(GLL2_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-#ggplot(GLL3_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
-#ggplot(GLL4_clim, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')
+det.age.clim.ghcn <-lapply(detrended.age, get.clim, climatedata = "GHCN")
+det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
 
+# plot the RWI vs July.pdsi
+ggplot(det.age.clim.prism.df, aes(x = jul.VPDmax, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
+ggplot(det.age.clim.ghcn.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
 
+# ------------------plot climate parameters vs growth for all the tree ring series
 
 # this function plots a scatter plot of a climate param vs. growth (RWI)
 # with two separate slopes for the "young" and the "old" trees
-plot.young.old <- function(x, Climate, xlab, ylab,Site){
-  
-  if(length(unique(x$ageclass)) >= 1){
+plot.young.old <- function(x, Climate, xlab, ylab){
+  Site <- x[1,]$site
+  if(length(unique(x$ageclass)) > 1){
   #create dummy variable
   x$group <- 0
   ifelse(x$ageclass %in% "old", x$group <- 1, x$group <- 0)
@@ -276,7 +388,7 @@ plot.young.old <- function(x, Climate, xlab, ylab,Site){
                 se=TRUE,    # add shaded confidence region
                 fullrange=FALSE)+# Extend regression lines
     
-    scale_color_manual(values=c('old'="red",'young'="blue"))+
+    scale_color_manual(values=c('old'="red",'young'="blue"), name = "Tree Age")+
     #xlim(-8, 8)+
     #ylim(0.5, 1.5) +
     theme_bw()+
@@ -298,7 +410,7 @@ plot.young.old <- function(x, Climate, xlab, ylab,Site){
                   se=TRUE,    # add shaded confidence region
                   fullrange=FALSE)+# Extend regression lines
       
-      scale_color_manual(values=c('young'="blue"))+
+      scale_color_manual(values=c('young'="blue",'old'="red"), name = "Tree Age")+
       #xlim(-8, 8)+
       #ylim(0.5, 1.5) +
       theme_bw()+
@@ -308,52 +420,49 @@ plot.young.old <- function(x, Climate, xlab, ylab,Site){
       ggtitle(Site)
   }
   p
-  ggsave(filename = paste0('outputs/correlations/young_old_jul_pdsi_',Site,".png"), plot = p, width = 5, height = 3.5 )
+  #ggsave(filename = paste0('outputs/correlations/young_old_jul_pdsi_',Site,".png"), plot = p, width = 5, height = 3.5 )
 }
 
-#pdf("outputs/correlations/BAI_young_old_figs.pdf")
-plot.young.old(STC_clim, "PDSI", "PDSI","RWI", "STC")
-plot.young.old(HIC_clim, "PDSI", "PDSI","RWI", "HIC")
-plot.young.old(TOW_clim, "PDSI", "PDSI","RWI", "TOW")
-plot.young.old(BON_clim, "PDSI", "PDSI","RWI", "BON")
-plot.young.old(PLE_clim, "PDSI", "PDSI","RWI", "PLE")
-plot.young.old(COR_clim, "PDSI", "PDSI","RWI", "COR")
-plot.young.old(UNC_clim, "PDSI", "PDSI","RWI", "UNC")
-plot.young.old(ENG_clim, "PDSI", "PDSI","RWI", "ENG")
-plot.young.old(PVC_clim, "PDSI", "PDSI","RWI", "PVC")
-plot.young.old(GLL1_clim, "PDSI", "PDSI","RWI", "GLL1")
-plot.young.old(GLL2_clim, "PDSI", "PDSI","RWI", "GLL2")
-plot.young.old(GLL3_clim, "PDSI", "PDSI","RWI", "GLL3")
-plot.young.old(GLL4_clim, "PDSI", "PDSI","RWI", "GLL4")
-plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "RWI",Site = "MOU")
-#dev.off()
+# make all the plots for ghcn data: outputs to outputs/correlations/folder
+allyoung.old.plots.pdsi <- lapply(det.age.clim.ghcn, plot.young.old, Climate = "PDSI",xlab = "PDSI", ylab = "RWI")
 
-# drought is really only important in the summer, so lest look at July pdsi
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/young_old_pdsi_allsite.png")
+  n <- length(allyoung.old.plots.pdsi)
+  nCol <- floor(sqrt(n))
+  do.call("grid.arrange", c(allyoung.old.plots.pdsi, ncol=3))
+dev.off()
 
-plot.young.old(STC_clim, "Jul.pdsi", "PDSI","BAI", "STC")
-plot.young.old(HIC_clim, "Jul.pdsi", "PDSI","BAI", "HIC")
-plot.young.old(TOW_clim, "Jul.pdsi", "PDSI","BAI", "TOW")
-plot.young.old(BON_clim, "Jul.pdsi", "PDSI","BAI", "BON")
-plot.young.old(PLE_clim, "Jul.pdsi", "PDSI","BAI", "PLE")
-plot.young.old(COR_clim, "Jul.pdsi", "PDSI","BAI", "COR")
-plot.young.old(UNC_clim, "Jul.pdsi", "PDSI","BAI", "UNC")
-plot.young.old(ENG_clim, "Jul.pdsi", "PDSI","BAI", "ENG")
-plot.young.old(PVC_clim, "Jul.pdsi", "PDSI","BAI", "PVC")
-plot.young.old(GLL1_clim, "Jul.pdsi", "PDSI","BAI", "GLL1")
-plot.young.old(GLL2_clim, "Jul.pdsi", "PDSI","BAI", "GLL2")
-plot.young.old(GLL3_clim, "Jul.pdsi", "PDSI","BAI", "GLL3")
-plot.young.old(GLL4_clim, "Jul.pdsi", "PDSI","BAI", "GLL4")
-plot.young.old(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "BAI",Site = "MOU")
+# lets look at July VPDmax:
+# make all the plots for ghcn data: outputs to outputs/correlations/folder
+allyoung.old.plots.julvpdmax <- lapply(det.age.clim.prism, plot.young.old, Climate = "jul.VPDmax",xlab = "July VPDmax", ylab = "RWI")
+
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/young_old_jul_VPDmax_allsite.png")
+n <- length(allyoung.old.plots.julvpdmax)
+nCol <- floor(sqrt(n))
+do.call("grid.arrange", c(allyoung.old.plots.julvpdmax, ncol=3))
+dev.off()
+
+# looking at July moisture balance:
+allyoung.old.plots.julBAL <- lapply(det.age.clim.prism, plot.young.old, Climate = "jul.BAL",xlab = "July P - PET", ylab = "RWI")
+
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/young_old_jul_BAL_allsite.png")
+n <- length(allyoung.old.plots.julBAL)
+nCol <- floor(sqrt(n))
+do.call("grid.arrange", c(allyoung.old.plots.julBAL, ncol=3))
+dev.off()
 
 
-# should create PNGS but that is for a later date
-plot.pre.post <- function(x, Climate, xlab, ylab,Site){
+# can do this for the remaining climate variables:
+
+
+# the previous plost were showing differences in responses across tree ages, but are there differences before and after 1950 in general?
+plot.pre.post <- function(x, Climate, xlab, ylab){
   
-  
+    Site <- x[1,]$site # assign site name
     #create dummy variable
     x$time <- 0
  
-   x[x$year < 1950 ,]$time <- "Pre-1950"
+    x[x$year < 1950 ,]$time <- "Pre-1950"
     x[x$year >= 1950 ,]$time <- "Post-1950"
     
     #x <- rbind(co2.low.yr, co2.high.yr)
@@ -387,46 +496,63 @@ plot.pre.post <- function(x, Climate, xlab, ylab,Site){
    
 
   p
-  ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 5, height = 3.5 )
+  #ggsave(filename = paste0('outputs/correlations/pre_post_jul_pdsi_',Site,".png"), plot = p, width = 5, height = 3.5 )
 }
 
-plot.pre.post(GLL4_clim, "Jul.pdsi", "PDSI","RWI", "GLL4")
-plot.pre.post(STC_clim, "Jul.pdsi", "PDSI","RWI", "STC")
-plot.pre.post(HIC_clim, "Jul.pdsi", "PDSI","RWI", "HIC")
-plot.pre.post(TOW_clim, "Jul.pdsi", "PDSI","RWI", "TOW")
-plot.pre.post(BON_clim, "Jul.pdsi", "PDSI","RWI", "BON")
-plot.pre.post(PLE_clim, "Jul.pdsi", "PDSI","RWI", "PLE")
-plot.pre.post(COR_clim, "Jul.pdsi", "PDSI","RWI", "COR")
-plot.pre.post(UNC_clim, "Jul.pdsi", "PDSI","RWI", "UNC")
-plot.pre.post(ENG_clim, "Jul.pdsi", "PDSI","RWI", "ENG")
-plot.pre.post(PVC_clim, "Jul.pdsi", "PDSI","RWI", "PVC")
-plot.pre.post(GLL1_clim, "Jul.pdsi", "PDSI","RWI", "GLL1")
-plot.pre.post(GLL2_clim, "Jul.pdsi", "PDSI","RWI", "GLL2")
-plot.pre.post(GLL3_clim, "Jul.pdsi", "PDSI","RWI", "GLL3")
-plot.pre.post(GLL4_clim, "Jul.pdsi", "PDSI","RWI", "GLL4")
-plot.pre.post(x = MOU_clim, Climate = "PDSI", xlab = "PDSI", ylab = "RWI",Site = "MOU")
 
-all <- rbind(STC_clim, HIC_clim, TOW_clim, BON_clim, PLE_clim,
-             COR_clim, UNC_clim, ENG_clim, MOU_clim, GLL1_clim,
-             GLL2_clim, GLL3_clim, GLL4_clim, PVC_clim)
+# for PDSI (mean):
+allpre.post.plots.PDSI <- lapply(det.age.clim.ghcn, plot.pre.post, Climate = "PDSI", xlab = "PDSI", ylab = "RWI")
+
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/pre_post1950_PDSI_allsite.png")
+n <- length(allpre.post.plots.PDSI)
+nCol <- floor(sqrt(n))
+do.call("grid.arrange", c(allpre.post.plots.PDSI, ncol=3))
+dev.off()
+
+# for PDSI (July):
+allpre.post.plots.JulPDSI <- lapply(det.age.clim.ghcn, plot.pre.post, Climate = "Jul.pdsi", xlab = "July PDSI", ylab = "RWI")
+
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/pre_post1950_jul_PDSI_allsite.png")
+n <- length(allpre.post.plots.JulPDSI)
+nCol <- floor(sqrt(n))
+do.call("grid.arrange", c(allpre.post.plots.JulPDSI, ncol=3))
+dev.off()
+
+# pre-post July VPDmax:
+allpre.post.plots.julvpdmax <- lapply(det.age.clim.prism, plot.pre.post, Climate = "jul.VPDmax",xlab = "July VPDmax", ylab = "RWI")
+
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/pre_post1950_jul_VPDmax_allsite.png")
+  n <- length(allpre.post.plots.julvpdmax)
+  nCol <- floor(sqrt(n))
+  do.call("grid.arrange", c(allpre.post.plots.julvpdmax, ncol=3))
+dev.off()
+
+# pre-post July P-PET:
+allpre.post.plots.julBAL <- lapply(det.age.clim.prism, plot.pre.post, Climate = "jul.BAL",xlab = "July P - PET", ylab = "RWI")
+
+png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/pre_post1950_jul_BAL_allsite.png")
+n <- length(allpre.post.plots.julBAL)
+nCol <- floor(sqrt(n))
+do.call("grid.arrange", c(allpre.post.plots.julBAL, ncol=3))
+dev.off()
 
 
-ggplot(all, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
+# a look at most of the sites altogether
+ggplot(det.age.clim.df, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_smooth()
 
 
-summary(lm(RWI~PDSI, data = all))
-summary(lm(RWI~PDSI:site, data = all))
-summary(lm(RWI~year, data = all))
-summary(lm(RWI~year:site, data = all))
+summary(lm(RWI~PDSI, data = det.age.clim.df))
+summary(lm(RWI~PDSI:site, data = det.age.clim.df))
+summary(lm(RWI~year, data = det.age.clim.df))
+summary(lm(RWI~year:site, data = det.age.clim.df))
 
-ggplot(all, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
+ggplot(det.age.clim.df, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
 
 ###################################################################
 # Lets directly compare old and young years with similar climates:
 ##################################################################
 
-df <- aggregate(Jul.pdsi~year, data = BON_clim, FUN = mean )
-#names(df) <- BON_clim$year
+df <- aggregate(Jul.pdsi~year, data = det.age.clim.df, FUN = mean )
 df.pre <- df[df$year < 1950,]
 df.post <- df[df$year >=1950,]
 sorted.pre1950 <- df.pre[order(df.pre$Jul.pdsi),]
@@ -466,7 +592,8 @@ get.clim.sensitivity <- function(df){
 }
 
 # get all the sensitivities for pdsi:
-pdsi.sens <- get.clim.sensitivity(all)
+
+pdsi.sens <- get.clim.sensitivity(df = det.age.clim.prism.df)
 
 # function to extract slopes for young an old trees of lm(RWI~PDSI)
 get.clim.sens.age <- function(df){
