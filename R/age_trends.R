@@ -1082,27 +1082,22 @@ GLL3.age <- tree_age_agg_mean_class(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detr
 GLL4.age <- tree_age_agg_mean_class(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
 PVC.age <- tree_age_agg_mean_class(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
 
+
+allsitesage<- list(Hic.age, Stc.age, Bon.age, Tow.age, Ple.age, Cor.age, Unc.age, Eng.age, Mou.age, GLL1.age, GLL2.age, GLL3.age, GLL4.age, PVC.age)
+
 # now plot mean with STDEV
 # made a function to plot out mean RWI vs. age
 rwi.age.class<- function(df, site){
   ggplot(df, aes(Age, Mean, color = Ageclass))+geom_point()+ 
-    geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) +ggtitle(site)
+    geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) +ggtitle(df$site)
 }
 
-rwi.age.class(Hic.age, "HIC")
-rwi.age.class(Stc.age, "STC")
-rwi.age.class(Tow.age, "TOW")
-rwi.age.class(Unc.age, "UNC")
-rwi.age.class(Bon.age, "BON")
-rwi.age.class(Ple.age, "PLE")
-rwi.age.class(Cor.age, "COR")
-rwi.age.class(Eng.age, "ENG")
-rwi.age.class(Mou.age, "MOU")
-rwi.age.class(GLL1.age, "GLL1")
-rwi.age.class(GLL2.age, "GLL2")
-rwi.age.class(GLL3.age, "GLL3")
-rwi.age.class(GLL4.age, "GLL4")
-rwi.age.class(PVC.age, "PVC")
+allsites.ages <- lapply(allsitesage, rwi.age.class)
+
+
+png(width = 12, height = 12, units = "in", res = 300, "outputs/mean_age/mean_growth_vs_age_by_ageclass.png")
+do.call("grid.arrange", c(allsites.ages, ncol = 3))
+dev.off()
 
 
 #------------------Plot pith date vs. mean growth (within each tree)
@@ -1115,39 +1110,35 @@ Cor.pith <- tree_pith_agg_mean(CORww.rwl, 2016, "COR", 30,"RWI_Spline_detrended"
 Unc.pith <- tree_pith_agg_mean(UNCww.rwl, 2016, "UNC", 30,"RWI_Spline_detrended")
 Eng.pith <- tree_pith_agg_mean(ENGww.rwl, 2015, "ENG", 30,"RWI_Spline_detrended")
 Mou.pith <- tree_pith_agg_mean(MOUww.rwl, 2015, "MOU", 30,"RWI_Spline_detrended")
-GLL1.pith <- tree_pith_agg_mean(GLL1ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL2.pith <- tree_pith_agg_mean(GLL2ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL3.pith <- tree_pith_agg_mean(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL4.pith <- tree_pith_agg_mean(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-PVC.pith <- tree_pith_agg_mean(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL1.pith <- tree_pith_agg_mean(GLL1ww.rwl, 2016, "GLL1", 30,"RWI_Spline_detrended")
+GLL2.pith <- tree_pith_agg_mean(GLL2ww.rwl, 2016, "GLL2", 30,"RWI_Spline_detrended")
+GLL3.pith <- tree_pith_agg_mean(GLL3ww.rwl, 2016, "GLL3", 30,"RWI_Spline_detrended")
+GLL4.pith <- tree_pith_agg_mean(GLL4ww.rwl, 2016, "GLL4", 30,"RWI_Spline_detrended")
+PVC.pith <- tree_pith_agg_mean(PVCww.rwl, 2016, "PVC", 30,"RWI_Spline_detrended")
+
+allsitespith<- list(Hic.pith, Stc.pith, Bon.pith, Tow.pith, Ple.pith, Cor.pith, Unc.pith, Eng.pith, Mou.pith, GLL1.pith, GLL2.pith, GLL3.pith, GLL4.pith, PVC.pith)
+
 
 rwi.pith <- function(df, site){
   ggplot(df, aes(Pith, Mean, color = ageclass))+geom_point()+ 
-    geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.9) +ggtitle(site)+theme_bw()+ylab("Mean RWI (mm)")+xlab("Pith date")
+    geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.9) +ggtitle(df$site)+theme_bw()+ylab("Mean RWI (mm)")+xlab("Pith date")
 }
 
-
-rwi.pith(Hic.pith, "HIC")
-rwi.pith(Stc.pith, "STC")
-rwi.pith(Tow.pith, "TOW")
-rwi.pith(Unc.pith, "UNC")
-rwi.pith(Bon.pith, "BON")
-rwi.pith(Ple.pith, "PLE")
-rwi.pith(Cor.pith, "COR")
-rwi.pith(Eng.pith, "ENG")
-rwi.pith(Mou.pith, "MOU")
-rwi.pith(GLL1.pith, "GLL1")
-rwi.pith(GLL2.pith, "GLL2")
-rwi.pith(GLL3.pith, "GLL3")
-rwi.pith(GLL4.pith, "GLL4")
-rwi.pith(PVC.pith, "PVC")
+allsites.pithplots <- lapply(allsitespith, rwi.pith)
 
 
+png(width = 12, height = 12, units = "in", res = 300, "outputs/mean_age/mean_growth_vs_age_by_pithdate.png")
+do.call("grid.arrange", c(allsites.pithplots, ncol = 3))
+dev.off()
+
+
+
+# left off here:
 #------------------------Does growth climate response really vary by age???-----------------
 # generate age classes and age-dependant climate response functions:
 # use the "all" dataframe created on line 398
-
-summary(all$Age) # ages range from 0 to 246
+all <- det.age.clim.ghcn.df
+summary(det.age.clim.ghcn.df$Age) # ages range from 0 to 246
 label.breaks <- function(beg, end, splitby){
   labels.test <- data.frame(first = seq(beg, end, by = splitby), second = seq((beg + splitby), (end + splitby), by = splitby))
   labels.test <- paste (labels.test$first, '-' , labels.test$second)
@@ -1160,9 +1151,11 @@ all$agebreaks <- cut(all$Age, breaks = seq(0, 250, by = 50), labels = label.brea
 X11(width = 12)
 ggplot(all, aes(Jul.pdsi, RWI))+geom_point()+stat_smooth(method = 'lm')+facet_grid(~agebreaks)
 
+# 
 # make a function to plot age based correlations with July PDSI climate of each site:
 plot.cor.by.age.site <- function(df, site.names, clim){
-    coef.list <- list()
+    
+  coef.list <- list()
     
     all <- df[df$site %in% site.names,]
     for(i in 1:length(unique(all$agebreaks))){
@@ -1186,10 +1179,6 @@ plot.cor.by.age.site <- function(df, site.names, clim){
     cors.df <- data.frame(agebreaks = as.character(unique(all$agebreaks)), 
                           cor = cors[,1])
     
-    # rearrang factor lists
-    #cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 25", "25 - 50", "50 - 75", "75 - 100",
-     #"100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
-      #                                                    "225 - 250", "NA"))
     
     cors.df$agebreaks_f <- factor(cors.df$agebreaks, levels = c("0 - 50", "50 - 100", "100 - 150", "150 - 200", "200 - 250"))
                                                                #"100 - 125", "125 - 150", "150 - 175","175 - 200", "200 - 225", 
