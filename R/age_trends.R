@@ -570,7 +570,7 @@ test <- lm(Jul.pdsi~year, data = df)# no significant change
 ##########################################################################
 
 # function to extract whole time series slope of lm(RWI ~ PDSI)
-get.clim.sensitivity <- function(df){
+get.clim.sensitivity <- function(df, model.func){
   
   coeffs <- matrix ( 0, length(unique(df$site)), 7 ) # set up matrix for coefficients
   
@@ -590,7 +590,7 @@ get.clim.sensitivity <- function(df){
     
     
       results <- boot(data=site.data, statistic=bs, 
-                    R=2000, formula=RWI ~ PDSI)
+                    R=2000, formula=model.func)
       
       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
       slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
@@ -617,100 +617,193 @@ get.clim.sensitivity <- function(df){
 
 # get all the sensitivities for pdsi:
 
-pdsi.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df)
+pdsi.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ PDSI")
+Julpdsi.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ Jul.pdsi")
+TMIN.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ TMIN")
+May.pr.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ MAY.p")
+
+
+# make a plot with error bars
+ggplot(pdsi.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+ggplot(Julpdsi.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+ggplot(TMIN.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+ggplot(May.pr.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
+# for prism data:
+VPDmax.sens <- get.clim.sensitivity(df = det.age.clim.prism.df, model.func = "RWI ~ VPDmax")
+JulVPDmax.sens <- get.clim.sensitivity(df = det.age.clim.prism.df, model.func = "RWI ~ jul.VPDmax")
+TMIN.sens <- get.clim.sensitivity(df = det.age.clim.prism.df, model.func = "RWI ~ TMIN")
+BAL.sens <- get.clim.sensitivity(df = det.age.clim.prism.df, model.func = "RWI ~ BAL")
+
+
+ggplot(VPDmax.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+ggplot(JulVPDmax.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+ggplot(TMIN.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+ggplot(BAL.sens, aes(site, slope.est))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
 
 # function to extract slopes for young an old trees of lm(RWI~PDSI)
-get.clim.sens.age <- function(df){
+get.clim.sens.age <- function(df, model.func){
   
-  coeffs <- matrix ( 0, length(unique(df$site))*2, 4 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
   
   
-  for(s in 1: length(unique(all$site))){
-     name <- unique(all$site)[s]  
-     if(nrow(all[all$site == name & all$ageclass == "young" ,]) > 0){
-     lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" & all$year >= 1950 ,])
-     coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
-     coeffs[s , 1] <-  "young"
-     coeffs[s,4] <- name
+  for(s in 1: length(unique(df$site))){
+    name <- unique(df$site)[s]  
+    site.data<- na.omit(df[df$site == name ,])
+    
+          # function used in boot strapping below
+          bs <- function(formula, data, indices) {
+            d <- data[indices,] # allows boot to select sample 
+            fit <- lm(formula, data=d)
+            return(coef(fit)) 
+          } 
+          
+    # for the "young" class:
+     if(nrow(site.data[site.data$site == name & site.data$ageclass == "young" ,]) > 0){
+        # bootstrapping the linear regression model
+        results <- boot(data=site.data[site.data$ageclass == "young" & site.data$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
+    
+        int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+        slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+        coeffs[s,3:4] <- results$t0
+        coeffs[s , 1] <- name
+        coeffs[s,2] <- "young"
+        coeffs[s,5] <- as.data.frame(int.cis$normal)$V2
+        coeffs[s,6] <- as.data.frame(int.cis$normal)$V3
+        coeffs[s,7] <- as.data.frame(slope.cis$normal)$V2
+        coeffs[s,8] <- as.data.frame(slope.cis$normal)$V3
      
     } else{
-      #lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
-      coeffs[s,2:3] <- c(NA,NA)
-      coeffs[s , 1] <- "young"
-      coeffs[s,4] <- name
+      #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "young" ,])
+      coeffs[s,3:8] <- c(NA,NA)
+      coeffs[s , 2] <- "young"
+      coeffs[s,1] <- name
     }
      
-     if(nrow(all[all$site == name & all$ageclass == "old" ,]) > 0){
-     lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" & all$year < 1950,])
-     coeffs[s+14, 2:3] <- summary(lmest2)$coefficients[2,1:2]
-     coeffs[s +14 , 1] <- 'old'
-     coeffs[s+14,4] <- name
+     
+  # for the "old" class:  
+     if(nrow(site.data[site.data$site == name & site.data$ageclass == "old" ,]) > 0){
+       results <- boot(data=site.data[site.data$ageclass == "old" & site.data$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
+       
+       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+       slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+       coeffs[s+length(unique(df$site)),3:4] <- results$t0
+       coeffs[s+length(unique(df$site)) , 1] <- name
+       coeffs[s+length(unique(df$site)),2] <- "old"
+       coeffs[s+length(unique(df$site)),5] <- as.data.frame(int.cis$normal)$V2
+       coeffs[s+length(unique(df$site)),6] <- as.data.frame(int.cis$normal)$V3
+       coeffs[s+length(unique(df$site)),7] <- as.data.frame(slope.cis$normal)$V2
+       coeffs[s+length(unique(df$site)),8] <- as.data.frame(slope.cis$normal)$V3
+       
+       
      }else{
-     #lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
-     coeffs[s+14, 2:3] <- c(NA,NA)
-     coeffs[s+14 , 1] <- "old"
-     coeffs[s+14,4] <- name
+     #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "old" ,])
+       coeffs[s+length(unique(df$site)),3:8] <- c(NA,NA)
+       coeffs[s +length(unique(df$site)), 2] <- "young"
+       coeffs[s+length(unique(df$site)),1] <- name
      }
   }
   
   coeffs <- data.frame(coeffs)
-  colnames(coeffs) <- c("age", "slope.est", "std.err","site")
+  colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
   coeffs$site <- as.character(coeffs$site)
   coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
-  coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
+  coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
+  coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
+  coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
+  coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
   coeffs
   
 }
-pdsi.age.sens <- get.clim.sens.age(all)
+
+
+pdsi.age.sens <- get.clim.sens.age(df = det.age.clim.ghcn.df, "RWI ~ PDSI")
 
 # function to extrat the slope for all trees before and after 1950
-get.clim.sens.year <- function(all){
+get.clim.sens.year <- function(df, model.func){
   
-  coeffs <- matrix ( 0, length(unique(all$site))*2, 4 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
   yr <- 1895:1950
   yr.post <- 1950:2014
-  all$class <- '9999'
-  all[all$year %in% yr,]$class <- 'Pre-1950'
-  all[all$year %in% yr.post,]$class <- 'Post-1950'
+  df$class <- '9999'
+  df[df$year %in% yr,]$class <- 'Pre-1950'
+  df[df$year %in% yr.post,]$class <- 'Post-1950'
   
-  for(s in 1: length(unique(all$site))){
-    name <- unique(all$site)[s]  
-    if(nrow(all[all$site == name & all$class == "Pre-1950" ,]) > 0){
-      lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$class == "Pre-1950" ,])
-      coeffs[s,2:3] <- summary(lmest)$coefficients[2,1:2]
-      coeffs[s , 1] <-  "Pre-1950"
-      coeffs[s,4] <- name
+  for(s in 1:length(unique(df$site))){
+    name <- unique(df$site)[s]  
+    site.data <- na.omit(df[df$site == name ,])
+    
+    # function used in boot strapping below
+    bs <- function(formula, data, indices) {
+      d <- data[indices,] # allows boot to select sample 
+      fit <- lm(formula, data=d)
+      return(coef(fit)) 
+    } 
+    
+    # for the "Post-1950" class:
+    if(nrow(site.data[ site.data$class == "Post-1950" ,]) > 0){
+      # bootstrapping the linear regression model
+      results <- boot(data=site.data[site.data$class == "Post-1950" & site.data$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      coeffs[s,3:4] <- results$t0
+      coeffs[s , 1] <- name
+      coeffs[s,2] <- "Post-1950"
+      coeffs[s,5] <- as.data.frame(int.cis$normal)$V2
+      coeffs[s,6] <- as.data.frame(int.cis$normal)$V3
+      coeffs[s,7] <- as.data.frame(slope.cis$normal)$V2
+      coeffs[s,8] <- as.data.frame(slope.cis$normal)$V3
       
     } else{
-      #lmest <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "young" ,])
-      coeffs[s,2:3] <- c(NA,NA)
-      coeffs[s , 1] <- "Pre-1950"
-      coeffs[s,4] <- name
+      #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$class == "Post-1950" ,])
+      coeffs[s,3:8] <- c(NA,NA)
+      coeffs[s , 2] <- "Post-1950"
+      coeffs[s,1] <- name
     }
     
-    if(nrow(all[all$site == name & all$class == "Post-1950" ,]) > 0){
-      lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$class == "Post-1950" ,])
-      coeffs[s+14, 2:3] <- summary(lmest2)$coefficients[2,1:2]
-      coeffs[s +14 , 1] <- 'Post-1950'
-      coeffs[s+14,4] <- name
+    
+    # for the "Pre-1950" class:  
+    if(nrow(site.data[ site.data$class == "Pre-1950" ,]) > 0){
+      results <- boot(data=site.data[site.data$class == "Pre-1950" & site.data$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      coeffs[s+length(unique(df$site)),3:4] <- results$t0
+      coeffs[s+length(unique(df$site)) , 1] <- name
+      coeffs[s+length(unique(df$site)),2] <- "Pre-1950"
+      coeffs[s+length(unique(df$site)),5] <- as.data.frame(int.cis$normal)$V2
+      coeffs[s+length(unique(df$site)),6] <- as.data.frame(int.cis$normal)$V3
+      coeffs[s+length(unique(df$site)),7] <- as.data.frame(slope.cis$normal)$V2
+      coeffs[s+length(unique(df$site)),8] <- as.data.frame(slope.cis$normal)$V3
+      
+      
     }else{
-      #lmest2 <- lm(RWI ~ PDSI, data = all[all$site == name & all$ageclass == "old" ,])
-      coeffs[s+14, 2:3] <- c(NA,NA)
-      coeffs[s+14 , 1] <- "Post-1950"
-      coeffs[s+14,4] <- name
+      coeffs[s+length(unique(df$site)),3:8] <- c(NA,NA)
+      coeffs[s +length(unique(df$site)), 2] <- "Pre-1950"
+      coeffs[s+length(unique(df$site)),1] <- name
     }
   }
-  
+
   coeffs <- data.frame(coeffs)
-  colnames(coeffs) <- c("age", "slope.est", "std.err","site")
+  colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
   coeffs$site <- as.character(coeffs$site)
   coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
-  coeffs$std.err <- as.numeric(as.character(coeffs$std.err))
+  coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
+  coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
+  coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
+  coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
   coeffs
   
-}
+  
+  }
+  
+  
 
-pdsi.yr.sens <- get.clim.sens.year(all)
+pdsi.yr.sens <- get.clim.sens.year(df, "RWI ~ PDSI")
 
 
 # read in soil, xy characteristics
@@ -722,8 +815,8 @@ sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4"
 site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
 
 # map out sensitivities in space:
-all_states <- map_data("state")
-states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
+df_states <- map_data("state")
+states <- subset(df_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
                                              "north dakota", 'michigan', 'missouri', 'indiana') )
 coordinates(states)<-~long+lat
 class(states)
@@ -731,7 +824,7 @@ proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 mapdata<-data.frame(mapdata)
 
-site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
+#site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
 site.df.age <- merge(pdsi.age.sens, locs, by.x = 'site', by.y = 'code')
 site.df.yr <- merge(pdsi.yr.sens, locs, by.x = 'site', by.y = 'code')
 
@@ -754,11 +847,11 @@ dev.off()
 #--------------------------------------------------------------
 # extract relevant climate from PRSIM 30 year mean precip and temp data:
 # dir where the precip data are
-workingdir <- "./Users/kah/Documents/biomodality/data/"
+workingdir <- "/Users/kah/Documents/biomodality/data/"
 
 # read in and average prism data (this is modern 30year normals)
-prism<- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
-prism.alb<- projectRaster(prism, crs='+init=epsg:3175')
+prism <- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
+prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
 
 site.df$pr30yr <- extract(prism.alb, site.df[,c("coords.x1","coords.x2")])
 
