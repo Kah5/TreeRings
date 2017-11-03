@@ -812,16 +812,32 @@ locs$code <- as.character(locs$code)
 locs[24:27,]$code <- c("GLL4", "GLL3", "GLL2", "GLL1")
 sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC")
 
+# read in the N & S deposition data:
+sdep.files <- list.files("data/total_Sdep/")
+ndep.files <- list.files("data/total_Ndep/")
+s.filenames <- paste0("data/total_Sdep/", sdep.files)
+s <- stack(s.filenames) 
+
+n.filenames <- paste0("data/total_Ndep/", ndep.files)
+n <- stack(n.filenames)
+plot(n[[2]])
+plot(mapdata, add = TRUE)
+projection(n) <- CRS('+init=epsg:4269')
+n.alb <- projectRaster(n,CRS('+init=epsg:3175'))
+
 site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
+sens.df <- merge(pdsi.age.sens, locs, by = "site")
+yr.sens.df <- merge(pdsi.yr.sens, locs, by = "site")
 
 # map out sensitivities in space:
 df_states <- map_data("state")
 states <- subset(df_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
                                              "north dakota", 'michigan', 'missouri', 'indiana') )
-coordinates(states)<-~long+lat
+coordinates(states) <- ~long+lat
 class(states)
 proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
 mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata.h<-spTransform(states, CRS('+proj=aea +lat_1=0 +lat_2=29.5 +lat_0=45.5 +lon_0=0 +x_0=0 +y_0=-96 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'))
 mapdata<-data.frame(mapdata)
 
 #site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
@@ -847,22 +863,26 @@ dev.off()
 #--------------------------------------------------------------
 # extract relevant climate from PRSIM 30 year mean precip and temp data:
 # dir where the precip data are
-workingdir <- "/Users/kah/Documents/biomodality/data/"
+workingdir <- "/Users/kah/Documents/bimodality/data/"
 
 # read in and average prism data (this is modern 30year normals)
 prism <- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
 prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
 
-site.df$pr30yr <- extract(prism.alb, site.df[,c("coords.x1","coords.x2")])
+site.df$pr30yr <- raster::extract(prism.alb, site.df[,c("coords.x1","coords.x2")])
+site.df.age$pr30yr <- raster::extract(prism.alb, site.df.age[,c("coords.x1","coords.x2")])
+site.df.yr$pr30yr <- raster::extract(prism.alb, site.df.yr[,c("coords.x1","coords.x2")])
 
-workingdir <- "/Users/kah/Documents/biomodality/data/"
+workingdir <- "/Users/kah/Documents/bimodality/data/"
 
 # read in and average prism temperature data (this is modern 30year normals)
 prism.t<- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
 prismt.alb<- projectRaster(prism.t, crs='+init=epsg:3175')
 
 # extract temp
-site.df$tm30yr <- extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
+site.df$tm30yr <- raster::extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
+site.df.age$tm30yr <- raster::extract(prismt.alb, site.df.age[,c("coords.x1","coords.x2")])
+site.df.yr$tm30yr <- raster::extract(prismt.alb, site.df.yr[,c("coords.x1","coords.x2")])
 
 
 #merge overalll slope and envt with the young and old slopes:
@@ -871,50 +891,52 @@ a <- site.df
  #                 "y", "PDSI_time", "sand","ksat","awc",      
   #               "pr30yr"  ,  "tm30yr")
 
-sens.df <- merge(pdsi.age.sens, a, by = "site")
-yr.sens.df <- merge(pdsi.yr.sens, a, by = "site")
+#sens.df <- merge(pdsi.age.sens, locs, by = "site")
+#yr.sens.df <- merge(pdsi.yr.sens, locs, by = "site")
 
 #--------------------------------------------------------------
 # how does sensitivity to drought vary by climate, envtl factors?
 #---------------------------------------------------------------
 # prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
-ggplot(site.df, aes(pr30yr, slope.est))+geom_point()
-ggplot(site.df, aes(tm30yr, slope.est))+geom_point()
-ggplot(site.df, aes(sand, slope.est))+geom_point()
+ggplot(site.df, aes(pr30yr, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+ggplot(site.df, aes(tm30yr, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+ggplot(site.df, aes(sand, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+#ggplot(site.df, aes(Description, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 
 # fit a gam on the slope estimate
-gam.sens <- gam(slope.est ~ pr30yr + tm30yr   , data = site.df)
+#gam.sens <- mgcv::gam(slope.est ~ s(pr30yr) + s(tm30yr)   , data = site.df)
 
-summary(gam.sens) # explains 27.4% of deviance:
+#summary(gam.sens) # explains 27.4% of deviance:
 
 
 #################################################
 #  make plots for young and old
 # prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
-ggplot(sens.df, aes(pr30yr, slope.est, color = age))+geom_point()
-ggplot(sens.df, aes(tm30yr, slope.est, color = age))+geom_point()
-ggplot(sens.df, aes(sand, slope.est, color = age))+geom_point()
 
-sens.young <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = sens.df[sens.df$age=="young",])
-summary(sens.young) # explains 47.7% of deviance:
+ggplot(site.df.age, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+ggplot(site.df.age, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 
-sens.old <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = sens.df[sens.df$age=="old",])
-summary(sens.old) # explains 90.5% of deviance:
+#sens.young <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = site.df.age[site.df.age$age=="young",])
+#summary(sens.young) # explains 47.7% of deviance:
+
+#sens.old <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = sens.df[sens.df$age=="old",])
+#summary(sens.old) # explains 90.5% of deviance:
 
 ##############################################################
 # make prelimnary plots for pre- and post- 1950
 ###############################################################3
-ggplot(yr.sens.df, aes(pr30yr, slope.est, color = age))+geom_point()
-ggplot(yr.sens.df, aes(tm30yr, slope.est, color = age))+geom_point()
-ggplot(yr.sens.df, aes(sand, slope.est, color = age))+geom_point()
+ggplot(site.df.yr, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+ggplot(site.df.yr, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+ggplot(site.df.yr, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 
-sens.pre <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Pre-1950",])
-summary(sens.pre) # explains 33.4% of deviance:
+#sens.pre <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Pre-1950",])
+#summary(sens.pre) # explains 33.4% of deviance:
 
-sens.post <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Post-1950",])
-summary(sens.post) # explains 36.8% of deviance:
+#sens.post <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Post-1950",])
+#summary(sens.post) # explains 36.8% of deviance:
 
-
+sens.df <- site.df.age
 
 #install.packages("plot3D")
 library(plot3D)
@@ -923,11 +945,11 @@ library(plot3D)
 # gam(sensitivity ~ precip + temperature) and plots a 3d surface of it
 plot3dsensitivity <- function(sens.df, age, class, col, add ){
   df <- sens.df[sens.df[,c(age)] == class,]
-  df <- df[!is.na(df$slope.est.x),]
+  df <- df[!is.na(df$slope.est),]
 # x, y, z variables
   x <- df$pr30yr
   y <- df$tm30yr
-  z <- df$slope.est.x
+  z <- df$slope.est
 # Compute the linear regression (z = ax + by + d)
   fit <- lm(z ~ x + y)
 # predict values on regular xy grid
@@ -970,9 +992,11 @@ legend(x = 0.5, y = 0 ,
 dev.off()
 
 # plot the pre and post 1950 sensitivity surfaces:
-
+yr.sens.df <- site.df.yr 
+  
 png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d_pre_post_1950.png')
-plot3dsensitivity(yr.sens.df, "age","Pre-1950", "red",FALSE)
+#sens.df, age, class, col, add
+plot3dsensitivity(sens.df = yr.sens.df, age = "age",class = "Pre-1950", col = "red",add = FALSE)
 plot3dsensitivity(yr.sens.df, "age","Post-1950", "blue",TRUE)
 legend(x = 0.5, y = 0 ,
        legend = c(expression(atop("All trees Pre-1950", "(low CO"[2]*")")), expression(atop("All trees Post-1950", "(high CO"[2]*")"))), 
@@ -1003,6 +1027,11 @@ for (i in seq_along(files)) {
   
 }
 
+#list.rwls <- list(Hicww.rwl, STCww.rwl, Bon, Tow, Ple, Cor, Unc, Eng, Mou, GLL1, GLL2, GLL3, GLL4, GLL4,PVC)
+#list.rwls <- list(HICww.rwl, STCww.rwl)
+#age_agg_mean <- lapply(list.rwls, FUN = tree_age_agg_mean, sampleyear = 2015, site.code = "HIC", age1950 = 30,type = "RWI" )
+#rwiorbai <- HICww.rwl
+
 # use tree_age_agg.R with raw RWI:
 source("R/tree_age_agg_mean.R")
 
@@ -1015,40 +1044,27 @@ Cor <- tree_age_agg_mean(CORww.rwl, 2016, "COR", 30,"RWI_Spline_detrended")
 Unc <- tree_age_agg_mean(UNCww.rwl, 2016, "UNC", 30,"RWI_Spline_detrended")
 Eng <- tree_age_agg_mean(ENGww.rwl, 2015, "ENG", 30,"RWI_Spline_detrended")
 Mou <- tree_age_agg_mean(MOUww.rwl, 2015, "MOU", 30,"RWI_Spline_detrended")
-GLL1 <- tree_age_agg_mean(GLL1ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL2 <- tree_age_agg_mean(GLL2ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL3 <- tree_age_agg_mean(GLL3ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-GLL4 <- tree_age_agg_mean(GLL4ww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
-PVC <- tree_age_agg_mean(PVCww.rwl, 2016, "MOU", 30,"RWI_Spline_detrended")
+GLL1 <- tree_age_agg_mean(GLL1ww.rwl, 2016, "GLL1", 30,"RWI_Spline_detrended")
+GLL2 <- tree_age_agg_mean(GLL2ww.rwl, 2016, "GLL2", 30,"RWI_Spline_detrended")
+GLL3 <- tree_age_agg_mean(GLL3ww.rwl, 2016, "GLL3", 30,"RWI_Spline_detrended")
+GLL4 <- tree_age_agg_mean(GLL4ww.rwl, 2016, "GLL4", 30,"RWI_Spline_detrended")
+PVC <- tree_age_agg_mean(PVCww.rwl, 2016, "GLL5", 30,"RWI_Spline_detrended")
+
 
 # now plot mean with STDEV
+allsitesmean<- list(Hic, Stc, Bon, Tow, Ple, Cor, Unc, Eng, Mou, GLL1, GLL2, GLL3, GLL4, PVC)
 
-ggplot(Hic, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Stc, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Tow, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Unc, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Bon, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Ple, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Cor, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Eng, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(Mou, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL1, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL2, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL3, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
-ggplot(GLL4, aes(Age, Mean))+geom_point()+ 
-  geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=.1) 
+plotmean.age<- function(df){
+      ggplot(df, aes(Age, Mean))+geom_point()+ 
+        geom_errorbar(aes(ymin=Mean-Std, ymax=Mean+Std), width=0.01)+xlim(0,250)+ggtitle(paste0(df$site, " Mean rwi by ageclass"))+theme_bw() 
+}
+
+mean.ages <- lapply(allsitesmean, plotmean.age)
+
+
+png(width = 12, height = 12, units = "in", res = 300, "outputs/mean_age/mean_growth_vs_age.png")
+do.call("grid.arrange", c(mean.ages, ncol = 3))
+dev.off()
 
 #------------ find the means for trees established before before 1920 and those established after:
 Hic.age <- tree_age_agg_mean_class(rwiorbai = HICww.rwl, sampleyear = 2015, site.code= "HIC", age1950 = 30,type = "RWI")
