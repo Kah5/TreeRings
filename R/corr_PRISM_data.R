@@ -77,10 +77,11 @@ clim.PRISM.corrs <- function(site, site.code){
     # now calculate SPI and SPEI (using spei package):
     
     #spi montly, 6 monthly, 12 montly, 24 monthly
-    #test <- spi(MNcd.clim$PCP, scale = 1)
-    #MNcd.clim$spi6 <- spi(MNcd.clim$PCP, scale = 6)
-    #MNcd.clim$spi12 <- spi(MNcd.clim$PCP, scale = 12)
-    #MNcd.clim$spi24 <- spi(MNcd.clim$PCP, scale = 24)
+    spei1 <-spi(MNcd.clim$PCP, scale = 1)$fitted
+    
+    MNcd.clim$spi6 <- spi(MNcd.clim$PCP, scale = 6)
+    MNcd.clim$spi12 <- spi(MNcd.clim$PCP, scale = 12)
+    MNcd.clim$spi24 <- spi(MNcd.clim$PCP, scale = 24)
    
     #calculate water balance for each month:
     MNcd.clim$BAL <- MNcd.clim$PCP - MNcd.clim$PET

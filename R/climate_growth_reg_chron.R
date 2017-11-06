@@ -97,6 +97,7 @@ ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_point() + geom_smooth(
 ggplot(crns, aes(x = Year,y=xxxstd, colour = type)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_line()+xlim(1900,2020) +ylim(0.5, 1.5)
 
+
 # create a df with year, and crons
 crn.cast <- dcast(crns[,c('xxxstd', "Year", "Site")], formula =  Year ~ Site,value.var = "xxxstd", na.rm=TRUE)
 write.csv(crn.cast, "outputs/Cronology_full_by_yr.csv", row.names = FALSE)
