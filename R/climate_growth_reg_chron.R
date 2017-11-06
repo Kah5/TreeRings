@@ -7,26 +7,26 @@ library(treeclim)
 
 #read in rwl & add site + year codes
 #read in records from my collections:
-Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
-Hickory <- read.tucson ("./cofecha/HICww.rwl", header = FALSE)
-PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
-StCroix <- read.tucson("./cofecha/STCww.rwl") #saint croix savanna, MN
-Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
+Bonanza <- read.tucson("cleanrwl/BONww.rwl", header = TRUE)
+Hickory <- read.tucson ("cleanrwl/HICww.rwl", header = FALSE)
+#PleasantWolf <- read.tucson('data/wi006.rwl') #Pleasant prairie in southeast WI, from ITRDB
+StCroix <- read.tucson("cleanrwl/STCww.rwl") #saint croix savanna, MN
+#Sand <- read.tucson("data/il001.rwl", header = TRUE) #Sandwich, il. Cook tree rings from the 1980's
 #Pulaski <- read.tucson("./in001.rwl", header = TRUE)
-Townsend <- read.tucson('./cofecha/tow/TOWww.rwl', header = TRUE)#townsedn woods
-YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
-Pleasant <- read.tucson('./cofecha/PLEww.rwl', header = TRUE) #Pleasant valley conservency
-Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza
-Coral <- read.tucson('/Users/kah/Documents/crossdating/data/cofecha/COR.rwl')
-Uncas <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/UNC.rwl")
-Glacial <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/GLA.rwl")
-Englund <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/ENG.rwl")
-Mound <- read.tucson("/Users/kah/Documents/crossdating/data/cofecha/MOU.rwl")
+Townsend <- read.tucson('cleanrwl/TOWww.rwl', header = TRUE)#townsedn woods
+#YellowRiver <- read.tucson('data/ia029.rwl', header = TRUE) # had to fix a wrong year
+Pleasant <- read.tucson('cleanrwl/PLEww.rwl', header = TRUE) #Pleasant valley conservency
+#Desouix <- read.tucson('data/mn029.rwl', header = TRUE) #close to BONanza
+Coral <- read.tucson('cleanrwl/CORww.rwl')
+Uncas <- read.tucson("cleanrwl/UNCww.rwl")
+Glacial <- read.tucson("cleanrwl/GLAww.rwl")
+Englund <- read.tucson("cleanrwl/ENGww.rwl")
+Mound <- read.tucson("cleanrwl/MOUww.rwl")
 Glaciallk1 <- read.tucson("cleanrwl/GLL1ww.rwl")
-Glaciallk2 <- read.tucson("cleanrwl/GLL1ww.rwl")
-Glaciallk3 <- read.tucson("cleanrwl/GLL2ww.rwl")
-Glaciallk4 <- read.tucson("cleanrwl/GLL3ww.rwl")
-PVC <- read.tucson("cleanrwl/GLL4ww.rwl")
+Glaciallk2 <- read.tucson("cleanrwl/GLL2ww.rwl")
+Glaciallk3 <- read.tucson("cleanrwl/GLL3ww.rwl")
+Glaciallk4 <- read.tucson("cleanrwl/GLL4ww.rwl")
+PVC <- read.tucson("cleanrwl/PVCww.rwl")
 
 
 #this function uses dplr to read rwl files,plot spaghetti plots, detrend and plot chronologies
@@ -37,7 +37,7 @@ read_detrend_rwl <- function(rwl, name, det.method){
   stats <- rwi.stats(rwl)
   #detrend
   rwl.rwi <- detrend(rwl = rwl, method = det.method)
-  rwl <- chron(rwl.rwi)
+  rwl <- chron(rwl.rwi, biweight = TRUE, prewhiten = TRUE)
   png(paste0('./outputs/cronplots/', name, '.png'))
   plot(rwl)
   dev.off()
@@ -50,7 +50,7 @@ read_detrend_rwl <- function(rwl, name, det.method){
 }
 
 
-Glacial <- read_detrend_rwl(Glacial, "Glacial", "Spline")# spline bettern than modneg
+Glacial <- read_detrend_rwl(rwl = Glacial, name = "Glacial", det.method = "Spline")# spline bettern than modneg
 Hickory <- read_detrend_rwl(Hickory, "Hickory","Spline")
 Bonanza <- read_detrend_rwl(Bonanza, "Bonanza","Spline")
 Pleasant <- read_detrend_rwl(Pleasant, "Pleasant","Spline")
@@ -92,9 +92,10 @@ PVC$type <- "Savanna"
 
 crns <- rbind(Bonanza, Hickory, StCroix, Pleasant, Mound, #PleasantPrairie, 
               Townsend, Glacial, Coral, Uncas, Englund, Glaciallk1, Glaciallk2, Glaciallk3, Glaciallk4, PVC)
-quartz(width = 14)
+#quartz(width = 14)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
 ggplot(crns, aes(x = Year,y=xxxstd, colour = type)) +geom_point() + geom_smooth()+xlim(1900,2020) +ylim(0.5, 1.5)
+ggplot(crns, aes(x = Year,y=xxxstd, colour = Site)) +geom_line()+xlim(1900,2020) +ylim(0.5, 1.5)
 
 # create a df with year, and crons
 crn.cast <- dcast(crns[,c('xxxstd', "Year", "Site")], formula =  Year ~ Site,value.var = "xxxstd", na.rm=TRUE)
