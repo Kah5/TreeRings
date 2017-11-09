@@ -16,9 +16,6 @@ library(grid)
 
 
 
-
-
-
 # reading in data from google maps (not all are exact site points)
 
 MN.priority <- readOGR("data/priority.kml", layer = "Priority")
@@ -89,7 +86,7 @@ gridded(dens) <- TRUE
 dens.rast <- raster(dens)
 plot(dens.rast)
 proj4string(dens.rast) <- '+init=epsg:3175'
-priority$PLSdensity <- extract(dens.rast, priority[,c("coords.x1", "coords.x2")])
+priority$PLSdensity <- raster::extract(dens.rast, priority[,c("coords.x1", "coords.x2")])
 priority$PLSclass <- ifelse(priority$PLSdensity < 0.5, "Prairie", ifelse(priority$PLSdensity <= 47, "Savanna", "Forest"))
 dens <- as.data.frame(dens)
 
@@ -106,20 +103,36 @@ dens <- as.data.frame(dens)
 #priority$Names <- c('Pleasant Valley', 'St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
 #places <- c('St. Croix Savanna',"Townsend Woods", "Hickory Grove", "Bonanza Prairie")
 
+# read in the data on cores sampled at each site:
+full.cores <- read.csv("data/tree_cores_data_sheet_full_2016_2015.csv")
+full.cores$CW1 <- as.numeric(as.character(full.cores$CW1))
+full.cores$CW2 <- as.numeric(as.character(full.cores$CW2))
+DBH.means <- full.cores %>% 
+  group_by(Site.Code) %>%
+  summarise(DBH = mean(DBH..cm., na.rm= TRUE), DBH.sd = mean(DBH..cm., na.rm=TRUE), 
+            n = n(), nspecies = length(unique(Species)), CW_avg = mean((CW1 + CW2)/2))
+
+DBH.means <- data.frame(DBH.means)
+
+ggplot(DBH.means, aes(Site.Code, y = DBH))+geom_bar(stat = 'identity')
+ggplot(DBH.means, aes(CW_avg, y = DBH))+geom_point()
+
+priority <- merge(priority, DBH.means, by.x = "code", by.y = "Site.Code")
+
 #map against soils data
 library(raster)
-ksat <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_ksat1.tif')
+ksat <- raster('/Users/kah/Documents/bimodality/data/8km_UMW_ksatalb.tif')
 ksat.alb <- projectRaster(ksat, crs='+init=epsg:3175')
 
-awc <- raster('C:/Users/JMac/Box Sync/GSSURGOtifs/8km_UMW_awc1.tif')
+awc <- raster('/Users/kah/Documents/bimodality/data/8km_UMW_awc1.tif')
 awc.alb <- projectRaster(awc, crs = '+init=epsg:3175')
 
-sand <- raster("C:/Users/JMac/Box Sync/GSSURGOtifs/1km_UMW_sand1/8km_UMW_sand1.tif")
+sand <- raster("/Users/kah/Documents/bimodality/data/8km_UMW_sandalb.tif")
 sand.alb <- projectRaster(sand, crs = '+init=epsg:3175')
 
-priority$sand <- extract(sand.alb, priority[,c("coords.x1", "coords.x2")])
-priority$ksat <- extract(ksat.alb, priority[,c("coords.x1","coords.x2")])
-priority$awc <- extract(awc.alb, priority[,c("coords.x1","coords.x2")])
+priority$sand <- raster::extract(sand.alb, priority[,c("coords.x1", "coords.x2")])
+priority$ksat <- raster::extract(ksat.alb, priority[,c("coords.x1","coords.x2")])
+priority$awc <- raster::extract(awc.alb, priority[,c("coords.x1","coords.x2")])
 write.csv(priority, "outputs/priority_sites_locs.csv")
 
 #map out 
@@ -286,6 +299,20 @@ sites.map3 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coo
 
 sites.map3
 
+sites.mapblack <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description ), cex = 2.5, fill = "white", colour = "black")+
+  scale_shape_manual(values=1:4)+theme_black()+theme(axis.text = element_blank(),
+                                                     axis.title = element_blank(),
+                                                     legend.key = element_rect(),
+                                                
+                                                     axis.ticks = element_blank(),
+                                                     panel.grid.major = element_blank(),
+                                                     panel.grid.minor = element_blank())+ggtitle(" ")+theme(legend.key = element_rect(fill = "white"))
+ # geom_text_repel(data = priority, aes(x = coords.x1, y = coords.x2,label=code),
+               #   fontface = 'bold', color = 'black',
+                #  box.padding = unit(1.5, "lines"),
+                 # point.padding = unit(1.5, "lines"))
+sites.mapblack
+
 measured <- priority[!priority$PDSI_time %in% "Not measured",]
 sites.cor <- sites.map + geom_point(data = measured, aes(x = coords.x1, y = coords.x2, shape = Description, color = PDSI_time), cex = 2.5)+
   scale_shape_manual(values=c(15,16,17,3))+
@@ -302,12 +329,16 @@ png(height = 6, width = 6, units = 'in', res = 300, "outputs/Tree_core_map_nolab
 sites.map3
 dev.off()
 
+png(height = 6, width = 6, units = 'in', res = 300, "outputs/Tree_core_sites_map_black_background.png")              
+sites.mapblack
+dev.off()
+
 png("outputs/precip_only.png")              
 sites.map
 dev.off()
 
 png("outputs/precip_sites_full.png")
-sites.map2
+sites.map2+theme_black()
 dev.off()
 
 # map of sites cored in 2016 only:
@@ -329,18 +360,24 @@ sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 
 sites.map.pls <- ggplot()+ geom_raster(data=dens, aes(x=x, y=y, fill = PLSdensity))+
-  labs(x="easting", y="northing", title="A). Tree Core Sites 2015 & 2016") + 
+  #labs( title="A). Tree Core Sites 2015 & 2016") + 
   scale_fill_gradientn(colours = cbpalette, name ="PLS Tree density (trees/ha)")+
   coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
 sites.map.pls <- sites.map.pls +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
-                                     colour = "darkgrey", fill = NA)+theme_bw() +
-  theme(axis.text = element_text(size = 14),
-        axis.text.y = element_text(angle = 90, size = rel(0.7), hjust = 0.75),
+                                     colour = "darkgrey", fill = NA, size  = 1.5)+theme_black()+
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
         legend.key = element_rect(),
-        legend.background = element_rect(fill = "white"),
-        
+       
+        axis.ticks = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
+sites.map.pls + theme_black()
+
+png("outputs/bw_tree_density_map.png")
+sites.map.pls
+dev.off()
+
 sites.map.pls <- sites.map.pls + geom_point(data = priority[complete.cases(priority),], aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
   scale_shape_manual(values=1:4)+theme(axis.text = element_blank(), axis.ticks=element_blank(),
                                        legend.key.size = unit(2,'lines')

@@ -607,7 +607,6 @@ clim.cor(MNse.clim, Mound, 'Mound_prairie_')
 # ------------------------What is the factor that affects growth-------------
 # gam models:
 
-gam1 <- gamm(RWI ~  s(tair, k=k, by=PFT) + s(precipf, k=k, by=PFT) + s(CO2, k=k, by=PFT), random=list(PlotID=~1), data=data) 
 
 gam1 <- gam(RWI~ s(TAVG, k = 6, by = year) +
               s(PCP, k = 6, by = year) + 
@@ -991,7 +990,10 @@ get.clim.sens.age <- function(df, model.func){
 }
 
 
-pdsi.age.sens <- get.clim.sens.age(df = det.age.clim.ghcn.df, "RWI ~ Jul.pdsi")
+julpdsi.age.sens <- get.clim.sens.age(df = det.age.clim.ghcn.df, "RWI ~ Jul.pdsi")
+pdsi.age.sens <- get.clim.sens.age(df = det.age.clim.ghcn.df, "RWI ~ PDSI")
+jjap.age.sens <- get.clim.sens.age(df = det.age.clim.prism.df, "RWI ~ JJA.p")
+
 
 # function to get the bootstrapped correlation coefficients across ages:
 get.clim.cor.age <- function(df, clim){
@@ -1096,8 +1098,10 @@ age.jjaPrismpcp.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "JJ
 age.jjaPrismpcp.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "JJA.p")
 
 
-ggplot(age.pcp.rf.df, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin = ci.min, ymax=ci.max))
+ggplot(age.julpdsi.rf.df, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin = ci.min, ymax=ci.max))
+ggplot(age.jjaPrismpcp.rf.df, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin = ci.min, ymax=ci.max))
 
+ggplot(age.julvpdmax.rf.df, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin = ci.min, ymax=ci.max))
 
 
 # function to extrat the slope for all trees before and after 1950
@@ -1195,7 +1199,11 @@ speciesdf<- data.frame(code = c("BON", "COR", "GLA", "GL1", "GL2", "GL3", "GL4",
                        species =  c("QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
                                     "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA"))
 
+
+
+# merge plot summary data with the locs and species df:
 locs <- merge(locs, speciesdf, by = "code")
+
 
 
 # read in the N & S deposition data:
@@ -1227,7 +1235,7 @@ mapdata.h<-spTransform(states, CRS('+proj=aea +lat_1=0 +lat_2=29.5 +lat_0=45.5 +
 mapdata<-data.frame(mapdata)
 
 #site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
-site.df.age <- merge(pdsi.age.sens, locs, by.x = 'site', by.y = 'code')
+site.df.age <- merge(julpdsi.age.sens, locs, by.x = 'site', by.y = 'code')
 site.df.yr <- merge(pdsi.yr.sens, locs, by.x = 'site', by.y = 'code')
 
 png("outputs/maps/Jul.pdsi_sensitivity.png")
@@ -1289,12 +1297,21 @@ ggplot(site.df[!site.df$site %in% "PVC",], aes(slope.max, slope.est, color = sit
 ggplot(site.df, aes(tm30yr, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 ggplot(site.df[!site.df$site %in% "UNC",], aes(sand, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 #ggplot(site.df, aes(Description, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+ggplot(site.df, aes(DBH, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+
+ggplot(site.df, aes( DBH, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 
 # fit a gam on the slope estimate
-gam.sens <- mgcv::gam(slope.est ~ pr30yr + sand  , data = site.df[site.df$species %in% "QUMA",])
-sand <- lm(slope.est ~ sand, data = site.df[!site.df$site %in% "UNC",]) # outside of UNCAS dusnes, sesnsitivyt depends on soil type
-summary(sand) # explains 27.4% of deviance:
+gam.sens <- mgcv::gam(slope.est ~ pr30yr  + DBH , data = site.df)
+site.df$gam_ypred <- predict(gam.sens, data = site.df)
+sand <- lm(slope.est ~ pr30yr + DBH, data = site.df[!site.df$site %in% "UNC",]) # outside of UNCAS dusnes, sesnsitivyt depends on soil type
+summary(gam.sens) # explains 27.4% of deviance:
 
+ggplot(site.df, aes(gam_ypred, slope.est))+geom_point()
+
+png('outputs/modeled_sensitivity_Jul_PDSI_age_DBH_climate.png')
+ggplot(site.df, aes(gam_ypred, slope.est)) + geom_point(color = "white") + geom_abline(color = "red", linetype = "dashed")+theme_black(base_size = 20)+ylab("Observed Sensitivity to July PDSI")+xlab("Predicted Sensitivity to July PDSI")
+dev.off()
 
 #################################################
 #  make plots for young and old
@@ -1310,8 +1327,23 @@ dev.off()
 ggplot(site.df.age, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 ggplot(site.df.age, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = "lm")
+ggplot(site.df.age, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = "lm")
+#ggplot(site.df.age, aes(CW_avg, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = "lm")
 
 
+png("outputs/sensitivity_v_siteDBH_age.png")
+ggplot(site.df.age, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Site Avg DBH")+theme(legend.title = element_blank())
+dev.off()
+
+gam.pr.dbh <- gam(slope.est ~ sand+ pr30yr+ DBH + age,data = site.df.age)
+summary(gam.pr.dbh)
+
+site.df.age$ypred <- predict(gam.pr.dbh, site.df.age)
+summary(site.df.age)
+
+png('outputs/modeled_sensitivity_slope_by_age_age_DBH_climate.png')
+ggplot(site.df.age, aes(ypred, slope.est)) + geom_point(color = "white") + geom_abline(color = "red", linetype = "dashed")+theme_black(base_size = 20)+ylab("Observed Sensitivity to July PDSI")+xlab("Predicted Sensitivity to July PDSI")
+dev.off()
 
 png("outputs/sensitivity_v_sand_age.png")
 ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
@@ -1364,6 +1396,7 @@ ggplot(site.df.yr, aes(sand, pr30yr,color = slope.est, shape = age))+geom_point(
 
 summary(lm(slope.est ~ sand + age  ,data = site.df.yr))
 summary(lm(slope.est ~ sand + pr30yr + age ,data = site.df.age))
+summary(lm(slope.est ~ sand + pr30yr + age +DBH,data = site.df.age))
 #sens.pre <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Pre-1950",])
 #summary(sens.pre) # explains 33.4% of deviance:
 
@@ -1384,7 +1417,7 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
   df <- df[!is.na(df$slope.est),]
 # x, y, z variables
   x <- df$pr30yr
-  y <- df$tm30yr
+  y <- df$DBH
   z <- df$slope.est
 # Compute the linear regression (z = ax + by + d)
   fit <- lm(z ~ x + y)
@@ -1400,7 +1433,7 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
 # scatter plot with regression plane
   scatter3D(x, y, z, pch = 18, cex = 2, col= col,
           theta = 50, phi = 25,  bty="u", lwd.panel= 2, space = 0.15,ticktype = "detailed",
-          xlab = "\n\n\n\n Precip", ylab = "\n\n\n\n Temp", zlab = "\n\n\n\n drought sensitivity", add= add ,
+          xlab = "\n\n\n\n Precip", ylab = "\n\n\n\n DBH (cm)", zlab = "\n\n\n\n drought sensitivity", add= add ,
           surf = list(x = x.pred, y = y.pred, z = z.pred,  
                       facets = NA, fit = fitpoints), main = paste("Drought Sensitivity by climate"),
           zlim=c(0,0.1))
@@ -1410,9 +1443,9 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
 
 # plot old and young predictive surfaces on the smae plot
 png(height = 5, width = 9, units = 'in', res= 300, 'outputs/sensitivity_surface3d_age.png')
-plot3dsensitivity(sens.df, "age","old", "red",FALSE)
+plot3dsensitivity(site.df.age, "age","old", "red",FALSE)
 
-plot3dsensitivity(sens.df, "age","young", "blue",TRUE)
+plot3dsensitivity(site.df.age, "age","young", "blue",TRUE)
 legend(x = 0.5, y = 0 ,
        legend = c(expression(atop("Young pre-1950", "(low CO"[2]*")")), expression(atop("Young post-1950", "(high CO"[2]*")"))), 
        col = c("red", 
@@ -1430,10 +1463,10 @@ dev.off()
 # plot the pre and post 1950 sensitivity surfaces:
 yr.sens.df <- site.df.yr 
   
-png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d_pre_post_1950.png')
+png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d_pre_post_1950_precip_DBH.png')
 #sens.df, age, class, col, add
-plot3dsensitivity(sens.df = yr.sens.df, age = "age",class = "Pre-1950", col = "red",add = FALSE)
-plot3dsensitivity(yr.sens.df, "age","Post-1950", "blue",TRUE)
+plot3dsensitivity(sens.df = site.df.yr, age = "age",class = "Pre-1950", col = "red",add = FALSE)
+plot3dsensitivity(site.df.yr, "age","Post-1950", "blue",TRUE)
 legend(x = 0.5, y = 0 ,
        legend = c(expression(atop("All trees Pre-1950", "(low CO"[2]*")")), expression(atop("All trees Post-1950", "(high CO"[2]*")"))), 
        col = c("red", 
