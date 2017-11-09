@@ -52,21 +52,21 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
 
-Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
-StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
-Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "rwi", site = "BON")
-Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "rwi", site = "TOW")#townsedn woods
-Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "Spline", rwiorbai = "rwi", site = "PLE") #Pleasant valley conservency
-Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "Spline", rwiorbai = "rwi", site = "COR")
-Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNC")
-Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLA")
-Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "rwi", site = "ENG")
-Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "rwi", site = "MOU")
-GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL1")
-GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL2")
-GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL3")
-GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL4")
-PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
+Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "bai", site = "HIC")
+StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "bai", site = "STC")
+Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "bai", site = "BON")
+Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "bai", site = "TOW")#townsedn woods
+Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "Spline", rwiorbai = "bai", site = "PLE") #Pleasant valley conservency
+Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "Spline", rwiorbai = "bai", site = "COR")
+Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai = "bai", site = "UNC")
+Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "bai", site = "GLA")
+Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "bai", site = "ENG")
+Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "bai", site = "MOU")
+GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL1")
+GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL2")
+GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL3")
+GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL4")
+PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "bai", site = "PVC")
 
 detrended.list <- list(Hickory.bai, StCroix.bai, Bonanza.bai,Townsend.bai,Pleasant.bai, Coral.bai,
                  Uncas.bai, Glacial.bai, Englund.bai, Mound.bai, GLL1.bai, GLL2.bai, 
@@ -355,6 +355,278 @@ det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
 # plot the RWI vs July.pdsi
 ggplot(det.age.clim.prism.df, aes(x = jul.VPDmax, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
 ggplot(det.age.clim.ghcn.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
+
+
+# write these dfs to a csv:
+write.csv(det.age.clim.prism.df, "outputs/data/full_det_prism_rwi.csv", row.names = FALSE)
+write.csv(det.age.clim.ghcn.df, "outputs/data/full_det_ghcn_rwi.csv", row.names = FALSE)
+
+# ------------------------How does growth vary over time:
+
+library(treeclim)
+
+# we will us the dcc function in the tree clim package, but this funtion takes monthly data:
+test <- det.age.clim.ghcn.df
+
+
+# moving correlations between climate and tree growth:
+
+a<- dcc(det.age.clim.ghcn.df[], IL.clim[1:1452,c("Year", "Month", "PCP")], dynamic = 'moving', win_size = 35, win_offset = 5)
+a
+
+plot(a)
+traceplot(a)
+
+
+#these funcitons print out plots time moving correlations for all of the climate parameters
+
+clim.cor<- function(climate, chron, site.name){
+  site.code <- site.df[1,]$site
+  
+  if(climatedata == "GHCN"){
+    if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
+      MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+    } else{ if(site.code %in% c("HIC", "COR","GLA", "PVC" )){
+      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+    }  else{ if(site.code == "W-R" ){
+      MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+    } else{ if(site.code == 'SAW'){
+      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+    }else{ if(site.code == "STC"){
+      MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+    }else{ if(site.code == "ENG"){
+      MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
+    }else{ if(site.code == "TOW"){
+      MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
+    }else{ if(site.code == "MOU"){
+      MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
+    }else{ if(site.code == "UNC"){
+      MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+    }else { if(site.code == 'PLE'){
+      MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
+    }else { if(site.code == 'YRF'){
+      MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')}
+      #MNcd.clim <-read.csv('data/CDODiv2154347072867.csv')}
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    
+    
+    MNcd.clim$PCP <- MNcd.clim$PCP*25.54
+    
+    keeps <- c("Year", "Month",  "PCP")
+    keepstavg <- c("Year", "Month", "TAVG")
+    keepst <- c("Year", "Month",  "TMAX")
+    keepstmin <- c("Year", "Month",  "TMIN")
+    keepspdsi <- c("Year", "Month",  "PDSI")
+    
+    #create a dataset for Precip
+    MNp.df <- MNcd.clim[,keeps]
+    MNp.df[MNp.df == -9999]<- NA
+    
+    #for tmax
+    MNt.df <- MNcd.clim[,keepst]
+    MNt.df[MNt.df == -9999]<- NA
+    
+    #for tmin
+    MNtmin.df<- MNcd.clim[,keepstmin]
+    MNtmin.df[MNtmin.df == -9999]<- NA
+    
+    #for tavg
+    MNtavg.df <- MNcd.clim[,keepstavg]
+    MNtavg.df[MNtavg.df == -9999]<- NA
+    
+    MNpdsi.df <- MNcd.clim[,keepspdsi]
+    MNpdsi.df[MNpdsi.df == -9999]<- NA
+    #for precipitation
+    
+    
+ 
+  }else{
+    
+    MNcd.clim <- read.csv(paste0("data/PRISM/",list.files("data/PRISM/", pattern = site.code)), header = TRUE, skip = 10 )
+    colnames(MNcd.clim) <- c("Date", "PCP", "TMIN", "TAVG", "TMAX", "TdAVG", "VPDmin", "VPDmax" )
+    
+    # get latitude (need for PET calculation):
+    lat <- as.numeric(unlist(strsplit(list.files("data/PRISM/", pattern = site.code), split = "_"))[5])
+    
+    #split date into month and year:
+    MNcd.clim <- MNcd.clim %>% separate(Date, c("Year", "Month"), "-")
+    
+    # conversions to metric b/c PRISM still uses Farenheit and inches \_O_/
+    MNcd.clim$PCP <- MNcd.clim$PCP*25.54 # convert to mm
+    # convert temperatures to celcius
+    MNcd.clim$TMIN <- (MNcd.clim$TMIN - 32)/1.8
+    MNcd.clim$TMAX <- (MNcd.clim$TMAX - 32)/1.8
+    MNcd.clim$TAVG <- (MNcd.clim$TAVG - 32)/1.8
+    MNcd.clim$TdAVG <- (MNcd.clim$TdAVG - 32)/1.8
+    
+    
+    # calculate PET using thornthwaite method:
+    
+    MNcd.clim$PET <- as.numeric(thornthwaite(MNcd.clim$TAVG, lat))
+    
+    #calculate water balance for each month:
+    MNcd.clim$BAL <- MNcd.clim$PCP - MNcd.clim$PET
+    
+    MNcd.clim$Month<- as.numeric(MNcd.clim$Month)
+    
+  }
+  climate <- MNcd.clim 
+  PREC <- climate[,c('Year', 'Month', 'PCP')]
+  PREC$Year <- as.numeric(PREC$Year)
+  #PREC$PCP <- PREC$PCP*25.54
+  PREC <- PREC[1:1452,]
+  
+  # PDSI
+  PDSI <- climate[,c('Year', 'Month', 'PDSI')]
+  PDSI$Year <- as.numeric(PDSI$Year)
+  #PREC$PCP <- PREC$PCP*25.54
+  PDSI <- PDSI[1:1452,]
+  
+  chron <- chron[chron$Year >=1895,]
+  
+  hic.pdsi.static <- dcc(chron, PREC, dynamic = 'static', win_size = 35, win_offset = 30)
+  
+  pdf(paste0('outputs/correlations/moving_site_cors/PREC_', site.name,'dynamic.pdf'))
+  print(plot(hic.pdsi.static))
+  #g_test(hic.pdsi.moving)
+  #traceplot(hic.pdsi.moving)
+  #plot(skills(hic.pdsi.moving))
+  
+  
+  hic.prec.moving <- dcc(chron, PREC, dynamic = 'moving', win_size = 45, win_offset = 5, ci = 0.05, boot = "std")
+  
+  print(plot(hic.prec.moving))
+  #g_test(hic.pdsi.moving)
+  print(traceplot(hic.prec.moving))
+  #plot(skills(hic.pdsi.moving))
+  dev.off()
+  write.csv(hic.prec.moving, paste0('outputs/correlations/moving_site_cors/PREC_', site.name,'dynamic.csv'))
+  
+  
+  #PDSI
+  PDSI <- climate[,c('Year', 'Month', 'PDSI')]
+  
+  PDSI <- PDSI[1:1452,]
+  
+  pdf(paste0('outputs/correlations/moving_site_cors/PDSI_', site.name,'dynamic.pdf'))
+  hic.pdsi.static <- dcc(chron, PDSI, dynamic = 'static', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.static))
+  #g_test(hic.pdsi.moving)
+  #traceplot(hic.pdsi.moving)
+  #plot(skills(hic.pdsi.moving))
+  
+  hic.pdsi.moving <- dcc(chron, PDSI, dynamic = 'moving', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.moving))
+  #g_test(hic.pdsi.moving)
+  print(traceplot(hic.pdsi.moving))
+  #plot(skills(hic.pdsi.moving))
+  dev.off()
+  
+  write.csv(hic.pdsi.moving, paste0('outputs/correlations/moving_site_cors/PDSI_', site.name,'dynamic.csv'))
+  
+  #TAVG
+  TAVG <- climate[,c('Year', 'Month', 'TAVG')]
+  
+  TAVG <- TAVG[1:1452,]
+  
+  pdf(paste0('outputs/correlations/moving_site_cors/TAVG_', site.name,'dynamic.pdf'))
+  hic.pdsi.static <- dcc(chron, TAVG, dynamic = 'static', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.static))
+  
+  
+  hic.pdsi.moving <- dcc(chron, TAVG, dynamic = 'moving', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.tavg.moving))
+  #g_test(hic.pdsi.moving)
+  print(traceplot(hic.pdsi.moving))
+  dev.off()
+  write.csv(hic.tavg.moving, paste0('outputs/correlations/moving_site_cors/PDSI_', site.name,'dynamic.csv'))
+  
+  
+  #TMAX
+  TMAX <- climate[,c('Year', 'Month', 'TMAX')]
+  
+  TMAX <- TMAX[1:1452,]
+  
+  pdf(paste0('outputs/correlations/moving_site_cors/TMAX_', site.name,'dynamic.pdf'))
+  hic.pdsi.static <- dcc(chron, TMAX, dynamic = 'static', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.static))
+  
+  
+  hic.pdsi.moving <- dcc(chron, TMAX, dynamic = 'moving', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.moving))
+  #g_test(hic.pdsi.moving)
+  print(traceplot(hic.pdsi.moving))
+  #plot(skills(hic.pdsi.moving))
+  dev.off()
+  
+  #TMIN
+  TMIN <- climate[,c('Year', 'Month', 'TMIN')]
+  
+  TMIN <- TMIN[1:1452,]
+  
+  pdf(paste0('outputs/correlations/moving_site_cors/TMIN_', site.name,'dynamic.pdf'))
+  hic.pdsi.static <- dcc(chron, TMIN, dynamic = 'static', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.static))
+  
+  
+  hic.pdsi.moving <- dcc(chron, TMIN, dynamic = 'moving', win_size = 35, win_offset = 5)
+  
+  print(plot(hic.pdsi.moving))
+  #g_test(hic.pdsi.moving)
+  print(traceplot(hic.pdsi.moving))
+  #plot(skills(hic.pdsi.moving))
+  dev.off()
+  dev.off()
+}
+
+clim.cor(IL.clim, Hickory, 'Hickory_Grove_')
+clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
+clim.cor(MNwc.clim, Desoix, 'Desoix_')
+clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
+clim.cor(MNec.clim, Townsend, 'Townsend_woods_')
+clim.cor(MNec.clim, StCroix, 'StCroix_savanna_')
+clim.cor(MNse.clim, Mound, 'Mound_prairie_')
+
+
+# ------------------------What is the factor that affects growth-------------
+# gam models:
+
+gam1 <- gamm(RWI ~  s(tair, k=k, by=PFT) + s(precipf, k=k, by=PFT) + s(CO2, k=k, by=PFT), random=list(PlotID=~1), data=data) 
+
+gam1 <- gam(RWI~ s(TAVG, k = 6, by = year) +
+              s(PCP, k = 6, by = year) + 
+               site   + year,
+            # random=list(Site=~1, PlotID=~1, TreeID=~1),
+            data=det.age.clim.prism.df)
+
+summary(gam1)$r.sq # R-squared
+summary(gam1)$dev.expl # explained deviance
+anova(gam1)
+AIC(gam1)
+
+# plot pred vs. obs:
+
+preds <- predict(gam1, det.age.clim.prism.df)
+plot(det.age.clim.prism.df$RWI, preds)
+
+ggplot(det.age.clim.prism.df, aes(TAVG, RWI, color = site))+geom_point()+facet_wrap(~site)
+ggplot(det.age.clim.prism.df, aes(PCP, RWI, color = site))+geom_point()+facet_wrap(~site)
 
 # ------------------plot climate parameters vs growth for all the tree ring series
 
@@ -719,7 +991,114 @@ get.clim.sens.age <- function(df, model.func){
 }
 
 
-pdsi.age.sens <- get.clim.sens.age(df = det.age.clim.ghcn.df, "RWI ~ PDSI")
+pdsi.age.sens <- get.clim.sens.age(df = det.age.clim.ghcn.df, "RWI ~ Jul.pdsi")
+
+# function to get the bootstrapped correlation coefficients across ages:
+get.clim.cor.age <- function(df, clim){
+  
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 5 ) # set up matrix for coefficients
+  
+  # function used in boot strapping below
+  boot.cor <- function(data, ind, colno ){
+    
+    return(cor(data[ind,c(colno)], data[ind,]$RWI, use = "pairwise.complete.obs"))
+  }
+  
+  
+  for(s in 1: length(unique(df$site))) {
+    
+    name <- unique(df$site)[s]  
+    site.data <- na.omit(df[df$site == name ,])
+    
+   
+  
+    
+    # for the "young" class:
+    if(nrow(site.data[site.data$site == name & site.data$ageclass == "young" ,]) > 0){
+      
+      # bootstrapping the correlation coefficients:
+      results <- boot(data=site.data[site.data$ageclass == "young" & site.data$year >= 1950 ,], colno = clim, statistic=boot.cor, R=2000)
+      
+      #int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      #slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      cis <- boot.ci(boot.out = results, type = "norm")
+      ci.mo <- cis$normal[2:3]
+      t <- results$t0
+     
+      coeffs[s,3] <-t
+      coeffs[s , 1] <- name
+      coeffs[s,2] <- "young"
+      coeffs[s,4] <- ci.mo[1]
+      coeffs[s,5] <- ci.mo[2]
+      
+      
+    } else{
+      #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "young" ,])
+      coeffs[s,3:5] <- c(NA,NA, NA)
+      coeffs[s , 2] <- "young"
+      coeffs[s,1] <- name
+    }
+    
+    
+    # for the "old" class:  
+    if(nrow(site.data[site.data$site == name & site.data$ageclass == "old" ,]) > 0){
+      results <- boot(data=site.data[site.data$ageclass == "old" & site.data$year < 1950 ,], colno = clim, statistic=boot.cor, R=2000)
+      
+      # bootstrapping the correlation coefficients:
+      
+      #int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      #slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      cis <- boot.ci(boot.out = results, type = "norm")
+      ci.mo <- cis$normal[2:3]
+      t <- results$t0
+      
+      coeffs[s+length(unique(df$site)),3] <-t
+      coeffs[s+length(unique(df$site)) , 1] <- name
+      coeffs[s+length(unique(df$site)),2] <- "old"
+      coeffs[s+length(unique(df$site)),4] <- ci.mo[1]
+      coeffs[s+length(unique(df$site)),5] <- ci.mo[2]
+      
+      
+    }else{
+      #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "old" ,])
+      coeffs[s+length(unique(df$site)),3:5] <- c(NA,NA, NA)
+      coeffs[s +length(unique(df$site)), 2] <- "old"
+      coeffs[s+length(unique(df$site)),1] <- name
+    }
+}
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("site","age",'cor.est', "ci.min", "ci.max")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$cor.est <- as.numeric(as.character(coeffs$cor.est))
+  
+  coeffs$ci.min <- as.numeric(as.character(coeffs$ci.min))
+  coeffs$ci.max <- as.numeric(as.character(coeffs$ci.max))
+  #coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  #coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
+  coeffs
+  
+}
+
+# for ghcn
+age.pdsi.rf.df< - get.clim.cor.age(df = det.age.clim.ghcn.df, clim = "PDSI")
+age.julpdsi.rf.df <- get.clim.cor.age(df = det.age.clim.ghcn.df, clim = "Jul.pdsi")
+age.pcp.rf.df <- get.clim.cor.age(df = det.age.clim.ghcn.df, clim = "PCP")
+
+# for prism
+age.vpdmax.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "VPDmax")
+age.BAL.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "BAL")
+age.Prismpcp.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "PCP")
+
+age.julvpdmax.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "VPDmax")
+age.julBAL.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "jul.BAL")
+age.jjaPrismpcp.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "JJA.p")
+age.jjaPrismpcp.rf.df <- get.clim.cor.age(df = det.age.clim.prism.df, clim = "JJA.p")
+
+
+ggplot(age.pcp.rf.df, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin = ci.min, ymax=ci.max))
+
+
 
 # function to extrat the slope for all trees before and after 1950
 get.clim.sens.year <- function(df, model.func){
@@ -801,16 +1180,23 @@ get.clim.sens.year <- function(df, model.func){
   
   }
   
-  
-
-pdsi.yr.sens <- get.clim.sens.year(df, "RWI ~ PDSI")
+  pdsi.yr.sens <- get.clim.sens.year(df, "RWI ~ Jul.pdsi")
 
 
 # read in soil, xy characteristics
-locs <- read.csv("outputs/priority_sites.csv")
+  
+locs <- read.csv("outputs/priority_sites_locs.csv")
 locs$code <- as.character(locs$code)
 locs[24:27,]$code <- c("GLL4", "GLL3", "GLL2", "GLL1")
 sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC")
+
+speciesdf<- data.frame(code = c("BON", "COR", "GLA", "GL1", "GL2", "GL3", "GL4",
+                                "HIC", "MOU", "PLE", "PVC", "STC", "TOW", "UNC"),
+                       species =  c("QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
+                                    "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA"))
+
+locs <- merge(locs, speciesdf, by = "code")
+
 
 # read in the N & S deposition data:
 sdep.files <- list.files("data/total_Sdep/")
@@ -826,8 +1212,8 @@ projection(n) <- CRS('+init=epsg:4269')
 n.alb <- projectRaster(n,CRS('+init=epsg:3175'))
 
 site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
-sens.df <- merge(pdsi.age.sens, locs, by = "site")
-yr.sens.df <- merge(pdsi.yr.sens, locs, by = "site")
+sens.df <- merge(pdsi.age.sens, locs, by = "site",by.y = 'code')
+yr.sens.df <- merge(pdsi.yr.sens, locs, by = "site",by.y = 'code')
 
 # map out sensitivities in space:
 df_states <- map_data("state")
@@ -860,6 +1246,7 @@ ggplot(site.df.yr, aes(coords.x1, coords.x2, color = slope.est))+geom_point()+ g
 dev.off()
 
 
+
 #--------------------------------------------------------------
 # extract relevant climate from PRSIM 30 year mean precip and temp data:
 # dir where the precip data are
@@ -876,8 +1263,8 @@ site.df.yr$pr30yr <- raster::extract(prism.alb, site.df.yr[,c("coords.x1","coord
 workingdir <- "/Users/kah/Documents/bimodality/data/"
 
 # read in and average prism temperature data (this is modern 30year normals)
-prism.t<- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
-prismt.alb<- projectRaster(prism.t, crs='+init=epsg:3175')
+prism.t <- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
+prismt.alb <- projectRaster(prism.t, crs='+init=epsg:3175')
 
 # extract temp
 site.df$tm30yr <- raster::extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
@@ -891,31 +1278,54 @@ a <- site.df
  #                 "y", "PDSI_time", "sand","ksat","awc",      
   #               "pr30yr"  ,  "tm30yr")
 
-#sens.df <- merge(pdsi.age.sens, locs, by = "site")
-#yr.sens.df <- merge(pdsi.yr.sens, locs, by = "site")
+cor.age.df <- merge(age.julpdsi.rf.df, site.df, by = "site")
+#yr.sens.df <- merge(s, site.df, by = "site")
 
 #--------------------------------------------------------------
 # how does sensitivity to drought vary by climate, envtl factors?
 #---------------------------------------------------------------
 # prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
-ggplot(site.df, aes(pr30yr, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+ggplot(site.df[!site.df$site %in% "PVC",], aes(slope.max, slope.est, color = site))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 ggplot(site.df, aes(tm30yr, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
-ggplot(site.df, aes(sand, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+ggplot(site.df[!site.df$site %in% "UNC",], aes(sand, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 #ggplot(site.df, aes(Description, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 
 # fit a gam on the slope estimate
-#gam.sens <- mgcv::gam(slope.est ~ s(pr30yr) + s(tm30yr)   , data = site.df)
-
-#summary(gam.sens) # explains 27.4% of deviance:
+gam.sens <- mgcv::gam(slope.est ~ pr30yr + sand  , data = site.df[site.df$species %in% "QUMA",])
+sand <- lm(slope.est ~ sand, data = site.df[!site.df$site %in% "UNC",]) # outside of UNCAS dusnes, sesnsitivyt depends on soil type
+summary(sand) # explains 27.4% of deviance:
 
 
 #################################################
 #  make plots for young and old
 # prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
+ageColors <- c( "#009E73", "#D55E00")
+names(ageColors) <- levels(site.df.age$age)
+
+png("outputs/boxplot_old_young_sens.png")
+ggplot(site.df.age, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI)")+theme(legend.title = element_blank())
+dev.off()
 
 ggplot(site.df.age, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 ggplot(site.df.age, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
-ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = "lm")
+
+
+
+png("outputs/sensitivity_v_sand_age.png")
+ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
+dev.off()
+
+png("outputs/sensitivity_v_MAP_age.png")
+ggplot(site.df.age, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Annual Precipitation")+theme(legend.title = element_blank())
+dev.off()
+
+png("outputs/sensitivity_v_TMEAN_age.png")
+ggplot(site.df.age, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.1)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Monthly Temperature (DegC)")+theme(legend.title = element_blank())
+dev.off()
+
+#ggplot(cor.age.df[!cor.age.df$site %in% "UNC",], aes(sand, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max))+stat_smooth(method = "lm")
 
 #sens.young <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = site.df.age[site.df.age$age=="young",])
 #summary(sens.young) # explains 47.7% of deviance:
@@ -926,10 +1336,34 @@ ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorba
 ##############################################################
 # make prelimnary plots for pre- and post- 1950
 ###############################################################3
+site.df.yr$age <- factor(site.df.yr$age,levels = rev(levels(site.df.yr$age)),ordered = TRUE)
+yrColors <- c( "#009E73", "#D55E00")
+names(yrColors) <- levels(site.df.yr$age)
+#colScale <- scale_colour_manual(name = "grp",values = myColors)
+
+png("outputs/boxplot_pre_post_sens.png")
+ggplot(site.df.yr, aes(age, slope.est, fill = age))+geom_boxplot()+theme_black(base_size = 20)+scale_fill_manual(values = yrColors)+ylab("Growth Sensitivity to Drought (PDSI)")+theme(legend.title = element_blank())
+dev.off()
+
 ggplot(site.df.yr, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 ggplot(site.df.yr, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
-ggplot(site.df.yr, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 
+png("outputs/sensitivity_v_sand_pre_post.png")
+ggplot(site.df.yr, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = 'lm', se = FALSE)+scale_color_manual(values = yrColors)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
+dev.off()
+
+png("outputs/sensitivity_v_MAP_pre_post.png")
+ggplot(site.df.yr, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = 'lm', se = FALSE)+scale_color_manual(values = yrColors)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Annual Precipitation")+theme(legend.title = element_blank())
+dev.off()
+
+png("outputs/sensitivity_v_TMEAN_pre_post.png")
+ggplot(site.df.yr, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.05)+stat_smooth(method = 'lm', se = FALSE)+scale_color_manual(values = yrColors)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Monthly Temperature (DegC)")+theme(legend.title = element_blank())
+dev.off()
+
+ggplot(site.df.yr, aes(sand, pr30yr,color = slope.est, shape = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5) + ylim(500, 1000)
+
+summary(lm(slope.est ~ sand + age  ,data = site.df.yr))
+summary(lm(slope.est ~ sand + pr30yr + age ,data = site.df.age))
 #sens.pre <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Pre-1950",])
 #summary(sens.pre) # explains 33.4% of deviance:
 
@@ -937,6 +1371,8 @@ ggplot(site.df.yr, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar
 #summary(sens.post) # explains 36.8% of deviance:
 
 sens.df <- site.df.age
+
+
 
 #install.packages("plot3D")
 library(plot3D)
@@ -1011,6 +1447,7 @@ legend(x = 0.5, y = 0 ,
        inset = c(0.1, 0.1))
 
 dev.off()
+
 
 
 ###########################################################################

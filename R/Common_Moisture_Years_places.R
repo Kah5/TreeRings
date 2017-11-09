@@ -55,6 +55,7 @@ ggplot(dataset[dataset$Month %in% '07', ], aes(as.numeric(Year), ppt..inches.))+
 
 
 # --------------------------finding the most similar climate years for each site------------------------:
+
 setwd("/Users/kah/Documents/TreeRings")
 sites <- unique(dataset$site)
 
