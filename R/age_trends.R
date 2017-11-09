@@ -52,21 +52,21 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
 
-Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "bai", site = "HIC")
-StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "bai", site = "STC")
-Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "bai", site = "BON")
-Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "bai", site = "TOW")#townsedn woods
-Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "Spline", rwiorbai = "bai", site = "PLE") #Pleasant valley conservency
-Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "Spline", rwiorbai = "bai", site = "COR")
-Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai = "bai", site = "UNC")
-Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "bai", site = "GLA")
-Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "bai", site = "ENG")
-Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "bai", site = "MOU")
-GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL1")
-GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL2")
-GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL3")
-GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "bai", site = "GL4")
-PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "bai", site = "PVC")
+Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
+StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
+Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "rwi", site = "BON")
+Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "rwi", site = "TOW")#townsedn woods
+Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "Spline", rwiorbai = "rwi", site = "PLE") #Pleasant valley conservency
+Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "Spline", rwiorbai = "rwi", site = "COR")
+Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNC")
+Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLA")
+Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "rwi", site = "ENG")
+Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "rwi", site = "MOU")
+GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL1")
+GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL2")
+GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL3")
+GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL4")
+PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
 
 detrended.list <- list(Hickory.bai, StCroix.bai, Bonanza.bai,Townsend.bai,Pleasant.bai, Coral.bai,
                  Uncas.bai, Glacial.bai, Englund.bai, Mound.bai, GLL1.bai, GLL2.bai, 
