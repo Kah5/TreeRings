@@ -55,10 +55,17 @@ mound <- rbind(mound, priority[priority$code %in% c("TOW", "HIC", "STC"),]) # ad
 
 
 MN.priority <- readOGR("data/priority.kml", layer = "Priority")
+MN.priority.alb <- spTransform(MN.priority, CRSobj = CRS('+init=epsg:3175'))
+priority <- data.frame(MN.priority.alb)
+priority.lat <- data.frame(priority)
+
+priority$code <- c("ITA", "GLE", "MAP", "UNC", "AVO", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+priority.lat$code <- c("ITA", "GLE", "MAP", "UNC", "AVO", "STC", "GLL", "GLA", "PVC", 'BON', 'COR', "HIC", "ENG", "TOW")
+
 #read in layer of sites cored in 2016
 sites16 <- readOGR("data/Treecores.kml", layer= "2016sites")
 sites16.lat <- sites16
-#sites16 <- spTransform(sites16, CRSobj = CRS('+init=epsg:3175'))
+sites16 <- spTransform(sites16, CRSobj = CRS('+init=epsg:3175'))
 sites16 <- data.frame(sites16)
 sites16.lat <- data.frame(sites16.lat)
 sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
@@ -226,11 +233,12 @@ map.plot("AVO")
 map.plot("PVC")
 map.plot("GLE1")
 map.plot("COR")
-#map.plot("DUF-1")
-#map.plot("DUF-2")
-#map.plot("GLA-2")
-#map.plot("HIC-2")
-#map.plot("HIC-1")
+map.plot("HIC-2")
+map.plot("HIC-1")
+map.plot("DUF-1")
+map.plot("DUF-2")
+map.plot("GLA-2")
+#map.plot("GLA-1")
 dev.off()
 
 
@@ -287,7 +295,7 @@ map.dispersed <- function(sitecode){
 
 pdf("outputs/standmaps/dispersed_maps_all.pdf")
 
-map.dispersed("MAP3")
+map.dispersed("MAP-3")
 map.dispersed("TOW")
 map.dispersed("STC")
 map.dispersed("UNI")

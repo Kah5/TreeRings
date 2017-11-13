@@ -115,6 +115,7 @@ clean_rwl(site = "GLL3", rwl.file = "/Users/kah/Documents/crossdating/data/cofec
 clean_rwl(site = "GLL4", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL4.rwl", "ww")
 clean_rwl(site = "PLE", rwl.file = './cofecha/PLEww.rwl', "ww")
 clean_rwl(site = "PVC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/PVC.rwl", "ww")
+clean_rwl(site = "AVO", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/AVOo.rwl", "ww")
 
 # for Earlywood
 clean_rwl(site = "HIC", rwl.file = "./cofecha/HICew.rwl", "ew")

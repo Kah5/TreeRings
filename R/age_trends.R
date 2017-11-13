@@ -67,11 +67,38 @@ GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai
 GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL3")
 GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL4")
 PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
+AVO.bai <- read_detrend_year("cleanrwl/AVOww.rwl", method = "Spline", rwiorbai = "rwi", site = "AVO")
+UNI.bai <- read_detrend_year("cleanrwl/UNIww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNI")
 
 detrended.list <- list(Hickory.bai, StCroix.bai, Bonanza.bai,Townsend.bai,Pleasant.bai, Coral.bai,
                  Uncas.bai, Glacial.bai, Englund.bai, Mound.bai, GLL1.bai, GLL2.bai, 
-                 GLL3.bai, GLL4.bai, PVC.bai)
+                 GLL3.bai, GLL4.bai, PVC.bai, AVO.bai, UNI.bai)
 
+# read in the site level data for each of these sites:
+test <- read.csv("data/site_maps/stand_metadata/AVO_full_xy.csv")
+
+
+# make example chronology:
+hic.raw <- read.rwl("cleanrwl/HICww.rwl")
+hic.raw$year <- as.numeric(row.names( hic.raw))
+png(width=6,height=4,units="in",res = 300,bg = "transparent","raw_rw_transparent.png")
+ggplot(Hickory.bai, aes(hic.raw$year, hic.raw[,11]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Raw Ring Width")+xlab("Year")
+dev.off()
+
+Hic.m<- melt(Hickory.bai, id.vars = c('year','site'))
+Hic.m$year <- as.numeric(Hic.m$year)
+Hickory.bai$year <- as.numeric(Hickory.bai$year)
+
+png(width=6,height=4,units="in",res = 300,bg = "transparent","det_transparent.png")
+ggplot(Hickory.bai, aes(Hickory.bai$year, Hickory.bai[,11]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Detrended Ring Width Index")+xlab("Year")
+dev.off()
+
+hic.chron <- chron(Hickory.bai)
+hic.chron$year <- as.numeric(row.names(hic.chron))
+
+png(width=6,height=4,units="in",res = 300,bg = "transparent","transparent_chronology.png")
+ggplot(hic.chron, aes(year, xxxstd))+xlim(1856, 2016) +ylim(0,2)+geom_line(color = "white")+theme_minimal()+xlab("Year")+ylab("Detrended Ring Width Index")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))
+dev.off()
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
@@ -1219,7 +1246,7 @@ plot(mapdata, add = TRUE)
 projection(n) <- CRS('+init=epsg:4269')
 n.alb <- projectRaster(n,CRS('+init=epsg:3175'))
 
-site.df <- merge(pdsi.sens, locs, by.x = 'site', by.y = 'code')
+site.df <- merge(Julpdsi.sens, locs, by.x = 'site', by.y = 'code')
 sens.df <- merge(pdsi.age.sens, locs, by = "site",by.y = 'code')
 yr.sens.df <- merge(pdsi.yr.sens, locs, by = "site",by.y = 'code')
 
@@ -1297,15 +1324,63 @@ ggplot(site.df[!site.df$site %in% "PVC",], aes(slope.max, slope.est, color = sit
 ggplot(site.df, aes(tm30yr, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 ggplot(site.df[!site.df$site %in% "UNC",], aes(sand, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 #ggplot(site.df, aes(Description, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
-ggplot(site.df, aes(DBH, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+png(height = 4, width = 6, units = "in", res = 300, "outputs/sensitivity_v_site_DBH.png")
+ggplot(site.df, aes(DBH, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("Diameter at Breast Height (cm)")+stat_smooth(method = "lm", se = FALSE)
+dev.off()
 
-ggplot(site.df, aes( DBH, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
+png(height = 4, width = 6, units = "in", res = 300, "outputs/sensitivity_v_site_MAP.png")
+ggplot(site.df, aes(pr30yr, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("Mean Annual Precipitation (mm)")+stat_smooth(method = "lm", se = FALSE)
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 300, "outputs/sensitivity_v_site_sand.png")
+ggplot(site.df, aes(sand, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("% sand ")+stat_smooth(method = "lm", se = FALSE)
+dev.off()
+
+summary(lm(slope.est~sand, data =site.df))
+summary(lm(slope.est~pr30yr, data =site.df))
+summary(lm(slope.est~DBH, data =site.df))
+
+ggplot(site.df, aes( BA, slope.est))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))
 
 # fit a gam on the slope estimate
 gam.sens <- mgcv::gam(slope.est ~ pr30yr  + DBH , data = site.df)
-site.df$gam_ypred <- predict(gam.sens, data = site.df)
-sand <- lm(slope.est ~ pr30yr + DBH, data = site.df[!site.df$site %in% "UNC",]) # outside of UNCAS dusnes, sesnsitivyt depends on soil type
-summary(gam.sens) # explains 27.4% of deviance:
+site.df$gam_ypred <- predict.gam(gam.sens, newdata = site.df)
+sand <- lm(slope.est ~ pr30yr + DBH, data = site.df) # outside of UNCAS dusnes, sesnsitivyt depends on soil type
+summary(gam.sens) # explains 58.7% of deviance:
+summary(sand)
+
+# predict 3d sensitivity:
+plot3dsensitivity.all <- function(sens.df, age, class, add ){
+  df <- sens.df[sens.df[,c(age)] == class,]
+  df <- df[!is.na(df$slope.est),]
+  # x, y, z variables
+  x <- df$pr30yr
+  y <- df$DBH
+  z <- df$slope.est
+  # Compute the linear regression (z = ax + by + d)
+  fit <- lm(z ~ x + y)
+  # predict values on regular xy grid
+  grid.lines = 25
+  x.pred <- seq(min(x), max(x), length.out = grid.lines)
+  y.pred <- seq(min(y), max(y), length.out = grid.lines)
+  xy <- expand.grid( x = x.pred, y = y.pred)
+  z.pred <- matrix(predict(fit, newdata = xy), 
+                   nrow = grid.lines, ncol = grid.lines)
+  # fitted points for droplines to surface
+  fitpoints <- predict(fit)
+  # scatter plot with regression plane
+  scatter3D(x, y, z, pch = 18, cex = 2, colvar = z,
+            theta = 50, phi = 35,  bty="u", lwd.panel= 2, space = 0.15,ticktype = "detailed",
+            xlab = "\n\n\n\n Precip (mm/yr)", ylab = "\n\n\n\n DBH (cm)", zlab = "\n\n\n\n drought sensitivity", add= add ,
+            surf = list(x = x.pred, y = y.pred, z = z.pred,  
+                        facets = NA, fit = fitpoints), main = paste("Drought Sensitivity by climate"),
+            zlim=c(0,0.06))
+  
+}
+site.df$age <- "all"
+png(height = 4, width = 7, units = 'in', res = 300, "outputs/full_pdsi_sens_3dplot.png")
+plot3dsensitivity.all(site.df, "age", class = "all", add =FALSE)
+dev.off()
 
 ggplot(site.df, aes(gam_ypred, slope.est))+geom_point()
 
@@ -1335,14 +1410,19 @@ png("outputs/sensitivity_v_siteDBH_age.png")
 ggplot(site.df.age, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Site Avg DBH")+theme(legend.title = element_blank())
 dev.off()
 
-gam.pr.dbh <- gam(slope.est ~ sand+ pr30yr+ DBH + age,data = site.df.age)
+summary(lm(slope.est ~DBH + pr30yr + age, data = site.df.age))
+gam.pr.dbh <- gam(slope.est ~ pr30yr+ DBH + age,data = site.df.age)
 summary(gam.pr.dbh)
 
 site.df.age$ypred <- predict(gam.pr.dbh, site.df.age)
 summary(site.df.age)
 
-png('outputs/modeled_sensitivity_slope_by_age_age_DBH_climate.png')
+png('outputs/modeled_sensitivity_v_DBH_age.png')
 ggplot(site.df.age, aes(ypred, slope.est)) + geom_point(color = "white") + geom_abline(color = "red", linetype = "dashed")+theme_black(base_size = 20)+ylab("Observed Sensitivity to July PDSI")+xlab("Predicted Sensitivity to July PDSI")
+dev.off()
+
+png("outputs/sensitivity_v_DBH_age.png")
+ggplot(site.df.age, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
 dev.off()
 
 png("outputs/sensitivity_v_sand_age.png")
@@ -1392,14 +1472,23 @@ png("outputs/sensitivity_v_TMEAN_pre_post.png")
 ggplot(site.df.yr, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.05)+stat_smooth(method = 'lm', se = FALSE)+scale_color_manual(values = yrColors)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Monthly Temperature (DegC)")+theme(legend.title = element_blank())
 dev.off()
 
+png("outputs/sensitivity_v_DBH_pre_post.png")
+ggplot(site.df.yr, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.05)+stat_smooth(method = 'lm', se = FALSE)+scale_color_manual(values = yrColors)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("DBH (cm)")+theme(legend.title = element_blank())
+dev.off()
+
 ggplot(site.df.yr, aes(sand, pr30yr,color = slope.est, shape = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5) + ylim(500, 1000)
 
 summary(lm(slope.est ~ sand + age  ,data = site.df.yr))
 summary(lm(slope.est ~ sand + pr30yr + age ,data = site.df.age))
-summary(lm(slope.est ~ sand + pr30yr + age +DBH,data = site.df.age))
-#sens.pre <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Pre-1950",])
-#summary(sens.pre) # explains 33.4% of deviance:
+summary(lm(slope.est ~  pr30yr + age +DBH,data = site.df.age))
 
+reformed.df <- dcast(site.df.age[c("site", "age", "coords.x1", "coords.x2", 'slope.est', "DBH" , "pr30yr", "tm30yr",'sand')], coords.x1 + coords.x2+site+DBH+pr30yr+tm30yr+sand ~ age, mean, na.rm=TRUE, value.var = 'slope.est') 
+reformed.df$diff <- reformed.df$old - reformed.df$young
+sens.dif <- gam(young ~  pr30yr + DBH   , data = reformed.df)
+summary(sens.dif) #Deviance explained = 41.1%
+
+gam.sens.age <- gam(slope.est ~  pr30yr + DBH   , data = site.df.age)
+summary(gam.sens.age)
 #sens.post <- gam(slope.est ~ pr30yr + tm30yr +sand  , data = yr.sens.df[yr.sens.df$age=="Post-1950",])
 #summary(sens.post) # explains 36.8% of deviance:
 
@@ -1443,13 +1532,13 @@ plot3dsensitivity <- function(sens.df, age, class, col, add ){
 
 # plot old and young predictive surfaces on the smae plot
 png(height = 5, width = 9, units = 'in', res= 300, 'outputs/sensitivity_surface3d_age.png')
-plot3dsensitivity(site.df.age, "age","old", "red",FALSE)
+plot3dsensitivity(site.df.age, "age","old", "#009E73",FALSE)
 
-plot3dsensitivity(site.df.age, "age","young", "blue",TRUE)
+plot3dsensitivity(site.df.age, "age","young", "#D55E00",TRUE)
 legend(x = 0.5, y = 0 ,
        legend = c(expression(atop("Young pre-1950", "(low CO"[2]*")")), expression(atop("Young post-1950", "(high CO"[2]*")"))), 
-       col = c("red", 
-               "blue"), 
+       col = c("#009E73", 
+               "#D55E00"), 
        pch = c(18, 18), 
        bty = "n", 
        pt.cex = 2, 
@@ -1465,12 +1554,12 @@ yr.sens.df <- site.df.yr
   
 png(height = 5, width = 9, units = 'in', res= 300,'outputs/sensitivity_surface3d_pre_post_1950_precip_DBH.png')
 #sens.df, age, class, col, add
-plot3dsensitivity(sens.df = site.df.yr, age = "age",class = "Pre-1950", col = "red",add = FALSE)
-plot3dsensitivity(site.df.yr, "age","Post-1950", "blue",TRUE)
+plot3dsensitivity(sens.df = site.df.yr, age = "age",class = "Pre-1950", col = "#009E73",add = FALSE)
+plot3dsensitivity(site.df.yr, "age","Post-1950", "#D55E00",TRUE)
 legend(x = 0.5, y = 0 ,
        legend = c(expression(atop("All trees Pre-1950", "(low CO"[2]*")")), expression(atop("All trees Post-1950", "(high CO"[2]*")"))), 
-       col = c("red", 
-               "blue"), 
+       col = c("#009E73", 
+               "#D55E00"), 
        pch = c(18, 18), 
        bty = "n", 
        pt.cex = 2, 
@@ -1481,6 +1570,233 @@ legend(x = 0.5, y = 0 ,
 
 dev.off()
 
+#-----------------------------modeling drought sensitivity over space:
+gam.sens <- mgcv::gam(slope.est ~ pr30yr  + DBH , data = site.df)
+site.df$gam_ypred <- predict(gam.sens, data = site.df)
+sand <- lm(slope.est ~ pr30yr + DBH*pi, data = site.df[!site.df$site %in% "UNC",]) # outside of UNCAS dusnes, sesnsitivyt depends on soil type
+summary(gam.sens) # explains 27.4% of deviance:
+
+# get pr30yr for the whole region:
+prism <- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
+prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
+
+
+# get FIA average DBH for each grid cell:
+
+FIA <- read.csv('/Users/kah/Documents/bimodality/data/FIA_species_plot_parameters_paleongrid.csv')
+speciesconversion <- read.csv('/Users/kah/Documents/bimodality/data/fia_conversion_v02-sgd.csv')
+
+FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
+FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON, mean, na.rm=TRUE, value.var = 'dbh') #sum all species in common taxa in FIA grid cells
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn', 'Var.5')) # melt the dataframe
+#fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, mean, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
+
+Oak.sites <- FIA.by.paleon[,c("x","y","cell", "Oak")]
+colnames(Oak.sites) <- c("x", "y","cell", "DBH")
+# extract pr30yr for all sites where we have FIA data:
+Oak.sites$pr30yr <- raster::extract(prism.alb, Oak.sites[,c("x","y")])
+
+
+# predict gam for whole region:
+July_pdsi_sens_pred <- as.vector(predict(gam.sens, newdata = Oak.sites))
+Oak.sites$July_pdsi_sens_pred <- July_pdsi_sens_pred
+ggplot(Oak.sites, aes(x,y, fill = July_pdsi_sens_pred))+geom_raster()
+
+
+# assume all forests have similar drought sensitivity as oaks:
+
+FIA.pal <- merge(FIA, speciesconversion, by = 'spcd' )
+FIA.by.paleon <- dcast(FIA.pal, x + y+ cell+ plt_cn ~ PalEON , mean, na.rm=TRUE, value.var = 'dbh') #sum all species in common taxa in FIA grid cells
+fia.melt <- melt(FIA.by.paleon, id.vars = c('x', 'y', 'cell', 'plt_cn')) # melt the dataframe
+fia.by.cell <- dcast(fia.melt, x + y+ cell ~ variable, sum, na.rm=TRUE, value.var = 'value') # average species densities and total density within each grid cell
+fia.by.cell[fia.by.cell == 0] <- NA
+fia.by.cell$DBH <- rowMeans(fia.by.cell[,4:length(fia.by.cell)], na.rm=TRUE)
+ggplot(fia.by.cell, aes(x,y, fill = DBH))+geom_raster()
+
+DBH_all <- fia.by.cell[,c("x", "y", "cell", "DBH")]
+DBH_all$pr30yr <- raster::extract(prism.alb, DBH_all[,c("x","y")])
+
+# now project gam for whole region
+July_pdsi_sens_pred <- as.vector(predict.gam(gam.sens, newdata = DBH_all))
+DBH_all$July_pdsi_sens_pred <- July_pdsi_sens_pred
+ggplot(DBH_all, aes(x,y, fill = July_pdsi_sens_pred))+geom_raster()
+
+
+
+# predict the Oak sensitivity landscape if all were young trees (future landscape):
+Oak.young <- Oak.sites
+Oak.young$age <- "young"
+July_pdsi_young_sens_pred <- as.vector(predict.gam(gam.pr.dbh, newdata = Oak.young))
+Oak.young$July_pdsi_young_sens_pred <- July_pdsi_young_sens_pred
+# if all trees were old:
+Oak.old <- Oak.young
+Oak.old$age <- "old"
+July_pdsi_old_sens_pred <-as.vector(predict(gam.pr.dbh, newdata = Oak.old))
+Oak.old$July_pdsi_old_sens_pred <- July_pdsi_old_sens_pred
+
+
+ggplot(Oak.old, aes(x, y, fill = July_pdsi_old_sens_pred))+geom_raster()
+ggplot(Oak.old, aes(x, y, fill = July_pdsi_young_sens_pred))+geom_raster()
+#Oak.old$diff <- Oak.old$July_pdsi_old_sens_pred - Oak.old$July_pdsi_young_sens_pred
+#ggplot(Oak.old, aes(x, y, fill = diff ))+geom_raster()
+
+# predict the full landscape if all trees were young
+
+All.young <- DBH_all
+All.young$age <- "young"
+July_pdsi_young_sens_pred <- as.vector(predict.gam(gam.pr.dbh, newdata = All.young))
+All.young$July_pdsi_young_sens_pred <- July_pdsi_young_sens_pred
+# if all trees were old:
+All.old <- All.young
+All.old$age <- "old"
+July_pdsi_old_sens_pred <-as.vector(predict(gam.pr.dbh, newdata = All.old))
+All.old$July_pdsi_old_sens_pred <- July_pdsi_old_sens_pred
+
+
+ggplot(All.old, aes(x, y, fill = July_pdsi_old_sens_pred))+geom_raster()
+ggplot(All.old, aes(x, y, fill = July_pdsi_young_sens_pred))+geom_raster()
+
+# map out all predictions over the region:
+all_states <- map_data("state")
+states <- subset(all_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
+                                             "north dakota", 'michigan', 'missouri', 'indiana') )
+coordinates(states)<-~long+lat
+class(states)
+proj4string(states) <-CRS("+proj=longlat +datum=NAD83")
+mapdata<-spTransform(states, CRS('+init=epsg:3175'))
+mapdata<-data.frame(mapdata)
+
+red.pal <- c('#ffffb2',
+  '#fecc5c',
+  '#fd8d3c',
+  '#f03b20',
+  '#bd0026')
+
+# map out sensitivity to drought over all oaks:
+sites.map <- ggplot()+ geom_raster(data=Oak.sites, aes(x=x, y=y, fill = July_pdsi_sens_pred))+
+  labs(x="easting", y="northing", title="Oak Drought Sensitivity") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map.oak <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                         colour = "darkgrey", fill = NA)+theme_bw() + theme_black(base_size = 20)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        #legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
+sites.map.oak
+
+# sensitivity for all forests:
+# map out sensitivity to drought over all oaks:
+sites.map <- ggplot()+ geom_raster(data=DBH_all, aes(x=x, y=y, fill = July_pdsi_sens_pred))+
+  labs(x="easting", y="northing", title="All Trees Drought Sensitivity") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map.all <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                         colour = "darkgrey", fill = NA)+theme_bw() + theme_black(base_size = 20)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        #legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
+sites.map.all
+
+
+png(width = 12, height = 6, units = "in", res = 300, "outputs/all_modern_drought_sens_predmaps.png")
+grid.arrange(sites.map.oak, sites.map.all, ncol = 2)
+dev.off()
+
+
+# ----------------------------- Young + old comparison -----------------
+#oak sensitivity for old trees map:
+sites.map <- ggplot()+ geom_raster(data=Oak.old, aes(x=x, y=y, fill = July_pdsi_old_sens_pred))+
+  labs(x="easting", y="northing", title="Drought Sensitivity 1895-1950") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map.old <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                     colour = "darkgrey", fill = NA)+theme_bw() + theme_black(base_size = 20)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        #legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
+sites.map.old
+
+# oak sensitivity for young trees map:
+sites.map <- ggplot()+ geom_raster(data=Oak.old, aes(x=x, y=y, fill = July_pdsi_young_sens_pred))+
+  labs(x="easting", y="northing", title="Drought Sensitivity 1950-present") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map.young <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                         colour = "darkgrey", fill = NA)+theme_bw() + theme_black(base_size = 20)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        #legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
+sites.map.young
+
+png(width = 12, height = 6, units = "in", res = 300, "outputs/Oak_modern_past_drought_sens_predmaps.png")
+grid.arrange(sites.map.old, sites.map.young, ncol = 2)
+dev.off()
+
+
+
+# oak sensitivity for old trees map:
+sites.map <- ggplot()+ geom_raster(data=All.old, aes(x=x, y=y, fill = July_pdsi_old_sens_pred))+
+  labs(x="easting", y="northing", title="Drought Sensitivity 1895-1950") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+all.map.old <- sites.map + geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                        colour = "darkgrey", fill = NA)+theme_bw() + theme_black(base_size = 20)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        #legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
+all.map.old
+
+# all tresssensitivity for young trees map:
+sites.map <- ggplot()+ geom_raster(data=All.old, aes(x=x, y=y, fill = July_pdsi_young_sens_pred))+
+  labs(x="easting", y="northing", title="Drought Sensitivity 1950-present") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+all.map.young <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                           colour = "darkgrey", fill = NA)+theme_bw() + theme_black(base_size = 20)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        #legend.background = element_rect(fill = "white"),
+        
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
+all.map.young
+
+png(width = 12, height = 6, units = "in", res = 300, "outputs/all_modern_past_drought_sens_predmaps.png")
+grid.arrange(all.map.old, all.map.young, ncol = 2)
+dev.off()
 
 
 ###########################################################################
