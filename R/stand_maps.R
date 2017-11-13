@@ -181,12 +181,13 @@ map.plot <- function(sitecode){
     theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
   
   colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common", "Circumference", "DBH", "CW1", "CW2", "dist2center", "direction",
-                          'ele', 'x_plot', "y_plot", "opt", "x_tree", "y_tree")
+                          'ele', 'x_plot', "y_plot", "test", "opt", "x_tree", "y_tree")
   site.alb <- site.alb[,c("name", "Year_cored", "TagID", "Core", "Species_common", "DBH", "CW1", "CW2", 
                            'x_plot', "y_plot",  "x_tree", "y_tree")]
   site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   
   # need to make a name that matches the Tellervo output names:
+  if(file.exists(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))){
   library(dplR)
   rwlfile<- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
   names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
@@ -198,6 +199,16 @@ map.plot <- function(sitecode){
   scientific <- read.csv("data/Scientific_names.csv")
   site.alb <- merge(site.alb, scientific, by = "Species_common")
   write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))
+  }else{
+    scientific <- read.csv("data/Scientific_names.csv")
+    site.alb <- merge(site.alb, scientific, by = "Species_common")
+    write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))
+  }
+  
+  #finally plot out the stand maps
+  ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH)) + 
+    #scale_color_manual(values = specColors)
+    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
   
 }
 
