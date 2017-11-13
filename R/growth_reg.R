@@ -534,9 +534,20 @@ d <- sites.tile('tmin', "GHCN")+ ggtitle("D). Minimum Temperature")+ylab('correl
 #b <- sites.tile('Precip', "GCHN")+ ggtitle("B). Precipitation")+ylab('correlation')
 a <- sites.tile('PDSI', "GHCN")+ ggtitle("A). Palmer Drought Severity Index")+ylab('correlation')
 
-png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_cors_all_sites_3panel.png')
+png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_GHCN_cors_all_sites_3panel.png')
 grid_arrange_shared_legend(a,b,c,d,e, nrow = 3, ncol = 2 )
 dev.off()
+# tile plot corrs for prism
+e <- sites.tile('tavg', "PRISM")+ggtitle("E). Average Temperature")+ylab("correlation")
+c <- sites.tile('tmax', "PRISM")+ ggtitle("C). Maximum Temperature")+ylab('correlation')
+d <- sites.tile('tmin', "PRISM")+ ggtitle("D). Minimum Temperature")+ylab('correlation')
+b <- sites.tile('Precip', "PRISM")+ ggtitle("B). Precipitation")+ylab('correlation')
+a <- sites.tile('VPDmax', "PRISM")+ ggtitle("A). VPDmax")+ylab('correlation')
+f <- sites.tile('BAL', "PRISM")+ ggtitle("A). Climatic Water Deficit P - PET")+ylab('correlation')
+png(width = 10, height = 8, units = 'in', res = 300, 'outputs/barplots/tileplot_PRISM_cors_all_sites_3panel.png')
+grid_arrange_shared_legend(a,b,c,d,e,f, nrow = 3, ncol = 2 )
+dev.off()
+
 
 # ------------Is there a variable/month that has highest correlation across all sites?
 #------------------rank the correlations based on highest to lowest for each site
@@ -608,7 +619,7 @@ write.csv(Highest, "outputs/highest_cors_GHCN_table.csv")
 #now plot the correlations against their mean annual precips MAP from GHCN, but can use prism data for correlations:
 cor.v.clim <- function(climatedata, mo, climatevar, var){
   
-  locs <- read.csv("outputs/priority_sites.csv")
+  locs <- read.csv("outputs/priority_sites_locs.csv")
   sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 
   precip <- matrix(NA ,nrow = length(sites), ncol = 2)
@@ -644,24 +655,28 @@ x$ci.min <- as.vector(month.coef[,3])
 if(var %in% "MAP"){
   x$env <- as.numeric(as.character(x$MAP))
 }else{if (var %in% "awc"){
-  x$env <- pre$awc
+  x$env <- precip$awc
 }else{if (var %in% "ksat"){
-x$env <- pre$ksat
+x$env <- precip$ksat
+}else{if (var %in% "DBH"){
+  x$env <- precip$DBH
 }else{if (var %in% "sand"){
-  x$env <- pre$sand
-}else{
+  x$env <- precip$sand
+  }else{
    precip$env <- 8888
  }
 }
 }
 }
-
+}
 lm <- lm(formula = cor ~ env, data = x)
+lm2 <- summary(lm)
 print(summary(lm))
-ggplot(x, aes(env, cor, color = cor))+geom_errorbar(aes(ymin = ci.min, ymax = ci.max))+
-  scale_color_continuous(low = 'red', high = 'blue')+geom_point(size = 5, aes(shape = Description))+stat_smooth(method = 'lm')+theme_bw()+ggtitle(paste0(climatevar, " correlation with ",mo," ", var))+
+ggplot(data = x, aes(env, cor,  color = cor))+geom_point(size = 5)+geom_errorbar( aes(ymin = ci.min, ymax = ci.max))+
+  stat_smooth(method = 'lm', color = "white")+scale_color_continuous(low = 'red', high = 'blue', name = "Correlation \n coefficient")+ggtitle(paste0(mo," ",climatevar, " correlation with ", var))+
   xlab(var)+ylab(paste0(climatevar," ",mo," correlation coefficient"))+geom_text(aes(label=as.character(site)),hjust=0, vjust=2) +scale_x_continuous(expand= c(0.25,0.5)) +scale_y_continuous(expand = c(0.25, 0))+
-  theme_bw()
+  theme_black(base_size = 15) #+annotate(geom = 'text', x = min(x$env), y = -0.55, label =paste0("R-squared = ",lm2$coefficients[2,4]), color= "white")
+
 }
 
 clim.ghcn <- c( "tavg",   "tmax",   "tmin",   "Precip", "PDSI" )
@@ -681,14 +696,51 @@ for(i in 1:length(clim.prism)){
 
 
 
-pdf("outputs/PRISM_cor_coef_v_MAP_Jun.pdf")
-cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "MAP")
-cor.v.clim("PRISM","Jun", climatevar = "tmin", var = "MAP")
-cor.v.clim("PRISM","Jun", climatevar = "tmax", var = "MAP")
-cor.v.clim("PRISM","Jun", climatevar = "precip", var = "MAP")
-cor.v.clim("PRISM","Jun", climatevar = "BAL", var = "MAP")
-cor.v.clim("PRISM","Jun", climatevar = "VPDmax", var = "MAP")
-dev.off()
+# singling out some significant relationships:
+cor.v.clim(climatedata = "PRISM",mo = "Jun", climatevar = "tavg", var = "DBH")+ ggtitle(" ")+ylab("Correlation with June Average Temperature")+xlab( "% Sand")
+
+cor.v.clim("PRISM","Jun", climatevar = "tavg", var = "sand")+ ggtitle(" ")+ylab("Correlation with June Average Temperature")+xlab( "% Sand")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_junTavg.png")
+
+cor.v.clim("PRISM","Aug", climatevar = "tmin", var = "sand")+ ggtitle(" ")+ylab("Correlation with August Minimum Temperature")+xlab( "% Sand")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_augTmin.png")
+
+cor.v.clim("PRISM","Sep", climatevar = "tmax", var = "sand") + ggtitle(" ")+ylab("Correlation with September TMAX")+xlab( "% Sand")# sept tmax sig 0.024, rsquared = 0.3012
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_junTavg.png")
+
+cor.v.clim("PRISM","Jul", climatevar = "BAL", var = "MAP") + ggtitle(" ")+ylab("Correlation with July Water Balance (P-PET)")+xlab( "Mean Annual Precipitation (mm/yr)")# sig p = 0.025, R-sq = 0.35
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_MAP_julBAL.png")
+
+cor.v.clim("PRISM","Jul", climatevar = "VPDmax", var = "DBH") + ggtitle(" ")+ylab("Correlation with July Water Balance (P-PET)")+xlab( "Mean Annual Precipitation (mm/yr)")# sig p = 0.025, R-sq = 0.35
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_DBH_vpdmaxL.png")
+
+cor.v.clim("PRISM","Sep", climatevar = "precip", var = "MAP") + ggtitle(" ")+ylab("Correlation with July Water Balance (P-PET)")+xlab( "Mean Annual Precipitation (mm/yr)")# sig p = 0.025, R-sq = 0.35
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_DBH_vpdmaxL.png")
+
+
+cor.v.clim("PRISM","Jul", climatevar = "precip", var = "sand") + ggtitle(" ")+ylab("Correlation with July Precipitation")+xlab( "% Sand") # sig p = 0.00047, r-sq = 0.63
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_julPrecip.png")
+
+cor.v.clim("PRISM","Jun", climatevar = "precip", var = "sand")+ ggtitle(" ")+ylab("Correlation with June Precipitation")+xlab( "% Sand")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_junprecip.png")
+
+cor.v.clim("GHCN","Sep", climatevar = "PDSI", var = "sand") + ggtitle(" ")+ylab("Correlation with September PDSI")+xlab( "% Sand")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_SeptPDSI.png")
+
+cor.v.clim("GHCN","Aug", climatevar = "PDSI", var = "sand")+ ggtitle(" ")+ylab("Correlation with August PDSI")+xlab( "% Sand")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_AugPDSI.png")
+
+cor.v.clim("GHCN","Jul", climatevar = "PDSI", var = "sand") + ggtitle(" ")+ylab("Correlation with July PDSI")+xlab( "% Sand")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_sand_JulPDSI.png")
+
+
+cor.v.clim("GHCN","Jul", climatevar = "PDSI", var = "MAP") + ggtitle(" ")+ylab("Correlation with July PDSI")+xlab( "Mean Annual Precipitation (mm)")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_MAP_JulPDSI.png")
+
+cor.v.clim("GHCN","Jul", climatevar = "PDSI", var = "DBH") + ggtitle(" ")+ylab("Correlation with July PDSI")+xlab( "Average DBH")
+ggsave("outputs/correlations/static_site_cors/PRISM_site_cor_DBH_JulPDSI.png")
+
+#cor.v.clim("GHCN","Aug", climatevar = "PDSI", var = "sand")
 
 #can use the cor.v.clim function to plot correlations against soil characteristics
 #read in site xys

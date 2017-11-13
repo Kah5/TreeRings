@@ -107,15 +107,16 @@ dens <- as.data.frame(dens)
 full.cores <- read.csv("data/tree_cores_data_sheet_full_2016_2015.csv")
 full.cores$CW1 <- as.numeric(as.character(full.cores$CW1))
 full.cores$CW2 <- as.numeric(as.character(full.cores$CW2))
+full.cores$area <- 0.00007854*((full.cores$DBH..cm.*pi)/100)^2
 DBH.means <- full.cores %>% 
   group_by(Site.Code) %>%
   summarise(DBH = mean(DBH..cm., na.rm= TRUE), DBH.sd = mean(DBH..cm., na.rm=TRUE), 
-            n = n(), nspecies = length(unique(Species)), CW_avg = mean((CW1 + CW2)/2))
+            n = n(), BA = sum(area, na.rm=TRUE)*10000,nspecies = length(unique(Species)), CW_avg = mean((CW1 + CW2)/2))
 
 DBH.means <- data.frame(DBH.means)
 
 ggplot(DBH.means, aes(Site.Code, y = DBH))+geom_bar(stat = 'identity')
-ggplot(DBH.means, aes(CW_avg, y = DBH))+geom_point()
+ggplot(DBH.means, aes(BA, y = DBH))+geom_point()
 
 priority <- merge(priority, DBH.means, by.x = "code", by.y = "Site.Code")
 

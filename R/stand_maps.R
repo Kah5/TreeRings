@@ -13,13 +13,13 @@ library(grid)
 library(plotKML)
 library(dplyr)
 # read in a gpx file
-test <- readGPX("C:/Users/JMac/Box Sync/GPX/Waypoints_06-AUG-16.gpx")
+test <- readGPX("GPX/Waypoints_06-AUG-16.gpx")
 
 
 # put all the files into the same directory, then
 
-myfiles <- list.files("C:/Users/JMac/Box Sync/GPX/2016/")
-mydir <- 'C:/Users/JMac/Box Sync/GPX/2016/'
+myfiles <- list.files("/Users/kah/Documents/TreeRings/GPX/")
+mydir <- '/Users/kah/Documents/TreeRings/GPX/'
 
 
 wpfull <- NULL
@@ -34,8 +34,9 @@ for (i in 1:length(myfiles)) {
 }
 
 head(wpfull)
+wpfull <- wpfull[4:length(wpfull$lon),]
 wpfull$code <- substr(wpfull$name, 1, 3)
-
+wpfull[wpfull$name %in% "UNC1", ]$name <- "UNC"
 
 # plot out 
 ggplot(data = wpfull, aes(x = lon, y = lat))+geom_point()
@@ -87,6 +88,7 @@ sites15$sym <- NA
 
 # reorder
 sites15<- sites15[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
+wpfull <- wpfull[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
 
 # add onto wpfull:
 wpfull <- rbind(wpfull, sites15)
@@ -123,7 +125,7 @@ sites.map <- ggplot()+ geom_point(data = full, aes(x = lon.coarse, y = lat.coars
 sites.map
 
 # write out the full data to csv
-write.csv(full, "C:/Users/JMac/Documents/Kelly/TreeRings/outputs/lat_long_sites.csv")
+write.csv(full, "/Users/kah/Documents/TreeRings/outputs/lat_long_sites.csv")
 
 #####################################
 # read in metadata from a stand#
@@ -151,7 +153,7 @@ map.plot <- function(sitecode){
 
 
   ggplot(site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.))+geom_point() + theme_bw()
-
+  
   
   circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
   r = diameter / 2
@@ -172,29 +174,52 @@ map.plot <- function(sitecode){
    colorsforspec <- c("#FF0000FF" ,"#FF5500FF" ,"#FFAA00FF" ,"#FFFF00FF", "#AAFF00FF", "#55FF00FF", "#00FF00FF" ,"#00FF55FF",
   "#00FFAAFF", "#00FFFFFF", "#00AAFFFF", "#0055FFFF" ,"#0000FFFF" ,"#5500FFFF" ,"#AA00FFFF" ,"#FF00FFFF",
   "#FF00AAFF" , "black")
+   #names(colorsforspec) <- species
   
   ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
     #scale_color_manual(values = specColors)
-    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) 
-    }
+    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
+  
+  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common", "Circumference", "DBH", "CW1", "CW2", "dist2center", "direction",
+                          'ele', 'x_plot', "y_plot", "opt", "x_tree", "y_tree")
+  site.alb <- site.alb[,c("name", "Year_cored", "TagID", "Core", "Species_common", "DBH", "CW1", "CW2", 
+                           'x_plot', "y_plot",  "x_tree", "y_tree")]
+  site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
+  
+  # need to make a name that matches the Tellervo output names:
+  library(dplR)
+  rwlfile<- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
+  names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
+  names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
+  
+  site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID')
+  
+  # finally, convert the common species names to scientific names:
+  scientific <- read.csv("data/Scientific_names.csv")
+  site.alb <- merge(site.alb, scientific, by = "Species_common")
+  write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))
+  
+}
 
+
+pdf("outputs/standmaps/plot_maps_all.pdf")
 map.plot("ITA1")
 map.plot("ITA2")
 map.plot("GLL1")
 map.plot("GLL2")
 map.plot("GLL3")
 map.plot("GLL4")
-map.plot("UNC1")
+map.plot("UNC")
 map.plot("AVO")
 map.plot("PVC")
 map.plot("GLE1")
-map.plot("COR1")
-map.plot("DUF-1")
-map.plot("DUF-2")
-map.plot("GLA-2")
-map.plot("HIC-2")
-map.plot("HIC-1")
-
+map.plot("COR")
+#map.plot("DUF-1")
+#map.plot("DUF-2")
+#map.plot("GLA-2")
+#map.plot("HIC-2")
+#map.plot("HIC-1")
+dev.off()
 
 
 ########################################
@@ -221,12 +246,15 @@ map.dispersed <- function(sitecode){
   ggplot()+ geom_point(data = site.alb, aes(x = lon, y = lat, color = Species, size = DBH..cm.)) +
     theme_bw() + ggtitle(paste(sitecode, " dispersed sample plot"))
 }
+
+pdf("outputs/standmaps/dispersed_maps_all.pdf")
+
 map.dispersed("MAP3")
 map.dispersed("TOW")
 map.dispersed("STC")
 map.dispersed("UNI")
 
-
+dev.off()
 
 
 # still working on cleaning the datasets but would like to eventually:
@@ -235,6 +263,13 @@ map.dispersed("UNI")
 # 3. map over DEM/topography metrics
 # 4. Estimate tree density from these small plots
 
+# get together a large file of the metadata from all sites:
+sitecode <- c(#"TOW", #"HIC", "BON", "STC",
+              "COR", "UNC","GLA", "ENG", "MOU", "GLL1", "GLL2", "GLL3", "GLL4", "PVC")
+site <- list()
+for(i in 1:length(sitecode)){
+site[[i]] <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/stand_metadata/",sitecode[i],"_metadata.csv"))
+}
 
 # Mapping out UNDERC stand maps from Sam Pecoraro's masters:
 
