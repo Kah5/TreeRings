@@ -176,14 +176,15 @@ map.plot <- function(sitecode){
   "#FF00AAFF" , "black")
    #names(colorsforspec) <- species
   
-  ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
+  mapped.plot<- ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
     #scale_color_manual(values = specColors)
     theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
   
-  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common", "Circumference", "DBH", "CW1", "CW2", "dist2center", "direction",
-                          'ele', 'x_plot', "y_plot", "test", "opt", "x_tree", "y_tree")
-  site.alb <- site.alb[,c("name", "Year_cored", "TagID", "Core", "Species_common", "DBH", "CW1", "CW2", 
-                           'x_plot', "y_plot",  "x_tree", "y_tree")]
+  site.alb <- site.alb[,c("name", "Year.Cored", "TagID", "Core", "Species", "DBH..cm.", "CW1", "CW2", 'ele',
+                          'lon', "lat",  "x_tree", "y_tree")]
+  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common",  "DBH", "CW1", "CW2", 
+                          'ele', 'x_plot', "y_plot", "x_tree", "y_tree")
+  
   site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   
   # need to make a name that matches the Tellervo output names:
@@ -206,10 +207,10 @@ map.plot <- function(sitecode){
   }
   
   #finally plot out the stand maps
-  ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH)) + 
+  #ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH)) + 
     #scale_color_manual(values = specColors)
-    theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
-  
+   # theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
+  mapped.plot
 }
 
 
@@ -254,8 +255,34 @@ map.dispersed <- function(sitecode){
   site.alb <- spTransform(site, CRS('+init=epsg:3175')) # converte to albers
   site.alb <- data.frame(site.alb)
 
-  ggplot()+ geom_point(data = site.alb, aes(x = lon, y = lat, color = Species, size = DBH..cm.)) +
+  mapped.disperse <- ggplot()+ geom_point(data = site.alb, aes(x = lon, y = lat, color = Species, size = DBH..cm.)) +
     theme_bw() + ggtitle(paste(sitecode, " dispersed sample plot"))
+  
+  site.alb$tellervo_ID <- paste0(site.alb$code, site.alb$TagID)
+  
+  if(file.exists(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))){
+    library(dplR)
+    rwlfile <- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
+    names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
+    names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
+    
+    site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID')
+    
+    # rename columns:
+    site.alb <- site.alb[,c("short", "full_tellervo", "Year.Cored", "TagID", "Core", "Species", "DBH..cm.", "CW1", "CW2", "dist2center", "direction",
+                            'code', "ele", 'lon', 'lat')]
+    colnames(site.alb) <- c("short", "full_tellervo", "Year_Cored", "TagID", "Core", "Species_common", "DBH", "CW1", "CW2", "dist2center", "direction",
+                            'code', "ele", 'x_tree', 'y_tree')
+    # finally, convert the common species names to scientific names:
+    scientific <- read.csv("data/Scientific_names.csv")
+    site.alb <- merge(site.alb, scientific, by = "Species_common")
+    write.csv(site.alb, paste0("data/site_maps/dispersed_metadata/", sitecode, "_full_xy.csv"))
+  }else{
+    scientific <- read.csv("data/Scientific_names.csv")
+    site.alb <- merge(site.alb, scientific, by = "Species_common")
+    write.csv(site.alb, paste0("data/site_maps/dispersed_metadata/", sitecode, "_full_xy.csv"))
+  }
+  
 }
 
 pdf("outputs/standmaps/dispersed_maps_all.pdf")
