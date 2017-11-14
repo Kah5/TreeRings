@@ -11,7 +11,7 @@ library(ggplot2)
 # note, you need to add years as a column for the rwiorbai first
 # this saves as a csv but also outputs a df
 tree_age_agg_mean <- function(rwiorbai, sampleyear, site.code, age1950,type){
-
+  
   # calculate record age
   treedata <- data.frame(ID = colnames(rwiorbai),
                          sampleyr = sampleyear)
@@ -59,6 +59,7 @@ tree_age_agg_mean <- function(rwiorbai, sampleyear, site.code, age1950,type){
   site.m$year <- as.numeric(site.m$year)
   site.m$ID <- as.character(site.m$ID)
   site.m$ageclass <- "young"
+
   
   # need to assign old trees then and old trees now
     for (i in unique(site.m$ID)){
@@ -73,6 +74,7 @@ tree_age_agg_mean <- function(rwiorbai, sampleyear, site.code, age1950,type){
   site.std <- aggregate(RWI ~ Age, data = site.m, sd)
   site.m <- merge(site.mean, site.std, by = "Age")
   colnames(site.m) <- c("Age", "Mean", "Std")
+  site.m$site <- site.code
   write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-raw-meanRWI-age",type, ".csv"))
   site.m
 }
@@ -144,7 +146,7 @@ tree_age_agg_mean_class <- function(rwiorbai, sampleyear, site.code, age1950,typ
   site.std <- aggregate(RWI ~  Age + ageclass, data = site.m, sd)
   site.m <- merge(site.mean, site.std, by = c("Age", "ageclass"))
   colnames(site.m) <- c("Age", "Ageclass", "Mean", "Std")
-  
+  site.m$site <- site.code
   # write to a csv
   write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-raw-meanRWI-byageclass",type, ".csv"))
   site.m
@@ -219,6 +221,7 @@ tree_pith_agg_mean <- function(rwiorbai, sampleyear, site.code, age1950,type){
   site.std <- aggregate(RWI ~ Pith + ageclass, data = site.m, sd)
   site.m <- merge(site.mean, site.std, by = c("Pith", "ageclass"))
   colnames(site.m) <- c("Pith", 'ageclass', "Mean", "Std")
+  site.m$site <- site.code
   write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-raw-meanRWI-pith",type, ".csv"))
   site.m
   
