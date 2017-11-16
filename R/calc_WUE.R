@@ -9,13 +9,16 @@ deltaATM <- read.csv("data/stable_isotopes/Mccarrol_loader_deltaC_atm.csv") # da
 deltaTR<- read.csv("data/stable_isotopes/BON_7a_1996_2011.csv")
 deltaTR2 <- read.csv("data/stable_isotopes/BON_9a_13a_1996_2015.csv")
 deltaTR3 <- read.csv("data/stable_isotopes/BON_8b_14b_1996_2015.csv")
-
-deltaTR <- rbind(deltaTR, deltaTR2, deltaTR3)
+deltaTR4 <- read.csv("data/stable_isotopes/Isotopes_BON13a_1969_1954_171115.csv")
+deltaTR <- rbind(deltaTR, deltaTR2, deltaTR3, deltaTR4)
 
 deltaTR <- deltaTR[! is.na(deltaTR$Year), ]
 
+# plot bon13:
+ggplot(data = deltaTR[deltaTR$Tree == "Bon13a",],aes(x = Year, y = Corr.d13C, color = Wood))+geom_point()+geom_line()
+
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_d13_time.png")
-ggplot(deltaTR, aes(x = Year, y = Corr.d13C, color = Tree))+
+ggplot(deltaTR[deltaTR$Wood %in% "LW",], aes(x = Year, y = Corr.d13C, color = Tree))+
   geom_point()+geom_line(data = deltaTR, aes(x = Year, y = Corr.d13C, color = Tree))+
   theme_bw()+ylab( expression(paste(delta, "13 C tree ring")))+ ylim(-30,-20)
 dev.off()
@@ -32,15 +35,15 @@ summary(deltas$iWUE)
 
 # make initial plots of the data
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_iWUE_time.png")
-ggplot(deltas, aes(x = Year, y = iWUE, color = Tree))+geom_point()+geom_line(data = deltas, aes(x = Year, y = iWUE, color = Tree))+theme_bw()
+ggplot(deltas[deltas$Wood %in% "LW",], aes(x = Year, y = iWUE, color = Tree))+geom_point()+geom_line(data = deltas, aes(x = Year, y = iWUE, color = Tree))+theme_bw()
 dev.off()
 
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_iWUE_ppm.png")
-ggplot(deltas, aes(x = ppm, y = iWUE,color = Tree))+geom_point()+geom_line(data = deltas, aes(x = ppm, y = iWUE,color = Tree))+theme_bw()
+ggplot(deltas[deltas$Wood %in% "LW",], aes(x = ppm, y = iWUE,color = Tree))+geom_point()+geom_line(data = deltas, aes(x = ppm, y = iWUE,color = Tree))+theme_bw()
 dev.off()
 
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_delta13C_ppm.png")
-ggplot(deltas, aes(x = ppm, y = Corr.d13C, color = Tree))+geom_point()+geom_line(data = deltas, aes(x = ppm, y = Corr.d13C,color = Tree))+theme_bw()
+ggplot(deltas[deltas$Wood %in% "LW",], aes(x = ppm, y = Corr.d13C, color = Tree))+geom_point()+geom_line(data = deltas, aes(x = ppm, y = Corr.d13C,color = Tree))+theme_bw()
 dev.off()
 
 #ggplot(deltas, aes(x = ppm, y = Corr.d13C, color = Tree))+geom_point()+geom_line(data= deltas, aes(x = ppm, y = Corr.d13C, color = Tree))+theme_bw()
