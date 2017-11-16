@@ -173,25 +173,33 @@ map.plot <- function(sitecode){
   dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),30,npoints = 100)
   #geom_path will do open circles, geom_polygon will do filled circles
   
-  species <-c("Bur Oak", "White Oak", "Red Oak", "Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
+  species <-c("Bur Oak", "White Oak", "Red Oak", "Northern Red Oak","Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
               "Red Maple",
               "Basswood", "Quaking Aspen", "Aspen","Red Pine", "White Pine", "White Spruce", 
               "Green Ash", "Black Cherry", "Hophornbeam","Ironwood","Standing Dead")
  
    colorsforspec <- c("#FF0000FF" ,"#FF5500FF" ,"#FFAA00FF" ,"#FFFF00FF", "#AAFF00FF", "#55FF00FF", "#00FF00FF" ,"#00FF55FF",
   "#00FFAAFF", "#00FFFFFF", "#00AAFFFF", "#0055FFFF" ,"#0000FFFF" ,"#5500FFFF" ,"#AA00FFFF" ,"#FF00FFFF",
-  "#FF00AAFF" , "black")
+  "#FF00AAFF" , "black", "blue", "forestgreen")
+   
+   names(colorsforspec) <- species
    #names(colorsforspec) <- species
   
   mapped.plot<- ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
     #scale_color_manual(values = specColors)
     theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
   
-  site.alb <- site.alb[,c("name", "Year.Cored", "TagID", "Core", "Species", "DBH..cm.", "CW1", "CW2", 'ele',
-                          'lon', "lat",  "x_tree", "y_tree")]
-  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common",  "DBH", "CW1", "CW2", 
-                          'ele', 'x_plot', "y_plot", "x_tree", "y_tree")
   
+  png(width = 8, height = 6, units = "in", res = 300, paste0("outputs/standmaps/", sitecode, "-plot-map.png"))
+  mapped.plot
+  dev.off()
+  
+  site.alb <- site.alb[,c("name", "Year.Cored", "TagID", "Core", "Species", "DBH..cm.", "CW1", "CW2", 'ele',
+                          'lon', "lat",  "x_tree", "y_tree", "Notes.")]
+  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common",  "DBH", "CW1", "CW2", 
+                          'ele', 'x_plot', "y_plot", "x_tree", "y_tree", "notes")
+  
+  site.alb$DBH <- round(site.alb$DBH, 2)
   site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   
   # need to make a name that matches the Tellervo output names:
@@ -201,13 +209,15 @@ map.plot <- function(sitecode){
   names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
   names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
   
-  site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID')
+  site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID', all = TRUE)
   
   # finally, convert the common species names to scientific names:
   scientific <- read.csv("data/Scientific_names.csv")
   site.alb <- merge(site.alb, scientific, by = "Species_common")
   write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))
+  
   }else{
+    
     scientific <- read.csv("data/Scientific_names.csv")
     site.alb <- merge(site.alb, scientific, by = "Species_common")
     write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))

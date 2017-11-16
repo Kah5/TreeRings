@@ -7,7 +7,8 @@ library(dplR)
 # This function renames many of the early tree ring records recorded (we had inconsistant naming structure at the beginning)
 
 clean_rwl <- function(site, rwl.file, wood){
-  if(site == "HIC"){
+ 
+   if(site == "HIC"){
     newseries <- read.rwl(rwl.file)
     new <- colnames(newseries)
     
@@ -67,7 +68,7 @@ clean_rwl <- function(site, rwl.file, wood){
           
           
           }else{
-            if(site %in% c("UNC", "TOW", "ENG", "PLE","GLL1", "GLL2", "GLL3", "GLL4", "PVC")){
+            if(site %in% c("UNC", "TOW", "ENG", "PLE","GLL1", "GLL2", "GLL3", "GLL4", "PVC", "AVO", "UNI")){
             newseries <- read.rwl(rwl.file)
             write.tucson(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson", long.names=TRUE)
             
@@ -116,6 +117,7 @@ clean_rwl(site = "GLL4", rwl.file = "/Users/kah/Documents/crossdating/data/cofec
 clean_rwl(site = "PLE", rwl.file = './cofecha/PLEww.rwl', "ww")
 clean_rwl(site = "PVC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/PVC.rwl", "ww")
 clean_rwl(site = "AVO", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/AVOo.rwl", "ww")
+clean_rwl(site = "UNI", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/UNI.rwl", "ww")
 
 # for Earlywood
 clean_rwl(site = "HIC", rwl.file = "./cofecha/HICew.rwl", "ew")
