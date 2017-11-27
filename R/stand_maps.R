@@ -70,11 +70,15 @@ sites16 <- data.frame(sites16)
 sites16.lat <- data.frame(sites16.lat)
 sites16$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
 sites16.lat$code <- c("COR", "PVC", "UNC", "ITA", "AVO", "GLE", "MAP", "GLL")
-sites16$Description <- c("Forest", "Savanna", "Savanna", 
+sites16.lat$Description <- c("Forest", "Savanna", "Savanna", 
                          "Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest", "Savanna & Forest")
+
+sites16.lat$time <- 2016
 # merge the two data sets using rbind
 priority <- rbind(mound, sites16)
 colnames(priority) <- c("Name", "Description", "lon.coarse", "lat.coarse", 'elev', "optional", "code")
+colnames(sites16.lat) <- c("name", "Description", "lon", "lat", 'ele', "sym", "code", "time")
+
 
 
 coarse <- priority[,c("lon.coarse", 'lat.coarse', 'code', "Description")]
@@ -94,17 +98,19 @@ sites15$time <- NA
 sites15$sym <- NA
 
 # reorder
-sites15<- sites15[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
+sites15 <- sites15[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
+sites16.lat <- sites16.lat[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
+sites16.lat$name <- c("COR", "PLEASANT VALLEY", "UNCAS", "ITASCA","AVON HILLS", "GLENDALOUGH", "MAPLEWOOD", "GLL")
 wpfull <- wpfull[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
 
 # add onto wpfull:
 wpfull <- rbind(wpfull, sites15)
-
+wpfull <- rbind(wpfull, sites16.lat)
 # merge the datasets together
 full <- merge(coarse, waypt, by = "code", all = TRUE)
 
 
-ggplot(full, aes(lon.coarse, lat.coarse))+geom_point()
+ggplot(full, aes(lon.coarse, lat.coarse, color = code))+geom_point()
 
 #map out 
 # need to fix the projections so that they match up
@@ -173,12 +179,12 @@ map.plot <- function(sitecode){
   dat <- circleFun(c(site.alb[1,]$lon,site.alb[1,]$lat),30,npoints = 100)
   #geom_path will do open circles, geom_polygon will do filled circles
   
-  species <-c("Bur Oak", "White Oak", "Red Oak", "Northern Red Oak","Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
+  species <-c("Bur Oak","Bur oak", "White Oak", "Red Oak", "Northern Red Oak","Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
               "Red Maple",
               "Basswood", "Quaking Aspen", "Aspen","Red Pine", "White Pine", "White Spruce", 
               "Green Ash", "Black Cherry", "Hophornbeam","Ironwood","Standing Dead")
  
-   colorsforspec <- c("#FF0000FF" ,"#FF5500FF" ,"#FFAA00FF" ,"#FFFF00FF", "#AAFF00FF", "#55FF00FF", "#00FF00FF" ,"#00FF55FF",
+   colorsforspec <- c("#FF0000FF","#FF0000FF" ,"#FF5500FF" ,"#FFAA00FF" ,"#FFFF00FF", "#AAFF00FF", "#55FF00FF", "#00FF00FF" ,"#00FF55FF",
   "#00FFAAFF", "#00FFFFFF", "#00AAFFFF", "#0055FFFF" ,"#0000FFFF" ,"#5500FFFF" ,"#AA00FFFF" ,"#FF00FFFF",
   "#FF00AAFF" , "black", "blue", "forestgreen")
    
@@ -194,17 +200,18 @@ map.plot <- function(sitecode){
   mapped.plot
   dev.off()
   
-  site.alb <- site.alb[,c("name", "Year.Cored", "TagID", "Core", "Species", "DBH..cm.", "CW1", "CW2", 'ele',
-                          'lon', "lat",  "x_tree", "y_tree", "Notes.")]
-  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common",  "DBH", "CW1", "CW2", 
-                          'ele', 'x_plot', "y_plot", "x_tree", "y_tree", "notes")
+  site.alb <- site.alb[,c("name", "Year.Cored", "TagID", "Core", "Species", "DBH..cm.", 'ele',
+                          'lon', "lat",  "x_tree", "y_tree")]
+  colnames(site.alb) <- c("name", "Year_cored", "TagID", "Core", "Species_common",  "DBH",  
+                          'ele', 'x_plot', "y_plot", "x_tree", "y_tree")
   
   site.alb$DBH <- round(site.alb$DBH, 2)
   site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   
   # need to make a name that matches the Tellervo output names:
   if(file.exists(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))){
-  library(dplR)
+  
+    library(dplR)
   rwlfile<- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
   names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
   names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
@@ -327,6 +334,14 @@ for(i in 1:length(sitecode)){
 site[[i]] <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/stand_metadata/",sitecode[i],"_metadata.csv"))
 }
 
+
+
+
+
+
+
+
+# extra:
 # Mapping out UNDERC stand maps from Sam Pecoraro's masters:
 
 UND <- read.csv("C:/Users/JMac/Box Sync/Pecoraro Permanent Archive/All mapped plots cartesian coordinates.csv")
