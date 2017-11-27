@@ -6,6 +6,8 @@ library(raster)
 library(data.table)
 library(rgdal)
 library(mgcv)
+library(tidyr)
+library(SPEI)
 # lets look at relationship to climate with age:
 setwd("/Users/kah/Documents/TreeRings")
 
@@ -16,6 +18,7 @@ setwd("/Users/kah/Documents/TreeRings")
 # quick function to read detrend and add the year as a column:
 # this function will also just calculate BAI instead
 read_detrend_year <- function( filename, method , rwiorbai, site){
+  
   newseries <- read.tucson( filename )
   rwl.stats(newseries)
   # average the cores by tree (for the sites with multiple cores):
@@ -34,6 +37,7 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   
   
   detrended.mean <- treeMean(detrended, autoread.ids(detrended), na.rm=TRUE)
+  colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
   
   mean.rwi.stat <- rwl.stats(detrended.mean)
   write.csv(mean.rwi.stat, paste0("outputs/Stats/mean.rwi.stats.", site,".csv"))
@@ -62,10 +66,10 @@ Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai
 Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLA")
 Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "rwi", site = "ENG")
 Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "rwi", site = "MOU")
-GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL1")
-GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL2")
-GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL3")
-GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GL4")
+GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL1")
+GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL2")
+GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL3")
+GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL4")
 PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
 AVO.bai <- read_detrend_year("cleanrwl/AVOww.rwl", method = "Spline", rwiorbai = "rwi", site = "AVO")
 UNI.bai <- read_detrend_year("cleanrwl/UNIww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNI")
@@ -75,10 +79,12 @@ detrended.list <- list(Hickory.bai, StCroix.bai, Bonanza.bai,Townsend.bai,Pleasa
                  GLL3.bai, GLL4.bai, PVC.bai, AVO.bai, UNI.bai)
 
 # read in the site level data for each of these sites:
-test <- read.csv("data/site_maps/stand_metadata/AVO_full_xy.csv")
+test <- read.csv("data/site_maps/stand_metadata/GLL1_full_xy.csv")
+
+test$short %in% colnames(detrended.mean)
 
 
-# make example chronology:
+# make example chronology to plot out:
 hic.raw <- read.rwl("cleanrwl/HICww.rwl")
 hic.raw$year <- as.numeric(row.names( hic.raw))
 png(width=6,height=4,units="in",res = 300,bg = "transparent","raw_rw_transparent.png")
@@ -99,6 +105,7 @@ hic.chron$year <- as.numeric(row.names(hic.chron))
 png(width=6,height=4,units="in",res = 300,bg = "transparent","transparent_chronology.png")
 ggplot(hic.chron, aes(year, xxxstd))+xlim(1856, 2016) +ylim(0,2)+geom_line(color = "white")+theme_minimal()+xlab("Year")+ylab("Detrended Ring Width Index")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))
 dev.off()
+
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
@@ -129,7 +136,8 @@ detrended.age.df <- do.call(rbind, detrended.age)
 ###################################
 # add climate data to the age trends
 ####################################
-
+# note about climate data: GHCN climate data provides PDSI esimtates, while PRISM is more commonly used and can be used to get VPD data.
+# both GHCN and PRISM have Precip and temperature estimates, but PRSIM data should be used for this b/c GHCN is over the whole climate zone, PRISM is point estimates
 
 # this function reads in climate data from each site and adds it to the appropriate site
 get.clim <- function(site.df, climatedata){
@@ -152,7 +160,7 @@ get.clim <- function(site.df, climatedata){
             MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
           }else{ if(site.code == "MOU"){
             MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
-          }else{ if(site.code == "UNC"){
+          }else{ if(site.code %in% c("UNC", "AVO")){
             MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
           }else { if(site.code == 'PLE'){
             MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
@@ -373,10 +381,12 @@ get.clim <- function(site.df, climatedata){
   }
 }
 
-det.age.clim.prism <-lapply(detrended.age, get.clim, climatedata = "PRISM")
+# get prism climate and merge for all:
+det.age.clim.prism <- lapply(detrended.age, get.clim, climatedata = "PRISM")
 det.age.clim.prism.df <- do.call(rbind,det.age.clim.prism)
 
-det.age.clim.ghcn <-lapply(detrended.age, get.clim, climatedata = "GHCN")
+# get GHCN climate and merge for all:
+det.age.clim.ghcn <-  lapply(detrended.age, get.clim, climatedata = "GHCN")
 det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
 
 # plot the RWI vs July.pdsi
@@ -1387,6 +1397,7 @@ ggplot(site.df, aes(gam_ypred, slope.est))+geom_point()
 png('outputs/modeled_sensitivity_Jul_PDSI_age_DBH_climate.png')
 ggplot(site.df, aes(gam_ypred, slope.est)) + geom_point(color = "white") + geom_abline(color = "red", linetype = "dashed")+theme_black(base_size = 20)+ylab("Observed Sensitivity to July PDSI")+xlab("Predicted Sensitivity to July PDSI")
 dev.off()
+
 
 #################################################
 #  make plots for young and old
