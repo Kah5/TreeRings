@@ -145,8 +145,19 @@ write.csv(full, "/Users/kah/Documents/TreeRings/outputs/lat_long_sites.csv")
 #####################################
 
 map.plot <- function(sitecode){
-  
+  library(Hmisc, quietly = TRUE)
   site <- read.csv(paste0("data/site_maps/stand_metadata/", sitecode,"_metadata.csv"))
+  
+  # standardize the spelling of each species
+  simpleCap <- function(x) {
+    s <- strsplit(x, " ")[[1]]
+    paste(toupper(substring(s, 1,1)), substring(s, 2),
+          sep="", collapse=" ")
+  }
+  
+  
+  
+  site$Species <- sapply(as.character(site$Species), simpleCap)
   site$name <- sitecode
   site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
 
@@ -269,7 +280,19 @@ dev.off()
 map.dispersed <- function(sitecode){
   
   site <- read.csv(paste0("data/site_maps/dispersed_metadata/",sitecode,"_metadata.csv"))
+ 
+   # standardize the spelling of each species
+  simpleCap <- function(x) {
+    s <- strsplit(x, " ")[[1]]
+    paste(toupper(substring(s, 1,1)), substring(s, 2),
+          sep="", collapse=" ")
+  }
   
+  
+  
+  site$Species <- sapply(as.character(site$Species), simpleCap)
+  
+  # adding site code name onto this
   site$code <- sitecode
   site$name <- paste0(sitecode, "-", as.character(site$TagID))
   site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
