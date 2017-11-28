@@ -232,13 +232,13 @@ map.plot <- function(sitecode){
   # finally, convert the common species names to scientific names:
   scientific <- read.csv("data/Scientific_names.csv")
   site.alb <- merge(site.alb, scientific, by = "Species_common")
-  write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))
+  write.csv(site.alb, paste0("data/site_maps/all_metadata/", sitecode, "_full_xy.csv"))
   
   }else{
     
     scientific <- read.csv("data/Scientific_names.csv")
     site.alb <- merge(site.alb, scientific, by = "Species_common")
-    write.csv(site.alb, paste0("data/site_maps/stand_metadata/", sitecode, "_full_xy.csv"))
+    write.csv(site.alb, paste0("data/site_maps/all_metadata/", sitecode, "_full_xy.csv"))
   }
   
   #finally plot out the stand maps
@@ -324,11 +324,11 @@ map.dispersed <- function(sitecode){
     # finally, convert the common species names to scientific names:
     scientific <- read.csv("data/Scientific_names.csv")
     site.alb <- merge(site.alb, scientific, by = "Species_common")
-    write.csv(site.alb, paste0("data/site_maps/dispersed_metadata/", sitecode, "_full_xy.csv"))
+    write.csv(site.alb, paste0("data/site_maps/all_metadata/", sitecode, "_full_xy.csv"))
   }else{
     scientific <- read.csv("data/Scientific_names.csv")
     site.alb <- merge(site.alb, scientific, by = "Species_common")
-    write.csv(site.alb, paste0("data/site_maps/dispersed_metadata/", sitecode, "_full_xy.csv"))
+    write.csv(site.alb, paste0("data/site_maps/all_metadata/", sitecode, "_full_xy.csv"))
   }
   
 }

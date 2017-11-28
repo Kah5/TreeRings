@@ -53,7 +53,6 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
 }
 
 
-
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
 
 Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
@@ -117,20 +116,6 @@ detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 30,type 
 # use do.calll to make these a dataframe
 detrended.age.df <- do.call(rbind, detrended.age)
 
-#Hic <- tree_age_agg(rwiorbai = Hickory.bai, age1950 = 30,type = "RWI_Spline_detrended")
-#Stc <- tree_age_agg(rwiorbai = StCroix.bai, age1950=30,type = "RWI_Spline_detrended")
-#Bon <- tree_age_agg(Bonanza.bai, 30,"RWI_Spline_detrended")
-#Tow <- tree_age_agg(Townsend.bai,  30,"RWI_Spline_detrended")
-#Ple <- tree_age_agg(Pleasant.bai,  30,"RWI_Spline_detrended")
-#Cor <- tree_age_agg(Coral.bai,30,"RWI_Spline_detrended")
-#Unc <- tree_age_agg(Uncas.bai, 30,"RWI_Spline_detrended")
-#Eng <- tree_age_agg(Englund.bai, 30,"RWI_Spline_detrended")
-#Mou <- tree_age_agg(Mound.bai,   30,"RWI_Spline_detrended")
-#GLL1 <- tree_age_agg(GLL1.bai,   30,"RWI_Spline_detrended")
-#GLL2 <- tree_age_agg(GLL2.bai,   30,"RWI_Spline_detrended")
-#GLL3 <- tree_age_agg(GLL3.bai,   30,"RWI_Spline_detrended")
-#GLL4 <- tree_age_agg(GLL4.bai,  30,"RWI_Spline_detrended")
-#PVC <- tree_age_agg(PVC.bai,  30,"RWI_Spline_detrended")
 
 
 ###################################
@@ -397,6 +382,176 @@ ggplot(det.age.clim.ghcn.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_
 # write these dfs to a csv:
 write.csv(det.age.clim.prism.df, "outputs/data/full_det_prism_rwi.csv", row.names = FALSE)
 write.csv(det.age.clim.ghcn.df, "outputs/data/full_det_ghcn_rwi.csv", row.names = FALSE)
+
+# ------------------------- Get tree DBH at time of coring + put in DBH classes ----------------------------------
+# This function uses DBH at time of coring and annual growth records to estimate Tree DBH over time
+# based on the DBH at each time step, specify the DBH class over time. 
+
+read_DBH_year <- function( filename, site){
+  
+  newseries <- read.tucson( filename )
+  rwl.stats(newseries)
+  # average the cores by tree (for the sites with multiple cores):
+  
+  
+  
+  gp.treeMean <- treeMean(newseries, read.ids(newseries, stc = c(3,1,2)))
+  gp.treeMean2 <- treeMean(newseries, autoread.ids(newseries), na.rm=TRUE)
+  
+  # if multiple cores were sampled per each site, we need to average the widths of the cores before estimating diamters:
+  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC")
+  if(site %in% mult.core.sites){
+          if(site %in% "COR"){
+            colnames(gp.treeMean2) <- paste0(site,19, colnames(gp.treeMean2))
+          }else{
+          colnames(gp.treeMean2) <- paste0(site,colnames(gp.treeMean2))
+          }
+          newseries <- gp.treeMean2
+          
+          site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
+          diams <- site.data[c("short", "DBH")]
+          diams.agg<- aggregate(diams, list(diams$short), mean)
+          colnames(diams.agg) <- c("ID", "short", "DBH")
+          diams <- diams.agg[,c("ID", "DBH")]
+          diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+          colnames(diams) <- c("ID", "DBH") 
+          
+          # only find records where we have both DBH and tellervo entries:
+          diams <- diams [diams$ID %in% colnames(newseries),]
+          newseries <- newseries[,colnames(newseries) %in% diams$ID]
+          
+          rwl <- newseries*0.1 # convert measuremnts to CM:
+          
+          # below code is adapted from dplR function bai.out to just estimate tree diameter at this point:
+          
+          # if the data is messed up, send up some error warnings!
+          if (!is.data.frame(newseries)) 
+            stop("'rwl' must be a data.frame")
+          if (!is.null(diams)) {
+            if (ncol(newseries) != nrow(diams)) 
+              stop("dimension problem: ", "'ncol(rw)' != 'nrow(diam)'")
+            if (!all(diams[, 1] %in% names(newseries))) 
+              stop("series ids in 'diam' and 'rwl' do not match")
+            diam.vec <- diams[, 2]
+          }
+          
+          # setting up and reordering vectors to match diameters to the tellervo records:
+          out <- rwl
+          n.vec <- seq_len(nrow(rwl))
+          diam <- diams[ order(match(diams$ID, colnames(rwl))), ] # reorder diameter vector to match trees
+          diam.vec <- diam[, 2]
+          
+          # for each column and year, calculate the tree diameter:
+          for (i in seq_len(ncol(rwl))) {
+            dat <- rwl[[i]]
+            dat2 <- na.omit(dat)
+            #if (is.null(diams)) 
+             # d <- sum(dat2) * 2
+            #else 
+            d <- diam.vec[i]
+            r0 <- d/2 - c(0, cumsum(rev(dat2)))
+            #bai <- -pi * rev(diff(r0 * r0))
+            
+            # add space for NA values in rwl style files:
+            na <- attributes(dat2)$na.action
+            if(min( n.vec[!n.vec %in% na]) == 1){
+              no.na <- c( n.vec[!n.vec %in% na])
+              out[no.na, i] <- rev(r0[1:length(r0)-1])*2 # only report back the diameters
+            }else{
+              
+              no.na <- c(na[length(na)], n.vec[!n.vec %in% na])
+              out[no.na, i] <- rev(r0[1:length(r0)])*2 # only report back the diameters
+            }
+            
+          }
+          
+  
+  }else{ 
+    # if sites only have one core per tree:
+          site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
+          diams <- site.data[c("full_tellervo", "DBH")]
+          diams$DBH <- (diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+          colnames(diams) <- c("ID", "DBH") 
+          
+          # only find records where we have both DBH and tellervo entries:
+          diams <- diams [diams$ID %in% colnames(newseries),]
+          newseries <- newseries[,colnames(newseries) %in% diams$ID]
+            
+          rwl <- newseries*0.1 # convert measuremnts to CM:
+          
+          # below code is adapted from dplR function bai.out to just estimate tree diameter at this point:
+          
+          # if the data is messed up, send up some error warnings!
+          if (!is.data.frame(rwl)) 
+            stop("'rwl' must be a data.frame")
+          if (!is.null(diam)) {
+            if (ncol(rwl) != nrow(diams)) 
+              stop("dimension problem: ", "'ncol(rwl)' != 'nrow(diam)'")
+            if (!all(diams[, 1] %in% names(rwl))) 
+              stop("series ids in 'diam' and 'rwl' do not match")
+            diam.vec <- diams[, 2]
+          }
+          
+          # setting up and reordering vectors to match diameters to the tellervo records:
+          out <- rwl
+          n.vec <- seq_len(nrow(rwl))
+          diam <- diams[ order(match(diams$ID, colnames(rwl))), ] # reorder diameter vector to match trees
+          diam.vec <- diam[, 2]
+          
+          # for each column and year, calculate the tree diameter:
+          for (i in seq_len(ncol(rwl))) {
+            dat <- rwl[[i]]
+            dat2 <- na.omit(dat)
+            if (is.null(diam)) 
+              d <- sum(dat2) * 2
+            else d <- diam.vec[i]
+            r0 <- d/2 - c(0, cumsum(rev(dat2)))
+            #bai <- -pi * rev(diff(r0 * r0))
+            # add space for NA values in rwl style files:
+            na <- attributes(dat2)$na.action
+            if(min( n.vec[!n.vec %in% na]) == 1){
+              no.na <- c( n.vec[!n.vec %in% na])
+              out[no.na, i] <- rev(r0[1:length(r0)-1])*2 # only report back the diameters
+            }else{
+              
+              no.na <- c(na[length(na)], n.vec[!n.vec %in% na])
+              out[no.na, i] <- rev(r0[1:length(r0)])*2 # only report back the diameters
+            }
+            
+          }
+  
+}
+  # rename df
+  yearly.diams <- out
+
+  
+  # add on year and site names
+  yearly.diams$year <- row.names(yearly.diams)
+  yearly.diams$site <- site
+  
+  # output yearly dataframe
+  yearly.diams
+}
+
+
+Hickory.DBH <- read_DBH_year(filename = "cleanrwl/HICww.rwl",  site = "HIC")
+StCroix.DBH <- read_DBH_year("cleanrwl/STCww.rwl",  site = "STC")
+Bonanza.DBH <- read_DBH_year("cleanrwl/BONww.rwl", site = "BON")
+Townsend.DBH <- read_DBH_year(filename = "cleanrwl/TOWww.rwl",  site = "TOW")#townsedn woods
+#Pleasant.DBH <- read_DBH_year("cleanrwl/PLEww.rwl",  site = "PLE") #Pleasant valley conservency
+Coral.DBH <- read_DBH_year(filename = "cleanrwl/CORww.rwl",  site = "COR")
+Uncas.DBH <- read_DBH_year(filename = "cleanrwl/UNCww.rwl",  site = "UNC")
+#Glacial.DBH <- read_DBH_year("cleanrwl/GLAww.rwl",  site = "GLA")
+#Englund.DBH <- read_DBH_year("cleanrwl/ENGww.rwl",  site = "ENG")
+#Mound.DBH <- read_DBH_year("cleanrwl/MOUww.rwl", site = "MOU")
+GLL1.DBH <- read_DBH_year("cleanrwl/GLL1ww.rwl",  site = "GLL1")
+GLL2.DBH <- read_DBH_year("cleanrwl/GLL2ww.rwl",  site = "GLL2")
+GLL3.DBH <- read_DBH_year("cleanrwl/GLL3ww.rwl",  site = "GLL3")
+GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4")
+#PVC.DBH <- read_DBH_year("cleanrwl/PVCww.rwl",  site = "PVC")
+#AVO.DBH <- read_DBH_year("cleanrwl/AVOww.rwl",  site = "AVO")
+UNI.DBH <- read_DBH_year("cleanrwl/UNIww.rwl", site = "UNI")
+
 
 # ------------------------How does growth vary over time:
 
