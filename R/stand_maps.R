@@ -312,8 +312,11 @@ map.dispersed <- function(sitecode){
     library(dplR)
     rwlfile <- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
     names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
-    names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
-    
+    if(sitecode %in% "MOU"){
+      names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-2)
+    }else{
+    names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-3)
+    }
     site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID')
     
     # rename columns:
@@ -340,6 +343,10 @@ map.dispersed("TOW")
 map.dispersed("STC")
 map.dispersed("UNI")
 
+# find metadata files for the following:
+map.dispersed("MOU")
+map.dispersed("ENG")
+map.dispersed("HIC-1")
 dev.off()
 
 

@@ -399,12 +399,18 @@ read_DBH_year <- function( filename, site){
   gp.treeMean2 <- treeMean(newseries, autoread.ids(newseries), na.rm=TRUE)
   
   # if multiple cores were sampled per each site, we need to average the widths of the cores before estimating diamters:
-  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC")
+  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC", "HIC", "BON")
   if(site %in% mult.core.sites){
           if(site %in% "COR"){
             colnames(gp.treeMean2) <- paste0(site,19, colnames(gp.treeMean2))
           }else{
+            if(site %in% "MOU"){
+              gp.treeMean2 <- treeMean(newseries, read.ids(newseries, stc = c(3,1,2)))
+              colnames(gp.treeMean2) <- paste0(site,colnames(gp.treeMean2))
+            }else{
+            
           colnames(gp.treeMean2) <- paste0(site,colnames(gp.treeMean2))
+            }
           }
           newseries <- gp.treeMean2
           
@@ -542,14 +548,14 @@ Townsend.DBH <- read_DBH_year(filename = "cleanrwl/TOWww.rwl",  site = "TOW")#to
 Coral.DBH <- read_DBH_year(filename = "cleanrwl/CORww.rwl",  site = "COR")
 Uncas.DBH <- read_DBH_year(filename = "cleanrwl/UNCww.rwl",  site = "UNC")
 #Glacial.DBH <- read_DBH_year("cleanrwl/GLAww.rwl",  site = "GLA")
-#Englund.DBH <- read_DBH_year("cleanrwl/ENGww.rwl",  site = "ENG")
-#Mound.DBH <- read_DBH_year("cleanrwl/MOUww.rwl", site = "MOU")
+Englund.DBH <- read_DBH_year(filename = "cleanrwl/ENGww.rwl",  site = "ENG")
+Mound.DBH <- read_DBH_year(filename = "cleanrwl/MOUww.rwl", site = "MOU")
 GLL1.DBH <- read_DBH_year("cleanrwl/GLL1ww.rwl",  site = "GLL1")
 GLL2.DBH <- read_DBH_year("cleanrwl/GLL2ww.rwl",  site = "GLL2")
 GLL3.DBH <- read_DBH_year("cleanrwl/GLL3ww.rwl",  site = "GLL3")
 GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4")
 #PVC.DBH <- read_DBH_year("cleanrwl/PVCww.rwl",  site = "PVC")
-#AVO.DBH <- read_DBH_year("cleanrwl/AVOww.rwl",  site = "AVO")
+AVO.DBH <- read_DBH_year(filename = "cleanrwl/AVOww.rwl",  site = "AVO")
 UNI.DBH <- read_DBH_year("cleanrwl/UNIww.rwl", site = "UNI")
 
 
