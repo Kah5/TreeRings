@@ -106,6 +106,10 @@ wpfull <- wpfull[,c("lon", "lat", "ele", "time", "name", "sym", "code")]
 # add onto wpfull:
 wpfull <- rbind(wpfull, sites15)
 wpfull <- rbind(wpfull, sites16.lat)
+wpfull<- wpfull[!wpfull$name %in% "PVC",] # gets rid of erroneos "PVC" datapoint
+wpfull[wpfull$name %in% "PLEASANT VALLEY",]$name <- "PVC"
+wpfull[wpfull$code %in% "Ple", ]$name <- "PLE"
+wpfull[wpfull$code %in% "Ple", ]$code <- "PLE"
 # merge the datasets together
 full <- merge(coarse, waypt, by = "code", all = TRUE)
 
@@ -140,6 +144,8 @@ sites.map
 # write out the full data to csv
 write.csv(full, "/Users/kah/Documents/TreeRings/outputs/lat_long_sites.csv")
 
+
+
 #####################################
 # read in metadata from a stand#
 #####################################
@@ -158,10 +164,17 @@ map.plot <- function(sitecode){
   
   
   site$Species <- sapply(as.character(site$Species), simpleCap)
-  site$name <- sitecode
-  site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+  
 
-
+  if(sitecode %in% c("HIC","GLA")){
+    site$name <- paste0(site$X)
+    site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+  }else{
+    site$name <- sitecode
+    site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+  }
+  # convert lat lo
+  
   # convert lat long to albers projection:
   coordinates(site) <- ~lon +lat
   proj4string(site) <- '+init=epsg:4326' # define native proj
@@ -217,16 +230,33 @@ map.plot <- function(sitecode){
                           'ele', 'x_plot', "y_plot", "x_tree", "y_tree")
   
   site.alb$DBH <- round(site.alb$DBH, 2)
-  site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
-  
+  #site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
+  if(sitecode %in% "HIC"){
+    site.alb$tellervo_ID <- paste0(sitecode, substr(site.alb$TagID, 2, 4))
+  }else{ if(sitecode %in% "PVC"){
+    site.alb$tellervo_ID<- paste0(site.alb$name, site.alb$Core)
+  }else{if(sitecode %in% "GLA"){
+    site.alb$TagID <- ifelse(nchar(site.alb$TagID) < 4, paste0(0, site.alb$TagID), site.alb$TagID)
+    site.alb$tellervo_ID <-  paste0(sitecode, substr(site.alb$TagID, 1, 4))
+   
+  }else{
+    site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
+  }
+  }
+  }
+    
+
   # need to make a name that matches the Tellervo output names:
-  if(file.exists(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))){
+  if(file.exists(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))){
   
     library(dplR)
-  rwlfile<- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
+  rwlfile<- read.rwl(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))
   names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
+  if(sitecode %in% c("PVC", "GLA")){
+    names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-1)
+  }else{
   names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
-  
+  }
   site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID', all = TRUE)
   
   # finally, convert the common species names to scientific names:
@@ -263,9 +293,13 @@ map.plot("GLE1")
 map.plot("COR")
 map.plot("HIC-2")
 map.plot("HIC-1")
+map.plot("HIC")
+map.plot("GLA")
 map.plot("DUF-1")
 map.plot("DUF-2")
 map.plot("GLA-2")
+map.plot("PLE")
+
 #map.plot("GLA-1")
 dev.off()
 
@@ -294,9 +328,14 @@ map.dispersed <- function(sitecode){
   
   # adding site code name onto this
   site$code <- sitecode
-  site$name <- paste0(sitecode, "-", as.character(site$TagID))
-  site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
-
+  
+  if(sitecode %in% "HIC"){
+    site$name <- paste0(site$X)
+    site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+  }else{
+    site$name <- paste0(sitecode, "-", as.character(site$TagID))
+    site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+ }
   # convert lat long to albers projection:
   coordinates(site) <- ~lon +lat
   proj4string(site) <- '+init=epsg:4326' # define native proj
@@ -308,11 +347,12 @@ map.dispersed <- function(sitecode){
   
   site.alb$tellervo_ID <- paste0(site.alb$code, site.alb$TagID)
   
-  if(file.exists(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))){
+  if(file.exists(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))){
     library(dplR)
-    rwlfile <- read.rwl(paste0("/Users/kah/Documents/crossdating/data/cofecha/",sitecode, ".rwl"))
+    rwlfile <- read.rwl(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))
     names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
-    if(sitecode %in% "MOU"){
+    
+    if(sitecode %in% c("MOU","ENG", "STC", "BON")){
       names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-2)
     }else{
     names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-3)
@@ -333,7 +373,7 @@ map.dispersed <- function(sitecode){
     site.alb <- merge(site.alb, scientific, by = "Species_common")
     write.csv(site.alb, paste0("data/site_maps/all_metadata/", sitecode, "_full_xy.csv"))
   }
-  
+  mapped.disperse
 }
 
 pdf("outputs/standmaps/dispersed_maps_all.pdf")
@@ -342,11 +382,12 @@ map.dispersed("MAP-3")
 map.dispersed("TOW")
 map.dispersed("STC")
 map.dispersed("UNI")
-
-# find metadata files for the following:
 map.dispersed("MOU")
 map.dispersed("ENG")
-map.dispersed("HIC-1")
+# find metadata files for the following:
+map.dispersed("BON")
+
+
 dev.off()
 
 
