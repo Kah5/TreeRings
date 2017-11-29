@@ -13,14 +13,20 @@ clean_rwl <- function(site, rwl.file, wood){
     new <- colnames(newseries)
     
       for(i in 1:length(colnames(newseries))){
-        core<- substring(colnames(newseries)[i], first = 4, 4)
-        tree<- substring(colnames(newseries)[i], first = 5, 7)
+        core <- substring(colnames(newseries)[i], first = 4, 4)
+        tree <- substring(colnames(newseries)[i], first = 5, 7)
+       
+        tree.cor<- if(nchar(tree) < 4){
+           paste0("1", tree)
+       }else{tree}
+       
         site <- substring(colnames(newseries)[i], first = 1, 3)
-        new[i] <- paste0(site, tree, core)
+        new[i] <- paste0(site, tree.cor, core)
       }
     colnames(newseries) <- new
     #read.ids(newseries,stc = c(3,3,3))
     write.rwl(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson")
+    write.csv(newseries, paste0("./cleanrwl/",site,wood, ".csv"), row.names = FALSE)
   }else{
     if(site == "STC"){
       newseries <- read.rwl(rwl.file)

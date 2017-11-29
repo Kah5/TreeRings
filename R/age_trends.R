@@ -18,8 +18,12 @@ setwd("/Users/kah/Documents/TreeRings")
 # quick function to read detrend and add the year as a column:
 # this function will also just calculate BAI instead
 read_detrend_year <- function( filename, method , rwiorbai, site){
-  
+  if(site %in% "HIC"){
+    newseries <- read.csv("cleanrwl/HICww.csv")
+    
+  }else{
   newseries <- read.tucson( filename )
+  }
   rwl.stats(newseries)
   # average the cores by tree (for the sites with multiple cores):
   
@@ -36,9 +40,14 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
           detrended <- bai.out(rwl = newseries))
   
   
-  detrended.mean <- treeMean(detrended, autoread.ids(detrended), na.rm=TRUE)
+ 
+  if(site %in% "HIC"){
+    detrended.mean <- treeMean(detrended, read.ids(detrended, stc = c(3,4,1)), na.rm=TRUE)
+    colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
+  }else{
+    detrended.mean <- treeMean(detrended, autoread.ids(detrended), na.rm=TRUE)
   colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
-  
+  }
   mean.rwi.stat <- rwl.stats(detrended.mean)
   write.csv(mean.rwi.stat, paste0("outputs/Stats/mean.rwi.stats.", site,".csv"))
   
@@ -388,8 +397,12 @@ write.csv(det.age.clim.ghcn.df, "outputs/data/full_det_ghcn_rwi.csv", row.names 
 # based on the DBH at each time step, specify the DBH class over time. 
 
 read_DBH_year <- function( filename, site){
-  
-  newseries <- read.tucson( filename )
+  if(site %in% "HIC"){
+    newseries <- read.csv("cleanrwl/HICww.csv")
+  }else{
+    newseries <- read.tucson( filename )
+  }
+ 
   rwl.stats(newseries)
   # average the cores by tree (for the sites with multiple cores):
   
@@ -408,15 +421,20 @@ read_DBH_year <- function( filename, site){
               gp.treeMean2 <- treeMean(newseries, read.ids(newseries, stc = c(3,1,2)))
               colnames(gp.treeMean2) <- paste0(site,colnames(gp.treeMean2))
             }else{
-            
-          colnames(gp.treeMean2) <- paste0(site,colnames(gp.treeMean2))
+            if(site %in% "HIC"){
+              
+              gp.treeMean2 <- treeMean(newseries, read.ids(newseries, stc = c(3,4,1)), na.rm=TRUE)
+              colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
+            }else{
+          colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
             }
+              }
           }
           newseries <- gp.treeMean2
           
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
           diams <- site.data[c("short", "DBH")]
-          diams.agg<- aggregate(diams, list(diams$short), mean)
+          diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
           colnames(diams.agg) <- c("ID", "short", "DBH")
           diams <- diams.agg[,c("ID", "DBH")]
           diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
@@ -586,23 +604,29 @@ DBH.classify <- function(dbh.df){
         # need to assign trees to age classes:
          
          
-          ifelse(DBH.m$DBH <= 10, DBH.m$dbhclass <-  "< 10", 
-                 ifelse(DBH.m$DBH > 10 & DBH.m$DBH <= 20 , DBH.m$dbhclass<- "10 - 20", 
-                        ifelse(DBH.m$DBH > 20 & DBH.m$DBH <= 30 ,DBH.m$dbhclass<- "20 - 30",
-                               ifelse(DBH.m$DBH > 30 & DBH.m$DBH <= 40 ,DBH.m$dbhclass<- "30 - 40",
-                                      ifelse(DBH.m$DBH > 40 & DBH.m$DBH <= 50 , DBH.m$dbhclass<- "40 - 50",
-                                             ifelse(DBH.m$DBH > 50 & DBH.m$DBH <= 60 ,DBH.m$dbhclass<- "50 - 60",
-                                                    ifelse(DBH.m$DBH > 60 & DBH.m$DBH <= 70 ,DBH.m$dbhclass<- "60 - 70",
-                                                           ifelse(DBH.m$DBH > 70 & DBH.m$DBH <= 80 ,DBH.m$dbhclass<- "70 - 80", DBH.m$dbhclass <-  "> 80"))))))))
+          class.dbh <- ifelse(is.na(DBH.m$DBH),  "NA",
+                              ifelse(DBH.m$DBH <= 10,  "< 10", 
+                 ifelse(DBH.m$DBH > 10 & DBH.m$DBH <= 20 ,  "10 - 20", 
+                        ifelse(DBH.m$DBH > 20 & DBH.m$DBH <= 30 , "20 - 30",
+                               ifelse(DBH.m$DBH > 30 & DBH.m$DBH <= 40 , "30 - 40",
+                                      ifelse(DBH.m$DBH > 40 & DBH.m$DBH <= 50 ,  "40 - 50",
+                                             ifelse(DBH.m$DBH > 50 & DBH.m$DBH <= 60 , "50 - 60",
+                                                    ifelse(DBH.m$DBH > 60 & DBH.m$DBH <= 70 ,  "60 - 70",
+                                                           ifelse(DBH.m$DBH > 70 & DBH.m$DBH <= 80 ,  "70 - 80", 
+                                                                ">80")))))))))
           
         
         
-        DBH.m # output DBH dataframe
+        DBH.m$dbhclass <- class.dbh # output DBH dataframe
+       # DBH.m$ID <- substr(DBH.m$ID, start = 4, 10)
+        DBH.m
 }
 
 dbh.class <- lapply(dbh.list, DBH.classify)
 dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
+# merge these with the climate/growth dataframes:
+merged.test<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
 # ------------------------How does growth vary over time:
 
 library(treeclim)

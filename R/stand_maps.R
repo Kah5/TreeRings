@@ -110,6 +110,9 @@ wpfull<- wpfull[!wpfull$name %in% "PVC",] # gets rid of erroneos "PVC" datapoint
 wpfull[wpfull$name %in% "PLEASANT VALLEY",]$name <- "PVC"
 wpfull[wpfull$code %in% "Ple", ]$name <- "PLE"
 wpfull[wpfull$code %in% "Ple", ]$code <- "PLE"
+
+# missing gps point from STC-9, fill in here to match up dtat
+
 # merge the datasets together
 full <- merge(coarse, waypt, by = "code", all = TRUE)
 
@@ -161,8 +164,10 @@ map.plot <- function(sitecode){
           sep="", collapse=" ")
   }
   
-  
-  
+  # make corrections for some trees that were cored just outside of plotcenters
+  site$dist2center<- ifelse(is.na(site$dist2center), 99, site$dist2center)
+  site$direction<- ifelse(is.na(site$direction), 99, site$direction)
+    
   site$Species <- sapply(as.character(site$Species), simpleCap)
   
 
@@ -215,7 +220,7 @@ map.plot <- function(sitecode){
    names(colorsforspec) <- species
    #names(colorsforspec) <- species
   
-  mapped.plot<- ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
+   mapped.plot<- ggplot()+ geom_point(data = site.alb, aes(x = x_tree, y = y_tree, color = Species, size = DBH..cm.)) + 
     #scale_color_manual(values = specColors)
     theme_bw() + geom_path(data = dat, aes(x=x,y=y)) + ggtitle(paste(sitecode, "plot map")) + scale_color_manual(name = species,values=colorsforspec) +ylab("y coord")+xlab("x coord")+theme(legend.title = element_blank())
   
@@ -232,7 +237,7 @@ map.plot <- function(sitecode){
   site.alb$DBH <- round(site.alb$DBH, 2)
   #site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   if(sitecode %in% "HIC"){
-    site.alb$tellervo_ID <- paste0(sitecode, substr(site.alb$TagID, 2, 4))
+    site.alb$tellervo_ID <- paste0(sitecode, site.alb$TagID)
   }else{ if(sitecode %in% "PVC"){
     site.alb$tellervo_ID<- paste0(site.alb$name, site.alb$Core)
   }else{if(sitecode %in% "GLA"){
@@ -248,11 +253,14 @@ map.plot <- function(sitecode){
 
   # need to make a name that matches the Tellervo output names:
   if(file.exists(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))){
-  
+    if(sitecode %in% "HIC"){
+      rwlfile<- read.csv(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.csv"))
+    }else{
     library(dplR)
   rwlfile<- read.rwl(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))
+    }
   names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
-  if(sitecode %in% c("PVC", "GLA")){
+  if(sitecode %in% c("PVC", "GLA", "HIC")){
     names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-1)
   }else{
   names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
@@ -334,7 +342,9 @@ map.dispersed <- function(sitecode){
     site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
   }else{
     site$name <- paste0(sitecode, "-", as.character(site$TagID))
-    site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
+    site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name', all.x=TRUE)
+    site$lon <- ifelse(is.na(site$lon), -99.0000, site$lon)
+    site$lat <- ifelse(is.na(site$lat), 45.0000, site$lat)
  }
   # convert lat long to albers projection:
   coordinates(site) <- ~lon +lat
