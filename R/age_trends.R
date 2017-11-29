@@ -562,6 +562,46 @@ dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH
                        Uncas.DBH, Glacial.DBH, Englund.DBH, Mound.DBH, GLL1.DBH, GLL2.DBH, 
                        GLL3.DBH, GLL4.DBH, PVC.DBH, AVO.DBH, UNI.DBH)
 
+# function to assign DBH class to all dataframes:
+DBH.classify <- function(dbh.df){
+        Hic <- dbh.df
+        
+        
+        # plot rwi vs. tree age:
+        DBH.m <- melt(Hic)
+        colnames(DBH.m) <- c("year","site", "ID", "DBH")
+        DBH.m$year <- as.numeric(DBH.m$year)
+        site <- unique(DBH.m$site)
+        # print out trajectory of DBH at each sites
+        
+        dbh.plot <- ggplot(DBH.m, aes(x = year, y = DBH, color = ID)) + geom_line()+theme_bw()
+       ggsave(plot = dbh.plot, filename = paste0("outputs/DBH/",  site, "_DBH_time.png"))
+        
+        
+        
+        DBH.m$ID <- as.character(DBH.m$ID)
+        DBH.m$dbhclass <- "small"
+        site.code <- unique(DBH.m$site)
+        
+        # need to assign trees to age classes:
+         
+         
+          ifelse(DBH.m$DBH <= 10, DBH.m$dbhclass <-  "< 10", 
+                 ifelse(DBH.m$DBH > 10 & DBH.m$DBH <= 20 , DBH.m$dbhclass<- "10 - 20", 
+                        ifelse(DBH.m$DBH > 20 & DBH.m$DBH <= 30 ,DBH.m$dbhclass<- "20 - 30",
+                               ifelse(DBH.m$DBH > 30 & DBH.m$DBH <= 40 ,DBH.m$dbhclass<- "30 - 40",
+                                      ifelse(DBH.m$DBH > 40 & DBH.m$DBH <= 50 , DBH.m$dbhclass<- "40 - 50",
+                                             ifelse(DBH.m$DBH > 50 & DBH.m$DBH <= 60 ,DBH.m$dbhclass<- "50 - 60",
+                                                    ifelse(DBH.m$DBH > 60 & DBH.m$DBH <= 70 ,DBH.m$dbhclass<- "60 - 70",
+                                                           ifelse(DBH.m$DBH > 70 & DBH.m$DBH <= 80 ,DBH.m$dbhclass<- "70 - 80", DBH.m$dbhclass <-  "> 80"))))))))
+          
+        
+        
+        DBH.m # output DBH dataframe
+}
+
+dbh.class <- lapply(dbh.list, DBH.classify)
+dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
 # ------------------------How does growth vary over time:
 
@@ -573,7 +613,7 @@ test <- det.age.clim.ghcn.df
 
 # moving correlations between climate and tree growth:
 
-a<- dcc(det.age.clim.ghcn.df[], IL.clim[1:1452,c("Year", "Month", "PCP")], dynamic = 'moving', win_size = 35, win_offset = 5)
+a <- dcc(det.age.clim.ghcn.df[], IL.clim[1:1452,c("Year", "Month", "PCP")], dynamic = 'moving', win_size = 35, win_offset = 5)
 a
 
 plot(a)
