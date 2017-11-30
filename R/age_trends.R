@@ -1676,9 +1676,153 @@ get.clim.cor.age.by.moisture <- function(df, climateclass,clim){
 cor.jul.pdsi.age_dry.25 <- get.clim.cor.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", clim = "Jul.pdsi" )
 cor.jul.pdsi.age_wet.25 <- get.clim.cor.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Wet_0.25", clim = "Jul.pdsi" )
 
+
 ggplot(cor.jul.pdsi.age_dry.25, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
 
 ggplot(cor.jul.pdsi.age_wet.25, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
+
+
+get.clim.cor.age.by.moisture.dbh <- function(df, climateclass, clim){
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  
+  
+  df$class <- '9999'
+  df[df$year %in% yr,]$class <- 'Pre-1950'
+  df[df$year %in% yr.post,]$class <- 'Post-1950'
+  
+  
+  
+  # function used in boot strapping below
+  boot.cor <- function(data, ind, colno ){
+    
+    return(cor(data[ind,c(colno)], data[ind,]$RWI, use = "pairwise.complete.obs"))
+  }
+  
+  bydbh <- list()
+  # for each dbh class, lets get the sensitivy to climate:
+  for(d in 1:length(unique(df$dbhclass))){
+    
+    sizeclass <- unique(df$dbhclass)[d]
+   
+    coeffs <- matrix ( 0, length(unique(df$site))*2, 5 ) # set up matrix for coefficients
+  
+        for(s in 1: length(unique(df$site))) {
+          
+          
+          
+          name <- unique(df$site)[s]  
+          site.data<- na.omit(df[df$site == name,])
+          
+          sim.df <- aggregate(Jul.pdsi~year, data = site.data, FUN = mean )
+          
+          dry <- quantile(sim.df$Jul.pdsi, 0.25) # value of the driest years
+          wet <- quantile(sim.df$Jul.pdsi, 0.75) # value of the wettest years
+          
+          pre.dry <- sim.df[sim.df$year < 1950 & sim.df$Jul.pdsi <= dry,]
+          pre.dry$class <- "Pre-1950"
+          pre.dry$climclass <- "Dry_0.25"
+          
+          post.dry <- sim.df[sim.df$year >=1950 & sim.df$Jul.pdsi <= dry,]
+          post.dry$class <- "Post-1950"
+          post.dry$climclass <- "Dry_0.25"
+          
+          pre.wet <- sim.df[sim.df$year < 1950 & sim.df$Jul.pdsi >= wet,]
+          pre.wet$class <- "Pre-1950"
+          pre.wet$climclass <- "Wet_0.25"
+          post.wet <- sim.df[sim.df$year >=1950 & sim.df$Jul.pdsi >= wet,]
+          post.wet$class <- "Post-1950"
+          post.wet$climclass <- "Wet_0.25"
+          
+          similar.clims <- rbind(post.wet, pre.wet, pre.dry, post.dry)
+          
+          #dfs <- det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "HIC",]
+          
+          sim.df <- merge(site.data, similar.clims[,c("year", "class", "climclass")], by = c('year'))
+          
+          # only use wet years across the region:
+          sim.df <- sim.df[sim.df$climclass %in% climateclass & sim.df$dbhclass %in% sizeclass,]
+          
+          
+          
+          
+          # for the "young" class:
+          if(nrow(sim.df[sim.df$site == name & sim.df$ageclass == "young" ,]) > 1){
+            
+            # bootstrapping the correlation coefficients:
+            results <- boot(data=sim.df[sim.df$ageclass == "young" & sim.df$year >= 1950 ,], colno = clim, statistic=boot.cor, R=2000)
+            
+            #int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+            #slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+            cis <- boot.ci(boot.out = results, type = "norm")
+            ci.mo <- cis$normal[2:3]
+            t <- results$t0
+            
+            coeffs[s,3] <-t
+            coeffs[s , 1] <- name
+            coeffs[s,2] <- "young"
+            coeffs[s,4] <- ci.mo[1]
+            coeffs[s,5] <- ci.mo[2]
+            
+            
+          } else{
+            #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "young" ,])
+            coeffs[s,3:5] <- c(NA,NA, NA)
+            coeffs[s , 2] <- "young"
+            coeffs[s,1] <- name
+          }
+          
+          
+          # for the "old" class:  
+          if(nrow(sim.df[sim.df$site == name & sim.df$ageclass == "old" & sim.df$year < 1950 ,]) > 0){
+            results <- boot(data=sim.df[sim.df$ageclass == "old" & sim.df$year < 1950 ,], colno = clim, statistic=boot.cor, R=2000)
+            
+            # bootstrapping the correlation coefficients:
+            
+            #int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+            #slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+            cis <- boot.ci(boot.out = results, type = "norm")
+            ci.mo <- cis$normal[2:3]
+            t <- results$t0
+            
+            coeffs[s+length(unique(df$site)),3] <-t
+            coeffs[s+length(unique(df$site)) , 1] <- name
+            coeffs[s+length(unique(df$site)),2] <- "old"
+            coeffs[s+length(unique(df$site)),4] <- ci.mo[1]
+            coeffs[s+length(unique(df$site)),5] <- ci.mo[2]
+            
+            
+          }else{
+            #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "old" ,])
+            coeffs[s+length(unique(df$site)),3:5] <- c(NA,NA, NA)
+            coeffs[s +length(unique(df$site)), 2] <- "old"
+            coeffs[s+length(unique(df$site)),1] <- name
+          }
+        }
+        
+        coeffs <- data.frame(coeffs)
+        colnames(coeffs) <- c("site","age",'cor.est', "ci.min", "ci.max")
+        coeffs$site <- as.character(coeffs$site)
+        coeffs$cor.est <- as.numeric(as.character(coeffs$cor.est))
+        
+        coeffs$ci.min <- as.numeric(as.character(coeffs$ci.min))
+        coeffs$ci.max <- as.numeric(as.character(coeffs$ci.max))
+        #coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+        #coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
+        coeffs$dbhclass <- sizeclass
+        bydbh[[d]]<- coeffs
+        
+  }  
+  names(bydbh) <- unique(df$dbhclass)
+  bydbh.df <- do.call(rbind, bydbh) # make list into a dataframe to output!
+  bydbh.df
+}
+
+cor.jul.pdsi.age_wet.25.dbh <- get.clim.cor.age.by.moisture.dbh(df =det.age.clim.ghcn.df[!det.age.clim.ghcn.df$site %in% "MOU",], climateclass = "Wet_0.25", clim = "Jul.pdsi" )
+cor.jul.pdsi.age_dry.25.dbh <- get.clim.cor.age.by.moisture.dbh(df =det.age.clim.ghcn.df[!det.age.clim.ghcn.df$site %in% "MOU",], climateclass = "Dry_0.25", clim = "Jul.pdsi" )
+
+ggplot(cor.jul.pdsi.age_wet.25.dbh, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)+facet_wrap(~dbhclass)
+ggplot(cor.jul.pdsi.age_dry.25.dbh, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)+facet_wrap(~dbhclass)
 
 
 
@@ -2090,6 +2234,10 @@ mapdata<-data.frame(mapdata)
 site.df.age <- merge(julpdsi.age.sens, locs, by.x = 'site', by.y = 'code')
 site.df.yr <- merge(pdsi.yr.sens, locs, by.x = 'site', by.y = 'code')
 
+site.df.age.dry <- merge(sens.jul.pdsi.age_dry.25, locs, by.x = 'site', by.y = 'code')
+site.df.age.wet <- merge(sens.jul.pdsi.age_wet.25, locs, by.x = 'site', by.y = 'code')
+
+
 png("outputs/maps/Jul.pdsi_sensitivity.png")
 ggplot(site.df, aes(coords.x1, coords.x2, color = slope.est))+geom_point()+scale_color_gradient(low = "blue", high = "red")+ geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
             colour = "darkgrey", fill = NA)+theme_bw() + coord_cartesian(xlim = c(-59495.64, 724000), ylim=c(68821.43, 1480021))
@@ -2105,6 +2253,8 @@ ggplot(site.df.yr, aes(coords.x1, coords.x2, color = slope.est))+geom_point()+ g
 
 dev.off()
 
+                                                                                                                                      colour = "darkgrey", fill = NA)+theme_bw() + coord_cartesian(xlim = c(-59495.64, 724000), ylim=c(68821.43, 1480021))
+
 
 
 #--------------------------------------------------------------
@@ -2119,6 +2269,8 @@ prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
 site.df$pr30yr <- raster::extract(prism.alb, site.df[,c("coords.x1","coords.x2")])
 site.df.age$pr30yr <- raster::extract(prism.alb, site.df.age[,c("coords.x1","coords.x2")])
 site.df.yr$pr30yr <- raster::extract(prism.alb, site.df.yr[,c("coords.x1","coords.x2")])
+site.df.age.dry$pr30yr <- raster::extract(prism.alb, site.df.age.dry[,c("coords.x1","coords.x2")])
+site.df.age.wet$pr30yr <- raster::extract(prism.alb, site.df.age.wet[,c("coords.x1","coords.x2")])
 
 workingdir <- "/Users/kah/Documents/bimodality/data/"
 
@@ -2130,6 +2282,8 @@ prismt.alb <- projectRaster(prism.t, crs='+init=epsg:3175')
 site.df$tm30yr <- raster::extract(prismt.alb, site.df[,c("coords.x1","coords.x2")])
 site.df.age$tm30yr <- raster::extract(prismt.alb, site.df.age[,c("coords.x1","coords.x2")])
 site.df.yr$tm30yr <- raster::extract(prismt.alb, site.df.yr[,c("coords.x1","coords.x2")])
+site.df.age.dry$tm30yr <- raster::extract(prismt.alb, site.df.age.dry[,c("coords.x1","coords.x2")])
+site.df.age.wet$tm30yr <- raster::extract(prismt.alb, site.df.age.wet[,c("coords.x1","coords.x2")])
 
 
 #merge overalll slope and envt with the young and old slopes:
@@ -2152,6 +2306,7 @@ ggplot(site.df[!site.df$site %in% "UNC",], aes(sand, slope.est))+geom_point()+ge
 png(height = 4, width = 6, units = "in", res = 300, "outputs/sensitivity_v_site_DBH.png")
 ggplot(site.df, aes(DBH, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("Diameter at Breast Height (cm)")+stat_smooth(method = "lm", se = FALSE)
 dev.off()
+
 
 png(height = 4, width = 6, units = "in", res = 300, "outputs/sensitivity_v_site_MAP.png")
 ggplot(site.df, aes(pr30yr, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("Mean Annual Precipitation (mm)")+stat_smooth(method = "lm", se = FALSE)
@@ -2225,6 +2380,40 @@ ggplot(site.df.age, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI)")+theme(legend.title = element_blank())
 dev.off()
 
+png("outputs/boxplot_old_young_sens_dry_0.25.png")
+ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())
+dev.off()
+
+
+
+png("outputs/boxplot_old_young_sens_wet_0.25.png")
+ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())
+dev.off()
+
+#ggplot(cor.jul.pdsi.age_dry.25.dbh[cor.jul.pdsi.age_dry.25.dbh$dbhclass %in% c("< 20", "20 - 40", "40 - 60", "60 - 80"),], aes(dbhclass, cor.est, fill = dbhclass))+geom_bar(stat=identity)+facet_wrap(~site)
+ # theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~site)
+
+
+ggplot(cor.jul.pdsi.age_dry.25.dbh[cor.jul.pdsi.age_dry.25.dbh$dbhclass %in% c("< 20", "20 - 40", "40 - 60", "60 - 80"),], aes(age, cor.est, fill = age))+geom_bar(stat="identity")+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~site)
+
+
+png("outputs/boxplot_old_young_sens_dry_0.25_bydbh_class.png")
+ggplot(cor.jul.pdsi.age_dry.25.dbh[cor.jul.pdsi.age_dry.25.dbh$dbhclass %in% c("< 20", "20 - 40", "40 - 60", "60 - 80"),], aes(age, cor.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~dbhclass)
+dev.off()
+
+
+png("outputs/boxplot_old_young_sens.png")
+ggplot(sens.jul.pdsi.age_dry.25, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI)")+theme(legend.title = element_blank())
+dev.off()
+
+ggplot(site.df.age.wet, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+ggplot(site.df.age.dry, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
+
 ggplot(site.df.age, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 ggplot(site.df.age, aes(tm30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)
 ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max))+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+stat_smooth(method = "lm")
@@ -2235,6 +2424,9 @@ ggplot(site.df.age, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar
 png("outputs/sensitivity_v_siteDBH_age.png")
 ggplot(site.df.age, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Site Avg DBH")+theme(legend.title = element_blank())
 dev.off()
+
+ggplot(site.df.age.wet, aes(DBH, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Site Avg DBH")+theme(legend.title = element_blank())
+
 
 summary(lm(slope.est ~DBH + pr30yr + age, data = site.df.age))
 gam.pr.dbh <- gam(slope.est ~ pr30yr+ DBH + age,data = site.df.age)
@@ -2255,8 +2447,20 @@ png("outputs/sensitivity_v_sand_age.png")
 ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
 dev.off()
 
+png("outputs/sensitivity_v_sand_age.png")
+ggplot(site.df.age.dry, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
+dev.off()
+
+png("outputs/sensitivity_v_sand_age_dry_years.png")
+ggplot(site.df.age.wet, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
+dev.off()
+
 png("outputs/sensitivity_v_MAP_age.png")
 ggplot(site.df.age, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Annual Precipitation")+theme(legend.title = element_blank())
+dev.off()
+
+png("outputs/sensitivity_v_MAP_age_dry_years.png")
+ggplot(site.df.age.dry, aes(pr30yr, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("Mean Annual Precipitation")+theme(legend.title = element_blank())
 dev.off()
 
 png("outputs/sensitivity_v_TMEAN_age.png")
