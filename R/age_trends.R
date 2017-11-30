@@ -447,27 +447,42 @@ read_DBH_year <- function( filename, site){
             diams <- site.data[complete.cases(site.data[c("full_tellervo", "DBH")]), ]
             diams.agg <- aggregate(diams[,c("full_tellervo", "DBH")], list(diams$full_tellervo), mean, na.rm = TRUE)
             colnames(diams.agg) <- c("ID", "short", "DBH")
-          
-            diams <- diams.agg[,c("ID", "DBH")]
+            #spec <- site.data[complete.cases(site.data[,c("full_tellervo", "SpecCode")]),c("full_tellervo", "SpecCode")]
+            #diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "full_tellervo")
+            
+            spec <- site.data[complete.cases(site.data[,c("full_tellervo", "SpecCode")]),c("full_tellervo", "SpecCode")]
+            spec <- spec[!duplicated(spec),]
+            diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "full_tellervo")
+            diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
             diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
-            colnames(diams) <- c("ID", "DBH") 
+            colnames(diams) <- c("ID", "DBH", "SpecCode") 
+            
             
             # only find records where we have both DBH and tellervo entries:
             diams <- diams [diams$ID %in% colnames(newseries),]
             newseries <- newseries[,colnames(newseries) %in% diams$ID]
+            write.csv(diams,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
+            
+            
           }else{
           diams <- site.data[c("short", "DBH")]
           diams <- diams[2:length(diams$short),]
           diams$DBH <- as.numeric(as.character(diams$DBH))
           diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
           colnames(diams.agg) <- c("ID", "short", "DBH")
-          diams <- diams.agg[,c("ID", "DBH")]
+          diams.agg<- diams.agg[!duplicated(diams.agg),]
+          spec <- site.data[complete.cases(site.data[,c("short", "SpecCode")]),c("short", "SpecCode")]
+          spec <- spec[!duplicated(spec),]
+          diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "short")
+          diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
           diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
-          colnames(diams) <- c("ID", "DBH") 
+          colnames(diams) <- c("ID", "DBH", "SpecCode") 
+          
           
           # only find records where we have both DBH and tellervo entries:
           diams <- diams [diams$ID %in% colnames(newseries),]
           newseries <- newseries[,colnames(newseries) %in% diams$ID]
+          write.csv(diams ,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
           }
           rwl <- newseries*0.1 # convert measuremnts to CM:
           
@@ -477,7 +492,7 @@ read_DBH_year <- function( filename, site){
           if (!is.data.frame(newseries)) 
             stop("'rwl' must be a data.frame")
           if (!is.null(diams)) {
-            if (ncol(newseries) != nrow(diams)) 
+            if (ncol(newseries) != nrow(diams[!names(diams) %in% "SpecCode"])) 
               stop("dimension problem: ", "'ncol(rw)' != 'nrow(diam)'")
             if (!all(diams[, 1] %in% names(newseries))) 
               stop("series ids in 'diam' and 'rwl' do not match")
@@ -518,19 +533,23 @@ read_DBH_year <- function( filename, site){
   }else{ 
     # if sites only have one core per tree:
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
-          #if(site %in% c("GLL1", "GLL2", "GLL3", "GLL4")){
-           # diams <- site.data[c("short",'full_tellervo', "DBH")]
-            #diams$DBH <- (diams$DBH) # subtract ~2cm for barkwidth and convert to mm
-            #colnames(diams) <- c("ID","fullID", "DBH") 
-          #}else{
+          
           diams <- site.data[c("full_tellervo", "DBH")]
           diams$DBH <- (diams$DBH) 
           colnames(diams) <- c("ID", "DBH") 
-         # }
+          spec <- site.data[complete.cases(site.data[,c("full_tellervo", "SpecCode")]),c("full_tellervo", "SpecCode")]
+          spec <- spec[!duplicated(spec),]
+          diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "full_tellervo")
+          diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
+          diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+          colnames(diams) <- c("ID", "DBH", "SpecCode") 
+          
+          
           # only find records where we have both DBH and tellervo entries:
           diams <- diams [diams$ID %in% colnames(newseries),]
           newseries <- newseries[,colnames(newseries) %in% diams$ID]
-            
+          write.csv(diams,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
+          
           rwl <- newseries*0.1 # convert measuremnts to CM:
           
           # below code is adapted from dplR function bai.out to just estimate tree diameter at this point:
@@ -611,7 +630,7 @@ dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH
                        GLL3.DBH, GLL4.DBH, PVC.DBH, AVO.DBH, UNI.DBH)
 
 # function to assign DBH class to all dataframes:
-DBH.classify <- function(dbh.df){
+DBH.classify <- function(dbh.df, n.classes){
         Hic <- dbh.df
         
         
@@ -633,7 +652,7 @@ DBH.classify <- function(dbh.df){
         
         # need to assign trees to age classes:
          
-         
+         if(n.classes == 9){
           class.dbh <- ifelse(is.na(DBH.m$DBH),  "NA",
                               ifelse(DBH.m$DBH <= 10,  "< 10", 
                  ifelse(DBH.m$DBH > 10 & DBH.m$DBH <= 20 ,  "10 - 20", 
@@ -645,14 +664,26 @@ DBH.classify <- function(dbh.df){
                                                            ifelse(DBH.m$DBH > 70 & DBH.m$DBH <= 80 ,  "70 - 80", 
                                                                 ">80")))))))))
           
-        
+         }else{ if(n.classes == 5){
+           class.dbh <- ifelse(is.na(DBH.m$DBH),  "NA",
+                               ifelse(DBH.m$DBH <= 20,  "< 20", 
+                                      ifelse(DBH.m$DBH > 20 & DBH.m$DBH <= 40 ,  "20 - 40",
+                                             ifelse(DBH.m$DBH > 40 & DBH.m$DBH <= 60 ,  "40 - 60",
+                                                ifelse(DBH.m$DBH > 60 & DBH.m$DBH <= 80 , "60 - 80",">80")))))
+         }else{
+           class.dbh <- ifelse(is.na(DBH.m$DBH),  "NA",
+                               ifelse(DBH.m$DBH <= 30,  "< 30", 
+                                      ifelse(DBH.m$DBH > 30 & DBH.m$DBH <= 60 ,  "20 - 60", 
+                                             ifelse(DBH.m$DBH > 60 & DBH.m$DBH <= 80 , "60 - 80",
+                                                    ifelse(DBH.m$DBH > 80 , "> 80",">80")))))
+         }}
         
         DBH.m$dbhclass <- class.dbh # output DBH dataframe
        # DBH.m$ID <- substr(DBH.m$ID, start = 4, 10)
         DBH.m
 }
 
-dbh.class <- lapply(dbh.list, DBH.classify)
+dbh.class <- lapply(dbh.list, DBH.classify, n.classes = 5)
 dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
 testmerge <- merge(dbh.class.df, detrended.age.df, by = c("year", "site", "ID"))
@@ -662,9 +693,11 @@ det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year"
 test.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
 test.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
 
+png("outputs/DBH/July_clim_sens_by_dbh.png")
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()
+dev.off()
 
-ggplot(det.age.clim.ghcn.df, aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)
-
+summary(lm(RWI ~ Jul.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
 # ------------------------How does growth vary over time:
 
 library(treeclim)
@@ -1117,7 +1150,7 @@ ggplot(det.age.clim.df, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_
 
 
 summary(lm(RWI~PDSI, data = det.age.clim.df))
-summary(lm(RWI~PDSI+dbhclass, data = det.age.clim.df))
+summary(lm(RWI~Jul.pdsi:dbhclass, data = det.age.clim.ghcn.df))
 summary(lm(RWI~year, data = det.age.clim.df))
 summary(lm(RWI~year:site, data = det.age.clim.df))
 
@@ -1496,12 +1529,12 @@ get.clim.sens.year <- function(df, model.func){
 locs <- read.csv("outputs/priority_sites_locs.csv")
 locs$code <- as.character(locs$code)
 locs[24:27,]$code <- c("GLL4", "GLL3", "GLL2", "GLL1")
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC", "AVO")
 
 speciesdf<- data.frame(code = c("BON", "COR", "GLA", "GL1", "GL2", "GL3", "GL4",
-                                "HIC", "MOU", "PLE", "PVC", "STC", "TOW", "UNC"),
+                                "HIC", "MOU", "PLE", "PVC", "STC", "TOW", "UNC", "AVO"),
                        species =  c("QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
-                                    "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA"))
+                                    "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA", "QURA"))
 
 
 
@@ -1592,7 +1625,7 @@ a <- site.df
 
 cor.age.df <- merge(age.julpdsi.rf.df, site.df, by = "site")
 #yr.sens.df <- merge(s, site.df, by = "site")
-
+workingdir <- "/Users/kah/Documents/TreeRings"
 #--------------------------------------------------------------
 # how does sensitivity to drought vary by climate, envtl factors?
 #---------------------------------------------------------------
