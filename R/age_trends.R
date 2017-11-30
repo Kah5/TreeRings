@@ -1163,6 +1163,20 @@ ggplot(det.age.clim.df, aes(x = year, y = RWI, color = site))+geom_point()+stat_
 #df <- aggregate(Jul.pdsi~year, data = det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "HIC",], FUN = mean )
 df <- aggregate(Jul.pdsi~year, data = det.age.clim.ghcn.df, FUN = mean )
 
+df<- df[order(df$Jul.pdsi),]
+df$order <- 1:length(df$Jul.pdsi)
+df$deficit <- ifelse(df$Jul.pdsi < 0, "deficit" ,"surplus")
+
+png(height = 4, width = 6, units = 'in', res = 300, "outputs/climate_25dry_percentile.png")
+ggplot(df, aes(order,Jul.pdsi, fill = deficit))+geom_bar(stat = "identity", width = 0.75) + scale_fill_manual(values = c("red", "blue"))+ylab("July Drought")+xlab(" ")+theme_black()+theme(legend.title = element_blank(), legend.position = "none", axis.text.x = element_blank(), axis.ticks.x = element_blank())+
+  geom_vline(xintercept = 30, color = "grey", linetype = "dashed")+geom_vline(xintercept = 0, color = "grey", linetype = "dashed")
+dev.off()
+
+png(height = 4, width = 6, units = 'in', res = 300, "outputs/climate_75wet_percentile.png")
+ggplot(df, aes(order, Jul.pdsi, fill = deficit))+geom_bar(stat = "identity", width = 0.75) + scale_fill_manual(values = c("red", "blue"))+ylab("July Drought")+xlab(" ")+theme_black()+theme(legend.title = element_blank(), legend.position = "none", axis.text.x = element_blank(), axis.ticks.x = element_blank())+
+  geom_vline(xintercept = 91, color = "grey", linetype = "dashed")+geom_vline(xintercept = 120, color = "grey", linetype = "dashed")
+dev.off()
+
 dry <- quantile(df$Jul.pdsi, 0.25) # value of the driest years
 wet <- quantile(df$Jul.pdsi, 0.75) # value of the wettest years
 
@@ -2392,6 +2406,39 @@ ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())
 dev.off()
 
+
+site.df.age.wet[site.df.age.wet$site %in% "AVO",]$Description <- "Forest"
+
+site.df.age.dry[site.df.age.dry$site %in% "AVO",]$Description <- "Forest"
+
+
+site.df.age.wet[site.df.age.wet$species %in% "QUAL/QUMA",]$species <- "QUAL"
+site.df.age.wet[site.df.age.wet$species %in% "QURA/QUVE",]$species <- "QURA"
+
+site.df.age.dry[site.df.age.dry$species %in% "QUAL/QUMA",]$species <- "QUAL"
+site.df.age.dry[site.df.age.dry$species %in% "QURA/QUVE",]$species <- "QURA"
+
+
+png("outputs/boxplot_old_young_sens_wet_0.25_by_stand_type.png")
+ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~Description)
+dev.off()
+
+png("outputs/boxplot_old_young_sens_dry_0.25_by_stand_type.png")
+ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~Description)
+dev.off()
+
+
+png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_old_young_sens_dry_0.25_by_species.png")
+ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)
+dev.off()
+
+png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_old_young_sens_wet_0.25_by_species.png")
+ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)
+dev.off()
 #ggplot(cor.jul.pdsi.age_dry.25.dbh[cor.jul.pdsi.age_dry.25.dbh$dbhclass %in% c("< 20", "20 - 40", "40 - 60", "60 - 80"),], aes(dbhclass, cor.est, fill = dbhclass))+geom_bar(stat=identity)+facet_wrap(~site)
  # theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~site)
 
