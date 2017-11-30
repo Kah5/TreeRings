@@ -244,28 +244,42 @@ map.plot <- function(sitecode){
     site.alb$TagID <- ifelse(nchar(site.alb$TagID) < 4, paste0(0, site.alb$TagID), site.alb$TagID)
     site.alb$tellervo_ID <-  paste0(sitecode, substr(site.alb$TagID, 1, 4))
    
-  }else{
+  }else{if(sitecode %in% "GLL1"){
+    site.alb$TagID<- ifelse(nchar(site.alb$TagID) < 2, paste0( site.alb$TagID, 1), site.alb$TagID)
     site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   }
+    site.alb$tellervo_ID <- paste0(site.alb$name, site.alb$TagID)
   }
+  
   }
-    
+  } 
 
   # need to make a name that matches the Tellervo output names:
   if(file.exists(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))){
-    if(sitecode %in% "HIC"){
-      rwlfile<- read.csv(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.csv"))
+    if(sitecode %in% c("HIC", "UNI", "AVO", "GLL1", "GLL2", "GLL3", "GLL4")){
+      rwlfile <- read.csv(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.csv"))
     }else{
     library(dplR)
   rwlfile<- read.rwl(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))
     }
   names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
+  
   if(sitecode %in% c("PVC", "GLA", "HIC")){
     names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-1)
-  }else{
+    
+    site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID', all = TRUE)
+  }else{ if(sitecode %in% c("GLL1", "GLL2", "GLL3", "GLL4")){
+    
+    names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
+    names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-2)
+    names.r$full_tellervo <- names.r$short
+    site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID', all = TRUE)
+    }else{
   names.r$short <- substr(names.r$full_tellervo,1,nchar(as.character(names.r$full_tellervo))-3)
-  }
   site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID', all = TRUE)
+    }
+  }
+  
   
   # finally, convert the common species names to scientific names:
   scientific <- read.csv("data/Scientific_names.csv")
@@ -362,11 +376,20 @@ map.dispersed <- function(sitecode){
     rwlfile <- read.rwl(paste0("/Users/kah/Documents/TreeRings/cleanrwl/",sitecode, "ww.rwl"))
     names.r <- data.frame(full_tellervo = as.character(colnames(rwlfile)))
     
-    if(sitecode %in% c("MOU","ENG", "STC", "BON")){
-      names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-2)
+    if(sitecode %in% c("MOU","ENG", "STC")){
+      names.r$short <- substr(names.r$full_tellervo, 1, nchar(as.character(names.r$full_tellervo))-2)
+    }else{ if(sitecode %in% c("BON")){
+      library(stringr)
+      names.r$short <-  str_sub(as.character(names.r$full_tellervo), 4, -2)
+      names.r$short<- ifelse(is.na(as.numeric(names.r$short)),
+        
+       paste0(sitecode, str_sub(as.character(names.r$full_tellervo), 4, -3)),
+    
+         paste0(sitecode, names.r$short))
+      
     }else{
-    names.r$short <- substr(names.r$full_tellervo, 1,nchar(as.character(names.r$full_tellervo))-3)
-    }
+    names.r$short <- substr(names.r$full_tellervo, 1, nchar(as.character(names.r$full_tellervo))-3)
+    }}
     site.alb <- merge(names.r, site.alb, by.x = "short", by.y='tellervo_ID')
     
     # rename columns:

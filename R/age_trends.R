@@ -18,13 +18,17 @@ setwd("/Users/kah/Documents/TreeRings")
 # quick function to read detrend and add the year as a column:
 # this function will also just calculate BAI instead
 read_detrend_year <- function( filename, method , rwiorbai, site){
-  if(site %in% "HIC"){
-    newseries <- read.csv("cleanrwl/HICww.csv")
+  if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
+    newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
+    rwl.stats(newseries)
+    file.tuc <- read.tucson( filename )
+    row.names(newseries) <- row.names(file.tuc)
     
   }else{
   newseries <- read.tucson( filename )
-  }
   rwl.stats(newseries)
+  }
+  
   # average the cores by tree (for the sites with multiple cores):
   
   #gp.ids <- read.ids(newseries, stc = autoread.ids(newseries))
@@ -74,12 +78,12 @@ Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "Spline", rwiorbai
 Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLA")
 Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "rwi", site = "ENG")
 Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "rwi", site = "MOU")
-GLL1.bai <- read_detrend_year("cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL1")
+GLL1.bai <- read_detrend_year(filename = "cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL1")
 GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL2")
 GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL3")
 GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL4")
 PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
-AVO.bai <- read_detrend_year("cleanrwl/AVOww.rwl", method = "Spline", rwiorbai = "rwi", site = "AVO")
+AVO.bai <- read_detrend_year(filename = "cleanrwl/AVOww.rwl", method = "Spline", rwiorbai = "rwi", site = "AVO")
 UNI.bai <- read_detrend_year("cleanrwl/UNIww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNI")
 
 detrended.list <- list(Hickory.bai, StCroix.bai, Bonanza.bai,Townsend.bai,Pleasant.bai, Coral.bai,
@@ -95,6 +99,7 @@ test$short %in% colnames(detrended.mean)
 # make example chronology to plot out:
 hic.raw <- read.rwl("cleanrwl/HICww.rwl")
 hic.raw$year <- as.numeric(row.names( hic.raw))
+
 png(width=6,height=4,units="in",res = 300,bg = "transparent","raw_rw_transparent.png")
 ggplot(Hickory.bai, aes(hic.raw$year, hic.raw[,11]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Raw Ring Width")+xlab("Year")
 dev.off()
@@ -397,8 +402,11 @@ write.csv(det.age.clim.ghcn.df, "outputs/data/full_det_ghcn_rwi.csv", row.names 
 # based on the DBH at each time step, specify the DBH class over time. 
 
 read_DBH_year <- function( filename, site){
-  if(site %in% "HIC"){
-    newseries <- read.csv("cleanrwl/HICww.csv")
+  if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
+    newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
+    
+    row.names(newseries) <- newseries$year
+    newseries <- newseries[!names(newseries) %in% "year"]
   }else{
     newseries <- read.tucson( filename )
   }
@@ -412,7 +420,7 @@ read_DBH_year <- function( filename, site){
   gp.treeMean2 <- treeMean(newseries, autoread.ids(newseries), na.rm=TRUE)
   
   # if multiple cores were sampled per each site, we need to average the widths of the cores before estimating diamters:
-  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC", "HIC", "BON", "PLE")
+  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC", "HIC", "BON", "PLE", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")
   if(site %in% mult.core.sites){
           if(site %in% "COR"){
             colnames(gp.treeMean2) <- paste0(site,19, colnames(gp.treeMean2))
@@ -427,13 +435,30 @@ read_DBH_year <- function( filename, site){
               colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
             }else{
           colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
+          
             }
               }
-          }
+  }
+
           newseries <- gp.treeMean2
           
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
+          if(site %in% "AVO"){
+            diams <- site.data[complete.cases(site.data[c("full_tellervo", "DBH")]), ]
+            diams.agg <- aggregate(diams[,c("full_tellervo", "DBH")], list(diams$full_tellervo), mean, na.rm = TRUE)
+            colnames(diams.agg) <- c("ID", "short", "DBH")
+          
+            diams <- diams.agg[,c("ID", "DBH")]
+            diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+            colnames(diams) <- c("ID", "DBH") 
+            
+            # only find records where we have both DBH and tellervo entries:
+            diams <- diams [diams$ID %in% colnames(newseries),]
+            newseries <- newseries[,colnames(newseries) %in% diams$ID]
+          }else{
           diams <- site.data[c("short", "DBH")]
+          diams <- diams[2:length(diams$short),]
+          diams$DBH <- as.numeric(as.character(diams$DBH))
           diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
           colnames(diams.agg) <- c("ID", "short", "DBH")
           diams <- diams.agg[,c("ID", "DBH")]
@@ -443,7 +468,7 @@ read_DBH_year <- function( filename, site){
           # only find records where we have both DBH and tellervo entries:
           diams <- diams [diams$ID %in% colnames(newseries),]
           newseries <- newseries[,colnames(newseries) %in% diams$ID]
-          
+          }
           rwl <- newseries*0.1 # convert measuremnts to CM:
           
           # below code is adapted from dplR function bai.out to just estimate tree diameter at this point:
@@ -493,10 +518,15 @@ read_DBH_year <- function( filename, site){
   }else{ 
     # if sites only have one core per tree:
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
+          #if(site %in% c("GLL1", "GLL2", "GLL3", "GLL4")){
+           # diams <- site.data[c("short",'full_tellervo', "DBH")]
+            #diams$DBH <- (diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+            #colnames(diams) <- c("ID","fullID", "DBH") 
+          #}else{
           diams <- site.data[c("full_tellervo", "DBH")]
-          diams$DBH <- (diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+          diams$DBH <- (diams$DBH) 
           colnames(diams) <- c("ID", "DBH") 
-          
+         # }
           # only find records where we have both DBH and tellervo entries:
           diams <- diams [diams$ID %in% colnames(newseries),]
           newseries <- newseries[,colnames(newseries) %in% diams$ID]
@@ -560,21 +590,21 @@ read_DBH_year <- function( filename, site){
 
 Hickory.DBH <- read_DBH_year(filename = "cleanrwl/HICww.rwl",  site = "HIC")
 StCroix.DBH <- read_DBH_year("cleanrwl/STCww.rwl",  site = "STC")
-Bonanza.DBH <- read_DBH_year("cleanrwl/BONww.rwl", site = "BON")
-Townsend.DBH <- read_DBH_year(filename = "cleanrwl/TOWww.rwl",  site = "TOW") #townsend woods
-Pleasant.DBH <- read_DBH_year(filename = "cleanrwl/PLEww.rwl",  site = "PLE") #Pleasant valley conservency
-Coral.DBH <- read_DBH_year(filename = "cleanrwl/CORww.rwl",  site = "COR")
-Uncas.DBH <- read_DBH_year(filename = "cleanrwl/UNCww.rwl",  site = "UNC")
-Glacial.DBH <- read_DBH_year("cleanrwl/GLAww.rwl",  site = "GLA")
+Bonanza.DBH <- read_DBH_year(filename = "cleanrwl/BONww.rwl", site = "BON") # missing 1 core
+Townsend.DBH <- read_DBH_year(filename = "cleanrwl/TOWww.rwl",  site = "TOW") #missing 1 core
+Pleasant.DBH <- read_DBH_year(filename = "cleanrwl/PLEww.rwl",  site = "PLE") #missing 3
+Coral.DBH <- read_DBH_year(filename = "cleanrwl/CORww.rwl",  site = "COR") #bai needs the 19 in front of numbers
+Uncas.DBH <- read_DBH_year(filename = "cleanrwl/UNCww.rwl",  site = "UNC") # bai is miisng full names...save as csv?
+Glacial.DBH <- read_DBH_year("cleanrwl/GLAww.rwl",  site = "GLA") # messed up and DBH not averaged ring
 Englund.DBH <- read_DBH_year(filename = "cleanrwl/ENGww.rwl",  site = "ENG")
-Mound.DBH <- read_DBH_year(filename = "cleanrwl/MOUww.rwl", site = "MOU")
-GLL1.DBH <- read_DBH_year("cleanrwl/GLL1ww.rwl",  site = "GLL1")
-GLL2.DBH <- read_DBH_year("cleanrwl/GLL2ww.rwl",  site = "GLL2")
+Mound.DBH <- read_DBH_year(filename = "cleanrwl/MOUww.rwl", site = "MOU") # bai is messed up
+GLL1.DBH <- read_DBH_year("cleanrwl/GLL1ww.rwl",  site = "GLL1")# bai removed extra ones
+GLL2.DBH <- read_DBH_year("cleanrwl/GLL2ww.rwl",  site = "GLL2") #  bai removed extra onesi
 GLL3.DBH <- read_DBH_year("cleanrwl/GLL3ww.rwl",  site = "GLL3")
-GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4")
+GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4") # error
 PVC.DBH <- read_DBH_year("cleanrwl/PVCww.rwl",  site = "PVC")
-AVO.DBH <- read_DBH_year(filename = "cleanrwl/AVOww.rwl",  site = "AVO")
-UNI.DBH <- read_DBH_year("cleanrwl/UNIww.rwl", site = "UNI")
+AVO.DBH <- read_DBH_year(filename = "cleanrwl/AVOww.rwl",  site = "AVO") 
+UNI.DBH <- read_DBH_year(filename = "cleanrwl/UNIww.rwl", site = "UNI") # DBH has multiple cores listed
 
 dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH, Coral.DBH,
                        Uncas.DBH, Glacial.DBH, Englund.DBH, Mound.DBH, GLL1.DBH, GLL2.DBH, 
@@ -625,8 +655,16 @@ DBH.classify <- function(dbh.df){
 dbh.class <- lapply(dbh.list, DBH.classify)
 dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
+testmerge <- merge(dbh.class.df, detrended.age.df, by = c("year", "site", "ID"))
 # merge these with the climate/growth dataframes:
-merged.test<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
+det.age.clim.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
+det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
+test.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
+test.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
+
+
+ggplot(det.age.clim.ghcn.df, aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)
+
 # ------------------------How does growth vary over time:
 
 library(treeclim)
@@ -1079,7 +1117,7 @@ ggplot(det.age.clim.df, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_
 
 
 summary(lm(RWI~PDSI, data = det.age.clim.df))
-summary(lm(RWI~PDSI:site, data = det.age.clim.df))
+summary(lm(RWI~PDSI+dbhclass, data = det.age.clim.df))
 summary(lm(RWI~year, data = det.age.clim.df))
 summary(lm(RWI~year:site, data = det.age.clim.df))
 
@@ -1153,7 +1191,7 @@ get.clim.sensitivity <- function(df, model.func){
 }
 
 # get all the sensitivities for pdsi:
-
+df <- test.ghcn.df
 pdsi.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ PDSI")
 Julpdsi.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ Jul.pdsi")
 TMIN.sens <- get.clim.sensitivity(df = det.age.clim.ghcn.df, model.func = "RWI ~ TMIN")

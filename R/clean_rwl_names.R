@@ -26,6 +26,7 @@ clean_rwl <- function(site, rwl.file, wood){
     colnames(newseries) <- new
     #read.ids(newseries,stc = c(3,3,3))
     write.rwl(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson")
+    newseries$year <- row.names(newseries)
     write.csv(newseries, paste0("./cleanrwl/",site,wood, ".csv"), row.names = FALSE)
   }else{
     if(site == "STC"){
@@ -77,7 +78,9 @@ clean_rwl <- function(site, rwl.file, wood){
             if(site %in% c("UNC", "TOW", "ENG", "PLE","GLL1", "GLL2", "GLL3", "GLL4", "PVC", "AVO", "UNI")){
             newseries <- read.rwl(rwl.file)
             write.tucson(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson", long.names=TRUE)
+            newseries$year <- row.names(newseries)
             
+            write.csv(newseries, paste0("./cleanrwl/",site,wood, ".csv"), row.names = FALSE)
             }else{
               if(site == "COR"){
                 newseries <- read.rwl(rwl.file)
@@ -95,6 +98,9 @@ clean_rwl <- function(site, rwl.file, wood){
                 
               }else{cat("NA")}
               write.tucson(newseries, fname = paste0("./cleanrwl/",site, wood,".rwl") , format="tucson", long.names=TRUE)
+              newseries$year <- row.names(newseries)
+              write.csv(newseries, paste0("./cleanrwl/",site,wood, ".csv"), row.names = FALSE)
+              
               
             }}
           
@@ -122,7 +128,7 @@ clean_rwl(site = "GLL3", rwl.file = "/Users/kah/Documents/crossdating/data/cofec
 clean_rwl(site = "GLL4", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/GLL4.rwl", "ww")
 clean_rwl(site = "PLE", rwl.file = './cofecha/PLEww.rwl', "ww")
 clean_rwl(site = "PVC", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/PVC.rwl", "ww")
-clean_rwl(site = "AVO", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/AVOo.rwl", "ww")
+clean_rwl(site = "AVO", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/AVO.rwl", "ww")
 clean_rwl(site = "UNI", rwl.file = "/Users/kah/Documents/crossdating/data/cofecha/UNI.rwl", "ww")
 
 # for Earlywood
