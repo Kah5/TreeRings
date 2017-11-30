@@ -1201,7 +1201,7 @@ summary(lm(Jul.pdsi ~ RWI , data = sim.df[sim.df$climclass %in% "Dry_0.25" & sim
 summary(lm(Jul.pdsi ~ RWI , data = sim.df[sim.df$climclass %in% "Dry_0.25" & sim.df$class %in% "post-1950",]))
 
 
-# get bootstrapped estimates of climate sensitivity for dry years :
+# get bootstrapped estimates of climate sensitivity for dry years for wet years before and after 1950 :
 get.clim.sens.by.dry <- function(df, model.func){
   
   df <- aggregate(Jul.pdsi~year, data = det.age.clim.ghcn.df, FUN = mean )
@@ -1309,8 +1309,8 @@ get.clim.sens.by.dry <- function(df, model.func){
 }
 sens.jul.pdsi_dry0.25 <- get.clim.sens.by.dry(df = det.age.clim.ghcn.df, model.func = "RWI ~ Jul.pdsi")
 
-# get bootstrapped estimates of climate sensitivity for wet years :
-get.clim.sens.by.wet <- function(df, model.func){
+# get bootstrapped estimates of climate sensitivity for wet years before and after 1950:
+get.clim.sens.by.wet <- function(df,climateclass, model.func){
   
   df <- aggregate(Jul.pdsi~year, data = det.age.clim.ghcn.df, FUN = mean )
   
@@ -1338,7 +1338,7 @@ get.clim.sens.by.wet <- function(df, model.func){
   sim.df <- merge(dfs, similar.clims[,c("year", "class", "climclass")], by = c('year'))
   
   # only use wet years across the region:
-  sim.df <- sim.df[sim.df$climclass %in% "Wet_0.25",]
+  sim.df <- sim.df[sim.df$climclass %in% climateclass,]
   coeffs <- matrix ( 0, length(unique(sim.df$site))*2, 8 ) # set up matrix for coefficients
   yr <- 1895:1950
   yr.post <- 1950:2014
@@ -1417,6 +1417,270 @@ get.clim.sens.by.wet <- function(df, model.func){
   
 }
 sens.jul.pdsi_wet0.25 <- get.clim.sens.by.dry(df = det.age.clim.ghcn.df, model.func = "RWI ~ Jul.pdsi")
+
+ggplot(sens.jul.pdsi_wet0.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
+ggplot(sens.jul.pdsi_dry0.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
+
+# get bootstrapped estimates of climate sensitivy for dry years young and old, before + after 1950
+get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
+ 
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  
+  
+  df$class <- '9999'
+  df[df$year %in% yr,]$class <- 'Pre-1950'
+  df[df$year %in% yr.post,]$class <- 'Post-1950'
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
+  
+  
+  for(s in 1: length(unique(df$site))){
+    
+    name <- unique(df$site)[s]  
+    site.data<- na.omit(df[df$site == name ,])
+    
+    sim.df <- aggregate(Jul.pdsi~year, data = site.data, FUN = mean )
+    
+    dry <- quantile(sim.df$Jul.pdsi, 0.25) # value of the driest years
+    wet <- quantile(sim.df$Jul.pdsi, 0.75) # value of the wettest years
+    
+    pre.dry <- sim.df[sim.df$year < 1950 & sim.df$Jul.pdsi <= dry,]
+    pre.dry$class <- "Pre-1950"
+    pre.dry$climclass <- "Dry_0.25"
+    post.dry <- sim.df[sim.df$year >=1950 & sim.df$Jul.pdsi <= dry,]
+    post.dry$class <- "Post-1950"
+    post.dry$climclass <- "Dry_0.25"
+    
+    pre.wet <- sim.df[sim.df$year < 1950 & sim.df$Jul.pdsi >= wet,]
+    pre.wet$class <- "Pre-1950"
+    pre.wet$climclass <- "Wet_0.25"
+    post.wet <- sim.df[sim.df$year >=1950 & sim.df$Jul.pdsi >= wet,]
+    post.wet$class <- "Post-1950"
+    post.wet$climclass <- "Wet_0.25"
+    
+    similar.clims <- rbind(post.wet, pre.wet, pre.dry, post.dry)
+    
+    #dfs <- det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "HIC",]
+    
+    sim.df <- merge(site.data, similar.clims[,c("year", "class", "climclass")], by = c('year'))
+    
+    # only use wet years across the region:
+    sim.df <- sim.df[sim.df$climclass %in% climateclass,]
+    
+    
+    
+    # function used in boot strapping below
+    bs <- function(formula, data, indices) {
+      d <- data[indices,] # allows boot to select sample 
+      fit <- lm(formula, data=d)
+      return(coef(fit)) 
+    } 
+    
+    # for the "young" class:
+    if(nrow(site.data[site.data$site == name & site.data$ageclass == "young" ,]) > 0){
+      # bootstrapping the linear regression model
+      results <- boot(data=site.data[site.data$ageclass == "young" & site.data$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      coeffs[s,3:4] <- results$t0
+      coeffs[s , 1] <- name
+      coeffs[s,2] <- "young"
+      coeffs[s,5] <- as.data.frame(int.cis$normal)$V2
+      coeffs[s,6] <- as.data.frame(int.cis$normal)$V3
+      coeffs[s,7] <- as.data.frame(slope.cis$normal)$V2
+      coeffs[s,8] <- as.data.frame(slope.cis$normal)$V3
+      
+    } else{
+      #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "young" ,])
+      coeffs[s,3:8] <- c(NA,NA)
+      coeffs[s , 2] <- "young"
+      coeffs[s,1] <- name
+    }
+    
+    
+    # for the "old" class:  
+    if(nrow(site.data[site.data$site == name & site.data$ageclass == "old" ,]) > 0){
+      results <- boot(data=site.data[site.data$ageclass == "old" & site.data$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      coeffs[s+length(unique(df$site)),3:4] <- results$t0
+      coeffs[s+length(unique(df$site)) , 1] <- name
+      coeffs[s+length(unique(df$site)),2] <- "old"
+      coeffs[s+length(unique(df$site)),5] <- as.data.frame(int.cis$normal)$V2
+      coeffs[s+length(unique(df$site)),6] <- as.data.frame(int.cis$normal)$V3
+      coeffs[s+length(unique(df$site)),7] <- as.data.frame(slope.cis$normal)$V2
+      coeffs[s+length(unique(df$site)),8] <- as.data.frame(slope.cis$normal)$V3
+      
+      
+    }else{
+      #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "old" ,])
+      coeffs[s+length(unique(df$site)),3:8] <- c(NA,NA)
+      coeffs[s +length(unique(df$site)), 2] <- "young"
+      coeffs[s+length(unique(df$site)),1] <- name
+    }
+  }
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
+  coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
+  coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
+  coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
+  coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
+  coeffs
+  
+}
+
+sens.jul.pdsi.age_wet.25 <- get.clim.sens.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Wet_0.25", model.func = "RWI ~ Jul.pdsi" )
+
+# get bootstrapped estimates of climate sensitivy for wet years young and old, before + after 1950
+sens.jul.pdsi.age_dry.25<- get.clim.sens.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", model.func = "RWI ~ Jul.pdsi" )
+
+
+ggplot(sens.jul.pdsi.age_wet.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
+ggplot(sens.jul.pdsi.age_dry.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
+# get the bootstrapped correlations for wet years and dry years:
+get.clim.cor.age.by.moisture <- function(df, climateclass,clim){
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  
+  
+  df$class <- '9999'
+  df[df$year %in% yr,]$class <- 'Pre-1950'
+  df[df$year %in% yr.post,]$class <- 'Post-1950'
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set u
+  
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 5 ) # set up matrix for coefficients
+  
+  # function used in boot strapping below
+  boot.cor <- function(data, ind, colno ){
+    
+    return(cor(data[ind,c(colno)], data[ind,]$RWI, use = "pairwise.complete.obs"))
+  }
+  
+  
+  for(s in 1: length(unique(df$site))) {
+    
+    
+    
+    name <- unique(df$site)[s]  
+    site.data<- na.omit(df[df$site == name ,])
+    
+    sim.df <- aggregate(Jul.pdsi~year, data = site.data, FUN = mean )
+    
+    dry <- quantile(sim.df$Jul.pdsi, 0.25) # value of the driest years
+    wet <- quantile(sim.df$Jul.pdsi, 0.75) # value of the wettest years
+    
+    pre.dry <- sim.df[sim.df$year < 1950 & sim.df$Jul.pdsi <= dry,]
+    pre.dry$class <- "Pre-1950"
+    pre.dry$climclass <- "Dry_0.25"
+    post.dry <- sim.df[sim.df$year >=1950 & sim.df$Jul.pdsi <= dry,]
+    post.dry$class <- "Post-1950"
+    post.dry$climclass <- "Dry_0.25"
+    
+    pre.wet <- sim.df[sim.df$year < 1950 & sim.df$Jul.pdsi >= wet,]
+    pre.wet$class <- "Pre-1950"
+    pre.wet$climclass <- "Wet_0.25"
+    post.wet <- sim.df[sim.df$year >=1950 & sim.df$Jul.pdsi >= wet,]
+    post.wet$class <- "Post-1950"
+    post.wet$climclass <- "Wet_0.25"
+    
+    similar.clims <- rbind(post.wet, pre.wet, pre.dry, post.dry)
+    
+    #dfs <- det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "HIC",]
+    
+    sim.df <- merge(site.data, similar.clims[,c("year", "class", "climclass")], by = c('year'))
+    
+    # only use wet years across the region:
+    sim.df <- sim.df[sim.df$climclass %in% climateclass,]
+    
+    
+    
+    
+    # for the "young" class:
+    if(nrow(site.data[site.data$site == name & site.data$ageclass == "young" ,]) > 0){
+      
+      # bootstrapping the correlation coefficients:
+      results <- boot(data=site.data[site.data$ageclass == "young" & site.data$year >= 1950 ,], colno = clim, statistic=boot.cor, R=2000)
+      
+      #int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      #slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      cis <- boot.ci(boot.out = results, type = "norm")
+      ci.mo <- cis$normal[2:3]
+      t <- results$t0
+      
+      coeffs[s,3] <-t
+      coeffs[s , 1] <- name
+      coeffs[s,2] <- "young"
+      coeffs[s,4] <- ci.mo[1]
+      coeffs[s,5] <- ci.mo[2]
+      
+      
+    } else{
+      #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "young" ,])
+      coeffs[s,3:5] <- c(NA,NA, NA)
+      coeffs[s , 2] <- "young"
+      coeffs[s,1] <- name
+    }
+    
+    
+    # for the "old" class:  
+    if(nrow(site.data[site.data$site == name & site.data$ageclass == "old" ,]) > 0){
+      results <- boot(data=site.data[site.data$ageclass == "old" & site.data$year < 1950 ,], colno = clim, statistic=boot.cor, R=2000)
+      
+      # bootstrapping the correlation coefficients:
+      
+      #int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      #slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      cis <- boot.ci(boot.out = results, type = "norm")
+      ci.mo <- cis$normal[2:3]
+      t <- results$t0
+      
+      coeffs[s+length(unique(df$site)),3] <-t
+      coeffs[s+length(unique(df$site)) , 1] <- name
+      coeffs[s+length(unique(df$site)),2] <- "old"
+      coeffs[s+length(unique(df$site)),4] <- ci.mo[1]
+      coeffs[s+length(unique(df$site)),5] <- ci.mo[2]
+      
+      
+    }else{
+      #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "old" ,])
+      coeffs[s+length(unique(df$site)),3:5] <- c(NA,NA, NA)
+      coeffs[s +length(unique(df$site)), 2] <- "old"
+      coeffs[s+length(unique(df$site)),1] <- name
+    }
+  }
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("site","age",'cor.est', "ci.min", "ci.max")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$cor.est <- as.numeric(as.character(coeffs$cor.est))
+  
+  coeffs$ci.min <- as.numeric(as.character(coeffs$ci.min))
+  coeffs$ci.max <- as.numeric(as.character(coeffs$ci.max))
+  #coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  #coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
+  coeffs
+  
+}
+
+cor.jul.pdsi.age_dry.25 <- get.clim.cor.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", clim = "Jul.pdsi" )
+cor.jul.pdsi.age_wet.25 <- get.clim.cor.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Wet_0.25", clim = "Jul.pdsi" )
+
+ggplot(cor.jul.pdsi.age_dry.25, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
+
+ggplot(cor.jul.pdsi.age_wet.25, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
+
+
 
 
 # july pdsi is signicantly increaseing
