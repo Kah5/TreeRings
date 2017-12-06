@@ -119,6 +119,12 @@ png(width=6,height=4,units="in",res = 300,bg = "transparent","transparent_chrono
 ggplot(hic.chron, aes(year, xxxstd))+xlim(1856, 2016) +ylim(0,2)+geom_line(color = "white")+theme_minimal()+xlab("Year")+ylab("Detrended Ring Width Index")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))
 dev.off()
 
+# make example PDSI reconstruction to plot out:
+PDSImi <- read.table("/Users/kah/Documents/TreeRings/outputs/data/850w_425n_226.txt", header = TRUE)
+png(width=6,height=4,units="in",res = 300,bg = "transparent","transparent_reconstruction.png")
+ggplot(PDSImi, aes(YEAR, RECON))+#xlim(1500, 2016) +ylim(0,2)+
+  geom_line(color = "white")+theme_minimal()+xlab("Year")+ylab("Reconstructed PDSI")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))
+dev.off()
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
@@ -698,6 +704,22 @@ ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat
 dev.off()
 
 summary(lm(RWI ~ Jul.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
+
+# lets find to cores that need to be checked (not sensitivit to climate)
+corrs <- data.frame(a = 1:length(unique(det.age.clim.ghcn.df$ID)),
+                    id = unique(det.age.clim.ghcn.df$ID))
+for(i in 1:length(unique(det.age.clim.ghcn.df$ID))){
+  id <- unique(det.age.clim.ghcn.df$ID)[i]
+ 
+  a <- cor(det.age.clim.ghcn.df[det.age.clim.ghcn.df$ID %in% id,]$RWI, det.age.clim.ghcn.df[det.age.clim.ghcn.df$ID %in% id,]$Jul.pdsi, use = "pairwise.complete.obs")
+  corrs[i,]$a <- a
+  corrs[i,]$id <- id
+}
+
+removes <- corrs[corrs$a <= 0.1 | is.na(corrs$a),]$id
+
+det.age.clim.ghcn.df <- det.age.clim.ghcn.df[!det.age.clim.ghcn.df$ID %in% removes,]
+
 # ------------------------How does growth vary over time:
 
 library(treeclim)
@@ -1560,7 +1582,7 @@ sens.jul.pdsi.age_dry.25<- get.clim.sens.age.by.moisture(df =det.age.clim.ghcn.d
 
 ggplot(sens.jul.pdsi.age_wet.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
 
-ggplot(sens.jul.pdsi.age_wet.25, aes(age, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)+facet_wrap(~site)
+ggplot(sens.jul.pdsi.age_dry.25, aes(age, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)+facet_wrap(~site)
 
 
 ggplot(sens.jul.pdsi.age_dry.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
@@ -2454,13 +2476,13 @@ get.clim.sens.year <- function(df, model.func){
   
 locs <- read.csv("outputs/priority_sites_locs.csv")
 locs$code <- as.character(locs$code)
-locs[24:27,]$code <- c("GLL4", "GLL3", "GLL2", "GLL1")
-sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC", "AVO")
+locs[9:12,]$code <- c( "GLL1", "GLL2", "GLL3", "GLL4")
+sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC", "AVO", "PLE", "UNI")
 
-speciesdf<- data.frame(code = c("BON", "COR", "GLA", "GL1", "GL2", "GL3", "GL4",
-                                "HIC", "MOU", "PLE", "PVC", "STC", "TOW", "UNC", "AVO"),
-                       species =  c("QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
-                                    "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA", "QURA"))
+speciesdf<- data.frame(code = c("BON", "COR", "GLA", "GLL1", "GLL2", "GLL3", "GLL4",
+                                "HIC", "MOU", "PLE", "PVC", "STC", "TOW", "UNC", "AVO", "ENG", "PLE", "UNI"),
+                       species =  c( "QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
+                                  "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA", "QURA", "QURA", "QUAL", "QUAL"))
 
 
 
@@ -2658,11 +2680,17 @@ ggplot(site.df.age, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 25)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI)")+theme(legend.title = element_blank(), legend.position = c(0.8,0.9))
 dev.off()
 
+# find differences in means of the site.df.ages
+t.out<- t.test(site.df.age[site.df.age$age %in% "Past",]$slope.est, site.df.age[site.df.age$age %in% "Modern",]$slope.est )
+round(t.out$p.value, digits = 5)
+
 png(height = 6.5, width = 8, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25.png")
 ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 25)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank(), legend.position = c(0.8,0.9))
 dev.off()
 
+t.outdry<- t.test(site.df.age.dry[site.df.age.dry$age %in% "Past",]$slope.est, site.df.age.dry[site.df.age.dry$age %in% "Modern",]$slope.est )
+round(t.outdry$p.value, digits = 5)
 
 
 png(height = 6.5, width = 8, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_wet_0.25.png")
@@ -2670,11 +2698,13 @@ ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 25)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank(), legend.position = c(0.8,0.9))
 dev.off()
 
+t.outwet <- t.test(site.df.age.wet[site.df.age.wet$age %in% "Past",]$slope.est, site.df.age.wet[site.df.age.wet$age %in% "Modern",]$slope.est )
+round(t.outwet$p.value, digits = 5)
 
-site.df.age.wet[site.df.age.wet$site %in% "AVO",]$Description <- "Forest"
+site.df.age.wet[site.df.age.wet$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
+site.df.age.dry[site.df.age.dry$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
 
-site.df.age.dry[site.df.age.dry$site %in% "AVO",]$Description <- "Forest"
-
+site.df.age.dry[site.df.age.dry$site %in% "",]$Description <- "Forest"
 
 site.df.age.wet[site.df.age.wet$species %in% "QUAL/QUMA",]$species <- "QUAL"
 site.df.age.wet[site.df.age.wet$species %in% "QURA/QUVE",]$species <- "QURA"
@@ -2687,6 +2717,12 @@ png(height = 6.5, width = 9, units = "in", res =300,"outputs/boxplot_Past_Modern
 ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~Description)
 dev.off()
+
+t.outwetsav <- t.test(site.df.age.wet[site.df.age.wet$age %in% "Past" & site.df.age.wet$Description %in% "Savanna",]$slope.est, site.df.age.wet[site.df.age.wet$age %in% "Modern" & site.df.age.wet$Description %in% "Savanna",]$slope.est )
+round(t.outwetsav$p.value, digits = 5)
+
+t.outwetfor <- t.test(site.df.age.wet[site.df.age.wet$age %in% "Past" & site.df.age.wet$Description %in% "Forest",]$slope.est, site.df.age.wet[site.df.age.wet$age %in% "Modern" & site.df.age.wet$Description %in% "Forest",]$slope.est )
+round(t.outwetfor$p.value, digits = 5)
 
 png(height = 6.5, width = 9, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_stand_type.png")
 ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+

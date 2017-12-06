@@ -360,6 +360,8 @@ dev.off()
 sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
 cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
 
+dens$ecoclass <- ifelse(dens$PLSdensity >= 48, "Forest", ifelse(dens$PLSdensity >= 0.5, "Savanna", "Prairie"))
+
 sites.map.pls <- ggplot()+ geom_raster(data=dens, aes(x=x, y=y, fill = PLSdensity))+
   #labs( title="A). Tree Core Sites 2015 & 2016") + 
   scale_fill_gradientn(colours = cbpalette, name ="PLS Tree density (trees/ha)")+
@@ -377,6 +379,28 @@ sites.map.pls + theme_black()
 
 png("outputs/bw_tree_density_map.png")
 sites.map.pls
+dev.off()
+
+ df.dens <- dens
+sites.map.eco <- ggplot()+geom_raster(data = df.dens, aes(x=x, y=y, fill = ecoclass))+
+   
+  scale_fill_manual(values = c('#f7fcb9',
+                      '#addd8e',
+                      '#31a354'),limits = c("Prairie", "Savanna", "Forest"), name ="Biome")#+
+  #coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+sites.map.eco <- sites.map.eco +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                             colour = "darkgrey", fill = NA, size  = 1.5)+theme_black()+
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+sites.map.eco<- sites.map.eco  + coord_cartesian(xlim = c(-59495.64, 845903.4), ylim=c(68821.43, 1480021))
+
+png("outputs/bw_ecotype_map.png")
+sites.map.eco
 dev.off()
 
 sites.map.pls <- sites.map.pls + geom_point(data = priority[complete.cases(priority),], aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
