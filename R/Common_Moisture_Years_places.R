@@ -58,6 +58,7 @@ ggplot(dataset[dataset$Month %in% '07', ], aes(as.numeric(Year), ppt..inches.))+
 
 setwd("/Users/kah/Documents/TreeRings")
 sites <- unique(dataset$site)
+library(reshape2)
 
 # this loop does a pca for each site's climate time series, 
 # finds the euclidian distance bewteen PC1 and PC2 for each year,
@@ -95,11 +96,11 @@ for(p in 1:length(sites)){
       
       # plot out the climate spaces:
       ggplot(JJA.means, aes(pc1, pc2, color = class)) + geom_point()
-      dists <- dist(JJA.means[,15:16], by.rows  = FALSE)
+      dists <- dist(JJA.means[,15:16]) #, by.rows  = FALSE)
       
       # need to find years that are close to each other:
       library(sp)
-      df<- spDists(as.matrix(JJA.means[,15:16]))
+      df <- spDists(as.matrix(JJA.means[,15:16]))
       i <- apply(df,2, function (x) which(x %in% min(x[x != 0])))
       dist <- apply(df,2, function (x) min(x[x != 0]))
       closest <- data.frame(Year = JJA.means$Year, distance = dist, closest = i)
@@ -116,6 +117,8 @@ for(p in 1:length(sites)){
       
       # order the dataframe and take the top 10 pairs of years 
       ordered <- post.pre[order(post.pre$distance),]
+      post_1950 <- JJA.means[JJA.means$Year %in% ordered$Year,]
+      pre_1950 <- JJA.means[JJA.means$Year %in% nearestyear$Year,]
       years.to.do <- ordered[1:15,]
       
       write.csv(years.to.do, file =  paste0("outputs/data/Isotope_climate/", sites[p],"_most_similar_years.csv"))

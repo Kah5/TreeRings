@@ -59,12 +59,12 @@ tree_age_agg <- function(rwiorbai, site.code, age1950, type){
   
   site.m$year <- as.numeric(site.m$year)
   site.m$ID <- as.character(site.m$ID)
-  site.m$ageclass <- "young"
+  site.m$ageclass <- "Modern"
   site.code <- unique(site.m$site)
   # need to assign old trees then and old trees now
     for (i in unique(site.m$ID)){
-      ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 , site.m[site.m$ID %in% i, ]$ageclass <-  "young",  
-             ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age > age1950 ,site.m[site.m$ID %in% i, ]$ageclass<- "old", site.m[site.m$ID %in% i, ]$ageclass <-  "young"))
+      ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age <= age1950 , site.m[site.m$ID %in% i, ]$ageclass <-  "Modern",  
+             ifelse(site.m[site.m$ID %in% i & site.m$year == 1950,]$Age > age1950 ,site.m[site.m$ID %in% i, ]$ageclass<- "Past", site.m[site.m$ID %in% i, ]$ageclass <-  "Modern"))
                     
     }
   write.csv(site.m, paste0( "data/tree_growth_age/", site.code, "-",type, ".csv"))
