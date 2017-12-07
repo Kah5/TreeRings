@@ -1462,7 +1462,7 @@ ggplot(sens.jul.pdsi_dry0.25, aes(site, slope.est, color = age))+geom_point()+ge
 # get bootstrapped estimates of climate sensitivy for dry years Modern and Past, before + after 1950
 get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
  
-  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 9 ) # set up matrix for coefficients
   yr <- 1895:1950
   yr.post <- 1950:2014
   
@@ -1470,7 +1470,7 @@ get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
   df$class <- '9999'
   df[df$year %in% yr,]$class <- 'Pre-1950'
   df[df$year %in% yr.post,]$class <- 'Post-1950'
-  coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
+  coeffs <- matrix ( 0, length(unique(df$site))*2, 9 ) # set up matrix for coefficients
   
   
   for(s in 1: length(unique(df$site))){
@@ -1516,9 +1516,9 @@ get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
     } 
     
     # for the "Modern" class:
-    if(nrow(site.data[site.data$site == name & site.data$ageclass == "Modern" ,]) > 0){
+    if(nrow(sim.df[sim.df$site == name & sim.df$ageclass == "Modern" ,]) > 0){
       # bootstrapping the linear regression model
-      results <- boot(data=site.data[site.data$ageclass == "Modern" & site.data$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
+      results <- boot(data=sim.df[sim.df$ageclass == "Modern" & sim.df$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
       
       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
       slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
@@ -1539,8 +1539,8 @@ get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
     
     
     # for the "Past" class:  
-    if(nrow(site.data[site.data$site == name & site.data$ageclass == "Past" ,]) > 0){
-      results <- boot(data=site.data[site.data$ageclass == "Past" & site.data$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
+    if(nrow(sim.df[sim.df$site == name & sim.df$ageclass == "Past" ,]) > 0){
+      results <- boot(data=sim.df[sim.df$ageclass == "Past" & sim.df$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
       
       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
       slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
@@ -1704,7 +1704,7 @@ function(df, climateclass ,model.func){
   coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
   coeffs
   
-}
+#}
 
 
 # get the bootstrapped correlations for wet years and dry years:
@@ -1762,7 +1762,7 @@ get.clim.cor.age.by.moisture <- function(df, climateclass,clim){
     # only use wet years across the region:
     sim.df <- sim.df[sim.df$climclass %in% climateclass,]
     
-    
+    site.data <- sim.df
     
     
     # for the "Modern" class:
@@ -1838,6 +1838,7 @@ cor.jul.pdsi.age_wet.25 <- get.clim.cor.age.by.moisture(df =det.age.clim.ghcn.df
 ggplot(cor.jul.pdsi.age_dry.25, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
 
 
+# get a correlation for each tree:
 get.clim.cor.age.by.moist.ID <- function(df, climateclass,clim){
   yr <- 1895:1950
   yr.post <- 1950:2014
@@ -1888,7 +1889,7 @@ get.clim.cor.age.by.moist.ID <- function(df, climateclass,clim){
     # only use wet years across the region:
     sim.df <- sim.df[sim.df$climclass %in% climateclass,]
     
-    
+    site.data <- sim.df
     
     
     # for the "Modern" class:
@@ -1964,6 +1965,123 @@ get.clim.cor.age.by.moist.ID <- function(df, climateclass,clim){
 cor.jul.pdsi.age_dry.25.id <- get.clim.cor.age.by.moist.ID(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", clim = "Jul.pdsi" )
 
 ggplot(cor.jul.pdsi.age_dry.25.id, aes(age, cor.est, color = age))+geom_boxplot()+facet_wrap(~site)#+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
+
+ggplot(cor.jul.pdsi.age_dry.25.id, aes(age, cor.est, color = age))+geom_boxplot()+facet_wrap(~site)#+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
+
+# get a senstivity for each tree at each site:
+get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
+  
+  coeffs <- matrix ( 0, length(unique(df$ID))*2, 9 ) # set up matrix for coefficients
+  yr <- 1895:1950
+  yr.post <- 1950:2014
+  
+  
+  df$class <- '9999'
+  df[df$year %in% yr,]$class <- 'Pre-1950'
+  df[df$year %in% yr.post,]$class <- 'Post-1950'
+  coeffs <- matrix ( 0, length(unique(df$ID))*2, 9 ) # set up matrix for coefficients
+  
+  
+  for(s in 1: length(unique(df$ID))){
+    IDname <- unique(df$ID)[s]  
+    site.data<- na.omit(df[df$ID == IDname ,])
+    name <- unique(site.data$site)
+    
+    sim.df <- aggregate(Jul.pdsi~year, data = site.data, FUN = mean )
+    
+    dry <- quantile(sim.df$Jul.pdsi, 0.25) # value of the driest years
+    wet <- quantile(sim.df$Jul.pdsi, 0.75) # value of the wettest years
+    sim.df$class <- ifelse(sim.df$year < 1950, "Pre-1950", "Post-1950" )
+    sim.df$climclass <- ifelse(sim.df$Jul.pdsi <= dry, "Dry_0.25", 
+                               ifelse(sim.df$Jul.pdsi >= wet,"Wet_0.25", "NA" ))
+    
+    pre.dry <- sim.df[sim.df$class %in% "Pre-1950" & sim.df$climclass %in% "Dry_0.25", ]
+    post.dry <- sim.df[sim.df$class %in% "Post-1950" & sim.df$climclass %in% "Dry_0.25", ]
+    pre.wet <- sim.df[sim.df$class %in% "Pre-1950" & sim.df$climclass %in% "Wet_0.25", ]
+    post.wet <- sim.df[sim.df$class %in% "Post-1950" & sim.df$climclass %in% "Wet_0.25", ]
+    
+    
+    similar.clims <- rbind(post.wet, pre.wet, pre.dry, post.dry)
+    
+    #dfs <- det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "HIC",]
+    
+    sim.df <- merge(site.data, similar.clims[,c("year", "class", "climclass")], by = c('year'))
+    
+    # only use dry or wet years across the region:
+    sim.df <- sim.df[sim.df$climclass %in% climateclass,]
+    
+    
+    # function used in boot strapping below
+    bs <- function(formula, data, indices) {
+      d <- data[indices,] # allows boot to select sample 
+      fit <- lm(formula, data=d)
+      return(coef(fit)) 
+    } 
+    
+    # for the "Modern" class:
+    if(nrow(sim.df[sim.df$ID == IDname & sim.df$ageclass == "Modern" ,]) > 1){
+      # bootstrapping the linear regression model
+      results <- boot(data=sim.df[sim.df$ageclass == "Modern" & sim.df$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      coeffs[s,4:5] <- results$t0
+      coeffs[s , 2] <- site
+      coeffs[s , 1] <- name
+      coeffs[s,3] <- "Modern"
+      coeffs[s,6] <- as.data.frame(int.cis$normal)$V2
+      coeffs[s,7] <- as.data.frame(int.cis$normal)$V3
+      coeffs[s,8] <- as.data.frame(slope.cis$normal)$V2
+      coeffs[s,9] <- as.data.frame(slope.cis$normal)$V3
+      
+    } else{
+      #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "Modern" ,])
+      coeffs[s,4:9] <- c(NA,NA)
+      coeffs[s , 3] <- "Modern"
+      coeffs[s,2] <- site
+      coeffs[s,1] <- name
+    }
+    
+    
+    # for the "Past" class:  
+    if(nrow(sim.df[sim.df$ID == IDname & sim.df$ageclass == "Past" ,]) > 1){
+      results <- boot(data=sim.df[sim.df$ageclass == "Past" & sim.df$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
+      
+      int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
+      slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
+      coeffs[s+length(unique(df$ID)),4:5] <- results$t0
+      coeffs[s+length(unique(df$ID)) , 2] <- site
+      coeffs[s+length(unique(df$ID)) , 1] <- name
+      coeffs[s+length(unique(df$ID)),2] <- "Past"
+      coeffs[s+length(unique(df$ID)),6] <- as.data.frame(int.cis$normal)$V2
+      coeffs[s+length(unique(df$ID)),7] <- as.data.frame(int.cis$normal)$V3
+      coeffs[s+length(unique(df$ID)),8] <- as.data.frame(slope.cis$normal)$V2
+      coeffs[s+length(unique(df$ID)),9] <- as.data.frame(slope.cis$normal)$V3
+      
+      
+    }else{
+      #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "Past" ,])
+      coeffs[s+length(unique(df$ID)),4:9] <- c(NA,NA)
+      coeffs[s +length(unique(df$ID)), 3] <- "Past"
+      coeffs[s+length(unique(df$ID)),2] <- site
+      coeffs[s+length(unique(df$ID)),1] <- name
+    }
+  }
+  
+  coeffs <- data.frame(coeffs)
+  colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
+  coeffs$site <- as.character(coeffs$site)
+  coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
+  coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
+  coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
+  coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
+  coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
+  coeffs
+  
+}
+jul.pdsi.age_dry.25.id <- get.clim.sens.age.by.moisture.ID(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", model.func = "RWI ~ Jul.pdsi" )
+
 
 
 # aesthetics off with this:
@@ -2724,16 +2842,44 @@ round(t.outwetsav$p.value, digits = 5)
 t.outwetfor <- t.test(site.df.age.wet[site.df.age.wet$age %in% "Past" & site.df.age.wet$Description %in% "Forest",]$slope.est, site.df.age.wet[site.df.age.wet$age %in% "Modern" & site.df.age.wet$Description %in% "Forest",]$slope.est )
 round(t.outwetfor$p.value, digits = 5)
 
+
 png(height = 6.5, width = 9, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_stand_type.png")
 ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~Description)
 dev.off()
 
+t.outdrysav <- t.test(site.df.age.dry[site.df.age.dry$age %in% "Past" & site.df.age.dry$Description %in% "Savanna",]$slope.est, site.df.age.wet[site.df.age.dry$age %in% "Modern" & site.df.age.dry$Description %in% "Savanna",]$slope.est )
+round(t.outdrysav$p.value, digits = 5)
+
+t.outdryfor <- t.test(site.df.age.dry[site.df.age.wet$age %in% "Past" & site.df.age.dry$Description %in% "Forest",]$slope.est, site.df.age.dry[site.df.age.dry$age %in% "Modern" & site.df.age.wet$Description %in% "Forest",]$slope.est )
+round(t.outdryfor$p.value, digits = 5)
 
 png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_species.png")
 ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)
 dev.off()
+
+# tests for differences between species
+t.outdrywhite <- t.test(site.df.age.dry[site.df.age.wet$age %in% "Past" & site.df.age.dry$species %in% "QUAL",]$slope.est, site.df.age.dry[site.df.age.dry$age %in% "Modern" & site.df.age.dry$species %in% "QUAL",]$slope.est )
+
+t.outdryred <- t.test(site.df.age.dry[site.df.age.wet$age %in% "Past" & site.df.age.dry$species %in% "QURA",]$slope.est, site.df.age.dry[site.df.age.dry$age %in% "Modern" & site.df.age.dry$species %in% "QURA",]$slope.est )
+
+
+t.outdrybur <- t.test(site.df.age.dry[site.df.age.wet$age %in% "Past" & site.df.age.dry$species %in% "QUMA",]$slope.est, site.df.age.dry[site.df.age.dry$age %in% "Modern" & site.df.age.dry$species %in% "QUMA",]$slope.est )
+round(t.outdrybur$p.value, digits = 5)
+
+appends<- data.frame(x = 0.75, y = 0.06 ,label = c( as.character(round(t.outdrywhite$p.value, digits = 5)), 
+             as.character(round(t.outdrybur$p.value, digits = 5)), 
+             as.character(round(t.outdryred$p.value, digits = 5))), 
+             color = c("QUAL", "QUMA", "QURA"))
+
+png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_species.png")
+ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+
+  scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)#+geom_text(data=appends, 
+                                                                                            #                                                                              aes(x,y,label=label), inherit.aes=FALSE)
+dev.off()
+
 
 png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_wet_0.25_by_species.png")
 ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
