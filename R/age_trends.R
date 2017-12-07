@@ -2026,8 +2026,8 @@ get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
       slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
       coeffs[s,4:5] <- results$t0
-      coeffs[s , 2] <- site
-      coeffs[s , 1] <- name
+      coeffs[s , 2] <- name
+      coeffs[s , 1] <- IDname
       coeffs[s,3] <- "Modern"
       coeffs[s,6] <- as.data.frame(int.cis$normal)$V2
       coeffs[s,7] <- as.data.frame(int.cis$normal)$V3
@@ -2038,8 +2038,8 @@ get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
       #lmest <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "Modern" ,])
       coeffs[s,4:9] <- c(NA,NA)
       coeffs[s , 3] <- "Modern"
-      coeffs[s,2] <- site
-      coeffs[s,1] <- name
+      coeffs[s,2] <- name
+      coeffs[s,1] <- IDname
     }
     
     
@@ -2050,9 +2050,9 @@ get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
       slope.cis <- boot.ci(boot.out = results, type = "norm", index = 2)
       coeffs[s+length(unique(df$ID)),4:5] <- results$t0
-      coeffs[s+length(unique(df$ID)) , 2] <- site
-      coeffs[s+length(unique(df$ID)) , 1] <- name
-      coeffs[s+length(unique(df$ID)),2] <- "Past"
+      coeffs[s+length(unique(df$ID)) , 2] <- name
+      coeffs[s+length(unique(df$ID)) , 1] <- IDname
+      coeffs[s+length(unique(df$ID)),3] <- "Past"
       coeffs[s+length(unique(df$ID)),6] <- as.data.frame(int.cis$normal)$V2
       coeffs[s+length(unique(df$ID)),7] <- as.data.frame(int.cis$normal)$V3
       coeffs[s+length(unique(df$ID)),8] <- as.data.frame(slope.cis$normal)$V2
@@ -2063,14 +2063,15 @@ get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
       #lmest2 <- lm(RWI ~ PDSI, data = df[df$site == name & df$ageclass == "Past" ,])
       coeffs[s+length(unique(df$ID)),4:9] <- c(NA,NA)
       coeffs[s +length(unique(df$ID)), 3] <- "Past"
-      coeffs[s+length(unique(df$ID)),2] <- site
-      coeffs[s+length(unique(df$ID)),1] <- name
+      coeffs[s+length(unique(df$ID)),2] <- name
+      coeffs[s+length(unique(df$ID)),1] <- IDname
     }
   }
   
   coeffs <- data.frame(coeffs)
-  colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
+  colnames(coeffs) <- c("site","ID","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
   coeffs$site <- as.character(coeffs$site)
+  
   coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
   coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
   coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
@@ -2082,7 +2083,10 @@ get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
 }
 jul.pdsi.age_dry.25.id <- get.clim.sens.age.by.moisture.ID(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", model.func = "RWI ~ Jul.pdsi" )
 
+ggplot(jul.pdsi.age_dry.25.id, aes(age, slope.est, color = age))+geom_boxplot()+facet_wrap(~ID)#+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
 
+dfnona<- jul.pdsi.age_dry.25.id[complete.cases(jul.pdsi.age_dry.25.id),]
+t.test(dfnona[dfnona$age %in% "Modern",]$slope.est, dfnona[dfnona$age %in% "Past",]$slope.est)
 
 # aesthetics off with this:
 ggplot(cor.jul.pdsi.age_dry.25, aes(site, cor.est, fill = age))+geom_bar(stat="identity", position = position_dodge(width = 0.9))#+geom_errorbar(data = cor.jul.pdsi.age_dry.25,aes(ymin=ci.min, ymax = ci.max,fill = age, position = position_dodge(width = 0.5)), size = 0.2, width = 0.5)
@@ -2634,7 +2638,7 @@ site.df.yr <- merge(pdsi.yr.sens, locs, by.x = 'site', by.y = 'code')
 site.df.age.dry <- merge(sens.jul.pdsi.age_dry.25, locs, by.x = 'site', by.y = 'code')
 site.df.age.wet <- merge(sens.jul.pdsi.age_wet.25, locs, by.x = 'site', by.y = 'code')
 
-
+site.df.age.dry.id <- merge(jul.pdsi.age_dry.25.id, locs, by.x = "site", by.y= "code")
 # map out sensitivities in space:
 df_states <- map_data("state")
 states <- subset(df_states, region %in% c(  "illinois", "minnesota", "wisconsin", "iowa", "south dakota",
@@ -2679,6 +2683,7 @@ site.df.age$pr30yr <- raster::extract(prism.alb, site.df.age[,c("coords.x1","coo
 site.df.yr$pr30yr <- raster::extract(prism.alb, site.df.yr[,c("coords.x1","coords.x2")])
 site.df.age.dry$pr30yr <- raster::extract(prism.alb, site.df.age.dry[,c("coords.x1","coords.x2")])
 site.df.age.wet$pr30yr <- raster::extract(prism.alb, site.df.age.wet[,c("coords.x1","coords.x2")])
+site.df.age.dry.id$pr30yr <- raster::extract(prism.alb, site.df.age.dry.id[,c("coords.x1","coords.x2")])
 
 workingdir <- "/Users/kah/Documents/bimodality/data/"
 
@@ -2692,6 +2697,7 @@ site.df.age$tm30yr <- raster::extract(prismt.alb, site.df.age[,c("coords.x1","co
 site.df.yr$tm30yr <- raster::extract(prismt.alb, site.df.yr[,c("coords.x1","coords.x2")])
 site.df.age.dry$tm30yr <- raster::extract(prismt.alb, site.df.age.dry[,c("coords.x1","coords.x2")])
 site.df.age.wet$tm30yr <- raster::extract(prismt.alb, site.df.age.wet[,c("coords.x1","coords.x2")])
+site.df.age.dry.id$tm30yr <- raster::extract(prismt.alb, site.df.age.dry.id[,c("coords.x1","coords.x2")])
 
 
 #merge overalll slope and envt with the Modern and Past slopes:
@@ -2792,6 +2798,9 @@ names(ageColors) <- levels(site.df.age.dry$age)
 site.df.age.wet$age <- factor(site.df.age.wet$age, levels = c("Past", "Modern"))
 names(ageColors) <- levels(site.df.age.wet$age)
 
+site.df.age.dry.id$age <- factor(site.df.age.dry.id$age, levels = c("Past", "Modern"))
+names(ageColors) <- levels(site.df.age.dry.id$age)
+
 
 png(height = 6.5, width = 8, units = "in", res =300, "outputs/boxplot_Past_Modern_sens.png")
 ggplot(site.df.age, aes(age, slope.est, fill = age))+geom_boxplot()+
@@ -2819,8 +2828,18 @@ dev.off()
 t.outwet <- t.test(site.df.age.wet[site.df.age.wet$age %in% "Past",]$slope.est, site.df.age.wet[site.df.age.wet$age %in% "Modern",]$slope.est )
 round(t.outwet$p.value, digits = 5)
 
+
+png(height = 6.5, width = 8, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_id.png")
+ggplot(site.df.age.dry.id, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 25)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank(), legend.position = c(0.8,0.9))+ylim(0,0.15)
+dev.off()
+
+t.outdryid <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern",]$slope.est )
+round(t.outdryid$p.value, digits = 5)
+
 site.df.age.wet[site.df.age.wet$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
 site.df.age.dry[site.df.age.dry$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
+site.df.age.dry.id[site.df.age.dry.id$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
 
 site.df.age.dry[site.df.age.dry$site %in% "",]$Description <- "Forest"
 
