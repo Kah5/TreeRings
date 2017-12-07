@@ -2082,7 +2082,7 @@ get.clim.sens.age.by.moisture.ID <- function(df, climateclass ,model.func){
   
 }
 jul.pdsi.age_dry.25.id <- get.clim.sens.age.by.moisture.ID(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", model.func = "RWI ~ Jul.pdsi" )
-
+colnames(jul.pdsi.age_dry.25.id)[1:2] <- c("ID", "site")
 ggplot(jul.pdsi.age_dry.25.id, aes(age, slope.est, color = age))+geom_boxplot()+facet_wrap(~ID)#+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
 
 dfnona<- jul.pdsi.age_dry.25.id[complete.cases(jul.pdsi.age_dry.25.id),]
@@ -2594,7 +2594,7 @@ get.clim.sens.year <- function(df, model.func){
   pdsi.yr.sens <- get.clim.sens.year(df, "RWI ~ Jul.pdsi")
 
 
-# read in soil, xy characteristics
+# ---------------------------read in soil, xy characteristics
   
 locs <- read.csv("outputs/priority_sites_locs.csv")
 locs$code <- as.character(locs$code)
@@ -2837,11 +2837,13 @@ dev.off()
 t.outdryid <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern",]$slope.est )
 round(t.outdryid$p.value, digits = 5)
 
+
 site.df.age.wet[site.df.age.wet$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
 site.df.age.dry[site.df.age.dry$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
 site.df.age.dry.id[site.df.age.dry.id$site %in% c("AVO", "ENG", "UNI"),]$Description <- "Forest"
 
 site.df.age.dry[site.df.age.dry$site %in% "",]$Description <- "Forest"
+
 
 site.df.age.wet[site.df.age.wet$species %in% "QUAL/QUMA",]$species <- "QUAL"
 site.df.age.wet[site.df.age.wet$species %in% "QURA/QUVE",]$species <- "QURA"
@@ -2849,6 +2851,8 @@ site.df.age.wet[site.df.age.wet$species %in% "QURA/QUVE",]$species <- "QURA"
 site.df.age.dry[site.df.age.dry$species %in% "QUAL/QUMA",]$species <- "QUAL"
 site.df.age.dry[site.df.age.dry$species %in% "QURA/QUVE",]$species <- "QURA"
 
+site.df.age.dry.id[site.df.age.dry.id$species %in% "QUAL/QUMA",]$species <- "QUAL"
+site.df.age.dry.id[site.df.age.dry.id$species %in% "QURA/QUVE",]$species <- "QURA"
 
 png(height = 6.5, width = 9, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_wet_0.25_by_stand_type.png")
 ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
@@ -2873,6 +2877,20 @@ round(t.outdrysav$p.value, digits = 5)
 t.outdryfor <- t.test(site.df.age.dry[site.df.age.wet$age %in% "Past" & site.df.age.dry$Description %in% "Forest",]$slope.est, site.df.age.dry[site.df.age.dry$age %in% "Modern" & site.df.age.wet$Description %in% "Forest",]$slope.est )
 round(t.outdryfor$p.value, digits = 5)
 
+# for the sensitivity estimated by id:
+png(height = 6.5, width = 9, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_stand_type_id.png")
+ggplot(site.df.age.dry.id, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~Description)
+dev.off()
+
+t.outdrysav.id <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$Description %in% "Savanna",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$Description %in% "Savanna",]$slope.est )
+round(t.outdrysav.id$p.value, digits = 5)
+
+t.outdryfor.id <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$Description %in% "Forest",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$Description %in% "Forest",]$slope.est )
+round(t.outdryfor.id$p.value, digits = 5)
+
+
+#-------- for the stisitivty by species:
 png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_species.png")
 ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)
@@ -2905,8 +2923,36 @@ ggplot(site.df.age.wet, aes(age, slope.est, fill = age))+geom_boxplot()+
   theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)
 dev.off()
 
-# plot by site
+# for sensitivy by species, estimated by tree ID:
+png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_species_ID.png")
+ggplot(site.df.age.dry.id, aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~species)+ylim(0, 0.15)
+dev.off()
 
+# tests for differences between species
+t.outdrywhite <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$species %in% "QUAL",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$species %in% "QUAL",]$slope.est )
+
+t.outdryred <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$species %in% "QURA",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$species %in% "QURA",]$slope.est )
+
+
+t.outdrybur <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$species %in% "QUMA",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$species %in% "QUMA",]$slope.est )
+round(t.outdrybur$p.value, digits = 5)
+
+
+
+# plot by site--using the sensitibity estimated by id:
+png(width = 12, height = 6, units = "in", res = 300,"outputs/boxplot_Past_Modern_sens_wet_0.25_by_site_id.png")
+ggplot(site.df.age.dry.id[!site.df.age.dry.id$site %in% "UNI",], aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~site, scales = "free_y", ncol = 4)#+ylim(-0.01, 0.15)
+dev.off()
+
+pairs <- c(  'GLA' , 'GLL1', 'GLL2', 'GLL3',  'MOU' , 'UNC')
+for(i in 1:length(pairs)){
+  sitei <- unique(pairs)[i]
+  testresults<- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$site %in% sitei,]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$site %in% sitei,]$slope.est )
+  print(sitei)
+  print(testresults)
+  }
 
 png(width = 12, height = 6, units = "in", res = 300, "outputs/boxplot_Past_Modern_sens_wet_0.25_by_site.png")
 ggplot(site.df.age.dry, aes(age, slope.est, fill = age))+geom_bar(stat = "identity", position = "dodge")+geom_errorbar(aes(ymin = slope.min, ymax = slope.max ), color = "grey", width = 0.2)+
