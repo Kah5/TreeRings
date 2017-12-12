@@ -2789,6 +2789,7 @@ dev.off()
 # prelimnary plots sugges that higher precipitation and higher T places might be more sensitive to PDSI
 # specify color for modern and past trees, and order factors
 ageColors <- c( "#009E73", "#D55E00")
+#ageColors <- c( "blue", "#D55E00")
 site.df.age$age <- factor(site.df.age$age, levels = c("Past", "Modern"))
 names(ageColors) <- levels(site.df.age$age)
 
@@ -2889,6 +2890,14 @@ round(t.outdrysav.id$p.value, digits = 5)
 t.outdryfor.id <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & site.df.age.dry.id$Description %in% "Forest",]$slope.est, site.df.age.dry.id[site.df.age.dry.id$age %in% "Modern" & site.df.age.dry.id$Description %in% "Forest",]$slope.est )
 round(t.outdryfor.id$p.value, digits = 5)
 
+nonas <- site.df.age.dry.id[complete.cases(site.df.age.dry.id$slope.est),]
+nonas %>% group_by(Description) %>% summarise(mean = mean(slope.est, na.rm = TRUE), n = n())
+nonas %>% group_by( species) %>% summarise(mean = mean(slope.est, na.rm = TRUE), n = n())
+site.slope.table <- nonas %>% group_by(site) %>% summarise(mean = mean(slope.est, na.rm = TRUE), n = n())
+site.slope.table.age <- nonas %>% group_by(site, age) %>% summarise(mean = mean(slope.est, na.rm = TRUE), n = n())
+
+write.csv(site.slope.table, "outputs/site_n_trees_slope_table.csv")
+write.csv(site.slope.table.age, "outputs/site_n_trees_slope_table_age.csv")
 
 #-------- for the stisitivty by species:
 png(width = 12, height = 6, units = "in", res =300,"outputs/boxplot_Past_Modern_sens_dry_0.25_by_species.png")
@@ -2939,11 +2948,23 @@ t.outdrybur <- t.test(site.df.age.dry.id[site.df.age.dry.id$age %in% "Past" & si
 round(t.outdrybur$p.value, digits = 5)
 
 
-
+site.df.age.dry.id$site <- factor(site.df.age.dry.id$site, levels = c("BON", "GLL1", "GLL2", "GLA", 
+                                                                      "GLL3", "UNC", "MOU", "HIC", 
+                                                                      "GLL4","TOW", "AVO", "ENG", 
+                                                                      "COR","STC", "PVC", "PLE", "UNI"))
 # plot by site--using the sensitibity estimated by id:
-png(width = 12, height = 6, units = "in", res = 300,"outputs/boxplot_Past_Modern_sens_wet_0.25_by_site_id.png")
-ggplot(site.df.age.dry.id[!site.df.age.dry.id$site %in% "UNI",], aes(age, slope.est, fill = age))+geom_boxplot()+
-  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank())+facet_wrap(~site, scales = "free_y", ncol = 4)#+ylim(-0.01, 0.15)
+png(width = 12, height = 4.5, units = "in", res = 300,"outputs/boxplot_Past_Modern_sens_wet_0.25_by_site_id_first.png")
+ggplot(site.df.age.dry.id[!site.df.age.dry.id$site %in% c("UNI", NA, "GLL4","TOW", "AVO", "ENG", 
+                                                          "COR","STC", "PVC", "PLE"),], aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank(),strip.text = element_text(face="bold", size=9),
+                                                                                                                                       strip.background = element_rect( colour="black",size=0.01))+facet_wrap(~site, scales = "free_y", ncol = 4)#+ylim(-0.01, 0.15)
+dev.off()
+
+png(width = 12, height = 4.5, units = "in", res = 300,"outputs/boxplot_Past_Modern_sens_wet_0.25_by_site_id_second.png")
+ggplot(site.df.age.dry.id[!site.df.age.dry.id$site %in% c("UNI", NA, "BON", "GLL1", "GLL2", "GLA", 
+                                                          "GLL3", "UNC", "MOU", "HIC"),], aes(age, slope.est, fill = age))+geom_boxplot()+
+  theme_black(base_size = 20)+scale_fill_manual(values = ageColors)+ylab("Growth Sensitivity to Drought (PDSI) \n in dry years")+theme(legend.title = element_blank(),strip.text = element_text(face="bold", size=9),
+                                                                                                                                       strip.background = element_rect( colour="black",size=0.01))+facet_wrap(~site, scales = "free_y", ncol = 4)#+ylim(-0.01, 0.15)
 dev.off()
 
 pairs <- c(  'GLA' , 'GLL1', 'GLL2', 'GLL3',  'MOU' , 'UNC')
@@ -3011,7 +3032,7 @@ ggplot(site.df.age, aes(sand, slope.est, color = age))+geom_point()+geom_errorba
 dev.off()
 
 png("outputs/sensitivity_v_sand_age.png")
-ggplot(site.df.age.dry, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())
+ggplot(site.df.age.dry, aes(sand, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), width = 0.5)+scale_color_manual(values = ageColors)+stat_smooth(method = 'lm', se = FALSE)+theme_black(base_size = 20)+ylab("Growth Sensitivity to Drought (PDSI)")+xlab("% Sand")+theme(legend.title = element_blank())+ylim(0,0.2)
 dev.off()
 
 png("outputs/sensitivity_v_sand_age_dry_years.png")
