@@ -8,6 +8,7 @@ library(rgdal)
 library(mgcv)
 library(tidyr)
 library(SPEI)
+library(boot)
 # lets look at relationship to climate with age:
 setwd("/Users/kah/Documents/TreeRings")
 
@@ -403,6 +404,9 @@ ggplot(det.age.clim.ghcn.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_
 write.csv(det.age.clim.prism.df, "outputs/data/full_det_prism_rwi.csv", row.names = FALSE)
 write.csv(det.age.clim.ghcn.df, "outputs/data/full_det_ghcn_rwi.csv", row.names = FALSE)
 
+png(height = 3, width = 5, units = "in", res =300,"outputs/pdsi_over_time_bw.png")
+ggplot(data = det.age.clim.ghcn.df[det.age.clim.ghcn.df$ID %in% "BON13", ], aes(year, Jul.pdsi))+geom_point()+stat_smooth(method = "lm", se = FALSE)+geom_line(color = "White")+theme_black(base_size = 20)+ylab("July PDSI")+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")
+dev.off()
 # ------------------------- Get tree DBH at time of coring + put in DBH classes ----------------------------------
 # This function uses DBH at time of coring and annual growth records to estimate Tree DBH over time
 # based on the DBH at each time step, specify the DBH class over time. 
@@ -694,14 +698,17 @@ dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
 testmerge <- merge(dbh.class.df, detrended.age.df, by = c("year", "site", "ID"))
 # merge these with the climate/growth dataframes:
-#det.age.clim.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
-#det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
+det.age.clim.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
+det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
 test.ghcn.df <- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
 test.prism.df <- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
 
 png("outputs/DBH/July_clim_sens_by_dbh.png")
 ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()
 dev.off()
+
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()+facet_wrap(~ageclass)
+
 
 summary(lm(RWI ~ Jul.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
 
@@ -1173,10 +1180,12 @@ ggplot(det.age.clim.df, aes(x = PDSI, y = RWI, color = site))+geom_point()+stat_
 
 summary(lm(RWI~PDSI, data = det.age.clim.df))
 summary(lm(RWI~Jul.pdsi:dbhclass, data = det.age.clim.ghcn.df))
+summary(lm(RWI~jul.VPDmax:dbhclass, data = det.age.clim.prism.df))
 summary(lm(RWI~year, data = det.age.clim.df))
 summary(lm(RWI~year:site, data = det.age.clim.df))
 
 ggplot(det.age.clim.df, aes(x = year, y = RWI, color = site))+geom_point()+stat_smooth(method = "lm")
+
 
 ###################################################################
 # Lets directly compare Past and Modern years with similar climates:
@@ -1476,7 +1485,7 @@ get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
   for(s in 1: length(unique(df$site))){
     
     name <- unique(df$site)[s]  
-    site.data<- na.omit(df[df$site == name ,])
+    site.data <- na.omit(df[df$site == name ,])
     
     sim.df <- aggregate(Jul.pdsi~year, data = site.data, FUN = mean )
     
@@ -1501,8 +1510,11 @@ get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
     
     #dfs <- det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "HIC",]
     
-    sim.df <- merge(site.data, similar.clims[,c("year", "class", "climclass")], by = c('year'))
+    sim.df <- merge(site.data, similar.clims[,c("year", "class", "climclass")], by = c('year', "class"))
     
+    # save the similar climates as a csv so we can pick trees to sample:
+    
+    write.csv(sim.df, paste0("outputs/data/Isotope_climate/",name, "_wet_dry_climate_age_class.csv"))
     # only use wet years across the region:
     sim.df <- sim.df[sim.df$climclass %in% climateclass,]
     

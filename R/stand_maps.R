@@ -351,7 +351,7 @@ map.dispersed <- function(sitecode){
   # adding site code name onto this
   site$code <- sitecode
   
-  if(sitecode %in% "HIC"){
+  if(sitecode %in% c("HIC")){
     site$name <- paste0(site$X)
     site <- merge(site, wpfull[,c('lon', 'lat', 'ele','name')], by = 'name')
   }else{
@@ -360,6 +360,9 @@ map.dispersed <- function(sitecode){
     site$lon <- ifelse(is.na(site$lon), -99.0000, site$lon)
     site$lat <- ifelse(is.na(site$lat), 45.0000, site$lat)
  }
+  
+  # remove trees without lat long values:
+  site <- site[!is.na(site$ele), ]
   # convert lat long to albers projection:
   coordinates(site) <- ~lon +lat
   proj4string(site) <- '+init=epsg:4326' # define native proj
@@ -411,7 +414,7 @@ map.dispersed <- function(sitecode){
 
 pdf("outputs/standmaps/dispersed_maps_all.pdf")
 
-map.dispersed("MAP-3")
+#map.dispersed("MAP-3")
 map.dispersed("TOW")
 map.dispersed("STC")
 map.dispersed("UNI")

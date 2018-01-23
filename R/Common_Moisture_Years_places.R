@@ -53,6 +53,7 @@ for (file in file_list){
 
 ggplot(dataset[dataset$Month %in% '07', ], aes(as.numeric(Year), ppt..inches.))+geom_point()+stat_smooth(method= "lm")
 
+ggplot(dataset[dataset$Month %in% '07', ], aes(as.numeric(Year), vpdmax..hPa.))+geom_point()+stat_smooth(method= "lm")
 
 # --------------------------finding the most similar climate years for each site------------------------:
 
@@ -118,7 +119,7 @@ for(p in 1:length(sites)){
       # order the dataframe and take the top 10 pairs of years 
       ordered <- post.pre[order(post.pre$distance),]
       post_1950 <- JJA.means[JJA.means$Year %in% ordered$Year,]
-      pre_1950 <- JJA.means[JJA.means$Year %in% nearestyear$Year,]
+      pre_1950 <- JJA.means[JJA.means$Year %in% closest$nearestyear,]
       years.to.do <- ordered[1:15,]
       
       write.csv(years.to.do, file =  paste0("outputs/data/Isotope_climate/", sites[p],"_most_similar_years.csv"))
