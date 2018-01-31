@@ -66,6 +66,10 @@ GLL_PVC<- GLL_PVC[GLL_PVC$code %in% c("GL4", "GL3", "GL2", "GL1"),]
 
 # merge the two data sets using rbind
 priority <- rbind(mound, sites16, GLL_PVC)
+coordinates(priority) <- ~coords.x1 + coords.x2
+proj4string(priority) <- '+init=epsg:3175'
+priority.lat <- spTransform(priority, CRSobj = CRS("+init=epsg:4326"))
+priority.lat <- data.frame(priority.lat)
 priority$PDSI_time <- c("Not measured", "No Change", "Growth Change", "Not measured", 
                         "Not measured", "No Change", "Not measured", "Not measured", 
                         "Growth Change", "Not measured", "Not measured","Growth Change", "Slope Change","Slope Change","No Change",
@@ -341,6 +345,106 @@ dev.off()
 png("outputs/precip_sites_full.png")
 sites.map2+theme_black()
 dev.off()
+#------------------------------ natural earth maps------------------------------
+library(raster)
+library(rgdal)
+library(ggplot2)
+library(reshape2)
+library(plyr)
+library(rnaturalearth)
+#  Assuming you have a path 'Maps' that you store your spatial files in.  This
+#  is all downloaded from <a href=>http://www.naturalearthdata.com/downloads/</a> using the
+#  1:50m "Medium" scale data.
+
+# lakes
+ne_lakes <- ne_download(scale = 110, type = 'lakes', category = 'physical')
+sp::plot(ne_lakes, col = 'blue')
+
+# rivers
+ne_rivers <- ne_download(scale = 110, type = 'rivers_lake_centerlines', category = 'physical')
+sp::plot(ne_rivers, col = 'blue')
+
+# coast:
+ne_coast <- ne_download(scale = 110, type = 'coastline', category = 'physical')
+sp::plot(ne_coast, col = 'blue')
+
+# states:
+ne_state <- ne_download(scale = 110, type = 'states', category = 'cultural')
+#ne_NE2 <- ne_download(scale = 50, type = 'NE2_50M', category = 'raster')
+#sp::plot(ne_HYP)
+
+#nat.earth<- stack(ne_MSR)
+nat.earth <- stack('data/NE2_50M_SR_W/NE2_50M_SR_W/NE2_50M_SR_W.tif')
+
+#ne_lakes <- readOGR('./Maps/NaturalEarth/ne_50m_lakes.shp',
+ #                   'ne_50m_lakes')
+
+#ne_rivers <- readOGR('./Maps/NaturalEarth/ne_50m_rivers_lake_centerlines.shp',
+ #                    'ne_50m_rivers_lake_centerlines')
+
+#ne_coast <- readOGR('./Maps/NaturalEarth/ne_50m_coastline.shp',
+ #                   'ne_50m_coastline')
+
+#  I have a domain I'm interested in, but there's no reason you can't define something else:
+quick.subset <- function(x, longlat){
+  
+  # longlat should be a vector of four values: c(xmin, xmax, ymin, ymax)
+  x@data$id <- rownames(x@data)
+  
+  x.f = fortify(x, region="id")
+  x.join = plyr::join(x.f, x@data, by="id")
+  
+  x.subset <- subset(x.join, x.join$long > longlat[1] & x.join$long < longlat[2] &
+                       x.join$lat > longlat[3] & x.join$lat < longlat[4])
+  
+  x.subset
+}
+
+domain <- c(-105, -80, 30.5, 55)
+lakes.subset <- quick.subset(ne_lakes, domain)
+river.subset <- quick.subset(ne_rivers, domain)
+coast.subset <- quick.subset(ne_coast, domain)
+state.subset <- quick.subset(ne_state, c(-105, -70, 30.5, 55))
+nat.crop <- crop(nat.earth, y=extent(domain))
+
+rast.table <- data.frame(xyFromCell(nat.crop, 1:ncell(nat.crop)),
+                         getValues(nat.crop/255))
+
+rast.table$rgb <- with(rast.table, rgb(NE2_50M_SR_W.1,
+                                       NE2_50M_SR_W.2,
+                                     NE2_50M_SR_W.3,
+                                       1))
+# et voila!
+
+NEmap <- ggplot()+
+  geom_raster(data = rast.table, aes(x = x, y = y, fill = NE2_50M_SR_W.1)) +scale_fill_gradientn(colours = rev(cbpalette))+
+  geom_polygon(data=lakes.subset, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
+  scale_alpha_discrete(range=c(1,0)) +
+  geom_path(data=state.subset, aes(x = long, y = lat, group = group), color = 'grey40')+
+  geom_path(data=lakes.subset, aes(x = long, y = lat, group = group), color = 'blue') +
+  #geom_path(data=river.subset, aes(x = long, y = lat, group = group), color = 'blue') +
+  #geom_path(data=coast.subset, aes(x = long, y = lat, group = group), color = 'blue') + 
+  #coord_equal()+#geom_raster(fill = rast.table$MSR_50M)+
+  #scale_x_continuous(expand=c(0,0)) +
+  #scale_y_continuous(expand=c(0,0)) +
+  xlab('') + ylab('')+ coord_cartesian(xlim = c(-100, -83), ylim=c(36.5, 50)) 
+
+NEmapfull <- NEmap + geom_point(data = priority.lat, aes(x = coords.x1, y = coords.x2), cex = 2.5)+
+  geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(0.5, "lines"),
+                  point.padding = unit(0.5, "lines"))+theme_bw()+ #geom_path(data=river.subset, aes(x = long, y = lat, group = group), color = 'blue')+
+                   theme(legend.position = 'none')
+
+png(height= 8, width = 9, units = "in", res = 300, "outputs/NE_map_sites.png")
+NEmapfull
+dev.off()
+
+NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))#+
+  geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(0.5, "lines"),
+                  point.padding = unit(0.5, "lines"))
 
 # map of sites cored in 2016 only:
 map2016 <- sites.map + geom_point(data = sites16, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
