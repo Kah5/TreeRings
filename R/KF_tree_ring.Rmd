@@ -36,7 +36,8 @@ molten.HIC<- read.csv("/Users/kah/Documents/TreeRings/data/molten.hic.csv")
 library(PerformanceAnalytics, quietly = TRUE,  warn.conflicts = FALSE)
 library(dlm)
 
-val <- molten.BON
+det.full.df <- read.csv("/Users/kah/Documents/TreeRings/outputs/data/full_det_ghcn_rwi.csv")
+val <- det.full.df[det.full.df$site %in% "BON",]
 clim <- "Jul.pdsi"
 site.code<- "BON"
 kalman.plot <- function(val, clim, site.code){
@@ -44,9 +45,9 @@ kalman.plot <- function(val, clim, site.code){
   
   
     # convert to xts objects
-    tr <- as.xts(val[,c("value")], order.by = as.yearqtr(val$Year))
+    tr <- as.xts(val[,c("RWI")], order.by = as.yearqtr(val$year))
     
-    pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$Year))
+    pdsi <- as.xts(val[,c( clim )], order.by = as.yearqtr(val$year))
     
     #tmin <- as.xts(val[,c( clim2 )], order.by = as.yearqtr(val$Year))
     
@@ -99,9 +100,9 @@ kalman.plot <- function(val, clim, site.code){
     #Now that we have obtained model estimates, and build the optimal model, we can filter the data through it, to obtain filtered values of the state vectors, together with their variance/co-variance matrices.
     
     TVP.f <- dlmFilter(y = tr, mod = TVP.dlm)
-    #class(TVP.f)
+    class(TVP.f)
     
-    #names(TVP.f)
+    names(TVP.f)
     
     #Similarly, to obtained the smoothed values of the state vectors, together with their variance/co-variance matrices; using knowledge of the entire series
     
@@ -143,6 +144,15 @@ kalman.plot <- function(val, clim, site.code){
     chart.TimeSeries(cbind(beta.s, b.l, b.u), main=paste("Smoothed estimates of beta for", site.code),
                      colorset=c(1,2,2), lty=c(1,2,2),ylab=expression(beta),xlab="")
 
+    
+alpha.df <- data.frame(dateTime = index(se.xts), alpha = alpha.s, upr = a.u, lwr = a.l)
+names(alpha.df) <- c("dateTime", "alpha", "upr", "lwr")
+beta.df  <- data.frame(dateTime = index(se.xts), beta = beta.s, upr = b.u, lwr = b.l)
+names(beta.df) <- c("dateTime", "beta", "upr", "lwr")
+
+ggplot(data = alpha.df, aes(dateTime, alpha) ) + geom_point () + geom_line() + geom_ribbon(data=alpha.df, aes(ymin=lwr,ymax=upr), alpha=0.3) + labs(x = "year", y = expression(alpha), title = expression(paste("State Space Values of ", alpha, " over Time")))
+
+ggplot(data = beta.df, aes(dateTime, beta) ) + geom_point (data = beta.df, aes(dateTime, beta) ) + geom_line() + geom_ribbon(data=beta.df , aes(ymin=lwr,ymax=upr), alpha=0.3) + labs(x = "year", y = expression(beta), title = expression(paste("State Space Values of ", beta, " over Time")))
 
 }
 
@@ -154,7 +164,7 @@ kalman.plot <- function(val, clim, site.code){
 pdf("/Users/kah/Documents/TreeRings/outputs/Kalman_regressions.pdf")
 kalman.plot(val = molten.UNC, clim = "Jul.pdsi", site.code = "UNC")
 kalman.plot(val = molten.BON, clim = "Jul.pdsi", site.code = "BON")
-kalman.plot(val = molten.HIC, clim = "Jul.pdsi", site.code = "HIC")
+kalman.plot(val = val, clim = "Jul.pdsi", site.code = "HIC")
 kalman.plot(val = molten.STC, clim = "Jul.pdsi", site.code = "STC")
 kalman.plot(val = molten.TOW, clim = "Jul.pdsi", site.code = "TOW")
 kalman.plot(val = molten.COR, clim = "Jul.pdsi", site.code = "COR")
