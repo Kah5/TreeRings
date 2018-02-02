@@ -16,7 +16,7 @@ setwd("/Users/kah/Documents/TreeRings")
 #read in rwl & add site + year codes#
 #####################################
 
-# quick function to read detrend and add the year as a column:
+# quick function to read, detrend, and add the year as a column:
 # this function will also just calculate BAI instead
 read_detrend_year <- function( filename, method , rwiorbai, site){
   if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
@@ -132,7 +132,7 @@ dev.off()
 source("R/tree_age_agg.R")
 
 # apply the tree_age_agg function on all of the detrended tree ring series
-detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 30,type = "RWI_Spline_detrended" )
+detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,type = "RWI_Spline_detrended" )
 
 # use do.calll to make these a dataframe
 detrended.age.df <- do.call(rbind, detrended.age)
@@ -412,6 +412,7 @@ dev.off()
 # based on the DBH at each time step, specify the DBH class over time. 
 
 read_DBH_year <- function( filename, site){
+  
   if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
     newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
     
@@ -639,6 +640,8 @@ dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH
                        Uncas.DBH, Glacial.DBH, Englund.DBH, Mound.DBH, GLL1.DBH, GLL2.DBH, 
                        GLL3.DBH, GLL4.DBH, PVC.DBH, AVO.DBH, UNI.DBH)
 
+
+
 # function to assign DBH class to all dataframes:
 DBH.classify <- function(dbh.df, n.classes){
         Hic <- dbh.df
@@ -696,7 +699,17 @@ DBH.classify <- function(dbh.df, n.classes){
 dbh.class <- lapply(dbh.list, DBH.classify, n.classes = 5)
 dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
-testmerge <- merge(dbh.class.df, detrended.age.df, by = c("year", "site", "ID"))
+# summarize # of cores each site has est before 1900, 1900-1950, and after 1950:
+
+summary(dbh.class.df)
+
+
+minyear.by.ID<- dbh.class.df %>% group_by(site, ID)  %>% summarise(min(year, na.rm = TRUE))
+#group.by(site) %>% summarise()
+
+age.classes <- dbh.class.df %>% group_by(site, ID)  %>% summarise(pre1800 = min(year, na.rm = TRUE) <1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
+
+age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 # merge these with the climate/growth dataframes:
 det.age.clim.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
 det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
@@ -709,6 +722,9 @@ dev.off()
 
 ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()+facet_wrap(~ageclass)
 
+png("outputs/DBH/July_clim_sens_by_site.png")
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()+facet_wrap(~site)
+dev.off()
 
 summary(lm(RWI ~ Jul.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
 
@@ -729,23 +745,17 @@ det.age.clim.ghcn.df <- det.age.clim.ghcn.df[!det.age.clim.ghcn.df$ID %in% remov
 
 # ------------------------How does growth vary over time:
 
-library(treeclim)
+#library(treeclim)
 
 # we will us the dcc function in the tree clim package, but this funtion takes monthly data:
-test <- det.age.clim.ghcn.df
+#test <- det.age.clim.ghcn.df
 
 
-# moving correlations between climate and tree growth:
-
-a <- dcc(det.age.clim.ghcn.df[], IL.clim[1:1452,c("Year", "Month", "PCP")], dynamic = 'moving', win_size = 35, win_offset = 5)
-a
-
-plot(a)
-traceplot(a)
+# moving correlations between climate and tree growth
 
 
 #these funcitons print out plots time moving correlations for all of the climate parameters
-
+# not run by default b/c they take along time to run:
 clim.cor<- function(climate, chron, site.name){
   site.code <- site.df[1,]$site
   
@@ -961,13 +971,13 @@ clim.cor<- function(climate, chron, site.name){
   dev.off()
 }
 
-clim.cor(IL.clim, Hickory, 'Hickory_Grove_')
-clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
-clim.cor(MNwc.clim, Desoix, 'Desoix_')
-clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
-clim.cor(MNec.clim, Townsend, 'Townsend_woods_')
-clim.cor(MNec.clim, StCroix, 'StCroix_savanna_')
-clim.cor(MNse.clim, Mound, 'Mound_prairie_')
+#clim.cor(IL.clim, Hickory, 'Hickory_Grove_')
+#clim.cor(MNwc.clim, Bonanza, 'Bonanza_Prairie_')
+#clim.cor(MNwc.clim, Desoix, 'Desoix_')
+#clim.cor(WIsc.clim, Pleasant, 'Pleasant_Valley_Conservancy_')
+#clim.cor(MNec.clim, Townsend, 'Townsend_woods_')
+#clim.cor(MNec.clim, StCroix, 'StCroix_savanna_')
+#clim.cor(MNse.clim, Mound, 'Mound_prairie_')
 
 
 # ------------------------What is the factor that affects growth-------------
