@@ -63,6 +63,7 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   
   detrended.mean$year <- rownames(detrended.mean)
   detrended.mean$site<- site
+  write.csv(detrended,paste0("cleanrwl/detrended_rwi_", site, ".csv"))
   detrended.mean
 }
 
@@ -137,6 +138,10 @@ detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,type 
 # use do.calll to make these a dataframe
 detrended.age.df <- do.call(rbind, detrended.age)
 
+
+age.classes <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% summarise(pre1800 = min(year) < 1880  , pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
+
+age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 
 
 ###################################
@@ -398,6 +403,10 @@ det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
 # plot the RWI vs July.pdsi
 ggplot(det.age.clim.prism.df, aes(x = jul.VPDmax, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
 ggplot(det.age.clim.ghcn.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
+
+age.classes <- det.age.clim.ghcn.df %>% group_by(site, ID)  %>% summarise(pre1800 = min(year, na.rm = TRUE) < 1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
+
+age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 
 
 # write these dfs to a csv:
@@ -707,9 +716,11 @@ summary(dbh.class.df)
 minyear.by.ID<- dbh.class.df %>% group_by(site, ID)  %>% summarise(min(year, na.rm = TRUE))
 #group.by(site) %>% summarise()
 
-age.classes <- dbh.class.df %>% group_by(site, ID)  %>% summarise(pre1800 = min(year, na.rm = TRUE) <1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
+age.classes <- dbh.class.df %>% group_by(site, ID)  %>% drop_na() %>% summarise(pre1800 = min(year, na.rm = TRUE) <1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
 
 age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
+
+
 # merge these with the climate/growth dataframes:
 det.age.clim.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
 det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
