@@ -10,11 +10,11 @@ library(ggplot2)
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
-#filename <- file.choose()
-#data.raw <- read.csv(filename)
-data.raw  <- read.csv("data/stable_isotopes/raw_irms/Export_180321.csv") # need to change this filename
+filename <- file.choose()
+data.raw <- read.csv(filename)
+#data.raw  <- read.csv("data/stable_isotopes/raw_irms/Export_180321.csv") # need to change this filename
 
-View(data.raw)
+head(data.raw)
 
 # ------------------------------------------QA/QC blank peaks ---------------------------
 #Check the Blanks for any blanks with more than 4 peaks
@@ -44,8 +44,8 @@ data.C.std <- filter(data.refs.samples, Peak.Nr==5, Identifier.2 == "std") %>%se
 data.C <- filter(data.refs.samples, Peak.Nr==4, !Identifier.2 == "std") #%>% select(c(5,6))
 std.NC <- merge(data.N.std, data.C.std, by = c("Identifier.1", "Identifier.2"))# combine N and C data
 head(std.NC)
-colnames<-c("Sample","Type","Peak_NrN", "d15N_14N", "Peak_NrC","d13C_12C" )
-names(std.NC)<-colnames
+colnames <- c("Sample","Type","Peak_NrN", "d15N_14N", "Peak_NrC","d13C_12C" )
+names(std.NC) <- colnames
 
 # -------------------------------- create standard curve -----------------------------------------------
 date<-("11/11/16") # enter date
@@ -61,7 +61,7 @@ protein <- filter(std.NC, Sample %in% c("Protein1std", "Protein2std", "Protein3s
 
 # set up vectors for observed and expected delta 13 C values
 obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards
-exp_13C <- c(rep(-13.68, length(sorghum$d13C_12C)), rep(-25.95, length(peach$d13C_12C)), rep(-26.98, length(peach$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
+exp_13C <- c(rep(-13.68, length(sorghum$d13C_12C)), rep(-25.95, length(peach$d13C_12C)), rep(-26.98, length(protein$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
 
 # run a linear regression on expected vs. observed values
 modelC <- lm( exp_13C ~ obs_13C )
@@ -80,9 +80,9 @@ plot(obs_13C[2:9], exp_13C[2:9])
 
 
 #save data - save raw, processed, and database prep data into a both individual csvs:
-setwd("/Users/kah/Documents/TreeRings/data/stable_isotopes/deltaC/")
+#setwd("/Users/kah/Documents/TreeRings/data/stable_isotopes/deltaC/")
 
-  savefilename<-'data/stable_isotopes/deltaC/3_21_2018_deltaC_'
+  savefilename<-'data/stable_isotopes/deltaC/4_4_2018_deltaC_'
   write.csv(std.NC,paste0(savefilename,'stds.csv'), row.names=F)
   write.csv(data.C, paste0(savefilename,'stds.csv'),row.names=F)
 
