@@ -9,7 +9,8 @@ library(mgcv)
 library(tidyr)
 library(SPEI)
 library(boot)
-# lets look at relationship to climate with age:
+library(dplyr)
+# lets look atrelationship to climate with age:
 setwd("/Users/kah/Documents/TreeRings")
 
 #####################################
@@ -143,6 +144,7 @@ age.classes <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% summar
 
 age.classes  %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 
+write.csv(age.classes, "data/site_stats/n_trees_ageclass_by_site.csv")
 
 ###################################
 # add climate data to the age trends
@@ -404,9 +406,9 @@ det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
 ggplot(det.age.clim.prism.df, aes(x = jul.VPDmax, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
 ggplot(det.age.clim.ghcn.df, aes(x = Jul.pdsi, y = RWI, color = ageclass))+geom_point()+stat_smooth(method = 'lm')+facet_wrap(~site, ncol = 5)
 
-age.classes <- det.age.clim.ghcn.df %>% group_by(site, ID)  %>% summarise(pre1800 = min(year, na.rm = TRUE) < 1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
+#age.classes <- det.age.clim.ghcn.df %>% group_by(site, ID)  %>% summarise(pre1800 = min(year, na.rm = TRUE) < 1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
 
-age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
+#test <- age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800 , na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 
 
 # write these dfs to a csv:
@@ -479,14 +481,20 @@ read_DBH_year <- function( filename, site){
             
             
             # only find records where we have both DBH and tellervo entries:
+            # writecsv with tree rwl that are missing for each site so we can check these:
+            not.in.rwl <- diams [!diams$ID %in% colnames(newseries),]
+            if(length(not.in.rwl$ID) > 0){ # if there are any records missing, make a csv output
+              write.csv(not.in.rwl, paste0("data/site_stats/", site, "-IDS_not_in_tellervo.csv"))
+            }
             diams <- diams [diams$ID %in% colnames(newseries),]
             newseries <- newseries[,colnames(newseries) %in% diams$ID]
             write.csv(diams,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
             
             
           }else{
+            
           diams <- site.data[c("short", "DBH")]
-          diams <- diams[2:length(diams$short),]
+          #diams <- diams[2:length(diams$short),]
           diams$DBH <- as.numeric(as.character(diams$DBH))
           diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
           colnames(diams.agg) <- c("ID", "short", "DBH")
@@ -495,11 +503,18 @@ read_DBH_year <- function( filename, site){
           spec <- spec[!duplicated(spec),]
           diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "short")
           diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
-          diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
+          diams$DBH <- c(diams$DBH) # may need to subtract ~2cm for barkwidth 
           colnames(diams) <- c("ID", "DBH", "SpecCode") 
           
           
           # only find records where we have both DBH and tellervo entries:
+          # writecsv with tree rwl that are missing for each site so we can check these:
+          not.in.rwl <- diams [!diams$ID %in% colnames(newseries),]
+          if(length(not.in.rwl$ID) > 0){ # if there are any records missing, make a csv output
+            write.csv(not.in.rwl, paste0("data/site_stats/", site, "-IDS_not_in_tellervo.csv"))
+          }
+          
+          
           diams <- diams [diams$ID %in% colnames(newseries),]
           newseries <- newseries[,colnames(newseries) %in% diams$ID]
           write.csv(diams ,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
@@ -551,6 +566,7 @@ read_DBH_year <- function( filename, site){
           
   
   }else{ 
+    
     # if sites only have one core per tree:
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
           
@@ -559,16 +575,21 @@ read_DBH_year <- function( filename, site){
           colnames(diams) <- c("ID", "DBH") 
           spec <- site.data[complete.cases(site.data[,c("full_tellervo", "SpecCode")]),c("full_tellervo", "SpecCode")]
           spec <- spec[!duplicated(spec),]
-          diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "full_tellervo")
+          #diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "full_tellervo")
+          diams.agg <- merge(diams, spec, by.x = "ID", by.y = "full_tellervo")
           diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
           diams$DBH <- c(diams$DBH) # subtract ~2cm for barkwidth and convert to mm
           colnames(diams) <- c("ID", "DBH", "SpecCode") 
           
-          
+          # writecsv with tree rwl that are missing for each site so we can check these:
+          not.in.rwl <- diams [!diams$ID %in% colnames(newseries),]
+          if(length(not.in.rwl$ID) > 0){ # if there are any records missing, make a csv output
+            write.csv(not.in.rwl, paste0("data/site_stats/", site, "-IDS_not_in_tellervo.csv"))
+          }
           # only find records where we have both DBH and tellervo entries:
           diams <- diams [diams$ID %in% colnames(newseries),]
           newseries <- newseries[,colnames(newseries) %in% diams$ID]
-          write.csv(diams,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
+          write.csv(diams,paste0("outputs/DBH/species_codes_", site, ".csv"))
           
           rwl <- newseries*0.1 # convert measuremnts to CM:
           
@@ -640,10 +661,10 @@ Mound.DBH <- read_DBH_year(filename = "cleanrwl/MOUww.rwl", site = "MOU") # bai 
 GLL1.DBH <- read_DBH_year("cleanrwl/GLL1ww.rwl",  site = "GLL1")# bai removed extra ones
 GLL2.DBH <- read_DBH_year("cleanrwl/GLL2ww.rwl",  site = "GLL2") #  bai removed extra onesi
 GLL3.DBH <- read_DBH_year("cleanrwl/GLL3ww.rwl",  site = "GLL3")
-GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4") # error
+#GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4") # error
 PVC.DBH <- read_DBH_year("cleanrwl/PVCww.rwl",  site = "PVC")
 AVO.DBH <- read_DBH_year(filename = "cleanrwl/AVOww.rwl",  site = "AVO") 
-UNI.DBH <- read_DBH_year(filename = "cleanrwl/UNIww.rwl", site = "UNI") # DBH has multiple cores listed
+#UNI.DBH <- read_DBH_year(filename = "cleanrwl/UNIww.rwl", site = "UNI") # DBH has multiple cores listed
 
 dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH, Coral.DBH,
                        Uncas.DBH, Glacial.DBH, Englund.DBH, Mound.DBH, GLL1.DBH, GLL2.DBH, 
