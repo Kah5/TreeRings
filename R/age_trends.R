@@ -429,7 +429,8 @@ read_DBH_year <- function( filename, site){
     
     row.names(newseries) <- newseries$year
     newseries <- newseries[!names(newseries) %in% "year"]
-  }else{
+  }
+  else{
     newseries <- read.tucson( filename )
   }
  
@@ -442,7 +443,7 @@ read_DBH_year <- function( filename, site){
   gp.treeMean2 <- treeMean(newseries, autoread.ids(newseries), na.rm=TRUE)
   
   # if multiple cores were sampled per each site, we need to average the widths of the cores before estimating diamters:
-  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC", "HIC", "BON", "PLE", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")
+  mult.core.sites <- c("TOW", "COR", "HIC", "STC", "MOU", "ENG", "PVC", "HIC","UNI", "BON", "PLE",  "GLL1", "GLL2", "GLL3", "GLL4")
   if(site %in% mult.core.sites){
           if(site %in% "COR"){
             colnames(gp.treeMean2) <- paste0(site,19, colnames(gp.treeMean2))
@@ -456,9 +457,22 @@ read_DBH_year <- function( filename, site){
               gp.treeMean2 <- treeMean(newseries, read.ids(newseries, stc = c(3,4,1)), na.rm=TRUE)
               colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
             }else{
+              if(site %in% "GLL4"){
+              
+              gp.treeMean2 <- treeMean(newseries, read.ids(newseries, stc = c(4,7,1)), na.rm=TRUE)
+              colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
+              # quick fix for GLL4:
+              
+              colnames(gp.treeMean2) <- c("GLL41", "GLL413", "GLL414", "GLL415", "GLL42", "GLL45", "GLL47", "GLL48", "GLL49")
+              }else{
+                if(site %in% "UNI"){
+                colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean))
+              
+            
+            }else{
           colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
           
-            }
+            }}}
               }
   }
 
@@ -491,33 +505,34 @@ read_DBH_year <- function( filename, site){
             write.csv(diams,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
             
             
-          }else{
-            
-          diams <- site.data[c("short", "DBH")]
-          #diams <- diams[2:length(diams$short),]
-          diams$DBH <- as.numeric(as.character(diams$DBH))
-          diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
-          colnames(diams.agg) <- c("ID", "short", "DBH")
-          diams.agg<- diams.agg[!duplicated(diams.agg),]
-          spec <- site.data[complete.cases(site.data[,c("short", "SpecCode")]),c("short", "SpecCode")]
-          spec <- spec[!duplicated(spec),]
-          diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "short")
-          diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
-          diams$DBH <- c(diams$DBH) # may need to subtract ~2cm for barkwidth 
-          colnames(diams) <- c("ID", "DBH", "SpecCode") 
-          
-          
-          # only find records where we have both DBH and tellervo entries:
-          # writecsv with tree rwl that are missing for each site so we can check these:
-          not.in.rwl <- diams [!diams$ID %in% colnames(newseries),]
-          if(length(not.in.rwl$ID) > 0){ # if there are any records missing, make a csv output
-            write.csv(not.in.rwl, paste0("data/site_stats/", site, "-IDS_not_in_tellervo.csv"))
           }
+          else{
+            diams <- site.data[c("short", "DBH")]
+            #diams <- diams[2:length(diams$short),]
+            diams$DBH <- as.numeric(as.character(diams$DBH))
+            diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
+            colnames(diams.agg) <- c("ID", "short", "DBH")
+            diams.agg<- diams.agg[!duplicated(diams.agg),]
+            spec <- site.data[complete.cases(site.data[,c("short", "SpecCode")]),c("short", "SpecCode")]
+            spec <- spec[!duplicated(spec),]
+            diams.agg <- merge(diams.agg, spec, by.x = "ID", by.y = "short")
+            diams <- diams.agg[,c("ID", "DBH", "SpecCode")]
+            diams$DBH <- c(diams$DBH) # may need to subtract ~2cm for barkwidth 
+            colnames(diams) <- c("ID", "DBH", "SpecCode") 
+            
+            
+            # only find records where we have both DBH and tellervo entries:
+            # writecsv with tree rwl that are missing for each site so we can check these:
+            not.in.rwl <- diams [!diams$ID %in% colnames(newseries),]
+            if(length(not.in.rwl$ID) > 0){ # if there are any records missing, make a csv output
+              write.csv(not.in.rwl, paste0("data/site_stats/", site, "-IDS_not_in_tellervo.csv"))
+            }
+            
+            
+            diams <- diams [diams$ID %in% colnames(newseries),]
+            newseries <- newseries[,colnames(newseries) %in% diams$ID]
+            write.csv(diams ,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
           
-          
-          diams <- diams [diams$ID %in% colnames(newseries),]
-          newseries <- newseries[,colnames(newseries) %in% diams$ID]
-          write.csv(diams ,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
           }
           rwl <- newseries*0.1 # convert measuremnts to CM:
           
@@ -556,7 +571,8 @@ read_DBH_year <- function( filename, site){
             if(min( n.vec[!n.vec %in% na]) == 1){
               no.na <- c( n.vec[!n.vec %in% na])
               out[no.na, i] <- rev(r0[1:length(r0)-1])*2 # only report back the diameters
-            }else{
+            }
+            else{
               
               no.na <- c(na[length(na)], n.vec[!n.vec %in% na])
               out[no.na, i] <- rev(r0[1:length(r0)])*2 # only report back the diameters
@@ -565,7 +581,9 @@ read_DBH_year <- function( filename, site){
           }
           
   
-  }else{ 
+
+}
+  else{ 
     
     # if sites only have one core per tree:
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
@@ -632,7 +650,7 @@ read_DBH_year <- function( filename, site){
               out[no.na, i] <- rev(r0[1:length(r0)])*2 # only report back the diameters
             }
             
-          }
+          
   
 }
   # rename df
@@ -645,7 +663,7 @@ read_DBH_year <- function( filename, site){
   
   # output yearly dataframe
   yearly.diams
-}
+}}
 
 
 Hickory.DBH <- read_DBH_year(filename = "cleanrwl/HICww.rwl",  site = "HIC")
@@ -661,10 +679,10 @@ Mound.DBH <- read_DBH_year(filename = "cleanrwl/MOUww.rwl", site = "MOU") # bai 
 GLL1.DBH <- read_DBH_year("cleanrwl/GLL1ww.rwl",  site = "GLL1")# bai removed extra ones
 GLL2.DBH <- read_DBH_year("cleanrwl/GLL2ww.rwl",  site = "GLL2") #  bai removed extra onesi
 GLL3.DBH <- read_DBH_year("cleanrwl/GLL3ww.rwl",  site = "GLL3")
-#GLL4.DBH <- read_DBH_year("cleanrwl/GLL4ww.rwl",  site = "GLL4") # error
+GLL4.DBH <- read_DBH_year(filename = "cleanrwl/GLL4ww.rwl",  site = "GLL4") # error
 PVC.DBH <- read_DBH_year("cleanrwl/PVCww.rwl",  site = "PVC")
 AVO.DBH <- read_DBH_year(filename = "cleanrwl/AVOww.rwl",  site = "AVO") 
-#UNI.DBH <- read_DBH_year(filename = "cleanrwl/UNIww.rwl", site = "UNI") # DBH has multiple cores listed
+UNI.DBH <- read_DBH_year(filename = "cleanrwl/UNIww.rwl", site = "UNI") # DBH has multiple cores listed
 
 dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH, Coral.DBH,
                        Uncas.DBH, Glacial.DBH, Englund.DBH, Mound.DBH, GLL1.DBH, GLL2.DBH, 

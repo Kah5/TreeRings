@@ -7,6 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
+date<-("04_20_2017") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -28,6 +29,7 @@ if (max(data.blanks$Peak.Nr)>4){
   readline("press enter to continue")
 } 
 
+
 # just check that these are only N peaks--
 
 #-----------------------------------Grab sample and standard data-----------------------------------
@@ -38,17 +40,16 @@ head(data.refs.samples)
 
 # since I have no N peaks for the samples, but I do in my standards, we need to grab a different peak number depending on whether the Identifier.2 == std or not:
 
-data.N.std <- filter(data.refs.samples, Peak.Nr==4, Identifier.2 == "std") %>%select(-c(5,6)) # %>% called piping...allows you to use multiple plyr functions linked together
-data.C.std <- filter(data.refs.samples, Peak.Nr==5, Identifier.2 == "std") %>%select(-c(4,6)) # %>% called piping...allows you to use multiple plyr functions linked together
+data.N.std <- filter(data.refs.samples, Peak.Nr==4, Identifier.2 == "std") %>%select(-c(5,6)) # grab all N peaks for std
+data.C.std <- filter(data.refs.samples, Peak.Nr==5, Identifier.2 == "std") %>%select(-c(4,6)) # grab all C peaks for sts
 
-data.C <- filter(data.refs.samples, Peak.Nr==4, !Identifier.2 == "std") #%>% select(c(5,6))
+data.C <- filter(data.refs.samples, Peak.Nr==4, !Identifier.2 == "std") # grab all the C peaks for the data (kh cellulose does not have any N peaks)
 std.NC <- merge(data.N.std, data.C.std, by = c("Identifier.1", "Identifier.2"))# combine N and C data
 head(std.NC)
 colnames <- c("Sample","Type","Peak_NrN", "d15N_14N", "Peak_NrC","d13C_12C" )
 names(std.NC) <- colnames
 
 # -------------------------------- create standard curve -----------------------------------------------
-date<-("11/11/16") # enter date
 
 # select sorghum standard data-- in the old code these values are averaged, then regressed, but I am going to keep them for now
 sorghum <- filter(std.NC, Sample %in% c("Sorhgum1std", "Sorhgum2std", "Sorhgum3std", "Sorghum4std", "Sorghum1std", "Sorghum2std", "Sorghum3std", "Sorghum4std"))#%>%summarise(d13C_12C=mean(d13C_12C))        
@@ -82,9 +83,9 @@ plot(obs_13C[2:9], exp_13C[2:9])
 #save data - save raw, processed, and database prep data into a both individual csvs:
 #setwd("/Users/kah/Documents/TreeRings/data/stable_isotopes/deltaC/")
 
-  savefilename<-'data/stable_isotopes/deltaC/4_4_2018_deltaC_'
+  savefilename<-paste0('data/stable_isotopes/deltaC/',date,'_deltaC_')
   write.csv(std.NC,paste0(savefilename,'stds.csv'), row.names=F)
-  write.csv(data.C, paste0(savefilename,'stds.csv'),row.names=F)
+  write.csv(data.C, paste0(savefilename,'data.csv'),row.names=F)
 
 
 # add processed samples to existing master CSV sample (if it exists) 

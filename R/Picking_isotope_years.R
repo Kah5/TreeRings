@@ -6,7 +6,7 @@ sites <- c( "HIC","STC",#"GLA",
 for(j in 1:length(sites)){
   
 # read in the similar years script + the wet + dry climates
-sim.yr <- read.csv(paste0("outputs/data/Isotope_climate/",sites[j],"_most_similar_years.csv"))
+#sim.yr <- read.csv(paste0("outputs/data/Isotope_climate/",sites[j],"_most_similar_years.csv"))
 dry.clim <- read.csv(paste0("outputs/data/Isotope_climate/",sites[j],"_wet_dry_climate_age_class.csv"))
 dry.clim.u <- unique(dry.clim[,c("year", "class", "site", "PCP", "Jul.pdsi", "PDSI", "climclass")])
 
