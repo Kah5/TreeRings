@@ -1,6 +1,5 @@
 library(dplR)
 library(ggplot2)
-library(R2jags)
 library(plyr)
 library(raster)
 library(data.table)
@@ -20,17 +19,23 @@ setwd("/Users/kah/Documents/TreeRings")
 # quick function to read, detrend, and add the year as a column:
 # this function will also just calculate BAI instead
 read_detrend_year <- function( filename, method , rwiorbai, site){
-  if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
+  if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3")){
     newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
     rwl.stats(newseries)
     file.tuc <- read.tucson( filename )
-    row.names(newseries) <- row.names(file.tuc)
+    rownames(newseries) <- rownames(file.tuc)
     
-  }else{
+  }else{if(site %in% "GLL4"){
+      newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
+      
+      rownames(newseries) <- newseries$year
+      newseries <- newseries[,1:(length(newseries)-1)] # remove yr column
+      rwl.stats(newseries)
+    }
   newseries <- read.tucson( filename )
   rwl.stats(newseries)
   }
-  
+
   # average the cores by tree (for the sites with multiple cores):
   
   #gp.ids <- read.ids(newseries, stc = autoread.ids(newseries))
@@ -51,8 +56,17 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
     detrended.mean <- treeMean(detrended, read.ids(detrended, stc = c(3,4,1)), na.rm=TRUE)
     colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
   }else{
+    if(site %in% "GLL4"){
+      detrended.mean <- treeMean(detrended, read.ids(detrended, stc = c(4,7,1)), na.rm=TRUE)
+      colnames(detrended.mean) <- paste0(site, colnames(detrended.mean))
+      # quick fix for GLL4:
+      
+      colnames(detrended.mean) <- c("GLL41", "GLL413", "GLL414", "GLL415", "GLL42", "GLL45", "GLL47", "GLL48", "GLL49")
+      
+    }else{
     detrended.mean <- treeMean(detrended, autoread.ids(detrended), na.rm=TRUE)
   colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
+    }
   }
   mean.rwi.stat <- rwl.stats(detrended.mean)
   write.csv(mean.rwi.stat, paste0("outputs/Stats/mean.rwi.stats.", site,".csv"))
@@ -421,6 +435,7 @@ dev.off()
 # ------------------------- Get tree DBH at time of coring + put in DBH classes ----------------------------------
 # This function uses DBH at time of coring and annual growth records to estimate Tree DBH over time
 # based on the DBH at each time step, specify the DBH class over time. 
+# for some reason these throw up alot of warnings now, but seem to be okay
 
 read_DBH_year <- function( filename, site){
   
@@ -429,8 +444,7 @@ read_DBH_year <- function( filename, site){
     
     row.names(newseries) <- newseries$year
     newseries <- newseries[!names(newseries) %in% "year"]
-  }
-  else{
+  }else{
     newseries <- read.tucson( filename )
   }
  
@@ -472,9 +486,7 @@ read_DBH_year <- function( filename, site){
             }else{
           colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
           
-            }}}
-              }
-  }
+            }}}}}
 
           newseries <- gp.treeMean2
           
@@ -505,8 +517,7 @@ read_DBH_year <- function( filename, site){
             write.csv(diams,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
             
             
-          }
-          else{
+          }else{
             diams <- site.data[c("short", "DBH")]
             #diams <- diams[2:length(diams$short),]
             diams$DBH <- as.numeric(as.character(diams$DBH))
@@ -532,8 +543,8 @@ read_DBH_year <- function( filename, site){
             diams <- diams [diams$ID %in% colnames(newseries),]
             newseries <- newseries[,colnames(newseries) %in% diams$ID]
             write.csv(diams ,paste0("outputs/DBH/species_codes_", sitecode, ".csv"))
-          
           }
+          
           rwl <- newseries*0.1 # convert measuremnts to CM:
           
           # below code is adapted from dplR function bai.out to just estimate tree diameter at this point:
@@ -571,8 +582,7 @@ read_DBH_year <- function( filename, site){
             if(min( n.vec[!n.vec %in% na]) == 1){
               no.na <- c( n.vec[!n.vec %in% na])
               out[no.na, i] <- rev(r0[1:length(r0)-1])*2 # only report back the diameters
-            }
-            else{
+            }else{
               
               no.na <- c(na[length(na)], n.vec[!n.vec %in% na])
               out[no.na, i] <- rev(r0[1:length(r0)])*2 # only report back the diameters
@@ -582,8 +592,7 @@ read_DBH_year <- function( filename, site){
           
   
 
-}
-  else{ 
+}else{ 
     
     # if sites only have one core per tree:
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
@@ -652,6 +661,7 @@ read_DBH_year <- function( filename, site){
             
           
   
+          }
 }
   # rename df
   yearly.diams <- out
@@ -663,7 +673,7 @@ read_DBH_year <- function( filename, site){
   
   # output yearly dataframe
   yearly.diams
-}}
+}
 
 
 Hickory.DBH <- read_DBH_year(filename = "cleanrwl/HICww.rwl",  site = "HIC")
@@ -690,7 +700,7 @@ dbh.list <- list(Hickory.DBH, StCroix.DBH, Bonanza.DBH,Townsend.DBH,Pleasant.DBH
 
 
 
-# function to assign DBH class to all dataframes:
+# function to assign DBH class to all dataframes and make plots of DBH
 DBH.classify <- function(dbh.df, n.classes){
         Hic <- dbh.df
         
@@ -751,34 +761,49 @@ dbh.class.df <- do.call(rbind, dbh.class) # make into df
 
 summary(dbh.class.df)
 
-
-minyear.by.ID<- dbh.class.df %>% group_by(site, ID)  %>% summarise(min(year, na.rm = TRUE))
+detach(package: plyr)
+minyear.by.ID <- dbh.class.df %>% group_by(site, ID)  %>% summarise(min(year, na.rm = TRUE))
 #group.by(site) %>% summarise()
 
 age.classes <- dbh.class.df %>% group_by(site, ID)  %>% drop_na() %>% summarise(pre1800 = min(year, na.rm = TRUE) <1880, pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
 
 age.classes %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 
+# fixing some ID's with UNI:
+test.uni<- det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "UNI",]$ID
+det.age.clim.ghcn.df[det.age.clim.ghcn.df$site %in% "UNI",]$ID<- substr(test.uni, 1, 4)
+det.age.clim.prism.df[det.age.clim.prism.df$site %in% "UNI",]$ID<- substr(test.uni, 1, 4)
 
-# merge these with the climate/growth dataframes:
-det.age.clim.ghcn.df<- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
-det.age.clim.prism.df<- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
+
+
+
+# merge the diameter class df with the climate/growth dataframes:
+det.age.clim.ghcn.df <- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
+det.age.clim.prism.df <- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
 test.ghcn.df <- merge(det.age.clim.ghcn.df, dbh.class.df, by = c("year", "site", "ID"))
 test.prism.df <- merge(det.age.clim.prism.df, dbh.class.df, by = c("year", "site", "ID"))
 
+# change factor order of dbhclass to make prettier plots:
+det.age.clim.ghcn.df$dbhclass<- factor(det.age.clim.ghcn.df$dbhclass, levels = c("< 20", "20 - 40", "40 - 60", "60 - 80", ">80"))
 png("outputs/DBH/July_clim_sens_by_dbh.png")
-ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()
 dev.off()
 
-ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()+facet_wrap(~ageclass)
+
+det.age.clim.ghcn.df$ageclass<- factor(det.age.clim.ghcn.df$ageclass, levels = c("Past", "Modern"))
+
+png("outputs/DBH/July_clim_sens_by_ageclass.png")
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~ageclass)
+dev.off()
+
 
 png("outputs/DBH/July_clim_sens_by_site.png")
-ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = FALSE)+theme_bw()+theme_black()+facet_wrap(~site)
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~site)
 dev.off()
 
 summary(lm(RWI ~ Jul.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
 
-# lets find to cores that need to be checked (not sensitivit to climate)
+# lets find to cores that need to be checked (not sensitive to climate)
 corrs <- data.frame(a = 1:length(unique(det.age.clim.ghcn.df$ID)),
                     id = unique(det.age.clim.ghcn.df$ID))
 for(i in 1:length(unique(det.age.clim.ghcn.df$ID))){
@@ -806,7 +831,7 @@ det.age.clim.ghcn.df <- det.age.clim.ghcn.df[!det.age.clim.ghcn.df$ID %in% remov
 
 #these funcitons print out plots time moving correlations for all of the climate parameters
 # not run by default b/c they take along time to run:
-clim.cor<- function(climate, chron, site.name){
+clim.cor <- function(climate, chron, site.name){
   site.code <- site.df[1,]$site
   
   if(climatedata == "GHCN"){
@@ -1129,6 +1154,8 @@ png(width = 10, height = 10, units = 'in', res = 300, "outputs/correlations/Mode
   do.call("grid.arrange", c(allModern.Past.plots.pdsi, ncol=3))
 dev.off()
 
+
+
 # lets look at July VPDmax:
 # make all the plots for ghcn data: outputs to outputs/correlations/fPaster
 allModern.Past.plots.julvpdmax <- lapply(det.age.clim.prism, plot.Modern.Past, Climate = "jul.VPDmax",xlab = "July VPDmax", ylab = "RWI")
@@ -1306,10 +1333,14 @@ summary(lm(Jul.pdsi ~ RWI , data = sim.df[sim.df$climclass %in% "Dry_0.25" & sim
 summary(lm(Jul.pdsi ~ RWI , data = sim.df[sim.df$climclass %in% "Dry_0.25" & sim.df$class %in% "post-1950",]))
 
 
+
+
+#---------------------Get Climate sensitivity for the two time periods in dry + wet------------------
+
 # get bootstrapped estimates of climate sensitivity for dry years for wet years before and after 1950 :
 get.clim.sens.by.dry <- function(df, model.func){
   
-  df <- aggregate(Jul.pdsi~year, data = det.age.clim.ghcn.df, FUN = mean )
+  df <- aggregate(Jul.pdsi~year , data = det.age.clim.ghcn.df, FUN = mean )
   
   dry <- quantile(df$Jul.pdsi, 0.25) # value of the driest years
   wet <- quantile(df$Jul.pdsi, 0.75) # value of the wettest years
@@ -1354,7 +1385,7 @@ get.clim.sens.by.dry <- function(df, model.func){
     } 
     
     # for the "Post-1950" class:
-    if(nrow(site.data[ site.data$class == "Post-1950" ,]) > 0){
+    if(nrow(site.data[ site.data$class %in% "Post-1950" ,]) > 0){
       # bootstrapping the linear regression model
       results <- boot(data=site.data[site.data$class == "Post-1950" & site.data$year >= 1950 ,], statistic=bs, R=2000, formula=model.func)
       
@@ -1377,7 +1408,7 @@ get.clim.sens.by.dry <- function(df, model.func){
     
     
     # for the "Pre-1950" class:  
-    if(nrow(site.data[ site.data$class == "Pre-1950" ,]) > 0){
+    if(nrow(site.data[ site.data$class %in% "Pre-1950" ,]) > 2){
       results <- boot(data=site.data[site.data$class == "Pre-1950" & site.data$year < 1950 ,], statistic=bs, R=2000, formula=model.func)
       
       int.cis <- boot.ci(boot.out = results, type = "norm", index = 1)# intercept 
@@ -1523,10 +1554,12 @@ get.clim.sens.by.wet <- function(df,climateclass, model.func){
 }
 sens.jul.pdsi_wet0.25 <- get.clim.sens.by.dry(df = det.age.clim.ghcn.df, model.func = "RWI ~ Jul.pdsi")
 
+
 ggplot(sens.jul.pdsi_wet0.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
 
 ggplot(sens.jul.pdsi_dry0.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
 
+#---------------------Get Climate sensitivity for the modern and past in dry + wet------------------
 
 # get bootstrapped estimates of climate sensitivy for dry years Modern and Past, before + after 1950
 get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
@@ -1649,9 +1682,10 @@ get.clim.sens.age.by.moisture <- function(df, climateclass ,model.func){
 sens.jul.pdsi.age_wet.25 <- get.clim.sens.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Wet_0.25", model.func = "RWI ~ Jul.pdsi" )
 
 # get bootstrapped estimates of climate sensitivy for wet years Modern and Past, before + after 1950
-sens.jul.pdsi.age_dry.25<- get.clim.sens.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", model.func = "RWI ~ Jul.pdsi" )
+sens.jul.pdsi.age_dry.25 <- get.clim.sens.age.by.moisture(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", model.func = "RWI ~ Jul.pdsi" )
 
 
+# plot slope estimates
 ggplot(sens.jul.pdsi.age_wet.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
 
 ggplot(sens.jul.pdsi.age_dry.25, aes(age, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)+facet_wrap(~site)
@@ -1660,7 +1694,7 @@ ggplot(sens.jul.pdsi.age_dry.25, aes(age, slope.est, color = age))+geom_point()+
 ggplot(sens.jul.pdsi.age_dry.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
 
 # get bootstrapped differences between slopes:
-function(df, climateclass ,model.func){
+#function(df, climateclass ,model.func){
   
   coeffs <- matrix ( 0, length(unique(df$site))*2, 8 ) # set up matrix for coefficients
   yr <- 1895:1950
@@ -1765,16 +1799,16 @@ function(df, climateclass ,model.func){
     }
   }
   
-  coeffs <- data.frame(coeffs)
-  colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
-  coeffs$site <- as.character(coeffs$site)
-  coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
-  coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
-  coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
-  coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
-  coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
-  coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
-  coeffs
+ # coeffs <- data.frame(coeffs)
+  #colnames(coeffs) <- c("site","age",'int.est', "slope.est", "int.min","int.max", "slope.min", "slope.max")
+  #coeffs$site <- as.character(coeffs$site)
+  #coeffs$slope.est <- as.numeric(as.character(coeffs$slope.est))
+  #coeffs$int.est <- as.numeric(as.character(coeffs$int.est))
+  #coeffs$int.min <- as.numeric(as.character(coeffs$int.min))
+  #coeffs$int.max <- as.numeric(as.character(coeffs$int.max))
+  #coeffs$slope.min <- as.numeric(as.character(coeffs$slope.min))
+  #coeffs$slope.max <- as.numeric(as.character(coeffs$slope.max))
+  #coeffs
   
 #}
 
@@ -1909,7 +1943,7 @@ cor.jul.pdsi.age_wet.25 <- get.clim.cor.age.by.moisture(df =det.age.clim.ghcn.df
 
 ggplot(cor.jul.pdsi.age_dry.25, aes(site, cor.est, color = age))+geom_point()+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
 
-
+#-------------------Get correlation by age class, using each tree------------------------
 # get a correlation for each tree:
 get.clim.cor.age.by.moist.ID <- function(df, climateclass,clim){
   yr <- 1895:1950
@@ -2034,7 +2068,7 @@ get.clim.cor.age.by.moist.ID <- function(df, climateclass,clim){
   coeffs
   
 }
-cor.jul.pdsi.age_dry.25.id <- get.clim.cor.age.by.moist.ID(df =det.age.clim.ghcn.df, climateclass = "Dry_0.25", clim = "Jul.pdsi" )
+cor.jul.pdsi.age_dry.25.id <- get.clim.cor.age.by.moist.ID(df = det.age.clim.ghcn.df, climateclass = "Dry_0.25", clim = "Jul.pdsi" )
 
 ggplot(cor.jul.pdsi.age_dry.25.id, aes(age, cor.est, color = age))+geom_boxplot()+facet_wrap(~site)#+geom_errorbar(aes(ymin=ci.min, ymax = ci.max), size = 0.2, width = 0.5)
 
