@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date<-("04_20_2017") # enter date of sample run
+date<-("04_20_18") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -29,19 +29,28 @@ if (max(data.blanks$Peak.Nr)>4){
   readline("press enter to continue")
 } 
 
-
 # just check that these are only N peaks--
 
 #-----------------------------------Grab sample and standard data-----------------------------------
 
 #get the all samples excluding the blanks
+
 data.refs.samples <- filter(data.raw, !Identifier.2=="blank",!Identifier.2=="trash")%>%select(-c(1,2,5,6,7,9:27, 29:30))
 head(data.refs.samples)
 
+# a special case where the data was formattted differently
+if(filename %in% "/Users/kah/Documents/TreeRings/data/stable_isotopes/raw_irms/170420_Heilman.csv"){
+  data.refs.samples <- filter(data.raw, !Identifier.2=="blank",!Identifier.2=="trash")%>%select(c("Identifier.1", "Identifier.2","Peak.Nr",  "d.15N.14N", "d.13C.12C", "Time.Code"))
+  head(data.refs.samples)
+}
 # since I have no N peaks for the samples, but I do in my standards, we need to grab a different peak number depending on whether the Identifier.2 == std or not:
 
 data.N.std <- filter(data.refs.samples, Peak.Nr==4, Identifier.2 == "std") %>%select(-c(5,6)) # grab all N peaks for std
 data.C.std <- filter(data.refs.samples, Peak.Nr==5, Identifier.2 == "std") %>%select(-c(4,6)) # grab all C peaks for sts
+
+data.C.std  <- data.C.std [data.C.std$d.13C.12C < 0,] # if there are any strnage peaks, get rid of them here
+# if protein is off (as in run on 02/19/18), then get rid of this value:
+data.C.std <- data.C.std [data.C.std$d.13C.12C > -30,]
 
 data.C <- filter(data.refs.samples, Peak.Nr==4, !Identifier.2 == "std") # grab all the C peaks for the data (kh cellulose does not have any N peaks)
 std.NC <- merge(data.N.std, data.C.std, by = c("Identifier.1", "Identifier.2"))# combine N and C data
@@ -52,13 +61,13 @@ names(std.NC) <- colnames
 # -------------------------------- create standard curve -----------------------------------------------
 
 # select sorghum standard data-- in the old code these values are averaged, then regressed, but I am going to keep them for now
-sorghum <- filter(std.NC, Sample %in% c("Sorhgum1std", "Sorhgum2std", "Sorhgum3std", "Sorghum4std", "Sorghum1std", "Sorghum2std", "Sorghum3std", "Sorghum4std"))#%>%summarise(d13C_12C=mean(d13C_12C))        
+sorghum <- filter(std.NC, Sample %in% c("sourgumstd", "sourgumstd2","Sorhgum1std", "Sorhgum2std", "Sorhgum3std", "Sorghum4std", "Sorghum1std", "Sorghum2std", "Sorghum3std", "Sorghum4std"))#%>%summarise(d13C_12C=mean(d13C_12C))        
 
 # select peach leaves standard data
-peach <- filter(std.NC, Sample %in% c("Peach1std", "Peach2std", "Peach3std", "Peach4std"))#%>%summarise(d13C_12C=mean(d13C_12C))
+peach <- filter(std.NC, Sample %in% c("peachstd", "peachstd2","Peach1std", "Peach2std", "Peach3std", "Peach4std"))#%>%summarise(d13C_12C=mean(d13C_12C))
 
 # select protein standard data
-protein <- filter(std.NC, Sample %in% c("Protein1std", "Protein2std", "Protein3std", "Protein4std"))#%>%summarise(d13C_12C=mean(d13C_12C))
+protein <- filter(std.NC, Sample %in% c("proteinstd", "proteinstd2","Protein1std", "Protein2std", "Protein3std", "Protein4std"))#%>%summarise(d13C_12C=mean(d13C_12C))
 
 # set up vectors for observed and expected delta 13 C values
 obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards
@@ -66,7 +75,8 @@ exp_13C <- c(rep(-13.68, length(sorghum$d13C_12C)), rep(-25.95, length(peach$d13
 
 # run a linear regression on expected vs. observed values
 modelC <- lm( exp_13C ~ obs_13C )
-summary(modelC)
+summary(modelC)# check p value + Rsquared
+
 ccoeff <- coefficients(modelC)
 
 # correct delta 13C values based on standard calibration equation
