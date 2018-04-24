@@ -63,7 +63,7 @@ iso.df <- iso.data.df[,c("Year", "Tree","Site","samplenum", "d.13C.12C", "d13C_1
 deltaATM <- read.csv("data/stable_isotopes/Mccarrol_loader_deltaC_atm.csv") # data from mccarroll and loader patched with recent ppm an dneed to check the delta13atm values
 head(deltaATM)
 
-full.df <- merge(iso.df, deltaATM[,c("Year", "d13atm")], by = "Year")
+full.df <- merge(iso.df, deltaATM[,c("Year", "d13atm", "ppm")], by = "Year")
 full.df$Cor.d13C.suess <- full.df$d13C_12C_corr + (full.df$d13atm + 6.4)
 
 
@@ -71,6 +71,10 @@ ggplot(full.df, aes(Year, Cor.d13C.suess, color = Tree))+geom_point()
 
 ggplot(full.df, aes(Year, Cor.d13C.suess, color = Site))+geom_point()+facet_wrap(~Site)
 
+ggplot(full.df, aes(Year, Cor.d13C.suess, color = Tree))+geom_point()+geom_line()+facet_wrap(~Site)
+
+ggplot(full.df[!full.df$Year == 1979, ], aes(ppm, Cor.d13C.suess, color = Tree))+geom_point()+facet_wrap(~Site)
 
 # write to a csv
 write.csv(full.df, "outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
+

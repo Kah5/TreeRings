@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date<-("04_20_18") # enter date of sample run
+date<-("05_11_17") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -38,8 +38,9 @@ if (max(data.blanks$Peak.Nr)>4){
 data.refs.samples <- filter(data.raw, !Identifier.2=="blank",!Identifier.2=="trash")%>%select(-c(1,2,5,6,7,9:27, 29:30))
 head(data.refs.samples)
 
-# a special case where the data was formattted differently
-if(filename %in% "/Users/kah/Documents/TreeRings/data/stable_isotopes/raw_irms/170420_Heilman.csv"){
+# a couple of special cases where the data was formattted differently
+if(filename %in% c("/Users/kah/Documents/TreeRings/data/stable_isotopes/raw_irms/170420_Heilman.csv", 
+                   "/Users/kah/Documents/TreeRings/data/stable_isotopes/raw_irms/170511_Heilman_full.csv")){
   data.refs.samples <- filter(data.raw, !Identifier.2=="blank",!Identifier.2=="trash")%>%select(c("Identifier.1", "Identifier.2","Peak.Nr",  "d.15N.14N", "d.13C.12C", "Time.Code"))
   head(data.refs.samples)
 }

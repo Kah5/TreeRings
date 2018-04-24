@@ -30,12 +30,22 @@ dev.off()
 
 deltas <- merge(deltaTR, deltaATM, by = "Year")
 
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Read in Isotopde df from read_plot_delatC.R>>>>>>>>>>>>>>>>>>>>>>>
+deltas <- read.csv("outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
 # now calculate the WUE:
 a <- 4.4
 b <- 27
 
-deltas$iWUE <- deltas$ppm*(1-(deltas$Corr.d13C-deltas$d13atm + a))/(b-a)*0.625
+deltas$iWUE <- deltas$ppm*(1-(deltas$d13C_12C_corr-deltas$d13atm + a))/(b-a)*0.625
 summary(deltas$iWUE)
+
+
+ggplot(deltas, aes(x = Year, y = iWUE, color = Tree))+geom_point()+theme_bw()+facet_wrap(~Site)
+
+deltas$class <- ifelse(deltas$Year <= 1950, "Pre-1950", "Post-1950")
+
+ggplot(deltas, aes(x = ppm, y = iWUE, color = Tree))+geom_point()+theme_bw()+facet_wrap(~Site + class)+ylim(90, 200)+xlim(290, 410)
 
 # make initial plots of the data
 png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_iWUE_time.png")
