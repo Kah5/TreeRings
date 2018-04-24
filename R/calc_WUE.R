@@ -31,18 +31,65 @@ dev.off()
 deltas <- merge(deltaTR, deltaATM, by = "Year")
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Read in Isotopde df from read_plot_delatC.R>>>>>>>>>>>>>>>>>>>>>>>
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Read in Isotopde df from read_plot_delatC.R >>>>>>>>>>>>>>>>>>>>>>>
 deltas <- read.csv("outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
-# now calculate the WUE:
+deltas <- deltas[!is.na(deltas$d13C_12C_corr),]
+
+# make some preliminary plots of the data:
+
+ggplot(deltas[!deltas$Site %in% "UNI", ], aes(x = Year, y = d13C_12C_corr, color = Site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+ylim(-32, -23)
+
+ggplot(deltas[!deltas$Site %in% "UNI", ], aes(x = Year, y = Cor.d13C.suess, color = Site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+ylim(-32, -23)
+#ggplot(deltas[!deltas$Site %in% "UNI", ], aes(x = Year, y = Cor.d13C.suess, color = Site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
+
+
+# get the means and sd of each year for each site
+d13.avgs <- aggregate(d13C_12C_corr ~ Year + Site, data=deltas, FUN=mean, na.rm = T) 
+d13.sds <- aggregate(d13C_12C_corr ~ Year + Site, data=deltas, FUN=sd, na.rm = T) 
+colnames(d13.sds) <- c("Year", "Site", "sd")
+d13.avgs <- merge(d13.avgs, d13.sds, by = c("Year", "Site"))
+
+# plot with errorbars
+ggplot(d13.avgs[!d13.avgs$Site %in% "UNI", ], aes(x = Year, y = d13C_12C_corr, color = Site))+geom_point()+geom_errorbar(aes(ymin=d13C_12C_corr - sd, ymax = d13C_12C_corr + sd), size = 0.2, width = 0.9)+theme_bw()+scale_color_manual(values = c("red", "blue"))
+
+# highlight the comparison years in each site
+young.yrs.bon <- c(1955, 1959, 1961,  1964, 1976, 1977,1981, 1987, 1988,1989, 1980, 2006,2012)
+old.yrs.bon <- c(1921, 1929, 1911, 1940, 1900, 1931, 1934, 1922, 1931, 1929)
+
+young.yrs.gll <- c(1985:1980, 1976:1978, 1972, 1964, 1959:1962, 1953, 1959,
+                   2014, 2012, 2011, 2006, 2005, 2001, 1997,1995, 1991, 1993)
+old.yrs.gll <- c(1910, 1911, 1918, 1926,1932, 1933, 1934, 1936, 1940, 1943)
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> calculate the WUE:  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 a <- 4.4
 b <- 27
 
 deltas$iWUE <- deltas$ppm*(1-(deltas$d13C_12C_corr-deltas$d13atm + a))/(b-a)*0.625
 summary(deltas$iWUE)
 
+# just make plots of all the tree replicates:
+ggplot(deltas[!deltas$Site %in% "UNI", ], aes(x = Year, y = iWUE, color = Site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))
+ggplot(deltas[!deltas$Site %in% "UNI", ], aes(x = Year, y = iWUE, color = Site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
+
+wue.avgs <- aggregate(iWUE ~ Year + Site, data=deltas, FUN=mean, na.rm = T) 
+wue.sds <- aggregate(iWUE ~ Year + Site, data=deltas, FUN=sd, na.rm = T) 
+colnames(wue.sds) <- c("Year", "Site", "sd")
+wue.avgs <- merge(wue.avgs, wue.sds, by = c("Year", "Site"))
+
+ggplot(wue.avgs[!wue.avgs$Site %in% "UNI", ], aes(x = Year, y = iWUE, color = Site))+geom_point() +theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))
+ggplot(wue.avgs[!wue.avgs$Site %in% "UNI", ], aes(x = Year, y = iWUE, color = Site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
+
+# plot with errorbars
+ggplot(wue.avgs[!wue.avgs$Site %in% "UNI", ], aes(x = Year, y = iWUE, color = Site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
+
+# plot only the years where we have multiple sample estimates
+ggplot(wue.avgs[!wue.avgs$Site %in% "UNI" & ! is.na(wue.avgs$sd), ], aes(x = Year, y = iWUE, color = Site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
+
 
 ggplot(deltas, aes(x = Year, y = iWUE, color = Tree))+geom_point()+theme_bw()+facet_wrap(~Site)
 
+# If 
 deltas$class <- ifelse(deltas$Year <= 1950, "Pre-1950", "Post-1950")
 
 ggplot(deltas, aes(x = ppm, y = iWUE, color = Tree))+geom_point()+theme_bw()+facet_wrap(~Site + class)+ylim(90, 200)+xlim(290, 410)

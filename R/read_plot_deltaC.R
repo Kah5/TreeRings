@@ -40,10 +40,21 @@ iso.data.df[iso.data.df$Identifier.2 %in% c("BON9A", "BON9B", "BON9C"),]$Identif
 iso.data.df[iso.data.df$Identifier.2 %in% c("BON8A", "BON8B", "BON8C"),]$Identifier.2 <- "BON8" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("BON7A", "BON7B", "BON7C"),]$Identifier.2 <- "BON7" 
 
+iso.data.df[iso.data.df$Identifier.2 %in% c("UNI5B"),]$Identifier.2 <- "UNI5" 
 unique(iso.data.df$Identifier.2) # check that this took care of all the data:
 
 # change to more intutitive column names:
 colnames(iso.data.df) <- c("Year", "Tree", "Peak.Nr", "d.15N.14N", "d.13C.12C","Time.Code", "d13C_12C_corr")
+
+# some of the sample years are labeled with EW and LW:
+iso.EW <- iso.data.df[iso.data.df$Year %like% "EW",]
+
+# get all the non-EW data:
+iso.data.LW <- iso.data.df[!iso.data.df$Year %like% "EW",]
+
+# if the year has an LW after it, remove it here, else, keep all the characters
+iso.data.LW[iso.data.LW$Year %like% "LW",]$Year <- substr(iso.data.LW[iso.data.LW$Year %like% "LW",]$Year , 1, 4)
+iso.data.df <- iso.data.LW 
 
 # some samples are analytical replicates, denote replicate # here:
 iso.data.df$samplenum <- substr(iso.data.df$Year, 5, 6)
@@ -60,12 +71,16 @@ iso.df <- iso.data.df[,c("Year", "Tree","Site","samplenum", "d.13C.12C", "d13C_1
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< correct for seuss effect: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # 13C corrected = 13C plant + (13C atm + 6.4)
+# note, check the deltaC_atm
 deltaATM <- read.csv("data/stable_isotopes/Mccarrol_loader_deltaC_atm.csv") # data from mccarroll and loader patched with recent ppm an dneed to check the delta13atm values
 head(deltaATM)
 
 full.df <- merge(iso.df, deltaATM[,c("Year", "d13atm", "ppm")], by = "Year")
-full.df$Cor.d13C.suess <- full.df$d13C_12C_corr + (full.df$d13atm + 6.4)
+full.df$Cor.d13C.suess <- full.df$d13C_12C_corr - (full.df$d13atm + 6.4)
 
+# there are a few points around -20 per mil which are points that may need to be checked:
+full.df[full.df$d13C_12C_corr > -22,] # the 1934 + 1933 may be strange b/c of the high drought in that year--see what the rest of the values say
+full.df <- full.df[!full.df$d13C_12C_corr > -21.55,]
 
 ggplot(full.df, aes(Year, Cor.d13C.suess, color = Tree))+geom_point()
 
