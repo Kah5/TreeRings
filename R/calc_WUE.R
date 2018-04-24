@@ -98,18 +98,36 @@ old.yrs.gll <- c(1900, 1910, 1911,1915, 1918, 1919, 1920, 1921, 1922, 1924, 1925
 
 # If the data is 
 deltas$class <- NA
-deltas[deltas$Site %in% "BON" & deltas$Year %in% old.yrs.bon,]$class <- "Pre-1950"
-deltas[deltas$Site %in% "BON" & deltas$Year %in% young.yrs.bon,]$class <-  "Post-1950"
-deltas[deltas$Site %in% "GLL" & deltas$Year %in% old.yrs.gll,]$class <-  "Pre-1950"
-deltas[deltas$Site %in% "GLL" & deltas$Year %in% young.yrs.gll,]$class <- "Post-1950"
+deltas[deltas$Site %in% "BON" & deltas$Year %in% old.yrs.bon,]$class <- "Past"
+deltas[deltas$Site %in% "BON" & deltas$Year %in% young.yrs.bon,]$class <-  "Modern"
+deltas[deltas$Site %in% "GLL" & deltas$Year %in% old.yrs.gll,]$class <-  "Past"
+deltas[deltas$Site %in% "GLL" & deltas$Year %in% young.yrs.gll,]$class <- "Modern"
 
-# plot based on groups
+# plot based on groups:
+
+# get colors that match tree growth plots
+ageColors <- c( "#009E73", "#D55E00")
+#ageColors <- c( "blue", "#D55E00")
+deltas$class <- factor(deltas$class, levels = c("Past", "Modern", "NA"))
+names(ageColors) <- levels(deltas$class)[1:2]
+
 ggplot(na.omit(deltas), aes(x = ppm, y = iWUE, color = Tree))+geom_point()+theme_bw()+facet_wrap(~Site + class, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
-
-ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = class))+geom_point()+geom_jitter()+theme_bw()+facet_wrap(~Site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
+ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+theme_bw()+facet_wrap(~Site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 
 ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+theme_bw()+facet_wrap(~Site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
-ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_jitter()+theme_bw()+facet_wrap(~Site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
+ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_jitter()+scale_color_manual(values = ageColors)+facet_wrap(~Site)+theme_black(base_size = 20)#, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
+
+
+png(width = 6, height = 4, units = "in", res = 300, "outputs/stable_isotopes/d13C_cor_by_age_class_sites.png")
+ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = class))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+scale_color_manual(values = ageColors)+facet_wrap(~Site)+theme_black(base_size = 20)+ylab("d13C corrected")+xlab(" ")
+dev.off()
+
+png(width = 6, height = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_by_age_class_sites.png")
+ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+scale_color_manual(values = ageColors)+facet_wrap(~Site)+theme_black(base_size = 20)+ylab("iWUE")+xlab(" ")
+dev.off()
+
+ggplot(site.df, aes(sand, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("% sand ")+stat_smooth(method = "lm", se = FALSE)
+
 
 t.test(na.omit(deltas[deltas$Site %in% "BON" & deltas$Year %in% old.yrs.bon,]$Cor.d13C.suess), na.omit(deltas[deltas$Site %in% "BON" & deltas$Year %in% young.yrs.bon,]$Cor.d13C.suess))
 
