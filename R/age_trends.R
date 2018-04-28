@@ -406,7 +406,7 @@ get.clim <- function(site.df, climatedata){
                           JUNTmax = jun.tmax[1:120,]$TMAX,
                           jul.VPDmax = jul.VPDmax[1:120,]$VPDmax, 
                           jul.BAL = jul.BAL[1:120,]$BAL) 
-   
+   write.csv(annuals, paste0("data/climate/PRISM/", site.code, "full.clim.csv"))
     
     df <- merge(site.df, annuals, by = "year")
     
@@ -800,7 +800,7 @@ ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat
 dev.off()
 
 png("outputs/DBH/JJA_clim_sens_by_dbh.png")
-ggplot(na.omit(det.age.clim.ghcn.df), aes(JJA.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()
+ggplot(na.omit(det.age.clim.ghcn.df), aes(JJA.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black(base_size = 20)+ylab("Detrended Ring Width Index")+xlab("Summer PDSI")
 dev.off()
 
 
@@ -811,11 +811,27 @@ ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat
 dev.off()
 
 png("outputs/DBH/JJA_clim_sens_by_ageclass.png")
-ggplot(na.omit(det.age.clim.ghcn.df), aes(JJA.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~ageclass)
+ggplot(na.omit(det.age.clim.ghcn.df), aes(JJA.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black(base_size = 12)+facet_wrap(~ageclass)
 dev.off()
 
+summary(aov(RWI~JJA.pdsi+ageclass, data=det.age.clim.class.ghcn.df))
+summary(aov(RWI~JJA.pdsi*ageclass, data=det.age.clim.class.ghcn.df))
+
+ggplot(na.omit(det.age.clim.ghcn.df), aes(JJA.pdsi, RWI, color = ageclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~ageclass)
+det.age.clim.class.ghcn.df<- merge(det.age.clim.ghcn.df, locs, by.x = "site", by.y = "code")
+
+png("outputs/DBH/JJA_clim_sens_by_coverclass.png")
+ggplot(na.omit(det.age.clim.class.ghcn.df), aes(JJA.pdsi, RWI, color = Description))+geom_point(size = 0.8)+stat_smooth(method = "lm", se = TRUE, aes(fill = Description), alpha = 0.1)+theme_bw()+theme_black()+ylab("Detrended Ring Width Index")+xlab("Summer PDSI")
+dev.off()
+
+summary(lm(RWI ~ JJA.pdsi, data = det.age.clim.class.ghcn.df[det.age.clim.class.ghcn.df$Description %in% "Forest",]))
+summary(lm(RWI ~ JJA.pdsi, data = det.age.clim.class.ghcn.df[det.age.clim.class.ghcn.df$Description %in% "Savanna",]))
+
+summary(aov(RWI~JJA.pdsi+Description, data=det.age.clim.class.ghcn.df))
+summary(aov(RWI~JJA.pdsi*Description, data=det.age.clim.class.ghcn.df))
+
 png("outputs/DBH/July_clim_sens_by_site.png")
-ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~site)
+ggplot(na.omit(det.age.clim.ghcn.df), aes(Jul.pdsi, RWI, color = dbhclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = ageclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~site)
 dev.off()
 
 png("outputs/DBH/JJA_clim_sens_by_site.png")
@@ -1098,6 +1114,11 @@ plot(det.age.clim.prism.df$RWI, preds)
 
 ggplot(det.age.clim.prism.df, aes(TAVG, RWI, color = site))+geom_point()+facet_wrap(~site)
 ggplot(det.age.clim.prism.df, aes(PCP, RWI, color = site))+geom_point()+facet_wrap(~site)
+
+# save climate + tree ring dfs detrened.age.clim.prism.df
+
+write.csv(det.age.clim.prism.df, "outputs/data/Isotope_climate/detrened_age_rwi_PRISMclimate.df.csv", row.names = FALSE)
+write.csv(det.age.clim.ghcn.df, "outputs/data/Isotope_climate/detrened_age_rwi_GHCNclimate.df.csv", row.names = FALSE)
 
 # ------------------plot climate parameters vs growth for all the tree ring series
 

@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date<-("11_15_17") # enter date of sample run
+date <- ("04_27_18") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -23,7 +23,7 @@ data.blanks <- filter(data.raw, Identifier.2=="blank")
 
 #check if there are any N or CO2 blank peaks - in blanks 
 #if there are more than 4 peaks in blank it will tell you where
-if (max(data.blanks$Peak.Nr)>4){
+if (max(data.blanks$Peak.Nr)>6){
   message("there are blank peaks in these samples: ")
   print(data.blanks[data.blanks$Peak.Nr>4,1:4])
   readline("press enter to continue")
@@ -69,17 +69,17 @@ data.C.std <- data.C.std [data.C.std$d.13C.12C > -30,]
 data.C <- filter(data.refs.samples, Peak.Nr==4, !Identifier.2 == "std") # grab all the C peaks for the data (kh cellulose does not have any N peaks)
 
 # this is for the special case where we prescreened the N peaks out
-if(length(data.N.std$Identifier.1 > 0)){
+if(length(data.N.std$Identifier.1) > 0){
 std.NC <- merge( data.C.std, data.N.std, by = c("Identifier.1", "Identifier.2"))# combine N and C data
 }else{
   std.NC <- data.C.std
   std.NC$Peak_NrN <- NA
   std.NC$d15N_14N <- NA
-  std.NC <- std.NC[,c("Identifier.1", "Identifier.2", "Peak_NrN", "d15N_14N","Peak.Nr", "d.13C.12C")]
+  std.NC <- std.NC[,c("Identifier.1", "Identifier.2", "Peak.Nr", "d.13C.12C", "Peak_NrN", "d15N_14N")]
 }
 
 head(std.NC)
-colnames <- c("Sample","Type","Peak_NrN", "d15N_14N", "Peak_NrC","d13C_12C" )
+colnames <- c("Sample","Type", "Peak_NrC","d13C_12C","Peak_NrN", "d15N_14N")
 names(std.NC) <- colnames
 
 # -------------------------------- create standard curve -----------------------------------------------
@@ -93,8 +93,8 @@ peach <- filter(std.NC, Sample %in% c("peachstd", "peachstd2","Peach1std", "Peac
 # select protein standard data
 protein <- filter(std.NC, Sample %in% c("proteinstd", "proteinstd2","Protein1std", "Protein2std", "Protein3std", "Protein4std"))#%>%summarise(d13C_12C=mean(d13C_12C))
 
-protein <- protein[protein$d13C_12C < -20,] # if the samples didnt drop, then peak 5 will be the background CO2 peak, which we need to remove
-peach <- peach[peach$d13C_12C < -20,]
+protein <- protein[protein$d13C_12C > -20,] # if the samples didnt drop, then peak 5 will be the background CO2 peak, which we need to remove
+peach <- peach[peach$d13C_12C > -20,]
 
 # set up vectors for observed and expected delta 13 C values
 obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards

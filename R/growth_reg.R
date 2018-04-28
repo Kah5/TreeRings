@@ -605,15 +605,60 @@ Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU",
 write.csv(Highest, "outputs/highest_cors_GHCN_table.csv")
 
 # for PRISM data
-Highest <- list()
+Highest.p <- list()
 for(j in 1:length(site.cd)){
-  Highest[[j]] <- highest.cor(site.cd[j], "PRISM", 1)
+  Highest.p[[j]] <- highest.cor(site.cd[j], "PRISM", 1)
 }
 
-Highest <- do.call(rbind, Highest) #bind together in a table
+Highest.p <- do.call(rbind, Highest.p) #bind together in a table
 
-Highest$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
-write.csv(Highest, "outputs/highest_cors_GHCN_table.csv")
+Highest.p$site <- c('HIC', "BON", "COR", "GLA", "STC", "ENG", "UNC", "TOW", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
+write.csv(Highest.p, "outputs/highest_cors_PRISM_table.csv")
+
+colnames(Highest.p) <- c("prism_mono", "prism_months", "prism_variable", "prism_value", "site")
+all.high <- merge(Highest, Highest.p, by = "site")
+
+# map out the highest correlations:
+
+locs <- read.csv("outputs/priority_sites_locs.csv")
+locs$code <- as.character(locs$code)
+#locs[9:12,]$code <- c( "GLL1", "GLL2", "GLL3", "GLL4")
+#sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC", "AVO", "PLE", "UNI")
+
+locs.highest <- merge(locs, Highest, by.x = "code", by.y = "site")
+locs.highest$variable <- ifelse(locs.highest$variable %in% "PDSI", "PDSI & VPDmax", paste(locs.highest$variable))
+locs.highest$highestcor <- paste(locs.highest$months, locs.highest$variable )
+
+ggplot(locs.highest, aes(coords.x1, coords.x2, color = highestcor))+geom_point(size = 2)+theme_black()
+
+
+
+highest.map <- ggplot()+geom_point(data = locs.highest, aes(coords.x1, coords.x2, color = highestcor))+scale_color_manual(values = c(
+  '#fdcc8a',
+  '#fc8d59',
+  '#e34a33',
+  '#b30000',
+  '#984ea3',
+  '#fef0d9',
+  '#386cb0'
+  ))+ 
+geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat, group=group),
+                                             colour = "darkgrey", fill = NA, size  = 0.8)+theme_black()+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(308821.43, 1380021))+
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        legend.key = element_rect(),
+        legend.title = element_blank(),
+        
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+png("outputs/bw_tree_highes_cors_map.png")
+highest.map
+dev.off()
+
+# get the highest correlation between either prism VPD and pdsi
 
 #---------- Does correlation with climate vary according to mean climate?-------------
 #now plot the correlations against their mean annual precips MAP from GHCN, but can use prism data for correlations:
