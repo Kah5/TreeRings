@@ -125,8 +125,6 @@ dev.off()
 ggplot(na.omit(deltas), aes(x = ppm, y = Cor.d13C.suess, color = class))+geom_point()+scale_color_manual(values = ageColors)+facet_wrap(~Site)+theme_black(base_size = 20)+ylab("d13C corrected")+xlab(" ")
 
 
-ggplot(site.df, aes(sand, slope.est))+geom_point(color = "white")+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), color = 'white')+theme_black(base_size = 20)+ylab("Sensitivity to July PDSI")+xlab("% sand ")+stat_smooth(method = "lm", se = FALSE)
-
 
 t.test(na.omit(deltas[deltas$Site %in% "BON" & deltas$Year %in% old.yrs.bon,]$Cor.d13C.suess), na.omit(deltas[deltas$Site %in% "BON" & deltas$Year %in% young.yrs.bon,]$Cor.d13C.suess))
 

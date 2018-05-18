@@ -840,6 +840,37 @@ dev.off()
 
 summary(lm(RWI ~ Jul.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
 summary(lm(RWI ~ JJA.pdsi:dbhclass, data = na.omit(det.age.clim.ghcn.df)))
+
+# make these plots with correlation coefficent, not linear relationships:
+head(det.age.clim.ghcn.df)
+require(plyr)
+cor.func <- function(xx)
+{
+  return(data.frame(COR = cor(xx$RWI, xx$JJA.pdsi)))
+}
+
+nona.age.df <- det.age.clim.ghcn.df[!is.na(det.age.clim.ghcn.df$RWI) & !is.na(det.age.clim.ghcn.df$JJA.pdsi),]
+# get correlation ceofficient with ages class
+det.age.dbhclass.cor <- ddply(nona.age.df, .(dbhclass, site), cor.func)
+ggplot(det.age.dbhclass.cor, aes(dbhclass, COR))+geom_bar(stat = "identity")+facet_wrap(~site)
+
+cor.boot <- function(df){
+dat <- df[,c("RWI", "JJA.pdsi")]
+N <- nrow(dat)
+R <- 2500
+
+cor.orig <- cor(dat)[1,2]
+cor.boot <- NULL
+
+for (i in 1:R) {
+  idx <- sample.int(N, N, replace = TRUE) 
+  cor.boot[i] <- cor(dat[idx, ])[1,2] 
+}
+cor.boot
+}
+
+det.age.dbhclass.cor.b <- ddply(nona.age.df, .(dbhclass), cor.boot)
+hist(cor.boot)
 # lets find to cores that need to be checked (not sensitive to climate)
 corrs <- data.frame(a = 1:length(unique(det.age.clim.ghcn.df$ID)),
                     id = unique(det.age.clim.ghcn.df$ID))
@@ -855,6 +886,7 @@ removes <- corrs[corrs$a <= 0.1 | is.na(corrs$a),]$id
 
 det.age.clim.ghcn.df <- det.age.clim.ghcn.df[!det.age.clim.ghcn.df$ID %in% removes,]
 
+write.csv(det.age.clim.ghcn.df, "outputs/det.age.clim.ghcn.sizes.csv", row.names = FALSE)
 # ------------------------How does growth vary over time:
 
 #library(treeclim)
@@ -3959,7 +3991,7 @@ July_pdsi_sens_pred <- as.vector(predict.gam(gam.sens, newdata = DBH_all))
 DBH_all$July_pdsi_sens_pred <- July_pdsi_sens_pred
 ggplot(DBH_all, aes(x,y, fill = July_pdsi_sens_pred))+geom_raster()
 
-
+write.csv(DBH_all, "outputs/DBH_modern_8km.csv")
 
 # predict the Oak sensitivity landscape if all were Modern trees (future landscape):
 Oak.Modern <- Oak.sites
@@ -3990,9 +4022,12 @@ All.Past$age <- "Past"
 July_pdsi_Past_sens_pred <-as.vector(predict(gam.pr.dbh, newdata = All.Past))
 All.Past$July_pdsi_Past_sens_pred <- July_pdsi_Past_sens_pred
 
+ggplot(DBH_all, aes(x, y, fill = DBH))+geom_raster()
 
 ggplot(All.Past, aes(x, y, fill = July_pdsi_Past_sens_pred))+geom_raster()
 ggplot(All.Past, aes(x, y, fill = July_pdsi_Modern_sens_pred))+geom_raster()
+ggplot(All.Past, aes(x, y, fill = July_pdsi_Past_sens_pred))+geom_raster()
+ggplot(All.Past, aes(x, y, fill = DBH))+geom_raster()
 
 # map out all predictions over the region:
 all_states <- map_data("state")
@@ -4071,6 +4106,13 @@ sites.map.Past <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, 
         panel.grid.minor = element_blank(), 
         title = element_text(margin = margin(t = 0, r = 20, b = 10, l = 0))) 
 sites.map.Past
+
+
+ggplot()+ geom_raster(data=Oak.Past, aes(x=x, y=y, fill = DBH))+
+  labs(x="easting", y="northing", title="Drought Sensitivity 1895-1950") + 
+  scale_fill_gradientn(colours = red.pal, name ="Drought \n Sensitivity", limits = c(-0.03, 0.075))+
+  coord_cartesian(xlim = c(-59495.64, 725903.4), ylim=c(68821.43, 1480021))
+
 
 # oak sensitivity for Modern trees map:
 sites.map <- ggplot()+ geom_raster(data=Oak.Past, aes(x=x, y=y, fill = July_pdsi_Modern_sens_pred))+

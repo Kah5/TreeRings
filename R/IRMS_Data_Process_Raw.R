@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date <- ("04_27_18") # enter date of sample run
+date <- ("05_02_18") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -93,8 +93,8 @@ peach <- filter(std.NC, Sample %in% c("peachstd", "peachstd2","Peach1std", "Peac
 # select protein standard data
 protein <- filter(std.NC, Sample %in% c("proteinstd", "proteinstd2","Protein1std", "Protein2std", "Protein3std", "Protein4std"))#%>%summarise(d13C_12C=mean(d13C_12C))
 
-protein <- protein[protein$d13C_12C > -20,] # if the samples didnt drop, then peak 5 will be the background CO2 peak, which we need to remove
-peach <- peach[peach$d13C_12C > -20,]
+protein <- protein[protein$d13C_12C < -20,] # if the samples didnt drop, then peak 5 will be the background CO2 peak, which we need to remove
+peach <- peach[peach$d13C_12C < -20,]
 
 # set up vectors for observed and expected delta 13 C values
 obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards
