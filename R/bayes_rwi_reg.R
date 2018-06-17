@@ -481,6 +481,10 @@ Y.80 <- as.vector(RWIS[RWIS$dbhclass %in% ">80",]$RWI)
 pdsi.80 <- as.vector( RWIS[RWIS$dbhclass %in% ">80",]$JJA.pdsi)
 n.80     <- length(RWIS[RWIS$dbhclass %in% ">80",]$RWI)
 
+#80 + 
+Y.80 <- as.vector(RWIS[RWIS$dbhclass %in% c(">80", "60 - 80"),]$RWI) 
+pdsi.80 <- as.vector( RWIS[RWIS$dbhclass %in% c(">80", "60 - 80"),]$JJA.pdsi)
+n.80     <- length(RWIS[RWIS$dbhclass %in% c(">80", "60 - 80"),]$RWI)
 
 model_string <- "model{
 
@@ -569,7 +573,7 @@ plot(samp.80)
 # save a data frame with beta2 sensitivity and the 
 samp.df <- summary(samp)
 
-samps.df.sum <- data.frame(dbhclass = c(">20", "20 - 40", "40 - 60", "60 - 80", ">80"),
+samps.df.sum <- data.frame(dbhclass = c(">20", "20 - 40", "40 - 60", "60 - 80", ">60"),
                            mean = c(summary(samp.20)$statistics[2,"Mean"],
                                    summary(samp.20.40)$statistics[2,"Mean"],
                                    summary(samp.40.60)$statistics[2,"Mean"],
@@ -586,7 +590,7 @@ samps.df.sum <- data.frame(dbhclass = c(">20", "20 - 40", "40 - 60", "60 - 80", 
                                       summary(samp.60.80)$quantiles[2,"97.5%"],
                                       summary(samp.80)$quantiles[2,"97.5%"] ))
 
-samps.df.sum$dbhclass <- factor(x = samps.df.sum$dbhclass, levels = c(">20", "20 - 40", "40 - 60", "60 - 80", ">80"))
+samps.df.sum$dbhclass <- factor(x = samps.df.sum$dbhclass, levels = c(">20", "20 - 40", "40 - 60", "60 - 80", ">60"))
 
 # now plot all of these together in a barplot:
 png(height = 4, width = 4, units = "in", res = 300, "outputs/barplots/all_sensitivity_jja_pdsi_by_dbhclass_bw.png")
@@ -597,7 +601,7 @@ dev.off()
 
 # now plot all of these together in a barplot:
 png(height = 3, width = 4, units = "in", res = 300, "outputs/barplots/0-80_sensitivity_jja_pdsi_by_dbhclass_bw.png")
-ggplot(samps.df.sum[!samps.df.sum$dbhclass %in% ">80",], aes(dbhclass, mean, fill = dbhclass))+geom_bar(stat = "identity")+
+ggplot(samps.df.sum[!samps.df.sum$dbhclass %in% "60 - 80",], aes(dbhclass, mean, fill = dbhclass))+geom_bar(stat = "identity")+
   geom_errorbar(aes(ymin=ci.low, ymax = ci.high), size = 0.2, width = 0.2, color = "white") +xlab("Diameter class (cm)") + ylab("Sensitivity to Summer PDSI")+theme_black(base_size = 10)
 dev.off()
 
@@ -654,3 +658,269 @@ png(height = 4, width = 4, units = "in", res = 300, "outputs/barplots/all_sensit
 ggplot(samps.df.cover.class, aes(coverclass, mean, fill = coverclass))+geom_bar(stat = "identity")+
   geom_errorbar(aes(ymin=ci.low, ymax = ci.high), size = 0.2, width = 0.2, color = "white")+scale_fill_manual(values = c("Savanna"="#7b3294", 'Forest' ="#006837")) +xlab("Stand Structure") + ylab("Sensitivity to Summer PDSI")+theme_black(base_size = 15)
 dev.off()
+
+
+
+# do the same for each species:
+# note: now this is the dominant oak species at the site--need to fix species code matching @ 
+RWIS <- read.csv("outputs/det.age.clim.ghcn.sizes.covclass.csv")
+head(RWIS)
+
+RWIS <- RWIS[!is.na(RWIS$RWI),]
+fit <- lm(RWI~JJA.pdsi , data = RWIS)
+summary(fit)
+
+# for QURA
+Y.QURA <- as.vector(RWIS[RWIS$species %in% "QURA",]$RWI) 
+pdsi.QURA <- as.vector( RWIS[RWIS$species %in% "QURA",]$JJA.pdsi)
+n.QURA     <- length(RWIS[RWIS$species %in% "QURA",]$RWI)
+reg.QURA <- jags.model(textConnection(model_string), 
+                    data = list(Y=Y.QURA,n=n.QURA,pdsi=pdsi.QURA))
+
+update(reg.QURA, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.QURA <- coda.samples(reg.QURA, 
+                       variable.names=c("beta","sigma"), 
+                       n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.QURA)
+
+# for QUMA
+Y.QUMA <- as.vector(RWIS[RWIS$species %in% "QUMA",]$RWI) 
+pdsi.QUMA <- as.vector( RWIS[RWIS$species %in% "QUMA",]$JJA.pdsi)
+n.QUMA     <- length(RWIS[RWIS$species %in% "QUMA",]$RWI)
+reg.QUMA <- jags.model(textConnection(model_string), 
+                       data = list(Y=Y.QUMA,n=n.QUMA,pdsi=pdsi.QUMA))
+
+update(reg.QURA, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.QUMA <- coda.samples(reg.QUMA, 
+                          variable.names=c("beta","sigma"), 
+                          n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.QUMA)
+
+# for QUAL
+Y.QUAL <- as.vector(RWIS[RWIS$species %in% "QUAL/QUMA",]$RWI) 
+pdsi.QUAL <- as.vector( RWIS[RWIS$species %in% "QUAL/QUMA",]$JJA.pdsi)
+n.QUAL     <- length(RWIS[RWIS$species %in% "QUAL/QUMA",]$RWI)
+reg.QUAL <- jags.model(textConnection(model_string), 
+                       data = list(Y=Y.QUAL,n=n.QUAL,pdsi=pdsi.QUAL))
+
+update(reg.QUAL, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.QUAL <- coda.samples(reg.QUAL, 
+                          variable.names=c("beta","sigma"), 
+                          n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.QUMA)
+
+
+
+samps.df.spec <- data.frame(species = c("Red Oak", "Bur Oak","White Oak"),
+                                   mean = c(summary(samp.QURA)$statistics[2,"Mean"],
+                                            summary(samp.QUMA)$statistics[2,"Mean"],
+                                            summary(samp.QUAL)$statistics[2,"Mean"]
+                                   ),
+                                   ci.low = c(summary(samp.QURA)$quantiles[2,"2.5%"],
+                                              summary(samp.QUMA)$quantiles[2,"2.5%"],
+                                              summary(samp.QUAL)$quantiles[2,"2.5%"]), 
+                                   ci.high = c(summary(samp.QURA)$quantiles[2,"97.5%"],
+                                               summary(samp.QUMA)$quantiles[2,"97.5%"],
+                                               summary(samp.QUAL)$quantiles[2,"97.5%"]))
+
+samps.df.spec$species <- factor(x = samps.df.spec$species, levels = c("Bur Oak", "White Oak", "Red Oak"))
+
+png(height = 4, width = 6, units = "in", res = 300, "outputs/barplots/all_sensitivity_jja_pdsi_by_species_bw.png")
+ggplot(samps.df.spec, aes(species, mean, fill = species))+geom_bar(stat = "identity")+
+  geom_errorbar(aes(ymin=ci.low, ymax = ci.high), size = 0.2, width = 0.2, color = "white")+scale_fill_manual(values = c("Red Oak"="#ca0020", 'Bur Oak' ="#1b9e77", "White Oak" = "#7570b3")) +xlab(" ") + ylab("Sensitivity to Summer PDSI")+theme_black(base_size = 15)
+dev.off()
+#
+
+
+# >>>>>>>>>>>>>>>>>>>> now run the model for each individual site: <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# for AVO
+Y.AVO <- as.vector(RWIS[RWIS$site %in% "AVO",]$RWI) 
+pdsi.AVO <- as.vector( RWIS[RWIS$site %in% "AVO",]$JJA.pdsi)
+n.AVO    <- length(RWIS[RWIS$site %in% "AVO",]$RWI)
+reg.AVO <- jags.model(textConnection(model_string), 
+                     data = list(Y=Y.AVO,n=n.AVO,pdsi=pdsi.AVO))
+
+update(reg.AVO, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.AVO <- coda.samples(reg.AVO, 
+                        variable.names=c("beta","sigma"), 
+                        n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.AVO)
+
+# for BON
+Y.BON <- as.vector(RWIS[RWIS$site %in% "BON",]$RWI) 
+pdsi.BON <- as.vector( RWIS[RWIS$site %in% "BON",]$JJA.pdsi)
+n.BON    <- length(RWIS[RWIS$site %in% "BON",]$RWI)
+reg.BON <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.BON,n=n.BON,pdsi=pdsi.BON))
+
+update(reg.BON, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.BON <- coda.samples(reg.BON, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.BON)
+
+
+# for HIC
+Y.HIC <- as.vector(RWIS[RWIS$site %in% "HIC",]$RWI) 
+pdsi.HIC <- as.vector( RWIS[RWIS$site %in% "HIC",]$JJA.pdsi)
+n.HIC    <- length(RWIS[RWIS$site %in% "HIC",]$RWI)
+reg.HIC <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.HIC,n=n.HIC,pdsi=pdsi.HIC))
+
+update(reg.HIC, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.HIC <- coda.samples(reg.HIC, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.HIC)
+
+# for MOU
+Y.MOU <- as.vector(RWIS[RWIS$site %in% "MOU",]$RWI) 
+pdsi.MOU <- as.vector( RWIS[RWIS$site %in% "MOU",]$JJA.pdsi)
+n.MOU    <- length(RWIS[RWIS$site %in% "MOU",]$RWI)
+reg.MOU <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.MOU,n=n.MOU,pdsi=pdsi.MOU))
+
+update(reg.MOU, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.MOU <- coda.samples(reg.MOU, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.MOU)
+
+
+# for PLE
+Y.PLE <- as.vector(RWIS[RWIS$site %in% "PLE",]$RWI) 
+pdsi.PLE <- as.vector( RWIS[RWIS$site %in% "PLE",]$JJA.pdsi)
+n.PLE    <- length(RWIS[RWIS$site %in% "PLE",]$RWI)
+reg.PLE <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.PLE,n=n.PLE,pdsi=pdsi.PLE))
+
+update(reg.PLE, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.PLE <- coda.samples(reg.PLE, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.PLE)
+
+# for PVC
+Y.PVC <- as.vector(RWIS[RWIS$site %in% "PVC",]$RWI) 
+pdsi.PVC <- as.vector( RWIS[RWIS$site %in% "PVC",]$JJA.pdsi)
+n.PVC    <- length(RWIS[RWIS$site %in% "PVC",]$RWI)
+reg.PVC <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.PVC,n=n.PVC,pdsi=pdsi.PVC))
+
+update(reg.PVC, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.PVC <- coda.samples(reg.PVC, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.PVC)
+
+# for STC
+Y.STC <- as.vector(RWIS[RWIS$site %in% "STC",]$RWI) 
+pdsi.STC <- as.vector( RWIS[RWIS$site %in% "STC",]$JJA.pdsi)
+n.STC    <- length(RWIS[RWIS$site %in% "STC",]$RWI)
+reg.STC <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.STC,n=n.STC,pdsi=pdsi.STC))
+
+update(reg.STC, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.STC <- coda.samples(reg.STC, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.STC)
+
+
+# for TOW
+Y.TOW <- as.vector(RWIS[RWIS$site %in% "TOW",]$RWI) 
+pdsi.TOW <- as.vector( RWIS[RWIS$site %in% "TOW",]$JJA.pdsi)
+n.TOW    <- length(RWIS[RWIS$site %in% "TOW",]$RWI)
+reg.TOW <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.TOW,n=n.TOW,pdsi=pdsi.TOW))
+
+update(reg.TOW, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.TOW <- coda.samples(reg.TOW, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.TOW)
+
+
+# for UNC
+Y.UNC <- as.vector(RWIS[RWIS$site %in% "UNC",]$RWI) 
+pdsi.UNC <- as.vector( RWIS[RWIS$site %in% "UNC",]$JJA.pdsi)
+n.UNC    <- length(RWIS[RWIS$site %in% "UNC",]$RWI)
+reg.UNC <- jags.model(textConnection(model_string), 
+                      data = list(Y=Y.UNC,n=n.UNC,pdsi=pdsi.UNC))
+
+update(reg.UNC, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp.UNC <- coda.samples(reg.UNC, 
+                         variable.names=c("beta","sigma"), 
+                         n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp.UNC)
+
+
+# save a data frame with beta2 sensitivity and the 
+samp.df <- summary(samp.UNC)
+
+samps.df.site <- data.frame(site = unique(RWIS$site),
+                           mean = c(summary(samp.AVO)$statistics[2,"Mean"],
+                                    summary(samp.BON)$statistics[2,"Mean"],
+                                    summary(samp.HIC)$statistics[2,"Mean"],
+                                    summary(samp.MOU)$statistics[2,"Mean"],
+                                    summary(samp.PLE)$statistics[2,"Mean"],
+                                    summary(samp.PVC)$statistics[2,"Mean"],
+                                    summary(samp.STC)$statistics[2,"Mean"],
+                                    summary(samp.TOW)$statistics[2,"Mean"],
+                                    summary(samp.UNC)$statistics[2,"Mean"]),
+                           ci.low = c(summary(samp.AVO)$quantiles[2,"2.5%"],
+                                      summary(samp.BON)$quantiles[2,"2.5%"],
+                                      summary(samp.HIC)$quantiles[2,"2.5%"],
+                                      summary(samp.MOU)$quantiles[2,"2.5%"],
+                                      summary(samp.PLE)$quantiles[2,"2.5%"],
+                                      summary(samp.PVC)$quantiles[2,"2.5%"],
+                                      summary(samp.STC)$quantiles[2,"2.5%"],
+                                      summary(samp.TOW)$quantiles[2,"2.5%"],
+                                      summary(samp.UNC)$quantiles[2,"2.5%"]), 
+                           ci.high = c(summary(samp.AVO)$quantiles[2,"97.5%"],
+                                       summary(samp.BON)$quantiles[2,"97.5%"],
+                                       summary(samp.HIC)$quantiles[2,"97.5%"],
+                                       summary(samp.MOU)$quantiles[2,"97.5%"],
+                                       summary(samp.PLE)$quantiles[2,"97.5%"],
+                                       summary(samp.PVC)$quantiles[2,"97.5%"],
+                                       summary(samp.STC)$quantiles[2,"97.5%"],
+                                       summary(samp.TOW)$quantiles[2,"97.5%"],
+                                       summary(samp.UNC)$quantiles[2,"97.5%"]))
+
+#samps.df.sum$dbhclass <- factor(x = samps.df.sum$dbhclass, levels = c(">20", "20 - 40", "40 - 60", "60 - 80", ">80"))
+
+# now plot all of these together in a barplot:
+png(height = 4, width = 4, units = "in", res = 300, "outputs/barplots/all_sensitivity_jja_pdsi_by_site_bw.png")
+ggplot(samps.df.site, aes(site, mean, fill = site))+geom_bar(stat = "identity")+
+  geom_errorbar(aes(ymin=ci.low, ymax = ci.high), size = 0.2, width = 0.2, color = "white") +xlab("Diameter class (cm)") + ylab("Sensitivity to Summer PDSI")+theme_black(base_size = 15)
+dev.off()
+
+# merge with site level data:
+
+head(RWIS$sand)
+new.df <- merge(samps.df.site, locs[,c("code", "sand", "awc", "pr30yr", "tm30yr")], by.x = "site", by.y = "code")
+ggplot(new.df[!new.df$site %in% c("AVO"),], aes(tm30yr, mean, color = site))+geom_point()+ylim(0,0.05)

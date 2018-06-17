@@ -502,7 +502,7 @@ read_DBH_year <- function( filename, site){
           
           site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
           if(site %in% "AVO"){
-            diams <- site.data[complete.cases(site.data[c("full_tellervo", "DBH")]), ]
+            diams <- site.data[complete.cases(site.data[c("full_tellervo", "DBH", "SpecCode")]), ]
             diams.agg <- aggregate(diams[,c("full_tellervo", "DBH")], list(diams$full_tellervo), mean, na.rm = TRUE)
             colnames(diams.agg) <- c("ID", "short", "DBH")
             #spec <- site.data[complete.cases(site.data[,c("full_tellervo", "SpecCode")]),c("full_tellervo", "SpecCode")]
@@ -528,7 +528,7 @@ read_DBH_year <- function( filename, site){
             
             
           }else{
-            diams <- site.data[c("short", "DBH")]
+            diams <- site.data[c("short", "DBH",  "SpecCode")]
             #diams <- diams[2:length(diams$short),]
             diams$DBH <- as.numeric(as.character(diams$DBH))
             diams.agg <- aggregate(diams, list(diams$short), mean, na.rm = TRUE)
@@ -818,7 +818,7 @@ summary(aov(RWI~JJA.pdsi+ageclass, data=det.age.clim.class.ghcn.df))
 summary(aov(RWI~JJA.pdsi*ageclass, data=det.age.clim.class.ghcn.df))
 
 ggplot(na.omit(det.age.clim.ghcn.df), aes(JJA.pdsi, RWI, color = ageclass))+stat_smooth(method = "lm", se = TRUE, aes(fill = dbhclass), alpha = 0.1)+theme_bw()+theme_black()+facet_wrap(~ageclass)
-det.age.clim.class.ghcn.df<- merge(det.age.clim.ghcn.df, locs, by.x = "site", by.y = "code")
+det.age.clim.class.ghcn.df <- merge(det.age.clim.ghcn.df, locs, by.x = "site", by.y = "code")
 
 png("outputs/DBH/JJA_clim_sens_by_coverclass.png")
 ggplot(na.omit(det.age.clim.class.ghcn.df), aes(JJA.pdsi, RWI, color = Description))+geom_point(size = 0.8)+stat_smooth(method = "lm", se = TRUE, aes(fill = Description), alpha = 0.1)+theme_bw()+theme_black()+ylab("Detrended Ring Width Index")+xlab("Summer PDSI")
@@ -887,6 +887,7 @@ removes <- corrs[corrs$a <= 0.1 | is.na(corrs$a),]$id
 det.age.clim.ghcn.df <- det.age.clim.ghcn.df[!det.age.clim.ghcn.df$ID %in% removes,]
 
 write.csv(det.age.clim.ghcn.df, "outputs/det.age.clim.ghcn.sizes.csv", row.names = FALSE)
+write.csv(det.age.clim.class.ghcn.df, "outputs/det.age.clim.ghcn.sizes.covclass.csv", row.names = FALSE)
 # ------------------------How does growth vary over time:
 
 #library(treeclim)
@@ -1637,6 +1638,7 @@ ggplot(sens.jul.pdsi_dry0.25, aes(site, slope.est, color = age))+geom_point()+ge
 ggplot(sens.jja.pdsi_wet0.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
 
 ggplot(sens.jja.pdsi_dry0.25, aes(site, slope.est, color = age))+geom_point()+geom_errorbar(aes(ymin=slope.min, ymax = slope.max), size = 0.2, width = 0.5)
+
 
 #---------------------Get Climate sensitivity for the modern and past in dry + wet------------------
 

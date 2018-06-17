@@ -80,7 +80,8 @@ write.csv(priority, "outputs/priority_sites.csv")
 
 #--------------- What was the tree density in the PLS data? -------------------------
 # read in the version 1.7-5 data (pls) merged with the upper midwest data:
-dens <- read.csv("/Users/kah/Documents/bimodality/data/midwest_pls_full_density_alb1.7-5.csv")
+#dens <- read.csv("/Users/kah/Documents/bimodality/data/midwest_pls_full_density_alb1.7-5.csv")
+dens <- read.csv("/Users/kah/Documents/bimodality/data/PLS_FIA_density_climate_full.csv")
 dens <- dens[names(dens) %in% c("x", "y", "PLSdensity")]
 ggplot(dens, aes(x, y, fill = PLSdensity) ) + geom_raster()
 
@@ -518,6 +519,89 @@ sites.map.pls
 png("outputs/PLS_density_TRsites.png")
 sites.map.pls
 dev.off()
+
+
+sc <- scale_colour_gradientn(colours = rev(terrain.colors(8)), limits=c(0, 16))
+cbpalette <- c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+cbPalette <- c("#999999","#009E73", "#E69F00", "#56B4E9",  "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+dens.pr <- read.csv("/Users/kah/Documents/bimodality/data/PLS_FIA_density_climate_full.csv")
+
+dens.pr$density_discrete <- ifelse(dens.pr$PLSdensity <= 0.5, "Prairie", 
+                                   ifelse(dens.pr$PLSdensity <= 47, "Savanna",
+                                          ifelse(dens.pr$PLSdensity > 47 & dens.pr$PLSdensity <= 100, "47-100",
+                                                 ifelse(dens.pr$PLSdensity > 100 & dens.pr$PLSdensity <= 200, "100-200", 
+                                                        ifelse(dens.pr$PLSdensity > 200 & dens.pr$PLSdensity <= 300, "200-300", 
+                                                               ifelse(dens.pr$PLSdensity > 300 & dens.pr$PLSdensity <= 400, "300-400",
+                                                                      ifelse(dens.pr$PLSdensity > 400 & dens.pr$PLSdensity <= 500, "400-500",
+                                                                             ifelse(dens.pr$PLSdensity > 500 & dens.pr$PLSdensity <= 600, "500 - 600",
+                                                                                    ifelse(dens.pr$PLSdensity > 600,  "600 +", "NA")))))))))
+
+dens.pr$density_discrete<- factor(dens.pr$density_discrete, c("Prairie", "Savanna","47-100", "100-200", "200-300", "300-400", "400-500", "500-600", "600+", "NA"))
+
+
+pls.map.alt.color <- ggplot()+ geom_polygon(data = mapdata[mapdata$region %in% c("illinois", "indiana", "minnesota", "wisconsin", "michigan"),], aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = density_discrete))+
+  geom_polygon(data = mapdata[mapdata$region %in% c("illinois", "indiana", "minnesota", "wisconsin", "michigan"),], aes(group = group,x=long, y =lat),color = "grey", fill = 'NA', size = 1)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c('#dfc27d',
+                               '#8c510a',
+                               '#d9f0a3',
+                               '#addd8e',
+                               '#78c679',
+                               '#41ab5d',
+                               '#238443',
+                               '#005a32'), name ="Tree \n Density", na.value = 'darkgrey') +
+  
+  theme_black(base_size = 8)+ theme(legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                 legend.key.size = unit(0.5, "lines"),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                 
+                                 axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal() 
+
+
+png(height = 4, width = 3, units = "in", res = 300,"outputs/PLS_density_map_full_alt_colors_bw.png")
+pls.map.alt.color
+dev.off()
+
+# make an FIA map of the same thing:
+
+dens.pr$fiadensity_discrete <- ifelse(dens.pr$FIAdensity <= 0.5, "Prairie", 
+                                   ifelse(dens.pr$FIAdensity <= 47, "Savanna",
+                                          ifelse(dens.pr$FIAdensity > 47 & dens.pr$FIAdensity <= 100, "47-100",
+                                                 ifelse(dens.pr$FIAdensity > 100 & dens.pr$FIAdensity <= 200, "100-200", 
+                                                        ifelse(dens.pr$FIAdensity > 200 & dens.pr$FIAdensity <= 300, "200-300", 
+                                                               ifelse(dens.pr$FIAdensity > 300 & dens.pr$FIAdensity <= 400, "300-400",
+                                                                      ifelse(dens.pr$FIAdensity > 400 & dens.pr$FIAdensity <= 500, "400-500",
+                                                                             ifelse(dens.pr$FIAdensity > 500 & dens.pr$FIAdensity <= 600, "500 - 600",
+                                                                                    ifelse(dens.pr$FIAdensity > 600,  "600 +", "NA")))))))))
+
+dens.pr$fiadensity_discrete<- factor(dens.pr$fiadensity_discrete, c( "Savanna","47-100", "100-200", "200-300", "300-400", "400-500", "500-600", "600+", "NA"))
+
+
+FIA.map.alt.color <- ggplot()+ geom_polygon(data = mapdata[mapdata$region %in% c("illinois", "indiana", "minnesota", "wisconsin", "michigan"),], aes(group = group,x=long, y =lat), fill = 'darkgrey')+
+  geom_raster(data=dens.pr, aes(x=x, y=y, fill = fiadensity_discrete))+
+  geom_polygon(data = mapdata[mapdata$region %in% c("illinois", "indiana", "minnesota", "wisconsin", "michigan"),], aes(group = group,x=long, y =lat),color = "grey", fill = 'NA', size = 1)+
+  labs(x="easting", y="northing")+ #+ 
+  scale_fill_manual(values = c(
+                               '#8c510a',
+                               '#d9f0a3',
+                               '#addd8e',
+                               '#78c679',
+                               '#41ab5d',
+                               '#238443',
+                               '#005a32'), name ="Tree \n Density", na.value = 'darkgrey') +
+  
+  theme_black(base_size = 8)+ theme(legend.background = element_rect(fill=alpha('transparent', 0)) ,axis.line=element_blank(),axis.text=element_blank(),
+                                    legend.key.size = unit(0.5, "lines"),axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                    
+                                    axis.title=element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ggtitle("")+coord_equal() 
+
+
+png(height = 4, width = 3, units = "in", res = 300,"outputs/FIA_density_map_full_alt_colors_bw.png")
+FIA.map.alt.color
+dev.off()
+
+
 
 # now map for temperature from GHCN data
 air_temp.1900<- read.table("./data/air_temp_2014/air_temp.1900")
