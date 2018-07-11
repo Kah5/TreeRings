@@ -121,12 +121,20 @@ png(width=6,height=4,units="in",res = 300,bg = "transparent","raw_rw_transparent
 ggplot(Hickory.bai, aes(hic.raw$year, hic.raw[,11]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Raw Ring Width")+xlab("Year")
 dev.off()
 
+png(width=6,height=4,units="in",res = 300,bg = "transparent","raw_rw_transparent_short.png")
+ggplot(Hickory.bai, aes(hic.raw$year, hic.raw[,8]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Raw Ring Width")+xlab("Year")
+dev.off()
+
 Hic.m<- melt(Hickory.bai, id.vars = c('year','site'))
 Hic.m$year <- as.numeric(Hic.m$year)
 Hickory.bai$year <- as.numeric(Hickory.bai$year)
 
 png(width=6,height=4,units="in",res = 300,bg = "transparent","det_transparent.png")
 ggplot(Hickory.bai, aes(Hickory.bai$year, Hickory.bai[,11]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Detrended Ring Width Index")+xlab("Year")
+dev.off()
+
+png(width=6,height=4,units="in",res = 300,bg = "transparent","det_transparent_short.png")
+ggplot(Hickory.bai, aes(Hickory.bai$year, Hickory.bai[,8]))+geom_line(color = "white")+theme_minimal()+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))+ylab("Detrended Ring Width Index")+xlab("Year")
 dev.off()
 
 hic.chron <- chron(Hickory.bai)
@@ -142,13 +150,14 @@ png(width=6,height=4,units="in",res = 300,bg = "transparent","transparent_recons
 ggplot(PDSImi, aes(YEAR, RECON))+#xlim(1500, 2016) +ylim(0,2)+
   geom_line(color = "white")+theme_minimal()+xlab("Year")+ylab("Reconstructed PDSI")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.line = element_line(colour = "white"), axis.text = element_text(colour = "white"), axis.title = element_text(color = "white"))
 dev.off()
+
 ##########################################################
 # tree age_agg adds on the ages of the trees at each year
 # can do this with BAI or detrended RWI
 source("R/tree_age_agg.R")
 
 # apply the tree_age_agg function on all of the detrended tree ring series
-detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,type = "RWI_Spline_detrended" )
+detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,  type = "RWI_Spline_detrended" )
 
 # use do.calll to make these a dataframe
 detrended.age.df <- do.call(rbind, detrended.age)

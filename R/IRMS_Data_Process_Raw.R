@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date <- ("05_02_18") # enter date of sample run
+date <- ("05_23_18") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -67,7 +67,7 @@ data.C.std  <- data.C.std [data.C.std$d.13C.12C < 0,] # if there are any strnage
 data.C.std <- data.C.std [data.C.std$d.13C.12C > -30,]
 
 data.C <- filter(data.refs.samples, Peak.Nr==4, !Identifier.2 == "std") # grab all the C peaks for the data (kh cellulose does not have any N peaks)
-
+data.C<- data.C[data.C$d.13C.12C < 0,]
 # this is for the special case where we prescreened the N peaks out
 if(length(data.N.std$Identifier.1) > 0){
 std.NC <- merge( data.C.std, data.N.std, by = c("Identifier.1", "Identifier.2"))# combine N and C data

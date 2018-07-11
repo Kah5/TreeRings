@@ -143,7 +143,7 @@ ggplot(na.omit(deltas[!deltas$Site %in% "BON",]), aes(x = class, y = Cor.d13C.su
 ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = Tree))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+facet_wrap(~Site)+theme_black(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
 
 
-png(width = 6, height = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_by_age_class_sites_v2.png")
+png(width = 7, height = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_by_age_class_sites_v2.png")
 ggplot(na.omit(deltas[!deltas$Site %in% "BON",]), aes(x = class, y = iWUE, fill = class))+geom_boxplot( color = "white")+scale_fill_manual(values = ageColors)+facet_wrap(~Site)+theme_black(base_size = 20)+ylab("iWUE")+xlab(" ")
 dev.off()
 
