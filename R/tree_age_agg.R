@@ -16,12 +16,13 @@ tree_age_agg <- function(rwiorbai, site.code, age1950, type){
   Hic <- as.data.frame(rwiorbai)
   Hic$year <- row.names(Hic)
   sampleyear <- as.numeric(max(Hic$year))
+  Hic <- Hic[,!is.na(colnames(Hic)) ]
   
   # calculate record age
-  treedata <- data.frame(ID = colnames(rwiorbai),
+  treedata <- data.frame(ID = colnames(Hic),
                          sampleyr = sampleyear)
   
-  
+ 
   # Find tree age for each tree at the time of sampling
   for(i in unique(colnames(Hic[,1:(length(Hic)-2)]))){
     treedata[treedata$ID==i, "age"] <- treedata[treedata$ID == i, c("sampleyr")] -  as.numeric( min(Hic[!is.na(Hic[,i]), "year"], na.rm=T))

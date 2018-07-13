@@ -12,21 +12,32 @@ library(grid)
 #library(plotKML)
 library(plotKML)
 library(dplyr)
+
+# KH note: if the library says it didnt load, you need to install the package library using:
+# install.packages("package name") i.e.
+install.packages("sp")
+
 # read in a gpx file
-test <- readGPX("GPX/Waypoints_06-AUG-16.gpx")
+#test <- readGPX("GPX/Waypoints_06-AUG-16.gpx")
+
+# set the directory (change this to your tree ring directory)
+setwd("/Users/kah/Documents/TreeRings")
+
+# put all the gpx files into the same directory labeled GPX, then run:
 
 
-# put all the files into the same directory, then
-
-myfiles <- list.files("/Users/kah/Documents/TreeRings/GPX/")
-mydir <- '/Users/kah/Documents/TreeRings/GPX/'
+myfiles <- list.files("/Users/kah/Documents/TreeRings/GPX/") # this lists all the files in the 
+mydir <- paste0(getwd(),'/GPX/')
 
 
 wpfull <- NULL
 
+# this for loop goes through each of the stand coordinates and extracts lat, long, elevation, time, and any comments
 for (i in 1:length(myfiles)) {
+  
   # - Select first file from the list and import data into R object
   wplist <- readGPX( paste0(mydir,myfiles[i]), way=T)
+  
   # extract latitude, longituDe, elevation, time, name and comments and apppend to R dataframe
   wpdf<- wplist$waypoints
   # append dataframe from last index to a full waypoint object
