@@ -1,0 +1,960 @@
+---
+title: "BAI_models"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rjags)
+
+# some initial data checking:
+full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.df")
+BAI <- full.ghcn$RWI
+hist(BAI)
+logBAI<- hist(log(BAI)) # approximates normal when log transformed
+
+```
+
+## Initial bayesian linear regression of climate on Basal Area Index
+# this model assumes all trees across all species + sites + forest types have the same relationship with PDSI
+
+```{r}
+
+
+
+summary(full.ghcn)
+# get all records that have all RWI and don't have negative diams or NA diams
+full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH > 0 & !is.na(full.ghcn$DBH),]
+Y <- as.vector(log(full.ghcn$RWI)) 
+#Y     <- 100*dat[,2]
+#Y     <- (Y-mean(Y))/sd(Y)
+
+# standardise predictor variables to have mean 0 and sd = 1
+DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
+DBH.scaled = scale(full.ghcn$DBH, center= TRUE, scale=TRUE)
+T.scaled = scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE)
+full.ghcn$DI.scaled = as.vector(scale(full.ghcn$JJA.pdsi, center = TRUE, scale = TRUE))
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+
+summary(lm(Y ~ log(DBH)))
+
+summary(lm(Y ~ log(DBH) + log((pdsi + 10)/20) + log(JunTmax)  ))
+
+# population model for the response of each BAI to each year of climate:
+population_model <- "model{
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1 +  beta2*DI.scaled[i] + beta3*DBH.scaled[i] # use Drought index
+
+res[i] <- Y[i] - gfunc[i]   # residual between actual and predicted
+emp.new[i] ~ dnorm(gfunc[i], inv.var) 
+res.new[i] <- emp.new[i] - gfunc[i]
+
+}
+
+# Assume normal priors for betas (because they could be negative or positive)
+
+beta1 ~ dnorm(0, 0.01)
+beta2 ~ dnorm(0, 0.01)
+beta3 ~ dnorm(0,0.01)
+
+
+
+# Non-informative Prior for the inverse variances
+inv.var   ~ dgamma(0.01, 0.01)
+sigma     <- 1/sqrt(inv.var)
+
+#Derived parameters
+  fit <- sum(res[])
+  fit.new <- sum(res.new[])
+
+
+
+}"
+
+
+sum.lin.reg <- lm(full.ghcn$RWI ~ log(full.ghcn$DI.scaled) + log(full.ghcn$DBH.scaled))
+lin.rgr.ests<- summary(sum.lin.reg)$coefficients
+# specify initial conditions for the three chains
+initsList <- list(
+  list(
+    # chain 1 has low estimates
+    beta1 = lin.rgr.ests[1,1] - 5*lin.rgr.ests[1,2],
+    beta2 = lin.rgr.ests[2,1] - 5*lin.rgr.ests[2,2], 
+    
+    inv.var = 0.0001
+  ), 
+  # chain 2 has high values
+  list(
+    beta1 = lin.rgr.ests[1,1] + 5*lin.rgr.ests[1,2],
+    beta2 = lin.rgr.ests[2,1] + 5*lin.rgr.ests[2,2], 
+    #beta3 = lin.rgr.ests[3,1] + 5*lin.rgr.ests[3,2], 
+    inv.var = 1
+  ), 
+  list(
+    # chain 3 has a mix
+    beta1 = lin.rgr.ests[1,1] + 5*lin.rgr.ests[1,2],
+    beta2 = lin.rgr.ests[2,1] - 5*lin.rgr.ests[2,2], 
+    #beta3 = lin.rgr.ests[3,1] + 5*lin.rgr.ests[3,2], 
+   inv.var = 100
+  )
+)
+
+# now 
+reg.model.age <- jags.model(textConnection(population_model), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled), inits = initsList, n.chains = 3)
+
+update(reg.model.age, 1000); # Burnin for 1000 samples to start, then go higher later
+
+samp <- coda.samples(reg.model.age, 
+                     variable.names=c("beta1", "beta2","beta3","sigma"), 
+                    n.chains = 3, n.iter=2000)
+
+#lin.reg.bayes <- as.mcmc(samp[[1]])
+summary(samp)
+plot(samp)
+traceplot(samp)
+gelman.diag(samp)
+gelman.plot(samp)
+
+
+#Extract the samples for each parameter
+
+ samps       <- samp[[1]]
+ #Yp.samps    <- samps[,1:n] 
+ alpha.samps <- samps[,1]
+ beta.samps  <- samps[,2:3]
+ sigma.samps <- samps[,4]
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta.mn  <- colMeans(beta.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha.mn <- mean(alpha.samps) 
+
+ 
+  DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.25)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.25)
+ 
+ # something like:
+ Xp <- expand.grid(DIprobe, DBHprobe)
+ #Xp <- as.matrix(Xp)
+# Plot the Posterior Predictive Density and plug-in
+np <- length(Xp$Var1)
+ypred <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   # Plug-in
+   mu <- alpha.mn+sum(Xp[j,]*beta.mn)
+   ypred[[j]]  <- rnorm(20000, mu, sigma.mn)
+   #plot(density(ypred[[j]]),col=2)
+  
+   # Truth
+   #abline(v=mean(ypred),col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- data.frame(do.call(rbind, ypred))
+
+Xp$MeanY <- exp(rowMeans(ypred.df)) # get the means of the posterior to plot the overall effects of DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Ypred_by_drought.png")
+ggplot(Xp, aes(Var1,MeanY))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+dev.off()
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Ypred_by_DBH.png")
+ggplot(Xp, aes(Var2,MeanY))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Ypred_by_drought_DBH.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)
+dev.off()
+
+#set.seed(13)
+m <- 10000
+chains <- samp[[1]][,1:4]
+chains2 <- samp[[2]][,1:4]
+
+postDraws <- chains[sample(nrow(chains),size=m,replace=TRUE),]
+
+
+
+# Sample m draws of y.rep (n obs each) from likelihood p(y|theta), using thetas sampled above. Approximates posterior predictive distribution p(y.rep|y)
+n <- nrow(full.ghcn)
+y.rep <- matrix(NA, nrow=n, ncol=m)
+for (i in 1:m){
+  y.rep[,i] <- rnorm(n = n, postDraws[i,"fit"], postDraws[i,"fit.new"])
+}
+
+# check to see if the predicted yrep alighs with data y max
+T1.y <- max(Y)
+T1.yrep <- apply(y.rep, 2, max)
+hist(T1.yrep)
+
+
+abline(v=T1.y,col="red",lwd=2)
+
+
+pppval.max <- sum(T1.yrep>=T1.y)/m
+print(pppval.max)
+
+# quick check to see how params compare to OLS 
+summary(lm(Y ~ full.ghcn$DI.scaled))
+
+# plot mcmc + the parameter distn
+coda:::plot.mcmc(samp)
+samp.basic.reg <- samp
+# save a data frame with beta2 sensitivity and the 
+samp.basic.reg.df <- summary(samp)
+  
+samp.basic.df.sum<- data.frame(mean = samp.df$statistics[2,"Mean"], 
+           ci.low = samp.df$quantiles[2,"2.5%"], 
+           ci.high = samp.df$quantiles[2,"97.5%"])
+  
+
+
+```
+
+# Create random effects for sites:
+```{r}
+population_model_site_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[SITE[i]] + beta2[SITE[i]]*DI.scaled[i] + beta3[SITE[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+res[i] <- Y[i] - gfunc[i]   
+emp.new[i] ~ dnorm(gfunc[i], sigma)
+res.new[i] <- emp.new[i] - gfunc[i]
+}
+
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(S)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+}
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+
+inv_beta1   ~ dgamma(0.0001, 0.0001)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.001, 0.001)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.001, 0.001)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+# derived parameters
+  fit <- sum(res[])
+  fit.new <- sum(res.new[])
+  Yp <- mean(Y)
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+
+
+
+reg.model.by_s <- jags.model(textConnection(population_model_site_re), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, SITE = as.numeric(full.ghcn$site), S = unique(full.ghcn$site)), n.chains = 3, n.adapt = 100)
+
+update(reg.model.by_s, 1000); # Burnin for 1000 samples to start, then go higher later
+
+samp.plot.re <- coda.samples(reg.model.by_s, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3"), 
+                    n.chains = 3, n.iter=20000)
+
+summary(samp.plot.re)
+plot(samp.plot.re)
+
+gelman.diag(samp.plot.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.plot.re[[1]]
+ #Yp.samps    <- samps[,1] 
+ alpha.samps <- samps[,1:16] # one alpha for each of 16 sites
+ beta1.samps  <- samps[,17:32]
+ beta2.samps <- samps[,33:48]
+ sigma.samps <- samps[,49]
+ sigma_betas <- samps[,50:52]
+
+
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta1.samps)
+ beta2.mn  <- colMeans(beta2.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+
+
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe, site = 1:16)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   ypred[[j]]  <- rnorm(20000, mu, sigma.mn)
+  # lines(density(y),col=2)
+
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+
+Xp$MeanY <- exp(rowMeans(ypred.df)) # get the means of the posterior to plot the overall effects of D
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_site_re/Ypred_by_drought_site.png")
+ggplot(Xp, aes(Var1,MeanY, color = as.factor(site)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_site_re/Ypred_by_DBH.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(site)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_site_re/Ypred_by_drought_DBH_site.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(site))
+dev.off()
+
+# since site 10 is variable, remove:
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_site_re/Ypred_by_drought_DBH_site_site_10_omitted.png")
+ggplot(Xp[Xp$site != 10,], aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(site))
+dev.off()
+
+
+```
+
+
+# model with cohort effects and re effects @ the cohort level:
+
+```{r}
+cohort_model_site_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+}
+
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(S)){
+beta1[s] ~ dnorm(mu_beta1[indiv[s]], inv_beta1)
+beta2[s] ~ dnorm(mu_beta2[indiv[s]], inv_beta2)
+beta3[s] ~ dnorm(mu_beta3[indiv[s]], inv_beta3)
+}
+
+
+for(j in 1:length(ind)){
+# use normal hyperpriors for each hyperparamters 
+mu_beta1[j] ~ dnorm(0, 0.5)
+mu_beta2[j] ~ dnorm(0, 0.5)
+mu_beta3[j] ~ dnorm(0, 0.5)
+
+}
+
+inv_beta1   ~ dgamma(0.001, 0.001)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.001, 0.001)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.001, 0.001)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.0001, 0.0001)
+sigma     <- 1/sqrt(inv.var)
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH.x, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+
+
+
+
+cohort.model.re <- jags.model(textConnection(cohort_model_site_re), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, cohort = as.numeric(full.ghcn$ageclass), S = unique(full.ghcn$ageclass),
+                    indiv = as.numeric(full.ghcn$ID), ind = unique(full.ghcn$ID)), n.chains = 3, n.adapt = 100)
+
+update(cohort.model.re, 20000); # Burnin for 1000 samples to start, then go higher later
+
+samp <- coda.samples(cohort.model.re, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3", "mu_beta1", "mu_beta2", "mu_beta3"), 
+                    n.chains = 3, n.iter=10000, thin = 10)
+
+summary(samp)
+traceplot(samp)
+gelman.diag(samp)
+
+
+```
+
+## Bayesian heirarchical liner regression where alpha and beta coeffiencents are specific to savanna and forest cover:
+# this model explores whether stand structure (savanna or forest) has an impact on the slope and intercept response to climate
+
+```{r}
+
+
+Y <- as.vector(log(full.ghcn$RWI)) 
+# create table of savanna and forest
+
+for.df <- data.frame(site = unique(full.ghcn$site), 
+           fortype = c("forest", "savanna", "forest" ,"forest", "savanna", "forest", "savanna", "savanna", "forest", "savanna", "savanna", "savanna", "savanna", "savanna", "forest", "savanna"))
+
+full.ghcn <- merge(full.ghcn, for.df, by = "site")
+full.ghcn$fornum <- ifelse(full.ghcn$fortype %in% "forest", 1, 2)
+# standardise predictor variables to have mean 0 and sd = 1
+#DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
+#T.scaled = scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE)
+#full.ghcn$DI.scaled = as.vector(scale(full.ghcn$JJA.pdsi, center = TRUE, scale = TRUE))
+ggplot(full.ghcn, aes(DI.scaled,log(RWI), color = ageclass))+geom_point(size = 0.2)+geom_smooth(method = "lm")+facet_wrap(~fortype)
+
+
+png(height= 5, width = 7, units = "in", res = 300, "outputs/two_age_class_logbai_past_mod.png")
+ggplot(full.ghcn[full.ghcn$RWI <= 6200, ], aes(JJA.pdsi, log(RWI), color = ageclass))+geom_point(size = 0.02)+geom_smooth(method = "lm")+facet_wrap(~fortype)
+dev.off()
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH.x, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+
+summary(lm(Y ~ log(DBH)))
+
+summary(lm(Y ~ log(DBH) + log((pdsi + 10)/20) + log(JunTmax)  ))
+summary(lmer(Y ~ DI.scaled+ (DI.scaled|ageclass)))
+# population model for the response of each BAI to each year of climate:
+population_model_age_class <- "model{
+
+# for each type of stand structure:
+
+
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[fortype[i]], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- alpha[fortype[i]]+ beta2[fortype[i]] *DI.scaled[i]    # use Drought index as a scaled variable 
+}
+
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(S)){
+alpha[s] ~ dnorm(mu_alpha, inv_alpha)
+beta2[s] ~ dnorm(mu_beta, inv_beta)
+}
+
+# use normal hyperpriors for each hyperparamters 
+mu_alpha ~ dunif(-2, 2)
+mu_beta ~ dunif(-2, 2)
+
+inv_alpha   ~ dgamma(0.0001, 0.0001)
+sigma_alpha <- 1/sqrt(inv_alpha)
+inv_beta   ~ dgamma(0.001, 0.001)
+sigma_beta <- 1/sqrt(inv_beta)
+
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+}"
+
+lmer.age <- lmer(Y ~ DI.scaled + (1|ageclass == 1))
+ranef(lmer.age)
+ggplot(full.ghcn[full.ghcn$RWI < 5500, ], aes(DBH.x, RWI , color = ageclass))+geom_point(size = 0.02)+stat_smooth(method = "lm")
+indiv <- lmer(log(RWI) ~ DI.scaled + (DI.scaled|ID), data = full.ghcn)
+
+initsList
+
+# now 
+reg.model.by_s <- jags.model(textConnection(population_model_age_class), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, fortype = ageclass, S = unique(ageclass)), n.chains = 3, n.adapt = 100)
+
+update(reg.model.by_s, 40000); # Burnin for 1000 samples to start, then go higher later
+
+samp <- coda.samples(reg.model.by_s, 
+                     variable.names=c("beta", "beta2","alpha","sigma", "sigma_alpha"), 
+                    n.chains = 3, n.iter=20000, thin = 10)
+
+summary(samp)
+gelman.diag(samp)
+traceplot(samp)
+plot(samp)
+
+# quick check to see how params compare to OLS 
+#summary(lm(Y ~ full.ghcn$DI.scaled))
+
+# plot mcmc + the parameter distn
+plot(samp)
+gelman.diag(samp)
+acfplot(samp, aspect = 2)
+
+
+gelman.plot(samp)
+# evaluate MCMC convergence:
+
+
+# save a data frame with beta2 sensitivity and the 
+samp.basic.reg.df <- summary(samp)
+  
+samp.basic.df.sum<- data.frame(mean = samp.df$statistics[2,"Mean"], 
+           ci.low = samp.df$quantiles[2,"2.5%"], 
+           ci.high = samp.df$quantiles[2,"97.5%"])
+  
+
+
+
+# lets do the model where stand only affects the slope and not the intercept, perhaps this will help it converge:
+
+population_model_stand <- "model{
+
+# for each type of stand structure:
+
+
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[fortype[i]], inv.var) # where Yi is already log transformed
+
+
+# function g()
+gfunc[i] <- alpha +  beta[fortype[i]]*DI.scaled[i] # use Drought index as a scaled variable 
+}
+
+# Assume normal priors for betas, but generate a beta + alpha for each forest type s
+for(s in 1:length(S)){
+
+beta[s] ~ dnorm(mu_beta, inv_beta)
+}
+
+# use normal hyperpriors for each hyperparamters 
+#mu_alpha ~ dnorm(0, 0.1)
+mu_beta ~ dnorm(0, 0.1)
+
+#inv_alpha   ~ dgamma(0.001, 0.001)
+#sigma_alpha <- 1/sqrt(inv_alpha)
+inv_beta   ~ dgamma(0.001, 0.001)
+sigma_beta <- 1/sqrt(inv_beta)
+
+
+
+# Non-informative Prior for the inverse population variances
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+alpha ~ dnorm(0, 0.1)
+
+}"
+
+# now 
+reg.model.by_s <- jags.model(textConnection(population_model_stand), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, fortype =    full.ghcn$fornum, S = unique(full.ghcn$fornum)))
+
+update(reg.model.by_s, 1000); # Burnin for 1000 samples to start, then go higher later
+
+samp <- coda.samples(reg.model.by_s, 
+                     variable.names=c("beta","alpha", "sigma"), 
+                    n.chains = 4, n.iter=20000)
+
+summary(samp)
+
+
+
+```
+# this model assumes all trees across all species + sites have the same relationship with summer PDSI + JUNTmax
+
+```{r}
+summary(full.ghcn)
+
+full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH.x > 0 & !is.na(full.ghcn$DBH.x),]
+Y <- as.vector(log(full.ghcn$RWI)) 
+
+pdsi <- as.vector( full.ghcn$JJA.pdsi)
+JunTmax <- as.vector( full.ghcn$JUNTmax)
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+
+model_string_pdsi_tmax <- "model{
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var)
+
+# function g()
+gfunc[i] <- beta[1] +  beta[2]*pdsi[i] + beta[3]*JunTmax[i]
+}
+
+# Assume normal priors for betas (because they could be negative or positive)
+for(j in 1:3){
+beta[j] ~ dnorm(0,0.001)
+}
+
+
+
+# Prior for the inverse variances
+inv.var   ~ dgamma(0.1, 0.1)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+}"
+
+reg.model.Drought.Tmax <- jags.model(textConnection(model_string_pdsi_tmax), 
+                    data = list(Y=Y, n=n, pdsi = pdsi, JunTmax = JunTmax))
+
+update(reg.model.Drought.Tmax, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp <- coda.samples(reg.model.Drought.Tmax, 
+                     variable.names=c("beta","sigma"), 
+                    n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp)
+
+
+# plot mcmc + the parameter distn
+plot(samp)
+
+# save a data frame with beta2 sensitivity and the 
+samp.df <- summary(samp)
+  
+samps.df.sum<- data.frame(mean = samp.df$statistics[2,"Mean"], 
+           ci.low = samp.df$quantiles[2,"2.5%"], 
+           ci.high = samp.df$quantiles[2,"97.5%"])
+  
+
+ggplot(samps.df.sum, aes("sens",mean))+geom_bar(stat = "identity")+
+  geom_errorbar(aes(ymin=ci.low, ymax = ci.high), size = 0.2, width = 0.2)
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+# this model assumes all trees across all species + sites have the same relationship with summer PDSI + JUNTmax + DBH, but has a power function as the process model:
+
+
+
+```{r}
+summary(full.ghcn)
+
+full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH.x > 0 & !is.na(full.ghcn$DBH.x),]
+
+
+Y <- as.vector(log(full.ghcn$RWI)) 
+
+pdsi <- as.vector( full.ghcn$JJA.pdsi)
+JunTmax <- as.vector( full.ghcn$JUNTmax)
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+
+model_string_DBH_power <- "model{
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var)
+
+# function g()
+gfunc[i] <- beta[1] +  beta[1]*log(DBH[i])
+}
+
+# Assume normal priors for betas (because they could be negative or positive)
+#for(j in 1:2){
+beta[1] ~ dnorm(0, 0.002)
+beta[2] ~ dnormal(0, 0.002)
+#}
+
+
+
+# Prior for the inverse variances
+inv.var   ~ dgamma(0.01, 0.01)
+sigma     <- 1/sqrt(inv.var)
+
+
+}"
+
+reg.model.dbh.power <- jags.model(textConnection(model_string_DBH_power), 
+                    data = list(Y=Y, n=n, DBH = DBH))
+
+update(reg.model.dbh.power, 1000); # Burnin for 1000 samples
+
+samp <- coda.samples(reg.model.dbh.power, 
+                     variable.names=c("beta","sigma"), 
+                    n.chains = 3, n.iter=2000)
+
+summary(samp)
+
+
+# plot mcmc + the parameter distn
+plot(samp)
+
+# save a data frame with beta2 sensitivity and the 
+samp.df <- summary(samp)
+  
+samp.dbh.pwr <- do.call(rbind.data.frame, samp)
+
+
+# compare to the estimates from OLS:
+
+summary(lm(Y ~ log(DBH)))
+```
+# this model assumes all trees across all species + sites have the same relationship with summer PDSI + JUNTmax + DBH, but has a power function as the process model:
+
+```{r}
+summary(full.ghcn)
+
+full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH.x > 0 & !is.na(full.ghcn$DBH.x),]
+Y <- as.vector((full.ghcn$RWI)) 
+
+pdsi <- as.vector( full.ghcn$JJA.pdsi)
+JunTmax <- as.vector( full.ghcn$JUNTmax)
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+
+model_string_pdsi_tmax_DBH_power <- "model{
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dlnorm(gfunc[i], inv.var)
+
+# function g()
+gfunc[i] <- beta[1] +  beta[2]*log((pdsi[i]+10)/20) + beta[3]*log(JunTmax[i]) + beta[4]*log(DBH[i])
+}
+
+# Assume normal priors for betas (because they could be negative or positive)
+for(j in 1:4){
+beta[j] ~ dlnorm(0,0.001)
+}
+
+
+
+# Prior for the inverse variances
+inv.var   ~ dgamma(0.1, 0.1)
+sigma     <- 1/sqrt(inv.var)
+
+
+}"
+
+reg.model.Drought.Tmax.dbh.power <- jags.model(textConnection(model_string_pdsi_tmax_DBH_power), 
+                    data = list(Y=Y, n=n, pdsi = pdsi, JunTmax = JunTmax, DBH = DBH))
+
+update(reg.model.Drought.Tmax.dbh.powe, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp <- coda.samples(reg.model.Drought.Tmax.dbh, 
+                     variable.names=c("beta","sigma"), 
+                    n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp)
+
+
+# plot mcmc + the parameter distn
+plot(samp)
+
+# save a data frame with beta2 sensitivity and the 
+samp.df <- summary(samp)
+  
+
+```
+# model assumes a power function relationship between growth ~ beta0x(DBH^beta1)x(DBH^2^beta2)x(droghtindex^beta3)x(JunTmax^beta4)
+# will need to scale pdsi such that: drought index == ((pdsi+10)/20)
+
+```{r}
+summary(full.ghcn)
+
+full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH.x > 0 & !is.na(full.ghcn$DBH.x),]
+Y <- as.vector(log(full.ghcn$RWI)) 
+
+pdsi <- as.vector( (full.ghcn$JJA.pdsi + 10)/20)
+JunTmax <- as.vector( full.ghcn$JUNTmax)
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+
+model_string_pdsi_tmax_DBH <- "model{
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var)
+
+# function g()
+gfunc[i] <- beta[1] +  beta[2]*pdsi[i] + beta[3]*JunTmax[i] + beta[4]*DBH[i]
+}
+
+# Assume normal priors for betas (because they could be negative or positive)
+for(j in 1:4){
+beta[j] ~ dnorm(0,0.001)
+}
+
+
+
+# Prior for the inverse variances
+inv.var   ~ dgamma(0.1, 0.1)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+}"
+
+reg.model.Drought.Tmax.dbh <- jags.model(textConnection(model_string_pdsi_tmax_DBH), 
+                    data = list(Y=Y, n=n, pdsi = pdsi, JunTmax = JunTmax, DBH = DBH))
+
+update(reg.model.Drought.Tmax.dbh, 10000, progress.bar="none"); # Burnin for 10000 samples
+
+samp <- coda.samples(reg.model.Drought.Tmax.dbh, 
+                     variable.names=c("beta","sigma"), 
+                    n.chains = 3, n.iter=20000, progress.bar="none")
+
+summary(samp)
+
+
+# plot mcmc + the parameter distn
+plot(samp)
+
+# save a data frame with beta2 sensitivity and the 
+samp.df <- summary(samp)
+  
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
