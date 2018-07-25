@@ -108,7 +108,8 @@ treeIDS <- colnames(site1)[!colnames(site1) %in% "Year"]
 Prec.matrix <- as.matrix(Prec[,2:length(Prec)])
 Prec.mat <- Prec.matrix[rownames(Prec.matrix) %in% treeIDS, colnames(Prec.matrix) %in% 1:12]
 library(Hmisc)
-cormatrix <- rcorr(Prec.matrix, type='spearman')
+library(reshape2)
+cormatrix <- rcorr(Prec.matrix, type='pearson')
 
 
 
@@ -119,29 +120,79 @@ ggplot(cordata_sub_prec, aes(x=Var2, y=Var1, fill=value)) +
   geom_tile() + xlab("Month") + ylab("")+ggtitle("Correlation with Precipitaiton")+scale_fill_gradient2(high="red",mid="white",low="blue", 
                                                          na.value="yellow", midpoint=0)
 
-# for TMAX
-# make a matrix:
-Tmax.matrix <- as.matrix(TMAX[,2:length(TMAX)])
-Tmax.mat <- Tmax.matrix[rownames(Tmax.matrix) %in% treeIDS, colnames(Tmax.matrix) %in% 1:12]
-library(Hmisc)
-cormatrix <- rcorr(Tmax.matrix, type='spearman')
 
 
+# we will do the same thing as above, but make a function out of it, so we can easily do the same analysis for all climate variables at each site:
+
+# climate = climate dataset of choice (i.e. Precip.m) and site is the detrended rwl, site.name and climate.name are names in quotes used to label the plot
+site.tile.plot <- function(climate, site, site.name, climate.name){ 
+  clim <- merge(site, climate, by = "Year")
+  treeIDS <- colnames(site)[!colnames(site) %in% "Year"]
+  
+  # make a matrix:
+  Tmax.matrix <- as.matrix(clim[,2:length(clim)])
+  Tmax.mat <- Tmax.matrix[rownames(Tmax.matrix) %in% treeIDS, colnames(Tmax.matrix) %in% 1:12]
+  library(Hmisc)
+  cormatrix <- rcorr(Tmax.matrix, type='spearman')
+  
+  
+  
+  
+  cordata = melt(cormatrix$r)
+  cordata_sub_tmax <- cordata[cordata$Var1 %in% treeIDS & cordata$Var2 %in% 1:12,]
+  
+  ggplot(cordata_sub_tmax, aes(x=Var2, y=Var1, fill=value)) + 
+    geom_tile() + xlab("Month") + ylab("")+ggtitle(paste0(site.name, " Correlation with ", climate.name))+scale_fill_gradient2(high="red",mid="white",low="blue", 
+                                                                                                 na.value="yellow", midpoint=0)
+  
+}
+
+# then you can use this function to create several tile plots of correlation:
+site.tile.plot(Precip.m, site1,  "test site", "Precipitation")
+site.tile.plot(Tavg.m, site1,  "test site", "Average Temperature")
+site.tile.plot(Tmax.m, site1,  "test site", "Maximum Temperature")
+site.tile.plot(Tmin.m, site1,  "test site", "Minimum Temperature")
+site.tile.plot(PDSI.m, site1,  "test site", "Palmer Drought Severity Index")
 
 
-cordata = melt(cormatrix$r)
-cordata_sub_tmax <- cordata[cordata$Var1 %in% treeIDS & cordata$Var2 %in% 1:12,]
-
-ggplot(cordata_sub_tmax, aes(x=Var2, y=Var1, fill=value)) + 
-  geom_tile() + xlab("Month") + ylab("")+ggtitle("Correlation with Tmax")+scale_fill_gradient2(high="red",mid="white",low="blue", 
-                                                                                                        na.value="yellow", midpoint=0)
-
-
-# left to do:
-# correlation plots for all trees with the rest of the climate variables
 
 # based on these plots, lets decide which climate variables to compare (typically we want to do a climate variable that most trees are somewhat sensitive to and seems ecologically relevant)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Extract sensitivities <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 # run a linear regression for each tree with each climate variable. The slope of this line will be our sensitivity.
 # alternatively, we could compare tree level correlations
+
+climate.data <- PDSI.m # change this to the climate dataset that you have chosen
+
+# select the months of climate variable (s) that you want to do linear regressions with here:
+clim.reg <- climate.data[,c("Year","5", "6")] # as an example I choose May (5) and June (6)
+
+# we will make another function to get sensitivity of each tree to the climate: sensitivity = slope of linear regression line
+# this gives us a group of sensitivities for each site (samples of the site/population level sensitivity), which we can use to campare
+
+extract.sens <- function(clim.reg, site, month, site.name, clim.name){
+  treeIDS <- colnames(site)[!colnames(site) %in% "Year"]
+  merged.m <- merge(clim.reg, site, by = "Year")
+  coeff <- data.frame(tree = treeIDS, 
+                      coeff = NA, 
+                      pval = NA)
+  
+  for(i in 1:length(treeIDS)){
+   reg <- lm( merged.m[,treeIDS[i]] ~ merged.m[,month])
+  coeff[i,2] <- reg$coefficients[2]
+  
+  }
+  write.csv(coeff, paste0(site.name, clim.name, "sensitivity.csv"), row.names = FALSE) # write sensitivities to csv
+  
+}
+
+extract.sens(clim.reg = clim.reg, site = site1, month = "5", site.name = 'test', clim.name = "May_PDSI")
+
+
+# finally you will want to campare the sensitivities across groups:
+
+
+
+
+
