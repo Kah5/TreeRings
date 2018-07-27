@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(rjags)
+library(ggplot2)
 
 # some initial data checking:
 full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.df")
@@ -47,7 +48,7 @@ SpecCode <- full.ghcn$SpecCode
 
 summary(lm(Y ~ log(DBH)))
 
-summary(lm(Y ~ log(DBH) + log((pdsi + 10)/20) + log(JunTmax)  ))
+
 
 # population model for the response of each BAI to each year of climate:
 population_model <- "model{
@@ -313,7 +314,7 @@ update(reg.model.by_s, 1000); # Burnin for 1000 samples to start, then go higher
 
 samp.plot.re <- coda.samples(reg.model.by_s, 
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3"), 
-                    n.chains = 3, n.iter=20000)
+                    n.chains = 3, n.iter=3000)
 
 summary(samp.plot.re)
 plot(samp.plot.re)
@@ -408,8 +409,564 @@ dev.off()
 ```
 
 
-# model with cohort effects and re effects @ the cohort level:
+#this is a model with cohort effects and re effects @ the cohort level rather than the site level:
 
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+population_model_cohort_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+res[i] <- Y[i] - gfunc[i]   
+emp.new[i] ~ dnorm(gfunc[i], sigma)
+res.new[i] <- emp.new[i] - gfunc[i]
+}
+
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(c in 1:length(C)){
+beta1[c] ~ dnorm(mu_beta1, inv_beta1)
+beta2[c] ~ dnorm(mu_beta2, inv_beta2)
+beta3[c] ~ dnorm(mu_beta3, inv_beta3)
+}
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+
+inv_beta1   ~ dgamma(0.001, 0.001)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.001, 0.001)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.001, 0.001)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+# derived parameters
+  fit <- sum(res[])
+  fit.new <- sum(res.new[])
+  Yp <- mean(Y)
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+
+
+
+reg.model.by_age <- jags.model(textConnection(population_model_cohort_re), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, cohort = as.numeric(full.ghcn$ageclass), C = unique(full.ghcn$ageclass)), n.chains = 3, n.adapt = 100)
+
+update(reg.model.by_age, 1000); # Burnin for 1000 samples to start, then go higher later
+
+samp.age.re <- coda.samples(reg.model.by_age, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3"), 
+                    n.chains = 3, n.iter=20000, thin = 10)
+
+summary(samp.age.re)
+plot(samp.age.re)
+
+gelman.diag(samp.age.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.age.re[[1]]
+ #Yp.samps    <- samps[,1] 
+ alpha.samps <- samps[,1:2] # one alpha for each of 16 sites
+ beta1.samps  <- samps[,3:4]
+ beta2.samps <- samps[,5:6]
+ sigma.samps <- samps[,7]
+ sigma_betas <- samps[,8:10]
+
+
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta1.samps)
+ beta2.mn  <- colMeans(beta2.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+
+
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  cohort= 1:2)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   ypred[[j]]  <- rnorm(20000, mu, sigma.mn)
+  # lines(density(y),col=2)
+
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+
+Xp$MeanY <- exp(rowMeans(ypred.df)) # get the means of the posterior to plot the overall effects of 
+Xp$cohort <- ifelse(Xp$cohort == 1, "Past", "Modern")
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_cohort_re/Ypred_by_drought_site_cohort.png")
+ggplot(Xp, aes(Var1,MeanY, color = as.factor(cohort)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_cohort_re/Ypred_by_DBH_cohort.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_cohort_re/Ypred_by_drought_DBH_cohort.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(cohort))
+dev.off()
+
+
+```
+
+
+#this is a model with structure effects and re effects @ the structure (forest vs. savanna) level rather than the site level:
+
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+population_model_structure_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[structure[i]] + beta2[structure[i]]*DI.scaled[i] + beta3[structure[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+res[i] <- Y[i] - gfunc[i]   
+emp.new[i] ~ dnorm(gfunc[i], sigma)
+res.new[i] <- emp.new[i] - gfunc[i]
+}
+
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+}
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.01, 0.01)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+full.ghcn <- merge(full.ghcn, structure, by = "site")
+
+reg.model.by_structure <- jags.model(textConnection(population_model_structure_re), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, structure = as.numeric(full.ghcn$structure), SF = unique(full.ghcn$structure)), n.chains = 3, n.adapt = 100)
+
+update(reg.model.by_structure, 1000); # Burnin for 1000 samples to start, then go higher later
+
+samp.structure.re <- coda.samples(reg.model.by_structure, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3"), 
+                    n.chains = 3, n.iter=20000, thin = 15)
+
+summary(samp.structure.re)
+plot(samp.structure.re)
+
+gelman.diag(samp.structure.re)
+acfplot(samp.structure.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.re[[1]]
+ #Yp.samps    <- samps[,1] 
+ alpha.samps <- samps[,1:2] # one alpha for each of 16 sites
+ beta1.samps  <- samps[,3:4]
+ beta2.samps <- samps[,5:6]
+ sigma.samps <- samps[,7]
+ sigma_betas <- samps[,8:10]
+
+
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta1.samps)
+ beta2.mn  <- colMeans(beta2.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+
+
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  structure= 1:2)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   ypred[[j]]  <- rnorm(20000, mu, sigma.mn)
+  # lines(density(y),col=2)
+
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+
+Xp$MeanY <- exp(rowMeans(ypred.df)) # get the means of the posterior to plot the overall effects of 
+Xp$structure <- ifelse(Xp$structure == 1, "Forest", "Savanna")
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_structure_re/Ypred_by_drought_structure.png")
+ggplot(Xp, aes(Var1,MeanY, color = as.factor(structure)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_structure_re/Ypred_by_DBH_structure.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(structure)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_structure_re/Ypred_by_drought_DBH_structure.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(structure))
+dev.off()
+
+
+```
+# could make a model with site or stand structure by ageclass as the factor to take random effects on:
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+population_model_structure_x_cohort_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+res[i] <- Y[i] - gfunc[i]   
+emp.new[i] ~ dnorm(gfunc[i], sigma)
+res.new[i] <- emp.new[i] - gfunc[i]
+}
+
+# Prediction
+  for(i in 1:np){
+    Yp[i]  ~ dnorm(mup[i],inv.var)
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] 
+  }
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+}
+
+
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.01, 0.01)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+
+
+full.ghcn <- merge(full.ghcn, structure, by = "site")
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+
+# generate fake data to predict on:
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+
+
+reg.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re), 
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, struct.cohort = as.numeric(full.ghcn$struct.cohort.code), SF = unique(full.ghcn$struct.cohort.code), np = length(Xp$Var1),
+   struct.cohort.p = Xp$struct.cohort, DBH.scaled.p = Xp$Var2, DI.scaled.p = Xp$Var1), n.chains = 3, n.adapt = 100)
+
+update(reg.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+samp.structure.cohort.re <- coda.samples(reg.model.by_structure_x_cohort, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
+                    n.chains = 3, n.iter=20000, thin = 15)
+
+summary(samp.structure.cohort.re)
+plot(samp.structure.cohort.re)
+
+gelman.diag(samp.structure.cohort.re)
+acfplot(samp.structure.cohort.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.cohort.re[[1]]
+ #Yp.samps    <- samps[,1] 
+ Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ alpha.samps  <- samps[,661:664]
+ beta2.samps <- samps[,665:668]
+ beta3.samps <- samps[,669:672]
+ sigma.samps <- samps[,673]
+ sigma_betas <- samps[,674:676]
+
+
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta1.samps)
+ beta2.mn  <- colMeans(beta2.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+
+
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ ypred.yp <- list()
+ diff <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   ypred[[j]]  <- rnorm(np, mu, sigma.mn)
+  # lines(density(y),col=2)
+   ypred.yp[[j]] <- Yp.samps[,j]
+   diff[[j]] <- ypred[[j]] - Yp.samps[[j]]
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+diff.df <- do.call(rbind, diff)
+ypred.yp.df <- do.call(rbind, ypred.yp)
+
+Xp$MeanY <- exp(rowMeans(ypred.df))
+Xp$MeanYhat <- exp(rowMeans(ypred.yp.df))# get the means of the posterior to plot the overall effects of 
+Xp$struct.cohort <- ifelse(Xp$struct.cohort == 1, "Past-Forest",  
+                       ifelse(Xp$struct.cohort == 2, "Modern-Forest",
+                               ifelse(Xp$struct.cohort == 3, "Past-Savanna", 
+                                       ifelse(Xp$struct.cohort == 4, "Modern-Savanna", NA))))
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_drought_struct_x_cohort.png")
+ggplot(Xp, aes(Var1,MeanYhat, color = as.factor(struct.cohort)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var2,MeanYhat,color = as.factor(struct.cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_drought_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanYhat))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(struct.cohort))
+dev.off()
+
+
+```
+
+
+# model for cohort effects and site level effects, heirarchically:
 ```{r}
 cohort_model_site_re <- "model{
 
@@ -428,9 +985,9 @@ gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
 for(s in 1:length(S)){
-beta1[s] ~ dnorm(mu_beta1[indiv[s]], inv_beta1)
-beta2[s] ~ dnorm(mu_beta2[indiv[s]], inv_beta2)
-beta3[s] ~ dnorm(mu_beta3[indiv[s]], inv_beta3)
+beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
+beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
+beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
 }
 
 
@@ -466,7 +1023,7 @@ ageclass <- as.numeric( full.ghcn$ageclass)
 Age <- as.numeric( full.ghcn$Age)
 n     <- length(full.ghcn$RWI)
 DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH.x, center = TRUE, scale = TRUE))
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
 site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 
@@ -475,9 +1032,9 @@ SpecCode <- full.ghcn$SpecCode
 
 cohort.model.re <- jags.model(textConnection(cohort_model_site_re), 
                     data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, cohort = as.numeric(full.ghcn$ageclass), S = unique(full.ghcn$ageclass),
-                    indiv = as.numeric(full.ghcn$ID), ind = unique(full.ghcn$ID)), n.chains = 3, n.adapt = 100)
+                    plot = as.numeric(full.ghcn$site), ind = unique(full.ghcn$site)), n.chains = 3, n.adapt = 100)
 
-update(cohort.model.re, 20000); # Burnin for 1000 samples to start, then go higher later
+update(cohort.model.re, 2000); # Burnin for 1000 samples to start, then go higher later
 
 samp <- coda.samples(cohort.model.re, 
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3", "mu_beta1", "mu_beta2", "mu_beta3"), 
@@ -487,8 +1044,354 @@ summary(samp)
 traceplot(samp)
 gelman.diag(samp)
 
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp[[1]]
+ #Yp.samps    <- samps[,1] 
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ alpha.samps  <- samps[,1:2]
+ beta2.samps <- samps[,3:4]
+ beta3.samps <- samps[,5:6]
+ mu_beta1.samps <- samps[,7:22]
+ mu_beta2.samps <- samps[,23:38]
+ mu_beta3.samps <- samps[,39:54]
+ sigma.samps <- samps[,55]
+ sigma_betas <- samps[,56:58]
+
+
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta1.samps)
+ beta2.mn  <- colMeans(beta2.samps)
+ beta3.mn  <- colMeans(beta3.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+ #mu_beta1.samps <- colMeans(mu_beta1.samps) 
+ #mu_beta2.samps <- colMeans(mu_beta2.samps) 
+ #mu_beta3.samps <- colMeans(mu_beta3.samps) 
+
+
+# get posterior predictions:
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  cohort= 1:2, site = as.numeric(unique(full.ghcn$site)))
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ 
+ 
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+        
+        alpha1.mn <- rnorm(1000, mu_beta1.samps[Xp[j,4]], mean(sigma_betas[,1]) ) # check the sigma betas
+        beta2.mn <- rnorm(1000, mu_beta2.samps[Xp[j,4]], mean(sigma_betas[,2]) ) # check the sigma betas
+        beta3.mn <- rnorm(1000, mu_beta3.samps[Xp[j,3]], mean(sigma_betas[,3]) ) # check the sigma betas
+       
+   mu <- alpha1.mn + beta2.mn*Xp[j,1] + beta2.mn*Xp[j,2]   # use
+   
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   
+   ypred[[j]]  <- mu
+  # lines(density(y),col=2)
+   
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+
+
+Xp$MeanY <- exp(rowMeans(ypred.df))
+
+Xp$cohort <- ifelse(Xp$cohort == 1, "Past-Forest",  
+                       ifelse(Xp$cohort == 2, "Modern-Forest",NA))
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_cohort_site_re/Ypred_by_drought_struct_x_cohort.png")
+ggplot(Xp, aes(Var1, MeanY, color = as.factor(site), shape = as.factor(cohort)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_cohort_site_re/Ypred_by_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_cohort_site_re/Ypred_by_drought_DBH_cohort_site.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(cohort))
+dev.off()
+
 
 ```
+
+
+# adding a prediction for stable isotopes (d13C) from tree growth predictions
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+d13_model_structure_x_cohort_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model for growth:
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+
+# process model for d13C:
+d13[i]   ~ dnorm(d13func[i], inv.var13) # where Yi is already log transformed
+d13func[i] <- beta.d131 + beta.d132*Y[i]
+
+res[i] <- Y[i] - gfunc[i]   
+emp.new[i] ~ dnorm(gfunc[i], sigma)
+res.new[i] <- emp.new[i] - gfunc[i]
+}
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+}
+
+
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+beta.d131 ~ dnorm(0, 2)
+beta.d132 ~ dnorm(0,2)
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.01, 0.01)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+inv.var13 ~ dgamma(0.01, 0.01)
+sigma_13 <- 1/sqrt(inv.var13)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+
+
+}"
+
+
+# read in the d13 data:
+
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+d13 <- d13[!is.na(d13$DBH),]
+Y <- log(d13$RWI)
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( d13$ageclass)
+Age <- as.numeric( d13$Age)
+n     <- length(d13$RWI)
+DBH <- d13$DBH
+d13$DBH.scaled = as.vector(scale(d13$DBH, center = TRUE, scale = TRUE))
+d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
+site <- d13$site
+SpecCode <- d13$SpecCode
+plot <- unique(d13$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+
+
+d13 <- merge(d13, structure, by = "site")
+
+d13$struct.cohort <- paste0(d13$ageclass,"-", d13$structure)
+d13$struct.cohort.code <- ifelse(d13$struct.cohort %in% "Past-Forest", 1,
+       ifelse(d13$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(d13$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(d13$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+
+# generate fake data to predict on:
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+
+
+d13.model.by_structure_x_cohort <- jags.model(textConnection(d13_model_structure_x_cohort_re), 
+                    data = list(Y=Y, n=n, DI.scaled = d13$DI.scaled, DBH.scaled = d13$DBH.scaled, struct.cohort = as.numeric(d13$struct.cohort.code), SF = unique(d13$struct.cohort.code), d13 = d13$Cor.d13C.suess), n.chains = 3, n.adapt = 100)
+
+update(d13.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+d13.structure.cohort.re <- coda.samples(d13.model.by_structure_x_cohort, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "beta.d131","beta.d132", "sigma_13"), 
+                    n.chains = 3, n.iter=200000, thin = 10)
+
+summary(d13.structure.cohort.re)
+plot(d13.structure.cohort.re)
+
+gelman.diag(d13.structure.cohort.re)
+acfplot(d13.structure.cohort.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- d13.structure.cohort.re[[1]]
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ alpha.samps  <- samps[,3:6]
+ beta2.samps <- samps[,7:10]
+ beta3.samps <- samps[,11:14]
+ sigma.samps <- samps[,14]
+ sigma13.samps <- samps[,15]
+ sigma_betas <- samps[,16:18]
+
+ betad131.samps <- samps[,1]
+ betad132.samps <- samps[,2]
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta1.samps)
+ beta2.mn  <- colMeans(beta2.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+beta131.mn <- mean(betad131.samps) 
+beta132.mn <- mean(betad132.samps) 
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+
+ d13pred <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   
+   ypred[[j]]  <- rnorm(np, mu, sigma.mn)
+
+   # make a prediction of d13 based on MU:
+   
+   
+   
+   d13func <- beta131.mn + beta132.mn*ypred[[j]]   # use
+   d13pred[[j]]  <- d13func
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+d13pred.df <- do.call(rbind, d13pred)
+#ypred.yp.df <- do.call(rbind, ypred.yp)
+
+Xp$MeanY <- exp(rowMeans(ypred.df))
+Xp$Meand13<- rowMeans(d13pred.df)# get the means of the posterior to plot the overall effects of 
+Xp$struct.cohort <- ifelse(Xp$struct.cohort == 1, "Past-Forest",  
+                       ifelse(Xp$struct.cohort == 2, "Modern-Forest",
+                               ifelse(Xp$struct.cohort == 3, "Past-Savanna", 
+                                       ifelse(Xp$struct.cohort == 4, "Modern-Savanna", NA))))
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+#png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_drought_struct_x_cohort.png")
+ggplot(Xp, aes(Var1,MeanY, color = as.factor(struct.cohort)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+#dev.off()
+
+#png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(struct.cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+#dev.off()
+
+#png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_drought_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(struct.cohort))
+#dev.off()
+
+
+
+
+
+
+#png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_drought_struct_x_cohort.png")
+ggplot(Xp, aes(Var1,Meand13, color = as.factor(struct.cohort)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")+stat_smooth(method = "lm")
+#dev.off()
+
+#png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var2, Meand13, color = as.factor(struct.cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted d13")+stat_smooth(method = "lm")
+#dev.off()
+
+#png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_struct_x_cohort_re/Ypred_by_drought_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var1, Var2, fill = Meand13))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(struct.cohort))
+#dev.off()
+
+
+
+```
+
+
+
+
+
+
+
+
+
 
 ## Bayesian heirarchical liner regression where alpha and beta coeffiencents are specific to savanna and forest cover:
 # this model explores whether stand structure (savanna or forest) has an impact on the slope and intercept response to climate
