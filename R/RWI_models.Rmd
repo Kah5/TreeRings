@@ -475,6 +475,7 @@ gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*DI.scaled.p[i] + beta3[coho
 
 }
 
+
 }"
 
 
@@ -703,6 +704,14 @@ inv.var   ~ dgamma(0.001, 0.001)
 sigma     <- 1/sqrt(inv.var)
 
 
+for(i in 1:np){
+# process model
+Yp[i]   ~ dnorm(gfuncp[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfuncp[i] <- beta1[structure.p[i]] + beta2[structure.p[i]]*DI.scaled.p[i] + beta3[structure.p[i]]*DBH.scaled.p[i]   # use Drought index as a scaled variable 
+
+}
 
 
 
@@ -728,12 +737,12 @@ structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GL
 full.ghcn <- merge(full.ghcn, structure, by = "site")
 
 reg.model.by_structure <- jags.model(textConnection(population_model_structure_re), 
-                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, structure = as.numeric(full.ghcn$structure), SF = unique(full.ghcn$structure)), n.chains = 3, n.adapt = 100)
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, structure = as.numeric(full.ghcn$structure), SF = unique(full.ghcn$structure), np=length(test$year), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, structure.p = as.numeric(test$structure)), n.chains = 3, n.adapt = 100)
 
 update(reg.model.by_structure, 1000); # Burnin for 1000 samples to start, then go higher later
 
 samp.structure.re <- coda.samples(reg.model.by_structure, 
-                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3"), 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
 summary(samp.structure.re)
@@ -746,12 +755,12 @@ acfplot(samp.structure.re)
 
  samps       <- samp.structure.re[[1]]
  saveRDS(samps, "outputs/growth_model/basic_reg_structure_re/samps.rds")
- #Yp.samps    <- samps[,1] 
- alpha.samps <- samps[,1:2] # one alpha for each of 16 sites
- beta1.samps  <- samps[,3:4]
- beta2.samps <- samps[,5:6]
- sigma.samps <- samps[,7]
- sigma_betas <- samps[,8:10]
+ Yp.samps    <- samps[,1:length(test$site)] 
+ alpha.samps <- samps[,(length(test$site)+1):(length(test$site)+2)] # one alpha for each of 16 sites
+ beta1.samps  <- samps[,(length(test$site)+3):(length(test$site)+4)]
+ beta2.samps <- samps[,(length(test$site)+5):(length(test$site)+6)]
+ sigma.samps <- samps[,(length(test$site)+7)]
+ sigma_betas <- samps[,(length(test$site)+8):(length(test$site)+10)]
  
  # derived quantities:
  beta1.diffs <- beta1.samps[,1] - beta2.samps[,2]
@@ -792,24 +801,24 @@ dev.off()
 
 # plot marginal distributions of cohort + structure specific parameters:
 a <- data.frame(alpha.samps)
-colnames(a) <- c(paste0("alpha-",c(as.character(unique(full.ghcn$structure)))))
+colnames(a) <- c(paste0("alpha-",c("Forest", "Savanna")))
 a$num <- rownames(a)
 a.m <- melt(a, id.vars=c("num"))
-alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+theme_black()+xlab("random intercepts")
 
 
 b2 <- data.frame(beta2.samps)
-colnames(b2) <- c(paste0("beta2-",c(as.character(unique(full.ghcn$structure)))))
+colnames(b2) <- c(paste0("beta2-",c("Forest", "Savanna")))
 b2$num <- rownames(b2)
 b2.m <- melt(b2, id.vars=c("num"))
-b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()
+b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+theme_black()+xlab("Drought slopes")
 
 
 b3 <- data.frame(beta3.samps)
-colnames(b3) <- c(paste0("beta3-",c(as.character(unique(full.ghcn$structure)))))
+colnames(b3) <- c(paste0("beta3-",c("Forest", "Savanna")))
 b3$num <- rownames(b3)
 b3.m <- melt(b3, id.vars=c("num"))
-b3.mplots <- ggplot(b3.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()
+b3.mplots <- ggplot(b3.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+theme_black()+xlab("DBH random slopes")
 
 library(cowplot)
 png(width = 4, height = 6, units = "in", res = 300, "outputs/growth_model/basic_reg_structure_re/param_marginal_distn_by_struct.png")
@@ -824,7 +833,11 @@ dev.off()
  sigma.mn <- mean(sigma.samps)
  alpha1.mn <- colMeans(alpha.samps) 
 
-
+ # plot predicted vs. observed:
+ png(width = 4, height = 6, units = "in", res = 300, "outputs/growth_model/basic_reg_structure_re/pred_vs_obs.png")
+ plot(colMeans(exp(Yp.samps)), test$RWI, xlab = "Predicted Growth", ylab = "Observed Growth")
+abline(a = 0, b = 1, col = "red")
+dev.off()
 # Plot the Posterior Predictive Density and plug-in
 # want to plaot posteror predictive distributions:
  
