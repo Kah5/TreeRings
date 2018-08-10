@@ -118,7 +118,7 @@ full.df$Cor.d13C.suess <- full.df$d13C_12C_corr - (full.df$d13atm + 6.4)
 
 # there are a few points around -20 per mil which are points that may need to be checked:
 full.df[full.df$d13C_12C_corr > -22,] # the 1934 + 1933 may be strange b/c of the high drought in that year--see what the rest of the values say
-full.df <- full.df[!full.df$d13C_12C_corr > -21.55,]
+#full.df <- full.df[!full.df$d13C_12C_corr > -21.55,]
 
 full.df[full.df$d13C_12C_corr < -28,] # need to check the values of BON9 below -28
 full.df[full.df$ID %in% "BON9",] 

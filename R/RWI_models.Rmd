@@ -247,7 +247,7 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[SITE[i]] + beta2[SITE[i]]*DI.scaled[i] + beta3[SITE[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[SITE[i]] + beta2[SITE[i]]*DI.scaled[i] #+ beta3[SITE[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
 
 res[i] <- Y[i] - gfunc[i]   
 emp.new[i] ~ dnorm(gfunc[i], sigma)
@@ -260,20 +260,20 @@ res.new[i] <- emp.new[i] - gfunc[i]
 for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1, inv_beta1)
 beta2[s] ~ dnorm(mu_beta2, inv_beta2)
-beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+#beta3[s] ~ dnorm(mu_beta3, inv_beta3)
 }
 
 # use normal hyperpriors for each hyperparamters 
 mu_beta1 ~ dunif(-2, 2)
 mu_beta2 ~ dunif(-2, 2)
-mu_beta3 ~ dunif(-2, 2)
+#mu_beta3 ~ dunif(-2, 2)
 
 inv_beta1   ~ dgamma(0.0001, 0.0001)
 sigma_beta1 <- 1/sqrt(inv_beta1)
 inv_beta2   ~ dgamma(0.001, 0.001)
 sigma_beta2 <- 1/sqrt(inv_beta2)
-inv_beta3   ~ dgamma(0.001, 0.001)
-sigma_beta3 <- 1/sqrt(inv_beta3)
+#inv_beta3   ~ dgamma(0.001, 0.001)
+#sigma_beta3 <- 1/sqrt(inv_beta3)
 
 
 # Non-informative Prior for the inverse population variances
@@ -305,10 +305,11 @@ site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 plot <- unique(full.ghcn$site)
 
-
+full.ghcn$site_age <- paste0(full.ghcn$site, "-", full.ghcn$ageclass)
+full.ghcn$site_age.code <- as.numeric(as.factor(full.ghcn$site_age))
 
 reg.model.by_s <- jags.model(textConnection(population_model_site_re), 
-                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, SITE = as.numeric(full.ghcn$site), S = unique(full.ghcn$site)), n.chains = 3, n.adapt = 100)
+                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, SITE = as.numeric(full.ghcn$site_age.code), S = unique(full.ghcn$site_age.code)), n.chains = 3, n.adapt = 100)
 
 update(reg.model.by_s, 1000); # Burnin for 1000 samples to start, then go higher later
 
@@ -325,14 +326,63 @@ gelman.diag(samp.plot.re)
 
  samps       <- samp.plot.re[[1]]
  #Yp.samps    <- samps[,1] 
- alpha.samps <- samps[,1:16] # one alpha for each of 16 sites
- beta1.samps  <- samps[,17:32]
- beta2.samps <- samps[,33:48]
+ alpha.samps <- samps[,1:25] # one alpha for each of 16 sites
+ beta1.samps  <- samps[,26:50]
+ beta2.samps <- samps[,51:75]
  sigma.samps <- samps[,49]
  sigma_betas <- samps[,50:52]
 
 
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(unique(full.ghcn$site_age)[order(unique(full.ghcn$site_age.code))]))
+a$num <- rownames(a)
+ 
+a.m <- melt(a, id.vars=c("num"))
+split.list <- strsplit(as.character(a.m$variable),split = "-")
+split.list.df <- do.call(rbind, split.list)
+a.m$site <- split.list.df[,1]
+a.m$ageclass <- split.list.df[,2]
+alpha.mplots <- ggplot(a.m, aes(value, fill = ageclass))+geom_density(alpha = 0.5)+theme_black()+xlab("Random Intercepts")
 
+
+b2 <- data.frame(beta2.samps)
+colnames(b2) <- c(paste0(unique(full.ghcn$site_age)[order(unique(full.ghcn$site_age.code))]))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+b2.m <- melt(b2, id.vars=c("num"))
+split.list <- strsplit(as.character(b2.m$variable),split = "-")
+split.list.df <- do.call(rbind, split.list)
+b2.m$site <- split.list.df[,1]
+b2.m$ageclass <- split.list.df[,2]
+b2.mplots <- ggplot(b2.m, aes(value, fill = ageclass))+geom_density(alpha = 0.5)+theme_black()+xlab("Drought Index sensitivity")
+
+
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.003)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 18)+scale_fill_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))
+
+b2.mean <- apply(as.matrix(b2[,1:25]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:25]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:25]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+split.list <- strsplit(as.character(row.names(plot.dat.b2)),split = "-")
+split.list.df <- do.call(rbind, split.list)
+plot.dat.b2$site <- split.list.df[,1]
+plot.dat.b2$ageclass <- split.list.df[,2]
+#plot.dat.b2$class <- row.names(plot.dat.b2)
+plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels = c("Past", "Modern"))
+
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")+facet_wrap(~site)
+
+png(height = 4, width = 8, units = "in", res= 300, "outputs/growth_model/basic_reg_cohort_re/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots, b2.mplots+coord_flip() +xlim(-0.01, 0.075)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
+ 
+ 
+ 
 # Compute the posterior mean for the plug-in predictions  
 
  beta1.mn  <- colMeans(beta1.samps)
@@ -425,19 +475,27 @@ Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 # function g()
 gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
 
-res[i] <- Y[i] - gfunc[i]   
-emp.new[i] ~ dnorm(gfunc[i], sigma)
-res.new[i] <- emp.new[i] - gfunc[i]
+
+r1[i] <- Y[i] - gfunc[i]   
 }
 
-
+RSS[1] <- sum(r1^2)
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
 for(c in 1:length(C)){
 beta1[c] ~ dnorm(mu_beta1, inv_beta1)
 beta2[c] ~ dnorm(mu_beta2, inv_beta2)
 beta3[c] ~ dnorm(mu_beta3, inv_beta3)
+
+r2[c] <- beta1[c] - mu_beta1
+r3[c] <- beta2[c] - mu_beta2
+r4[c] <- beta3[c] - mu_beta3
 }
+
+
+RSS[2] <- sum(r2^2)
+RSS[3] <- sum(r3^2)
+RSS[4] <- sum(r4^2)
 
 # use normal hyperpriors for each hyperparamters 
 mu_beta1 ~ dunif(-2, 2)
@@ -500,7 +558,7 @@ reg.model.by_age <- jags.model(textConnection(population_model_cohort_re),
 update(reg.model.by_age, 1000); # Burnin for 1000 samples to start, then go higher later
 
 samp.age.re <- coda.samples(reg.model.by_age, 
-                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "betadiff", "Yp"), 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "betadiff", "Yp", "RSS[1]", "RSS[2]", "RSS[3]", "RSS[4]"), 
                     n.chains = 3, n.iter=2000, thin = 10)
 
 summary(samp.age.re)
@@ -511,13 +569,27 @@ gelman.diag(samp.age.re)
 #Extract the samples for each parameter for a basic exploration of effects
 
  samps       <- samp.age.re[[1]]
- Yp.samps    <- samps[,1:2756] 
- alpha.samps <- samps[,2757:2758] # one alpha for each of 16 sites
- beta1.samps  <- samps[,2759:2760]
- beta2.samps <- samps[,2761:2762]
- beta.diff.samps <- samps[,2763]
- sigma.samps <- samps[,2764]
- sigma_betas <- samps[,2765:2767]
+ RSS <- samps[,1:5]
+ samps <- samps[,5:(length(test$year)+15)]
+ Yp.samps    <- samps[,1:length(test$year)] 
+ alpha.samps <- samps[,(length(test$year)+1):(length(test$year)+2)] # one alpha for each of 16 sites
+ beta1.samps  <- samps[,(length(test$year)+3):(length(test$year)+4)]
+ beta2.samps <- samps[,(length(test$year)+5):(length(test$year)+6)]
+ beta.diff.samps <- samps[,(length(test$year)+7)]
+ sigma.samps <- samps[,(length(test$year)+8)]
+ sigma_betas <- samps[,(length(test$year)+9):(length(test$year)+11)]
+
+ #RSS:
+  rss0 <- function(x) crossprod(x-mean(x))
+## Data level
+1-mean(RSS[,1])/rss0(Y)
+1-mean(RSS[,2])/rss0(Y)
+1-mean(RSS[,3])/rss0(Y)
+1-mean(RSS[,4])/rss0(Y)
+1-mean(RSS[,5])/rss0(Y)
+## Group level
+1-mean(RSS[,2])/mean(apply(alpha.samps, 1, rss0))
+1-mean(RSS[,3])/mean(apply(beta1.samps, 1, rss0))
 
 # plot predicted vs. observed test data:
  png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_cohort_re/Ypred_vs_obs.png")
@@ -527,7 +599,7 @@ gelman.diag(samp.age.re)
  
  
  
- png("outputs/growth_model/basic_reg_cohort_re/marginal_alphas.png")
+png("outputs/growth_model/basic_reg_cohort_re/marginal_alphas.png")
 par(mfrow=c(1,3))
 hist(alpha.samps[,1], main = "alpha Forest")
 hist(alpha.samps[,2], main = "alpha Savanna")
@@ -565,10 +637,30 @@ alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.
 
 
 b2 <- data.frame(beta2.samps)
-colnames(b2) <- c(paste0("beta2-",c("Modern", "Past")))
+colnames(b2) <- c(paste0(c("Modern", "Past")))
 b2$num <- rownames(b2)
 b2.m <- melt(b2, id.vars=c("num"))
 b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+xlab("Drought Index sensitivity")
+
+
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.003)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 18)+scale_fill_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))
+
+b2.mean <- apply(as.matrix(b2[,1:2]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:2]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:2]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c("Past", "Modern"))
+
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(-0.01, 0.075)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png(height = 4, width = 8, units = "in", res= 300, "outputs/growth_model/basic_reg_cohort_re/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots, b2.mplots+coord_flip() +xlim(-0.01, 0.075)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
 
 
 b3 <- data.frame(beta3.samps)
@@ -838,6 +930,15 @@ dev.off()
  plot(colMeans(exp(Yp.samps)), test$RWI, xlab = "Predicted Growth", ylab = "Observed Growth")
 abline(a = 0, b = 1, col = "red")
 dev.off()
+
+
+# calculate MSE:
+
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
+#AVESD1 <- mean(post_sd1)
+#COV1   <- mean(Ytest>post_low1 & Ytest<post_high1)
+
 # Plot the Posterior Predictive Density and plug-in
 # want to plaot posteror predictive distributions:
  
@@ -866,21 +967,27 @@ full.probe <- expand.grid(DIprobe, DBHprobe,  structure= 1:2)
    #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
 
    
-   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   mu <- alpha.samps[,Xp[j,3]] + beta1.samps[,Xp[j,3]]*Xp[j,1] + beta2.samps[,Xp[j,3]]*Xp[j,2]   # use
    #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
-   ypred[[j]]  <- rnorm(20000, mu, sigma.mn)
-  # lines(density(y),col=2)
-
-   # Truth
-   #abline(v=Y[j],col=3,lwd=2)
-
-   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+   ypred[[j]]  <- mu #rnorm(20000, mu, sigma.mn)
+  
 }
 
 ypred.df <- do.call(rbind, ypred)
-
+y.df <- as.data.frame(ypred.df)
 Xp$MeanY <- exp(rowMeans(ypred.df)) # get the means of the posterior to plot the overall effects of 
 Xp$structure <- ifelse(Xp$structure == 1, "Forest", "Savanna")
+Xp$number <- rownames(Xp)
+
+y.df$number <- 1:length(y.df$V1)
+y.df <- merge(Xp, y.df, by = "number")
+
+
+y.df.m <- melt(y.df, id.vars = c("number", "Var1", "Var2", "structure"))
+
+
+ggplot(y.df.m, aes(Var1, value, col = structure))+geom_boxplot()
+
 #DBH + DI on predicted growth
 png("outputs/growth_model/basic_reg_structure_re/predicted_y.png")
 #par(mfrow = c(1,2))
@@ -894,6 +1001,8 @@ dev.off()
 
 png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/basic_reg_structure_re/Ypred_by_drought_structure.png")
 ggplot(Xp, aes(Var1,MeanY, color = as.factor(structure)))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+
+
 dev.off()
 
 png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg_structure_re/Ypred_by_DBH_structure.png")
@@ -921,10 +1030,11 @@ Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 # function g()
 gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
 
-#res[i] <- Y[i] - gfunc[i]   
-#emp.new[i] ~ dnorm(gfunc[i], sigma)
-#res.new[i] <- emp.new[i] - gfunc[i]
+r1[i] <- Y[i] - gfunc[i]   
+
 }
+
+RSS[1] <- sum(r1^2)
 
 # Prediction
   for(i in 1:np){
@@ -937,8 +1047,10 @@ for(s in 1:length(SF)){
 beta1[s] ~ dnorm(mu_beta1, inv_beta1)
 beta2[s] ~ dnorm(mu_beta2, inv_beta2)
 beta3[s] ~ dnorm(mu_beta3, inv_beta3)
-}
 
+r2[s] <- a[j] - mu_beta1
+}
+RSS[2] <- sum(r2^2)
 
 
 # use normal hyperpriors for each hyperparamters 
@@ -1022,7 +1134,7 @@ full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
 
 
 reg.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
+                    data = list(Y=log(full.ghcn$RWI), n=length(full.ghcn$RWI), DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, struct.cohort = as.numeric(full.ghcn$struct.cohort.code), SF = unique(full.ghcn$struct.cohort.code), np = length(test$DBH.scaled),
    struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled), n.chains = 3, n.adapt = 100)
 
 update(reg.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
@@ -1042,13 +1154,15 @@ acfplot(samp.structure.cohort.re)
 
  samps       <- samp.structure.cohort.re[[1]]
  saveRDS(samps, "outputs//growth_model/basic_reg_struct_x_cohort_re/samps.rds")
+  samps <- readRDS("outputs//growth_model/basic_reg_struct_x_cohort_re/samps.rds")
  #Yp.samps    <- samps[,1] 
- Yp.samps <- samps[,1:3726] 
- alpha.samps  <- samps[,3727:3730]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps <- samps[,3731:3734]
- beta3.samps <- samps[,3735:3738]
- sigma.samps <- samps[,3739]
- sigma_betas <- samps[,3740:3742]
+ Yp.samps <- samps[,1:(length(test$RWI))] 
+ 
+ alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 4)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+ 5):(length(test$RWI)+ 8)]
+ beta3.samps <- samps[,(length(test$RWI)+ 9):(length(test$RWI)+ 12)]
+ sigma.samps <- samps[,(length(test$RWI)+ 13)]
+ sigma_betas <- samps[,(length(test$RWI)+ 14):(length(test$RWI)+ 16)]
 
  
 # plot predicted vs. observed:
@@ -1104,10 +1218,32 @@ alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.
 
 
 b2 <- data.frame(beta2.samps)
-colnames(b2) <- c(paste0("beta2-",c(unique(train$struct.cohort))))
+colnames(b2) <- c(paste0(c(unique(train$struct.cohort))))
 b2$num <- rownames(b2)
 b2.m <- melt(b2, id.vars=c("num"))
 b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Drought Index slope")
+
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.003)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+b2.mean <- apply(as.matrix(b2[,1:4]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/basic_reg_struct_x_cohort_re/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots+ xlim(0, 0.15), b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.6))
+dev.off()
 
 
 b3 <- data.frame(beta3.samps)
@@ -1241,6 +1377,9 @@ for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
 beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
 beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
+
+
+
 }
 
 
@@ -1315,6 +1454,7 @@ gelman.diag(samp)
 
  samps       <- samp[[1]]
  saveRDS(samps, "outputs/growth_model/basic_reg_cohort_site_re/samps.rds")
+samps <-  readRDS("outputs/growth_model/basic_reg_cohort_site_re/samps.rds")
  Yp.samps    <- samps[,1:2780] 
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
  alpha.samps  <- samps[,2781:2782]
@@ -1390,17 +1530,45 @@ dev.off()
 
 # plot marginal distributions of cohort + structure specific parameters:
 a <- data.frame(alpha.samps)
-colnames(a) <- c(paste0("alpha-", c("Modern", "Past")))
+colnames(a) <- c(paste0( c("Modern", "Past")))
 a$num <- rownames(a)
 a.m <- melt(a, id.vars=c("num"))
-alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Random intercepts")+theme_black()
+alpha.mplots <- ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bw = 0.005)+theme_bw()+xlab("Random intercepts")+theme_black()
+
+a.mean <- apply(as.matrix(a[,1:2]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:2]), 2, function(x) quantile(x, probs = c(0.025)))
+a.upper <- apply(as.matrix(a[,1:2]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat <- data.frame(a.mean, a.lower, a.upper)
+plot.dat$class <- row.names(plot.dat)
+
+a.dots <- ggplot(plot.dat, aes(x = a.mean,y = class, color = class))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 1,height = 0)+geom_point()+xlim(-0.1, 0.05)+theme_black()+coord_flip()+theme(legend.position = "none")+xlab("Estimated Intercept")
+
+plot_grid(a.dots, alpha.mplots+coord_flip()+ xlim(-0.1, 0.05)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+
 
 
 b2 <- data.frame(beta2.samps)
-colnames(b2) <- c(paste0("beta2-",c("Modern", "Past")))
+colnames(b2) <- c(paste0(c("Modern", "Past")))
 b2$num <- rownames(b2)
 b2.m <- melt(b2, id.vars=c("num"))
-b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Drought Index slope")+theme_black()
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bw = 0.005)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black()
+
+b2.mean <- apply(as.matrix(b2[,1:2]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:2]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:2]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 1,height = 0)+geom_point()+xlim(0, 0.15)+theme_black()+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png("outputs/growth_model/basic_reg_cohort_site_re/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots, b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
+
 
 
 b3 <- data.frame(beta3.samps)
@@ -1498,7 +1666,643 @@ ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+yl
 dev.off()
 
 ```
+# this is the same as above, but we include both cohort and structure as RE
+```{r}
 
+site_model_structure_x_cohort_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+
+}
+
+# Prediction
+  for(i in 1:np){
+    Yp[i]  ~ dnorm(mup[i],inv.var)
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] 
+  }
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(S)){
+beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
+beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
+beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
+}
+
+
+for(j in 1:length(ind)){
+# use normal hyperpriors for each hyperparamters 
+mu_beta1[j] ~ dnorm(0, 0.5)
+mu_beta2[j] ~ dnorm(0, 0.5)
+mu_beta3[j] ~ dnorm(0, 0.5)
+
+}
+
+inv_beta1   ~ dgamma(0.001, 0.001)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.001, 0.001)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.001, 0.001)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.0001, 0.0001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+#need to define site level structures:
+
+
+
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+
+
+library(caTools)
+msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
+
+train <- full.ghcn[msk,]
+test <- full.ghcn[!msk,]
+
+
+
+# generate fake data to predict on:
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ 
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+
+
+reg.model.site_structure_x_cohort <- jags.model(textConnection(site_model_structure_x_cohort_re ), 
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled), n.chains = 3, n.adapt = 100)
+
+update(reg.model.site_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+samp.structure.site.cohort.re <- coda.samples(reg.model.site_structure_x_cohort, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
+                    n.chains = 3, n.iter=20000, thin = 15)
+
+summary(samp.structure.site.cohort.re)
+plot(samp.structure.site.cohort.re)
+
+gelman.diag(samp.structure.site.cohort.re)
+acfplot(samp.structure.site.cohort.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.site.cohort.re[[1]]
+ saveRDS(samps, "outputs/growth_model/site_reg_structure_cohort_re/samps.rds")
+ #Yp.samps    <- samps[,1] 
+ Yp.samps <- samps[,1:length(test$RWI)] 
+ alpha.samps  <- samps[,(length(test$RWI)+1):(length(test$RWI)+4)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+5):(length(test$RWI)+8)]
+ beta3.samps <- samps[,(length(test$RWI)+9):(length(test$RWI)+12)]
+ sigma.samps <- samps[,(length(test$RWI)+13)]
+ sigma_betas <- samps[,(length(test$RWI)+14):(length(test$RWI)+16)]
+
+ 
+# plot predicted vs. observed:
+test$mean.Y <- colMeans(exp(Yp.samps))
+png("outputs/growth_model/site_reg_structure_cohort_re/marginal_alphas.png")
+plot(colMeans(exp(Yp.samps)), test$RWI)
+abline(a = 0, b = 1, col = "red")
+ dev.off()
+ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+
+# get difference between beta2.samps:
+oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
+oneminusthree <- beta2.samps[,1] - beta2.samps[,3]
+oneminusfour <- beta2.samps[,1] - beta2.samps[,4]
+twominusthree <- beta2.samps[,2] - beta2.samps[,3]
+twominusfour <- beta2.samps[,2] - beta2.samps[,4]
+threeminusfour <- beta2.samps[,3] - beta2.samps[,4]
+# calculate MSPE
+# get posterior predictive density
+
+# plot marginal distributions of each parameter:
+png("outputs/growth_model/site_reg_structure_cohort_re/marginal_alphas.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Forest")
+hist(alpha.samps[,2], main = "alpha Modern-Forest")
+hist(alpha.samps[,3],  main = "alpha Past-Savanna ")
+hist(alpha.samps[,4],  main = "alpha Modern-Savanna")
+hist(sigma_betas[,1], main = "sigma alpha")
+dev.off()
+
+png("outputs/growth_model/site_reg_structure_cohort_re/marginal_beta1s.png")
+par(mfrow=c(3,2))
+hist(beta2.samps[,1], main = "beta2 Past-Forest")
+hist(beta2.samps[,2], main = "beta2 Modern-Forest")
+hist(beta2.samps[,3],  main = "beta2 Past-Savanna")
+hist(beta2.samps[,4],  main = "beta2 Modern-Savanna")
+hist(sigma_betas[,2], main = "sigma beta2")
+dev.off()
+
+png("outputs/growth_model/site_reg_structure_cohort_re/marginal_beta2s.png")
+par(mfrow=c(3,2))
+hist(beta3.samps[,1], main = "beta3 Past-Forest")
+hist(beta3.samps[,2], main = "beta3 Modern-Forest")
+hist(beta3.samps[,3],  main = "beta3 Past-Savanna")
+hist(beta3.samps[,4],  main = "beta3 Modern-Savanna")
+hist(sigma_betas[,3], main = "sigma beta3")
+dev.off()
+
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), bandwidth = 0.005, alpha = 0.5)+theme_black()+ylab("frequency")+xlab(" random intercepts")
+
+
+b2 <- data.frame(beta2.samps)
+colnames(b2) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+b2.mplots <- ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), bandwidth = 0.005, alpha = 0.5)+theme_black()+ylab("frequency")+xlab("Drought random slopes")
+
+b3 <- data.frame(beta3.samps)
+colnames(b3) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+b3$num <- rownames(b3)
+b3.m <- melt(b3, id.vars=c("num"))
+b3.mplots <- ggplot(b3.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), bandwidth = 0.005, alpha = 0.5)+theme_black()+ylab("frequency")+xlab("DBH random slopes")
+
+
+library(cowplot)
+png(width = 5, height = 6, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/param_marginal_distn_bycohort_struct.png")
+plot_grid(alpha.mplots, b2.mplots, b3.mplots, ncol = 1)
+dev.off()
+
+
+Yp <- data.frame(Yp.samps)
+colnames(Yp) <- c(paste0("YP-",test$site))
+Yp$num <- rownames(Yp)
+Yp.m <- melt(Yp, id.vars=c("num"))
+#Yp.m$DBHindex <- Xp$Var2
+#Yp.m$DIindex <- Xp$Var1
+#Yp.m$struct.cohort <- Xp$struct.cohort
+
+ggplot(Yp.m, aes(value, color = as.factor(Yp.m$variable)))+geom_density(alpha = 0.5)+theme_bw()
+
+library(ggridges)
+
+ggplot(Yp.m, aes(x = value, y = as.factor(DIindex))) + 
+  geom_density_ridges()
+
+ggplot(full.ghcn, aes(x = log(RWI), y = as.factor(struct.cohort))) + 
+  geom_density_ridges()
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta2.samps)
+ beta2.mn  <- colMeans(beta3.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+
+
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ ypred.yp <- list()
+ diff <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   ypred[[j]]  <- rnorm(np, mu, sigma.mn)
+  # lines(density(y),col=2)
+   #ypred.yp[[j]] <- Yp.samps[,j]
+   #diff[[j]] <- ypred[[j]] - Yp.samps[[j]]
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+#diff.df <- do.call(rbind, diff)
+#ypred.yp.df <- do.call(rbind, ypred.yp)
+
+Xp$MeanY <- exp(rowMeans(ypred.df))
+#Xp$MeanYhat <- exp(rowMeans(ypred.yp.df))# get the means of the posterior to plot the overall effects of 
+Xp$struct.cohort <- ifelse(Xp$struct.cohort == 1, "Past-Forest",  
+                       ifelse(Xp$struct.cohort == 2, "Modern-Forest",
+                               ifelse(Xp$struct.cohort == 3, "Past-Savanna", 
+                                       ifelse(Xp$struct.cohort == 4, "Modern-Savanna", NA))))
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/site_reg_structure_cohort_re/Ypred_by_drought_struct_x_cohort.png")
+ggplot(Xp, aes(Var1,MeanY, color = as.factor(struct.cohort)))+xlab("Drought Index")+geom_point()+ylab("predicted growth")+stat_smooth()
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/site_reg_structure_cohort_re/Ypred_by_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(struct.cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")+stat_smooth()
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/site_reg_structure_cohort_re/Ypred_by_drought_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(struct.cohort))
+dev.off()
+
+
+```
+
+# this is the same as above, but we include both cohort and structure as RE, but no random slopes:
+```{r}
+
+site_model_structure_x_cohort_re_slopes <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1 + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+
+
+}
+
+# Prediction
+  for(i in 1:np){
+    Yp[i]  ~ dnorm(mup[i],inv.var)
+    mup[i] <- beta1 + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] 
+  }
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(S)){
+#beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
+beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
+beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
+}
+
+
+for(j in 1:length(ind)){
+# use normal hyperpriors for each hyperparamters 
+#mu_beta1[j] ~ dnorm(0, 0.5)
+mu_beta2[j] ~ dnorm(0, 0.5)
+mu_beta3[j] ~ dnorm(0, 0.5)
+
+}
+
+beta1 ~ dnorm(0, inv_beta1)
+inv_beta1   ~ dgamma(0.001, 0.001)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.001, 0.001)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.001, 0.001)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.0001, 0.0001)
+sigma     <- 1/sqrt(inv.var)
+
+
+
+
+
+}"
+
+
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+
+
+full.ghcn <- merge(full.ghcn, structure, by = "site")
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+
+
+library(caTools)
+msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
+
+train <- full.ghcn[msk,]
+test <- full.ghcn[!msk,]
+
+
+
+# generate fake data to predict on:
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ 
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+
+
+reg.model.site_structure_x_cohort_slopes <- jags.model(textConnection(site_model_structure_x_cohort_re_slopes ), 
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled), n.chains = 3, n.adapt = 100)
+
+update(reg.model.site_structure_x_cohort_slopes, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+samp.structure.site.cohort.re.slopes <- coda.samples(reg.model.site_structure_x_cohort_slopes, 
+                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
+                    n.chains = 3, n.iter=20000, thin = 15)
+
+summary(samp.structure.site.cohort.re.slopes)
+plot(samp.structure.site.cohort.re.slopes)
+
+gelman.diag(samp.structure.site.cohort.re.slopes)
+acfplot(samp.structure.site.cohort.re.slopes)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.site.cohort.re.slopes[[1]]
+ saveRDS(samps, "outputs/growth_model/site_reg_structure_cohort_re.slopes/samps.rds")
+ #Yp.samps    <- samps[,1] 
+ Yp.samps <- samps[,1:length(test$RWI)] 
+ alpha.samps  <- samps[,(length(test$RWI)+1)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+2):(length(test$RWI)+6)]
+ beta3.samps <- samps[,(length(test$RWI)+7):(length(test$RWI)+10)]
+ sigma.samps <- samps[,(length(test$RWI)+11)]
+ sigma_betas <- samps[,(length(test$RWI)+12):(length(test$RWI)+13)]
+
+ 
+# plot predicted vs. observed:
+test$mean.Y <- colMeans(exp(Yp.samps))
+png("outputs/growth_model/site_reg_structure_cohort_re.slopes/marginal_alphas.png")
+plot(colMeans(exp(Yp.samps)), test$RWI)
+abline(a = 0, b = 1, col = "red")
+ dev.off()
+ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+
+# get difference between beta2.samps:
+oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
+oneminusthree <- beta2.samps[,1] - beta2.samps[,3]
+oneminusfour <- beta2.samps[,1] - beta2.samps[,4]
+twominusthree <- beta2.samps[,2] - beta2.samps[,3]
+twominusfour <- beta2.samps[,2] - beta2.samps[,4]
+threeminusfour <- beta2.samps[,3] - beta2.samps[,4]
+# calculate MSPE
+# get posterior predictive density
+
+# plot marginal distributions of each parameter:
+png("outputs/growth_model/site_reg_structure_cohort_re.slopes/marginal_alphas.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Forest")
+hist(alpha.samps[,2], main = "alpha Modern-Forest")
+hist(alpha.samps[,3],  main = "alpha Past-Savanna ")
+hist(alpha.samps[,4],  main = "alpha Modern-Savanna")
+hist(sigma_betas[,1], main = "sigma alpha")
+dev.off()
+
+png("outputs/growth_model/site_reg_structure_cohort_re.slopes/marginal_beta1s.png")
+par(mfrow=c(3,2))
+hist(beta2.samps[,1], main = "beta2 Past-Forest")
+hist(beta2.samps[,2], main = "beta2 Modern-Forest")
+hist(beta2.samps[,3],  main = "beta2 Past-Savanna")
+hist(beta2.samps[,4],  main = "beta2 Modern-Savanna")
+hist(sigma_betas[,2], main = "sigma beta2")
+dev.off()
+
+png("outputs/growth_model/site_reg_structure_cohort_re.slopes/marginal_beta2s.png")
+par(mfrow=c(3,2))
+hist(beta3.samps[,1], main = "beta3 Past-Forest")
+hist(beta3.samps[,2], main = "beta3 Modern-Forest")
+hist(beta3.samps[,3],  main = "beta3 Past-Savanna")
+hist(beta3.samps[,4],  main = "beta3 Modern-Savanna")
+hist(sigma_betas[,3], main = "sigma beta3")
+dev.off()
+
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), bandwidth = 0.005, alpha = 0.5)+theme_black()+ylab("frequency")+xlab(" random intercepts")
+
+
+b2 <- data.frame(beta2.samps)
+colnames(b2) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.003)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black()+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+b2.mean <- apply(as.matrix(b2[,1:4]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png("outputs/growth_model/site_reg_structure_cohort_re.slopes/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots, b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
+
+
+b3 <- data.frame(beta3.samps)
+colnames(b3) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+b3$num <- rownames(b3)
+b3.m <- melt(b3, id.vars=c("num"))
+b3.mplots <- ggplot(b3.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), bandwidth = 0.005, alpha = 0.5)+theme_black()+ylab("frequency")+xlab("DBH random slopes")
+
+ ggplot(b3.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), bandwidth = 0.005, alpha = 0.5)+theme_black()+ylab("frequency")+xlab("DBH random slopes")
+
+b3.boxplots <- ggplot(b3.m, aes(y = value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_bw()+xlab("DBH slope")+theme_black()
+
+library(cowplot)
+png(width = 5, height = 6, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re.slopes/param_marginal_distn_bycohort_struct.png")
+plot_grid(alpha.mplots, b2.mplots, b3.mplots, ncol = 1)
+dev.off()
+
+
+Yp <- data.frame(Yp.samps)
+colnames(Yp) <- c(paste0("YP-",test$site))
+Yp$num <- rownames(Yp)
+Yp.m <- melt(Yp, id.vars=c("num"))
+#Yp.m$DBHindex <- Xp$Var2
+#Yp.m$DIindex <- Xp$Var1
+#Yp.m$struct.cohort <- Xp$struct.cohort
+
+ggplot(Yp.m, aes(value, color = as.factor(Yp.m$variable)))+geom_density(alpha = 0.5)+theme_bw()
+
+library(ggridges)
+
+ggplot(Yp.m, aes(x = value, y = as.factor(DIindex))) + 
+  geom_density_ridges()
+
+ggplot(full.ghcn, aes(x = log(RWI), y = as.factor(struct.cohort))) + 
+  geom_density_ridges()
+
+# Compute the posterior mean for the plug-in predictions  
+
+ beta1.mn  <- colMeans(beta2.samps)
+ beta2.mn  <- colMeans(beta3.samps)
+ sigma.mn <- mean(sigma.samps)
+ alpha1.mn <- colMeans(alpha.samps) 
+
+
+# Plot the Posterior Predictive Density and plug-in
+# want to plaot posteror predictive distributions:
+ 
+# can probe either within the JAGS model or in R after the model runs:
+ # specify "x probe" values for DBH + DI:
+ #xprobe <- matrix(rep(-2.102618, 3.321394))
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+ ypred <- list()
+ ypred.yp <- list()
+ diff <- list()
+ for(j in 1:np){
+
+   # PPD
+   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
+
+   
+   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
+   #mu <- alpha1.mn+sum(Xp[j,1]*beta1.mn, Xp[j,2]*beta2.mn)
+   ypred[[j]]  <- rnorm(np, mu, sigma.mn)
+  # lines(density(y),col=2)
+   #ypred.yp[[j]] <- Yp.samps[,j]
+   #diff[[j]] <- ypred[[j]] - Yp.samps[[j]]
+   # Truth
+   #abline(v=Y[j],col=3,lwd=2)
+
+   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
+}
+
+ypred.df <- do.call(rbind, ypred)
+#diff.df <- do.call(rbind, diff)
+#ypred.yp.df <- do.call(rbind, ypred.yp)
+
+Xp$MeanY <- exp(rowMeans(ypred.df))
+#Xp$MeanYhat <- exp(rowMeans(ypred.yp.df))# get the means of the posterior to plot the overall effects of 
+Xp$struct.cohort <- ifelse(Xp$struct.cohort == 1, "Past-Forest",  
+                       ifelse(Xp$struct.cohort == 2, "Modern-Forest",
+                               ifelse(Xp$struct.cohort == 3, "Past-Savanna", 
+                                       ifelse(Xp$struct.cohort == 4, "Modern-Savanna", NA))))
+#DBH + DI on predicted growth
+
+# Todo: unscale Drought and DBH indices
+
+png(height = 4, width = 6, units = "in", res = 200,filename= "/Users/kah/Documents/TreeRings/outputs/growth_model/site_reg_structure_cohort_re/Ypred_by_drought_struct_x_cohort.png")
+ggplot(Xp, aes(Var1,MeanY, color = as.factor(struct.cohort)))+xlab("Drought Index")+geom_point()+ylab("predicted growth")+stat_smooth()
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/site_reg_structure_cohort_re/Ypred_by_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var2,MeanY,color = as.factor(struct.cohort)))+geom_point()+xlab("DBH Index")+ylab("predicted growth")+stat_smooth()
+dev.off()
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/site_reg_structure_cohort_re/Ypred_by_drought_DBH_struct_x_cohort.png")
+ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(struct.cohort))
+dev.off()
+
+
+```
 
 # model for cohort effects with summer VPD instead of PDSI
 ```{r}
@@ -1879,8 +2683,8 @@ train <- dry.yrs[msk,]
 test <- dry.yrs[!msk,]
 
 cohort.model.dry.re <- jags.model(textConnection(cohort_model_dry_site_re), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, cohort = as.numeric(train$ageclass), S = unique(train$ageclass),
-                    plot = as.numeric(train$site), ind = unique(train$site),  np=length(test$RWI), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
+                    data = list(Y=log(dry.yrs$RWI), n=length(dry.yrs$RWI), DI.scaled = dry.yrs$DI.scaled, DBH.scaled = dry.yrs$DBH.scaled, cohort = as.numeric(dry.yrs$ageclass), S = unique(dry.yrs$ageclass),
+                    plot = as.numeric(dry.yrs$site), ind = unique(dry.yrs$site),  np=length(test$RWI), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
                     plot.p = as.numeric(test$site), ind.p = unique(test$site)), n.chains = 3, n.adapt = 100)
 
 update(cohort.model.dry.re, 2000); # Burnin for 1000 samples to start, then go higher later
@@ -1899,17 +2703,18 @@ gelman.diag(samp)
 
  samps       <- samp[[1]]
  
- saveRDS(samps, "outputs/growth_model/basic_reg_dry_cohort_site_re/samps.rds")
- Yp.samps    <- samps[,1:414] 
+ saveRDS(samps, "outputs/growth_model/basic_reg_dry_cohort_site_re/samps_full.rds")
+ samps <-  readRDS( "outputs/growth_model/basic_reg_dry_cohort_site_re/samps_full.rds")
+ Yp.samps    <- samps[,1:length(test$RWI)] 
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
- alpha.samps  <- samps[,415:416]
- beta2.samps <- samps[,417:418]
- beta3.samps <- samps[,419:420]
- mu_beta1.samps <- samps[,421:434]
- mu_beta2.samps <- samps[,435:448]
- mu_beta3.samps <- samps[,449:462]
- sigma.samps <- samps[,463]
- sigma_betas <- samps[,464:466]
+ alpha.samps  <- samps[,(length(test$RWI)+1):(length(test$RWI)+2)]
+ beta2.samps <- samps[,(length(test$RWI)+3):(length(test$RWI)+4)]
+ beta3.samps <- samps[,(length(test$RWI)+5):(length(test$RWI)+6)]
+ mu_beta1.samps <- samps[,(length(test$RWI)+7):(length(test$RWI)+20)]
+ mu_beta2.samps <- samps[,(length(test$RWI)+21):(length(test$RWI)+34)]
+ mu_beta3.samps <- samps[,(length(test$RWI)+35):(length(test$RWI)+48)]
+ sigma.samps <- samps[,(length(test$RWI)+49)]
+ sigma_betas <- samps[,(length(test$RWI)+50):(length(test$RWI)+52)]
 
  
 png("outputs/growth_model/basic_reg_dry_cohort_site_re/pred_vs_obs.png")
@@ -1986,10 +2791,26 @@ alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.
 
 
 b2 <- data.frame(beta2.samps)
-colnames(b2) <- c(paste0("beta2-",c("Modern", "Past")))
+colnames(b2) <- c(paste0(c("Modern", "Past")))
 b2$num <- rownames(b2)
 b2.m <- melt(b2, id.vars=c("num"))
-b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+xlab("Drought Sensitivity")+geom_segment( aes(x=quantile(b2[,1], 0.05), xend=quantile(b2[,1], 0.05), y= 0, yend = 2.5), col = "white", linetype = "dashed")+geom_segment( aes(x=quantile(b2[,1], 0.95), xend=quantile(b2[,1], 0.95), y= 0, yend = 2.5), col = "white", linetype = "dashed")+geom_segment( aes(x=quantile(b2[,2], 0.05), xend=quantile(b2[,2], 0.05), y= 0, yend = 5), col = "blue", linetype = "dashed")+geom_segment( aes(x=quantile(b2[,2], 0.95), xend=quantile(b2[,2], 0.95), y= 0, yend = 5), col = "blue", linetype = "dashed")+ylab("frequency")#+geom_segment( aes(x=quantile(b2[,2], 0.5), xend=quantile(b2[,2], 0.5), y= 0, yend = 29), col = "blue")
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.0075)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 18)+scale_fill_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))
+
+b2.mean <- apply(as.matrix(b2[,1:2]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:2]), 2, function(x) quantile(x, probs = c(0.05)))
+b2.upper <- apply(as.matrix(b2[,1:2]), 2, function(x) quantile(x, probs = c(0.95)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c("Past", "Modern"))
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0 , 0.25)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png(height = 5, width = 8, units = "in", res = 300, "outputs/growth_model/basic_reg_dry_cohort_site_re/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots+xlim(0.05 , 0.3), b2.mplots+coord_flip()+xlim(0.05 , 0.3)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
 
 # difference between betas:
 beta2.diff <- beta2.samps[,1] - beta2.samps[,2]
@@ -2091,6 +2912,194 @@ ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+yl
 dev.off()
 
 ```
+# intercept only model (mean for d13C):
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+d13C_intercept_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model for iWUE:
+iWUE[i]   ~ dnorm(iwuefunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+iwuefunc[i] <- beta1[struct.cohort[i]]
+
+}
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+}
+
+
+
+# use normal hyperpriors for each hyperparamters 
+
+mu_beta1 ~ dnorm(0, 0.1)
+
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+
+
+
+# Non-informative Prior for the inverse population variances
+
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+}"
+
+
+# read in the d13 data:
+
+
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+d13 <- d13[!is.na(d13$DBH),]
+Y.d13 <- log(d13$RWI)
+Y.iwue <- d13$iWUE
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass.d13 <- as.numeric( d13$ageclass)
+Age.d13 <- as.numeric( d13$Age)
+n.d13     <- length(d13$RWI)
+DBH.d13 <- d13$DBH
+d13$DBH.scaled = as.vector(scale(d13$DBH, center = TRUE, scale = TRUE))
+d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
+site.d13 <- d13$site
+SpecCode.d13 <- d13$SpecCode
+plot.d13 <- unique(d13$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+
+
+#full.ghcn <- merge(full.ghcn, structure, by = "site")
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+full.ghcn <- merge(full.ghcn, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
+# read in VPD data and merge with full data:
+full.prism <- read.csv("outputs/data/full_det_prism_rwi.csv")
+full.ghcn <- merge(full.ghcn, full.prism[,c("year", "site", "ID", "VPDmax", "jja.VPDmax", "BAL", "jul.BAL", "jul.VPDmax")], by = c("year", "site", "ID"))
+full.ghcn$jul.VPDmax.scaled <- as.numeric(scale(full.ghcn$jul.VPDmax))
+full.ghcn$iWUE.scaled <- as.numeric(scale(full.ghcn$iWUE))
+d13index <- !is.na(full.ghcn$Cor.d13C.suess)
+# generate fake data to predict on:
+ DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
+ DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
+ 
+ # something like:
+full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
+ # use these vals to get ypred
+ # compare y pred to y acutal
+ # for each value of DI and DBH and site, find the predicted growth based on the model:
+
+
+
+
+
+ Xp <- full.probe
+ np <- length(Xp$Var1)
+n = length(full.ghcn$Cor.d13C.suess)
+
+
+# split into testing and training:
+library(caTools)
+full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
+#full.iso <- full.ghcn
+iWUE.med<- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
+msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
+
+train <- full.iso[msk,]
+test <- full.iso[!msk,]
+
+iwue_mean <- jags.model(textConnection(d13C_intercept_re), 
+                    data = list(iWUE = full.iso$Cor.d13C.suess, n=length(full.iso$iWUE), struct.cohort = as.numeric(full.iso$struct.cohort.code), SF = unique(full.iso$struct.cohort.code)), n.chains = 3, n.adapt = 100)
+
+update(iwue_mean, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+iwue.mean.re <- coda.samples(iwue_mean, 
+                     variable.names=c("beta1", "mu_beta1"), 
+                    n.chains = 3, n.iter = 20000, thin = 15)
+
+summary(iwue.mean.re )
+plot(iwue.mean.re )
+
+gelman.diag(iwue.mean.re )
+acfplot(iwue.mean.re )
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- iwue.mean.re [[1]]
+ saveRDS(samps, "outputs/growth_model/d13C_intercept_mode/samps.d13_nobon.rds")
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ #d13pred <- samps
+ alpha.samps  <- samps[,1:4]
+
+
+
+png("outputs/growth_model/d13C_intercept_mode/marginal_alphas_v3_iWUE.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Savanna")
+hist(alpha.samps[,2], main = "alpha Modern-Savanna")
+hist(alpha.samps[,3],  main = "alpha Past-Forest")
+hist(alpha.samps[,4],  main = "alpha Modern-Forest")
+
+dev.off()
+
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna")))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+
+
+ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c(unique(full.iso$struct.cohort)[order(unique(full.iso$struct.cohort.code))])))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+a.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.5)+theme_bw()+xlab("Estimated mean D13C")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+a.mean <- apply(as.matrix(a[,1:4]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+a.upper <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
+plot.dat.a$class <- row.names(plot.dat.a)
+plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+a.dots <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(-26, -22)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Mean d13C")
+
+png(height = 5, width = 12, units = "in",res = 300,"outputs/growth_model/d13C_intercept_mode/d13C_alpha_marginal_distn_bycohort.png")
+plot_grid(a.dots, a.mplots+coord_flip()+ xlim(-26, -22)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.75))
+dev.off()
+
+library(cowplot)
+png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
+plot_grid(alpha.mplots, ncol = 1)
+dev.off()
 # intercept only model (mean for iWUE):
 ```{r}
 # this model is specified in basically the same as the site level model, but we replace site with "cohort"
@@ -2203,7 +3212,7 @@ train <- full.iso[msk,]
 test <- full.iso[!msk,]
 
 iwue_mean <- jags.model(textConnection(iWUE_intercept_re), 
-                    data = list(iWUE = train$iWUE, n=length(train$iWUE), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code)), n.chains = 3, n.adapt = 100)
+                    data = list(iWUE = full.iso$iWUE, n=length(full.iso$iWUE), struct.cohort = as.numeric(full.iso$struct.cohort.code), SF = unique(full.iso$struct.cohort.code)), n.chains = 3, n.adapt = 100)
 
 update(iwue_mean, 1000); # Burnin for 1000 samples to start, then go higher later
 
@@ -2240,7 +3249,7 @@ dev.off()
 
 # plot marginal distributions of cohort + structure specific parameters:
 a <- data.frame(alpha.samps)
-colnames(a) <- c(paste0("alpha- ", c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna")))
+colnames(a) <- c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna")))
 a$num <- rownames(a)
 a.m <- melt(a, id.vars=c("num"))
 alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
@@ -2248,6 +3257,31 @@ alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.
 
 ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
 
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+a.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.5)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+a.mean <- apply(as.matrix(a[,1:4]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+a.upper <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
+plot.dat.a$class <- row.names(plot.dat.a)
+plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+a.dots <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(100, 160)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png(height = 5, width = 12, units = "in",res = 300,"outputs/growth_model/iWUE_intercept_mod/iwue_alpha_marginal_distn_bycohort.png")
+plot_grid(a.dots, a.mplots+coord_flip()+ xlim(100, 160)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.75))
+dev.off()
 
 library(cowplot)
 png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
@@ -2330,6 +3364,10 @@ dev.off()
 
 
 ```
+
+
+
+
 
 # adding a prediction for stable isotopes (d13C) from tree growth predictions
 ```{r}
@@ -2499,7 +3537,7 @@ train <- full.iso[msk,]
 test <- full.iso[!msk,]
 
 d13.model.by_structure_x_cohort <- jags.model(textConnection(d13_model_structure_x_cohort_re), 
-                    data = list(Y = train$RWI, n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, jul.VPDmax = train$jul.VPDmax.scaled, iWUE = train$iWUE.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code)), n.chains = 3, n.adapt = 100)
+                    data = list(Y = full.iso$RWI, n=length(full.iso$RWI), DI.scaled = full.iso$DI.scaled, DBH.scaled = full.iso$DBH.scaled, jul.VPDmax = full.iso$jul.VPDmax.scaled, iWUE = full.iso$iWUE.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(full.iso$struct.cohort.code)), n.chains = 3, n.adapt = 100)
 
 update(d13.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
 
@@ -3048,6 +4086,296 @@ ggplot(Xp, aes(Var2, Meand13, color = as.factor(struct.cohort)))+geom_point()+xl
 ggplot(Xp, aes(Var1, Var2, fill = Meand13))+geom_raster()+xlab("Drought Index")+ylab("DBH Index")+scale_fill_distiller(palette = "BrBG", direction = -1)+facet_wrap(~as.factor(struct.cohort))
 #dev.off()
 
+
+
+```
+# cohort only model:
+
+```{r}
+d13only_model_cohort_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+
+ d13[i]   ~ dnorm(d13func[i], inv.var) # where Yi is already log transformed
+ d13func[i] <- beta1[cohort[i]]
+
+}
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+}
+
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+
+
+# Non-informative Prior for the inverse population variances
+inv.var ~ dgamma(0.01, 0.01)
+sigma <- 1/sqrt(inv.var)
+
+
+# Prediction using testing data
+for(i in 1:np){
+
+ d13.p[i]   ~ dnorm(d13func.p[i], inv.var) # where Yi is already log transformed
+ d13func.p[i] <- beta1[cohort.p[i]] 
+
+}
+
+}"
+
+
+# read in the d13 data:
+
+
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+d13 <- d13[!is.na(d13$DBH),]
+Y.d13 <- log(d13$RWI)
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass.d13 <- as.numeric( d13$ageclass)
+Age.d13 <- as.numeric( d13$Age)
+n.d13     <- length(d13$RWI)
+DBH.d13 <- d13$DBH
+d13$DBH.scaled = as.vector(scale(d13$DBH, center = TRUE, scale = TRUE))
+d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
+site.d13 <- d13$site
+SpecCode.d13 <- d13$SpecCode
+plot.d13 <- unique(d13$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+
+
+#full.ghcn <- merge(full.ghcn, structure, by = "site")
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+full.ghcn <- merge(full.ghcn, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
+
+
+d13.model.only.by_cohort <- jags.model(textConnection(d13only_model_cohort_re), 
+                    data = list( n=length(full.iso$DI.scaled), cohort = as.numeric(full.iso$ageclass), SF = unique(full.iso$ageclass), d13 = full.iso$Cor.d13C.suess,  np=length(test$DI.scaled),  cohort.p = as.numeric(test$ageclass)), n.chains = 3, n.adapt = 100)
+
+update(d13.model.only.by_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+d13.model.only.by_structure_x_cohort <- coda.samples(d13.model.only.by_cohort, 
+                     variable.names=c("beta1","sigma", "d13.p"), 
+                    n.chains = 3, n.iter = 20000, thin = 10)
+
+summary(d13.model.only.by_structure_x_cohort)
+plot(d13.model.only.by_structure_x_cohort)
+
+gelman.diag(d13.model.only.by_structure_x_cohort)
+acfplot(d13.model.only.by_structure_x_cohort)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+samps       <- d13.model.only.by_structure_x_cohort[[1]]
+saveRDS(samps,"outputs/growth_model/d13_reg_cohort/samps.rds")
+plot(d13.model.only.by_structure_x_cohort)
+
+ 
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ d13.samps <- samps[,1:length(test$site)]
+ alpha.samps  <- samps[,1:2]
+ 
+
+
+png("outputs/growth_model/d13_reg_cohort/marginal_alphas_v3.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Savanna")
+hist(alpha.samps[,2], main = "alpha Modern-Savanna")
+
+dev.off()
+
+
+
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c("Modern", "Past")
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Intercepts for iWUE")
+
+
+a.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.05)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 18)+scale_fill_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))
+
+a.mean <- apply(as.matrix(a[,1:2]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:2]), 2, function(x) quantile(x, probs = c(0.05)))
+a.upper <- apply(as.matrix(a[,1:2]), 2, function(x) quantile(x, probs = c(0.95)))
+
+## Combine both estimates
+plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
+plot.dat.a$class <- row.names(plot.dat.a)
+plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past", "Modern"))
+a.dots <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(-26, -22)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))+coord_flip()+theme(legend.position = "none")+xlab("d13C")
+
+png(height = 5, width = 8, units = "in", res = 300, "outputs/growth_model/d13_reg_cohort/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(a.dots+xlim(-26,-22), a.mplots+coord_flip()+xlim(-26,-22)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
+
+
+```
+```{r}
+iwueonly_model_cohort_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+
+ d13[i]   ~ dnorm(d13func[i], inv.var) # where Yi is already log transformed
+ d13func[i] <- beta1[cohort[i]]
+
+}
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+}
+
+
+# use normal hyperpriors for each hyperparamters 
+mu_beta1 ~ dunif(-2, 2)
+
+
+inv_beta1   ~ dgamma(0.1, 0.1)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+
+
+# Non-informative Prior for the inverse population variances
+inv.var ~ dgamma(0.01, 0.01)
+sigma <- 1/sqrt(inv.var)
+
+
+# Prediction using testing data
+for(i in 1:np){
+
+ d13.p[i]   ~ dnorm(d13func.p[i], inv.var) # where Yi is already log transformed
+ d13func.p[i] <- beta1[cohort.p[i]] 
+
+}
+
+}"
+
+
+# read in the d13 data:
+
+
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+d13 <- d13[!is.na(d13$DBH),]
+Y.d13 <- log(d13$RWI)
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass.d13 <- as.numeric( d13$ageclass)
+Age.d13 <- as.numeric( d13$Age)
+n.d13     <- length(d13$RWI)
+DBH.d13 <- d13$DBH
+d13$DBH.scaled = as.vector(scale(d13$DBH, center = TRUE, scale = TRUE))
+d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
+site.d13 <- d13$site
+SpecCode.d13 <- d13$SpecCode
+plot.d13 <- unique(d13$site)
+#need to define site level structures:
+structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+
+
+
+#full.ghcn <- merge(full.ghcn, structure, by = "site")
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+full.ghcn <- merge(full.ghcn, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
+
+
+iwue.model.only.by_cohort <- jags.model(textConnection(iwueonly_model_cohort_re), 
+                    data = list( n=length(full.iso$DI.scaled), cohort = as.numeric(full.iso$ageclass), SF = unique(full.iso$ageclass), d13 = full.iso$iWUE,  np=length(test$DI.scaled),  cohort.p = as.numeric(test$ageclass)), n.chains = 3, n.adapt = 100)
+
+update(iwue.model.only.by_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+iwue.model.only <- coda.samples(iwue.model.only.by_cohort, 
+                     variable.names=c("beta1","sigma", "d13.p"), 
+                    n.chains = 3, n.iter = 20000, thin = 10)
+
+summary(iwue.model.only )
+plot(iwue.model.only )
+
+gelman.diag(iwue.model.only )
+acfplot(iwue.model.only )
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+samps       <- iwue.model.only[[1]]
+saveRDS(samps,"outputs/growth_model/iwue_reg_cohort/samps.rds")
+plot(d13.model.only.by_structure_x_cohort)
+
+ 
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ d13.samps <- samps[,1:length(test$site)]
+ alpha.samps  <- samps[,1:2]
+ 
+
+
+png("outputs/growth_model/iwue_reg_cohort/marginal_alphas_v3.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Savanna")
+hist(alpha.samps[,2], main = "alpha Modern-Savanna")
+
+dev.off()
+
+
+
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c("Modern", "Past")
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Estimated iWUE")
+
+
+a.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.5)+theme_bw()+xlab("Estimated iWUE")+theme_black(base_size = 18)+scale_fill_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))
+
+a.mean <- apply(as.matrix(a[,1:2]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:2]), 2, function(x) quantile(x, probs = c(0.05)))
+a.upper <- apply(as.matrix(a[,1:2]), 2, function(x) quantile(x, probs = c(0.95)))
+
+## Combine both estimates
+plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
+plot.dat.a$class <- row.names(plot.dat.a)
+plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past", "Modern"))
+a.dots <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(115, 160)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='#d73027',
+"Modern"='#4575b4'))+coord_flip()+theme(legend.position = "none")+xlab("iWUE")
+
+png(height = 5, width = 8, units = "in", res = 300, "outputs/growth_model/iwue_reg_cohort/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(a.dots+xlim(115, 160), a.mplots+coord_flip()+xlim(115, 160)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()))
+dev.off()
 
 
 ```
@@ -3850,12 +5178,3 @@ samp.df <- summary(samp)
 
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
