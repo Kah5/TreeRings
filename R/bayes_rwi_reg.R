@@ -10,7 +10,7 @@ RWIS <- read.csv("outputs/data/full_det_ghcn_rwi.csv")
 head(RWIS)
 
 RWIS <- RWIS[!is.na(RWIS$RWI),]
-fit <- lm(RWI~JJA.pdsi , data = RWIS)
+fit <- lm(RWI~JJA.pdsi + site, data = RWIS)
 summary(fit)
 
 #### 
@@ -169,7 +169,7 @@ summary(samp)
 plot(samp)
 
 summary(lm(RWI ~ JJA.pdsi*ages, data = RWIS))
-
+summary(lm(RWI ~ (JJA.pdsi*ages)*site, data = RWIS))
 lm1_mcmc <- as.mcmc(samp)
 plot(lm1_mcmc)
 
@@ -296,7 +296,7 @@ lm2_jags <- "model{
 # Likelihood:
 for (i in 1:N){
 RWI[i] ~ dnorm(mu[i], tau) # tau is precision (1 / variance)
-mu[i] <- alpha[1] + dbhclass[i] * alpha[2] + (beta[1] + beta[2] * dbhclass[i]) * pdsi[i]
+mu[i] <- alpha[1] + dbhclass[i] * alpha[2] + (beta[1] + beta[2] * dbhclass[i]) * pdsi[i] 
 }
 # Priors:
 for (i in 1:2){
@@ -331,6 +331,7 @@ samp <- coda.samples(reg.model.age ,
                      n.chains = 3, n.iter=20000, progress.bar="none")
 
 summary(samp)
+
 plot(samp)
 
 summary(lm(RWI ~ JJA.pdsi*dbhs, data = RWIS))
@@ -415,12 +416,14 @@ lines(b_length_new, credible_lower, lty = 2, col = "green")
 lines(b_length_new, credible_upper, lty = 2, col = "green")
 lines(b_length_new, uncertain_lower, lty = 2, col = "red")
 lines(b_length_new, uncertain_upper, lty = 2, col = "red")
+
 # add lines for past trees
 lines(b_length_new, pred_mean_mean.1, col = "orange")
 lines(b_length_new, credible_lower.1, lty = 2, col = "purple")
 lines(b_length_new, credible_upper.1, lty = 2, col = "purple")
 lines(b_length_new, uncertain_lower.1, lty = 2, col = "blue")
 lines(b_length_new, uncertain_upper.1, lty = 2, col = "blue")
+
 dev.off()
 
 
