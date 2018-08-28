@@ -7,6 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(rjags)
 library(ggplot2)
+library(caTools)
 
 # some initial data checking:
 full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.df")
@@ -33,7 +34,7 @@ Y <- as.vector(log(full.ghcn$RWI))
 # standardise predictor variables to have mean 0 and sd = 1
 DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
 DBH.scaled = scale(full.ghcn$DBH, center= TRUE, scale=TRUE)
-T.scaled = scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE)
+full.ghcn$T.scaled = as.vector(scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE))
 full.ghcn$DI.scaled = as.vector(scale(full.ghcn$JJA.pdsi, center = TRUE, scale = TRUE))
 full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
 
@@ -46,8 +47,7 @@ full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRU
 site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 
-summary(lm(Y ~ log(DBH)))
-
+mgcv::gam(data = full.ghcn, RWI ~ DBH.scaled + DI.scaled)
 
 
 # population model for the response of each BAI to each year of climate:
@@ -59,30 +59,34 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1 +  beta2*DI.scaled[i] + beta3*DBH.scaled[i] # use Drought index
+gfunc[i] <- beta1 +  beta2*DI.scaled[i] + beta3*DBH.scaled[i] +  beta4*T.scaled[i]
 
-res[i] <- Y[i] - gfunc[i]   # residual between actual and predicted
-emp.new[i] ~ dnorm(gfunc[i], inv.var) 
-res.new[i] <- emp.new[i] - gfunc[i]
+
 
 }
 
 # Assume normal priors for betas (because they could be negative or positive)
 
-beta1 ~ dnorm(0, 0.01)
-beta2 ~ dnorm(0, 0.01)
-beta3 ~ dnorm(0,0.01)
-
+beta1 ~ dnorm(0, 0.001)
+beta2 ~ dnorm(0, 0.001)
+beta3 ~ dnorm(0,0.001)
+beta4 ~ dnorm(0,0.001)
 
 
 # Non-informative Prior for the inverse variances
 inv.var   ~ dgamma(0.01, 0.01)
 sigma     <- 1/sqrt(inv.var)
 
-#Derived parameters
-  fit <- sum(res[])
-  fit.new <- sum(res.new[])
 
+for(i in 1:np){
+# process model
+Yp[i]   ~ dnorm(gfuncp[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfuncp[i] <- beta1 +  beta2*DI.scaled.p[i] + beta3*DBH.scaled.p[i] + beta4*T.scaled.p[i] # use Drought index
+
+
+}
 
 
 }"
@@ -115,41 +119,104 @@ initsList <- list(
   )
 )
 
+msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
+
+train <- full.ghcn[msk,]
+test <- full.ghcn[!msk,]
+
+
 # now 
 reg.model.age <- jags.model(textConnection(population_model), 
-                    data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled), inits = initsList, n.chains = 3)
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,T.scaled = train$T.scaled, np = length(test$RWI), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, T.scaled.p = test$T.scaled), n.chains = 3)
 
 update(reg.model.age, 1000); # Burnin for 1000 samples to start, then go higher later
 
 samp <- coda.samples(reg.model.age, 
-                     variable.names=c("beta1", "beta2","beta3","sigma"), 
+                     variable.names=c("beta1", "beta2", "beta3", "beta4", "beta5", "sigma", "Yp"), 
                     n.chains = 3, n.iter=2000)
 
-#lin.reg.bayes <- as.mcmc(samp[[1]])
-summary(samp)
-plot(samp)
-traceplot(samp)
-gelman.diag(samp)
-gelman.plot(samp)
 
 
 #Extract the samples for each parameter
 
  samps       <- samp[[1]]
- #Yp.samps    <- samps[,1:n] 
- alpha.samps <- samps[,1]
- beta.samps  <- samps[,2:3]
- sigma.samps <- samps[,4]
+ Yp.samps    <- samps[,1:length(test$X)] 
+ alpha.samps <- samps[,(length(test$X)+1)]
+ beta.samps  <- samps[,(length(test$X)+2):((length(test$X)+4))]
+ sigma.samps <- samps[,(length(test$X)+5)]
+
+ 
+# caluculate 95% CI for alpha and beta samps 
+alpha.025 <- quantile(alpha.samps, 0.025)
+alpha.975 <- quantile(alpha.samps, 0.975)
+beta1.025 <- quantile(beta.samps[,1], 0.025)
+beta1.975 <- quantile(beta.samps[,1], 0.975)
+beta2.025 <- quantile(beta.samps[,2], 0.025)
+beta2.975 <- quantile(beta.samps[,2], 0.975)
+
+
+
+a <- data.frame('alpha' = alpha.samps, 'beta.drought' = beta.samps[,1], 'Beta.dbh' = beta.samps[,2], 'Beta.JunT' = beta.samps[,3])
+colnames(a)<- c("alpha", "beta.drought", "beta.dbh", "beta.temp")
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+
+# make dot + 95% CI plots for each param
+a.mplots <- ggplot(a.m, aes(value, color = variable))+geom_density(alpha = 0.5)+theme_black()
+
+a.m.mean <- apply(as.matrix(a[,1:3]), 2, mean)
+a.m.lower <- apply(as.matrix(a[,1:3]), 2, function(x) quantile(x, probs = c(0.025)))
+a.m.upper <- apply(as.matrix(a[,1:3]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.a.m <- data.frame(a.m.mean, a.m.lower, a.m.upper)
+
+#plot.dat.a.m$class <- row.names(plot.dat.a.m)
+
+a.m.dots <- ggplot(plot.dat.a.m, aes(x = a.m.mean, y = row.names(plot.dat.a.m)))+geom_errorbarh( xmin = a.m.lower, xmax = a.m.upper,height = 0, size = 2)+geom_point(size = 3)+geom_vline(xintercept = 0, linetype = "dashed")+coord_flip()+theme(legend.position = "none")+xlab("Parameter Estimages")+ylab("Parameters")+theme_bw()+xlim(-0.032, 0.1)
+
+png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Parameter_estimates.png")
+a.m.dots
+dev.off()
+
+# plot predicted vs. observed:
+## sorted to increase
+idx <- order(test[, "RWI"])
+pred <- data.frame(Yp.samps)
+n_samples <- length(pred[, 1])
+X_ci <- apply(pred[, idx], 2, sort)[(0.025*n_samples+1):(0.975*n_samples), ]
+sim.df <- data.frame(Covariate=c(X_ci),
+                     #Covariate.trans = exp(X_ci),
+                     Observation=factor(rep((1:length(test[, "RWI"])),
+                                            each=n_samples*0.95)),
+                     truth=rep(test[, "RWI"][idx],
+                               each=n_samples*0.95))
+
+
+sim.df$PredRWI <- exp(sim.df$Covariate)
+
+sub <- sample(x = 1:(n_samples*3665), replace = FALSE, size = 100)
+
+png(height=10, width = 14, units = "in",res = 200,"outputs/growth_model/basic_reg/pred_obs_ci.png")
+ggplot(na.omit(sim.df[sub,]), aes(truth, PredRWI)) +
+  geom_violin(position="identity") +
+  geom_point(aes(Observation, truth), color="red") +
+  scale_x_discrete(breaks=seq(, 25, 5)) + 
+  labs(x="Observed Growth", y="Predicted Growth")
+dev.off()
 
 # Compute the posterior mean for the plug-in predictions  
 
  beta.mn  <- colMeans(beta.samps)
  sigma.mn <- mean(sigma.samps)
  alpha.mn <- mean(alpha.samps) 
+ 
+ plot(colMeans(exp(Yp.samps)), test$RWI)
+ abline(a = 0, b = 1, col = "red")
 
  
   DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.25)
- DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.25)
+  DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.25)
  
  # something like:
  Xp <- expand.grid(DIprobe, DBHprobe)
@@ -165,7 +232,8 @@ ypred <- list()
    # Plug-in
    mu <- alpha.mn+sum(Xp[j,]*beta.mn)
    ypred[[j]]  <- rnorm(20000, mu, sigma.mn)
-   #plot(density(ypred[[j]]),col=2)
+   
+    
   
    # Truth
    #abline(v=mean(ypred),col=3,lwd=2)
@@ -180,10 +248,11 @@ Xp$MeanY <- exp(rowMeans(ypred.df)) # get the means of the posterior to plot the
 # Todo: unscale Drought and DBH indices
 
 png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Ypred_by_drought.png")
-ggplot(Xp, aes(Var1,MeanY))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
+ggplot(Xp, aes(Var1, MeanY, color = Var2))+geom_point()+xlab("Drought Index")+ylab("predicted growth")
 dev.off()
+
 png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Ypred_by_DBH.png")
-ggplot(Xp, aes(Var2,MeanY))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
+ggplot(Xp, aes(Var2, MeanY))+geom_point()+xlab("DBH Index")+ylab("predicted growth")
 dev.off()
 
 png(height = 4, width = 6, units = "in", res = 200,"outputs/growth_model/basic_reg/Ypred_by_drought_DBH.png")
@@ -247,11 +316,11 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[SITE[i]] + beta2[SITE[i]]*DI.scaled[i] #+ beta3[SITE[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[SITE[i]] + beta2[SITE[i]]*DI.scaled[i] + beta3[SITE[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
 
-res[i] <- Y[i] - gfunc[i]   
-emp.new[i] ~ dnorm(gfunc[i], sigma)
-res.new[i] <- emp.new[i] - gfunc[i]
+#res[i] <- Y[i] - gfunc[i]   
+#emp.new[i] ~ dnorm(gfunc[i], sigma)
+#res.new[i] <- emp.new[i] - gfunc[i]
 }
 
 
@@ -260,20 +329,20 @@ res.new[i] <- emp.new[i] - gfunc[i]
 for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1, inv_beta1)
 beta2[s] ~ dnorm(mu_beta2, inv_beta2)
-#beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
 }
 
 # use normal hyperpriors for each hyperparamters 
 mu_beta1 ~ dunif(-2, 2)
 mu_beta2 ~ dunif(-2, 2)
-#mu_beta3 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
 
 inv_beta1   ~ dgamma(0.0001, 0.0001)
 sigma_beta1 <- 1/sqrt(inv_beta1)
 inv_beta2   ~ dgamma(0.001, 0.001)
 sigma_beta2 <- 1/sqrt(inv_beta2)
-#inv_beta3   ~ dgamma(0.001, 0.001)
-#sigma_beta3 <- 1/sqrt(inv_beta3)
+inv_beta3   ~ dgamma(0.001, 0.001)
+sigma_beta3 <- 1/sqrt(inv_beta3)
 
 
 # Non-informative Prior for the inverse population variances
@@ -282,13 +351,18 @@ sigma_beta2 <- 1/sqrt(inv_beta2)
 inv.var   ~ dgamma(0.001, 0.001)
 sigma     <- 1/sqrt(inv.var)
 
+# predicted Y's
+for(i in 1:np){
+# process model
+Yp[i]   ~ dnorm(gfuncp[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfuncp[i] <- beta1[SITEp[i]] + beta2[SITEp[i]]*DI.scaled.p[i] + beta3[SITEp[i]]*DBH.scaled.p[i]   # use Drought index as a scaled variable 
+
+}
 
 
 
-# derived parameters
-  fit <- sum(res[])
-  fit.new <- sum(res.new[])
-  Yp <- mean(Y)
 
 }"
 
@@ -549,7 +623,10 @@ site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 plot <- unique(full.ghcn$site)
 
+msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
 
+train <- full.ghcn[msk,]
+test <- full.ghcn[!msk,]
 
 reg.model.by_age <- jags.model(textConnection(population_model_cohort_re), 
                     data = list(Y=Y, n=n, DI.scaled = full.ghcn$DI.scaled, DBH.scaled = full.ghcn$DBH.scaled, cohort = as.numeric(full.ghcn$ageclass), C = unique(full.ghcn$ageclass), np=length(test$year), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass)), n.chains = 3, n.adapt = 100)
@@ -1030,11 +1107,11 @@ Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 # function g()
 gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
 
-r1[i] <- Y[i] - gfunc[i]   
+#r1[i] <- Y[i] - gfunc[i]   
 
 }
 
-RSS[1] <- sum(r1^2)
+#RSS[1] <- sum(r1^2)
 
 # Prediction
   for(i in 1:np){
@@ -1048,9 +1125,9 @@ beta1[s] ~ dnorm(mu_beta1, inv_beta1)
 beta2[s] ~ dnorm(mu_beta2, inv_beta2)
 beta3[s] ~ dnorm(mu_beta3, inv_beta3)
 
-r2[s] <- a[j] - mu_beta1
+#r2[s] <- a[j] - mu_beta1
 }
-RSS[2] <- sum(r2^2)
+#RSS[2] <- sum(r2^2)
 
 
 # use normal hyperpriors for each hyperparamters 
@@ -1113,7 +1190,8 @@ msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
 train <- full.ghcn[msk,]
 test <- full.ghcn[!msk,]
 
-
+saveRDS(train, "outputs//growth_model/basic_reg_struct_x_cohort_re/train.rds")
+saveRDS(test, "outputs//growth_model/basic_reg_struct_x_cohort_re/test.rds")
 
 # generate fake data to predict on:
  DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
@@ -1168,7 +1246,12 @@ acfplot(samp.structure.cohort.re)
 # plot predicted vs. observed:
 test$mean.Y <- colMeans(exp(Yp.samps))
  
-ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")+xlim(0,5)+ylim(0,5)
+plot(test$mean.Y, test$RWI)
+abline(a= 0, b = 1)
+png(height = 5, width = 5, units = "in", res = 300, "outputs/growth_model/basic_reg_struct_x_cohort_re/predicted_vs_obs.png")
+ggplot(test, aes(mean.Y, RWI))+geom_point(col = "white", size = 0.5)+geom_abline(intercept = 0, slope = 1, col = "grey")+theme_black()+ylim(0,4)+xlim(0.5,1.5)+ylab("Observed")+xlab("Predicted")
+dev.off()
+
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -1236,6 +1319,7 @@ b2.upper <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.97
 plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
 plot.dat.b2$class <- row.names(plot.dat.b2)
 
+plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
 b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
@@ -1245,6 +1329,18 @@ png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/basic_
 plot_grid(b2.dots+ xlim(0, 0.15), b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.6))
 dev.off()
 
+# plot slightly differently:
+plot.dat.b2$forestclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Modern-Forest"), "Forest", "Savanna")
+
+plot.dat.b2$ageclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels= c("Past", "Modern"))
+
+b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
+"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/basic_reg_struct_x_cohort_re/param_marginal_distn_bycohort_struct_rb.png")
+b2.dots.2
+dev.off()
 
 b3 <- data.frame(beta3.samps)
 colnames(b3) <- c(paste0("beta3-",c(unique(train$struct.cohort))))
@@ -2682,6 +2778,10 @@ msk <- sample.split( dry.yrs, SplitRatio = 3/4, group = NULL )
 train <- dry.yrs[msk,]
 test <- dry.yrs[!msk,]
 
+# save training and testing for later:
+saveRDS(train, "outputs/growth_model/basic_reg_dry_cohort_site_re/train.rds")
+saveRDS(test, "outputs/growth_model/basic_reg_dry_cohort_site_re/test.rds")
+
 cohort.model.dry.re <- jags.model(textConnection(cohort_model_dry_site_re), 
                     data = list(Y=log(dry.yrs$RWI), n=length(dry.yrs$RWI), DI.scaled = dry.yrs$DI.scaled, DBH.scaled = dry.yrs$DBH.scaled, cohort = as.numeric(dry.yrs$ageclass), S = unique(dry.yrs$ageclass),
                     plot = as.numeric(dry.yrs$site), ind = unique(dry.yrs$site),  np=length(test$RWI), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
@@ -2978,9 +3078,9 @@ structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GL
                         structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
 
 
-
-#full.ghcn <- merge(full.ghcn, structure, by = "site")
-
+if(!"structure" %in% colnames(full.ghcn)){
+full.ghcn <- merge(full.ghcn, structure, by = "site")
+}
 full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
 full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
        ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
@@ -3100,7 +3200,26 @@ library(cowplot)
 png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
 plot_grid(alpha.mplots, ncol = 1)
 dev.off()
+
+plot.dat.a$ageclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
+plot.dat.a$ageclass <- factor(plot.dat.a$ageclass, levels = c("Past", "Modern"))
+
+plot.dat.a$forestclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Modern-Savanna"), "Savanna", "Forest")
+
+a.dots.2 <- ggplot(plot.dat.a, aes(x = a.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(-26, -22)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='blue',
+"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.text.x = element_blank())+xlab(expression(paste("Estimated " ,delta^{13}, "C (\u2030)")))+facet_wrap(~forestclass)
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_d13_random_slopes.png")
+a.dots.2
+dev.off()
+```
+
+
+
 # intercept only model (mean for iWUE):
+
+
+
 ```{r}
 # this model is specified in basically the same as the site level model, but we replace site with "cohort"
 iWUE_intercept_re <- "model{
@@ -3144,9 +3263,9 @@ sigma     <- 1/sqrt(inv.var)
 }"
 
 
-# read in the d13 data:
+# read in the d13 data, if it doesnt exist already
 
-
+if(!exists("d13")){
 d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
 d13 <- d13[!is.na(d13$DBH),]
 Y.d13 <- log(d13$RWI)
@@ -3161,9 +3280,15 @@ d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
 site.d13 <- d13$site
 SpecCode.d13 <- d13$SpecCode
 plot.d13 <- unique(d13$site)
+
 #need to define site level structures:
-structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+
+if(!"structure" %in% colnames(full.ghcn)){
+  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
                         structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+full.ghcn <- merge(full.ghcn, structure, by = "site")
+}
+
 
 
 
@@ -3206,6 +3331,9 @@ library(caTools)
 full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
 #full.iso <- full.ghcn
 iWUE.med<- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
+}
+
+
 msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
 
 train <- full.iso[msk,]
@@ -3258,7 +3386,8 @@ alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.
 ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
 
 a <- data.frame(alpha.samps)
-colnames(a) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+colnames(a) <- c(paste0(c(unique(full.iso$struct.cohort)[order(unique(full.iso$struct.cohort.code))])))
+
 a$num <- rownames(a)
 a.m <- melt(a, id.vars=c("num"))
 a.mplots <-ggplot(a.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.5)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
@@ -3274,6 +3403,7 @@ a.upper <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.975)
 plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
 plot.dat.a$class <- row.names(plot.dat.a)
 plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
 a.dots <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(100, 160)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
@@ -3288,6 +3418,18 @@ png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/iWUE_i
 plot_grid(alpha.mplots, ncol = 1)
 dev.off()
 
+
+plot.dat.a$ageclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
+plot.dat.a$ageclass <- factor(plot.dat.a$ageclass, levels = c("Past", "Modern"))
+plot.dat.a$forestclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Modern-Savanna"), "Savanna", "Forest")
+
+
+a.dots.2 <- ggplot(plot.dat.a, aes(x = a.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(100, 160)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='blue',
+"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("iWUE")+facet_wrap(~forestclass)
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
+a.dots.2
+dev.off()
 
 #predict the 
 # Compute the posterior mean for the plug-in predictions  
