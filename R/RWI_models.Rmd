@@ -2047,23 +2047,42 @@ dev.off()
 
 
 preds_ci_mod_past$ageclass <- factor(preds_ci_mod_past$ageclass, levels = c("Past", "Modern"))
-gg.tile.past.mod <- ggplot(preds_ci_mod_past, aes(PDSI, DBH.class, fill = meanY))+geom_raster()+facet_wrap(~ageclass)+scale_fill_distiller(palette = "BrBG", direction = 1, name = "RWI")+ylab("Tree diameter")+xlab("Palmer Drought Severity Index")+theme_bw(base_size = 12)
+gg.tile.past.mod <- ggplot(preds_ci_mod_past, aes(PDSI, DBH.class, fill = meanY))+geom_raster()+facet_wrap(~ageclass, ncol = 1)+scale_fill_distiller(palette = "BrBG", direction = 1, name = "Tree \nGrowth")+ylab("Tree diameter")+xlab("Palmer Drought Severity Index")+theme_bw(base_size = 12)
 
 
-png(height = 3.5, width = 8, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/predicted_growth_mod_past_tile.png")
+png(height = 4, width = 3, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/predicted_growth_mod_past_tile.png")
 gg.tile.past.mod
 dev.off()
 
 
-preds_ci_age_struct <- prob %>% group_by(Drought, struct.cohort) %>% summarise(meanY = mean(RWI),
+# do the same thing, but just for age structure:
+preds_ci_age_struct <- prob %>% group_by(Drought, struct.cohort, DBH.class) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
 
-ggplot(preds_ci_age_struct, aes(Drought, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()
+preds_ci_age_struct$PDSI <- unscale(preds_ci_age_struct$Drought, norm.data = DI.scaled)
+
+ggplot(preds_ci_age_struct, aes(PDSI, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()
+
+# rename cohort structure numbers to text
+cohort.df <- data.frame(cohorts = unique(full.ghcn$struct.cohort)[order(unique(full.ghcn$struct.cohort.code))],
+           struct.cohort = 1:4)
+
+preds_ci_age_struct <- merge(cohort.df, preds_ci_age_struct, by = "struct.cohort")
+preds_ci_age_struct$cohorts <- factor(preds_ci_age_struct$cohorts, levels =c("Past-Forest", 
+                                                                             "Past-Savanna", 
+                                                                             "Modern-Forest", 
+                                                                             "Modern-Savanna") )
+
+#create tile plots of growth responses over time:
+gg.tile.past.mod.cohort <- ggplot(preds_ci_age_struct, aes(PDSI, DBH.class, fill = meanY))+geom_raster()+facet_wrap(~cohorts, ncol = 2)+scale_fill_distiller(palette = "BrBG", direction = 1, name = "Tree \nGrowth")+ylab("Tree diameter")+xlab("Palmer Drought Severity Index")+theme_bw(base_size = 12)
+
+png(height = 4, width = 6, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/predicted_growth_mod_past_forest_sav_tile.png")
+gg.tile.past.mod.cohort
+dev.off()
 
 
-ggplot(prob, aes(Drought, Ypred, color = as.factor(DBH)))+geom_point()+facet_wrap(~struct.cohort)
 
-
+# or we can do the comparisons by hand:
 Yp <- data.frame(Yp.samps)
 colnames(Yp) <- c(paste0("YP-",test$site))
 Yp$num <- rownames(Yp)
