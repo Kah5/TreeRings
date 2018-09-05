@@ -2169,8 +2169,8 @@ acfplot(samp.structure.cohort.re)
 #Extract the samples for each parameter for a basic exploration of effects
 
  samps       <- samp.structure.cohort.re[[1]]
- saveRDS(samps, "outputs//growth_model/lag_reg_struct_x_cohort_re/samps.rds")
-  samps <- readRDS("outputs//growth_model/lag_reg_struct_x_cohort_re/samps.rds")
+ saveRDS(samps, "outputs//growth_model/lag_site_struct_x_cohort_re/samps.rds")
+  samps <- readRDS("outputs//growth_model/lag_site_struct_x_cohort_re/samps.rds")
 
  Yp.samps <- samps[,1:(length(test$RWI))] 
  alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 4)]# one alpha for each of 4 cohort-strcuture groups
@@ -2193,7 +2193,7 @@ pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs.r.squared, sep="")),parse=T,x=1, y=7)
 
-png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag_reg_struct_x_cohort_re/pred_vs_obs.png")
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag_site_struct_x_cohort_re/pred_vs_obs.png")
 p.o.plot
 dev.off()
 
@@ -2216,7 +2216,7 @@ threeminusfour <- beta2.samps[,3] - beta2.samps[,4]
 # get posterior predictive density
 
 # plot marginal distributions of each parameter:
-png("outputs/growth_model/lag_reg_struct_x_cohort_re/marginal_alphas.png")
+png("outputs/growth_model/lag_site_struct_x_cohort_re/marginal_alphas.png")
 par(mfrow=c(3,2))
 hist(alpha.samps[,1], main = "alpha Past-Forest")
 hist(alpha.samps[,2], main = "alpha Modern-Forest")
@@ -2225,7 +2225,7 @@ hist(alpha.samps[,4],  main = "alpha Modern-Savanna")
 hist(sigma_betas[,1], main = "sigma alpha")
 dev.off()
 
-png("outputs/growth_model/lag_reg_struct_x_cohort_re/marginal_beta1s.png")
+png("outputs/growth_model/lag_site_struct_x_cohort_re/marginal_beta1s.png")
 par(mfrow=c(3,2))
 hist(beta2.samps[,1], main = "beta2 Past-Forest")
 hist(beta2.samps[,2], main = "beta2 Modern-Forest")
@@ -2234,7 +2234,7 @@ hist(beta2.samps[,4],  main = "beta2 Modern-Savanna")
 hist(sigma_betas[,2], main = "sigma beta2")
 dev.off()
 
-png("outputs/growth_model/lag_reg_struct_x_cohort_re/marginal_beta2s.png")
+png("outputs/growth_model/lag_site_struct_x_cohort_re/marginal_beta2s.png")
 par(mfrow=c(3,2))
 hist(beta3.samps[,1], main = "beta3 Past-Forest")
 hist(beta3.samps[,2], main = "beta3 Modern-Forest")
@@ -2277,7 +2277,7 @@ b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size =
 "Modern-Forest"='#c7eae5',
 "Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
 
-png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/lag_reg_struct_x_cohort_re/drougt_beta_marginal_distn_bycohort.png")
+png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/lag_site_struct_x_cohort_re/drougt_beta_marginal_distn_bycohort.png")
 plot_grid(b2.dots+ xlim(0, 0.15), b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.6))
 dev.off()
 
@@ -2290,7 +2290,7 @@ plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels= c("Past", "Modern")
 b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
 "Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
 
-png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/lag_reg_struct_x_cohort_re/param_marginal_distn_bycohort_struct_rb.png")
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/lag_site_struct_x_cohort_re/param_marginal_distn_bycohort_struct_rb.png")
 b2.dots.2
 dev.off()
 
@@ -2307,7 +2307,7 @@ b4.m <- melt(b4, id.vars=c("num"))
 b4.mplots <- ggplot(b4.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("DBH slope")
 
 library(cowplot)
-png(width = 5, height = 8, units = "in", res = 300, "outputs/growth_model/lag_reg_struct_x_cohort_re/param_marginal_distn_bycohort_struct.png")
+png(width = 5, height = 8, units = "in", res = 300, "outputs/growth_model/lag_site_struct_x_cohort_re/param_marginal_distn_bycohort_struct.png")
 plot_grid(alpha.mplots, b2.mplots, b3.mplots,b4.mplots, ncol = 1)
 dev.off()
 
