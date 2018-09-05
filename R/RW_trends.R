@@ -133,22 +133,22 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
 
 Hickory.rwi <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "none", rwiorbai = "rwi", site = "HIC")
-StCroix.rwi <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
-Bonanza.rwi <- read_detrend_year("cleanrwl/BONww.rwl", method = "Spline", rwiorbai = "rwi", site = "BON")
-Townsend.rwi <- read_detrend_year("cleanrwl/TOWww.rwl", method = "Spline", rwiorbai = "rwi", site = "TOW")#townsedn woods
-Pleasant.rwi <- read_detrend_year("cleanrwl/PLEww.rwl", method = "Spline", rwiorbai = "rwi", site = "PLE") #Pleasant valley conservency
-Coral.rwi <- read_detrend_year(filename = "cleanrwl/CORww.rwl", method = "Spline", rwiorbai = "rwi", site = "COR")
-Uncas.rwi <- read_detrend_year(filename = "cleanrwl/UNCww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNC")
-Glacial.rwi <- read_detrend_year(filename = "cleanrwl/GLAww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLA")
-Englund.rwi <- read_detrend_year("cleanrwl/ENGww.rwl", method = "Spline", rwiorbai = "rwi", site = "ENG")
-Mound.rwi <- read_detrend_year("cleanrwl/MOUww.rwl", method = "Spline", rwiorbai = "rwi", site = "MOU")
-GLL1.rwi <- read_detrend_year(filename = "cleanrwl/GLL1ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL1")
-GLL2.rwi <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL2")
-GLL3.rwi <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL3")
-GLL4.rwi <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "Spline", rwiorbai = "rwi", site = "GLL4")
-PVC.rwi <- read_detrend_year("cleanrwl/PVCww.rwl", method = "Spline", rwiorbai = "rwi", site = "PVC")
-AVO.rwi <- read_detrend_year(filename = "cleanrwl/AVOww.rwl", method = "Spline", rwiorbai = "rwi", site = "AVO")
-UNI.rwi <- read_detrend_year("cleanrwl/UNIww.rwl", method = "Spline", rwiorbai = "rwi", site = "UNI")
+StCroix.rwi <- read_detrend_year("cleanrwl/STCww.rwl", method = "none", rwiorbai = "rwi", site = "STC")
+Bonanza.rwi <- read_detrend_year("cleanrwl/BONww.rwl", method = "none", rwiorbai = "rwi", site = "BON")
+Townsend.rwi <- read_detrend_year("cleanrwl/TOWww.rwl", method = "none", rwiorbai = "rwi", site = "TOW")#townsedn woods
+Pleasant.rwi <- read_detrend_year("cleanrwl/PLEww.rwl", method = "none", rwiorbai = "rwi", site = "PLE") #Pleasant valley conservency
+Coral.rwi <- read_detrend_year(filename = "cleanrwl/CORww.rwl", method = "none", rwiorbai = "rwi", site = "COR")
+Uncas.rwi <- read_detrend_year(filename = "cleanrwl/UNCww.rwl", method = "none", rwiorbai = "rwi", site = "UNC")
+Glacial.rwi <- read_detrend_year(filename = "cleanrwl/GLAww.rwl", method = "none", rwiorbai = "rwi", site = "GLA")
+Englund.rwi <- read_detrend_year("cleanrwl/ENGww.rwl", method = "none", rwiorbai = "rwi", site = "ENG")
+Mound.rwi <- read_detrend_year("cleanrwl/MOUww.rwl", method = "none", rwiorbai = "rwi", site = "MOU")
+GLL1.rwi <- read_detrend_year(filename = "cleanrwl/GLL1ww.rwl", method = "none", rwiorbai = "rwi", site = "GLL1")
+GLL2.rwi <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "none", rwiorbai = "rwi", site = "GLL2")
+GLL3.rwi <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "none", rwiorbai = "rwi", site = "GLL3")
+GLL4.rwi <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "none", rwiorbai = "rwi", site = "GLL4")
+PVC.rwi <- read_detrend_year("cleanrwl/PVCww.rwl", method = "none", rwiorbai = "rwi", site = "PVC")
+AVO.rwi <- read_detrend_year(filename = "cleanrwl/AVOww.rwl", method = "none", rwiorbai = "rwi", site = "AVO")
+UNI.rwi <- read_detrend_year("cleanrwl/UNIww.rwl", method = "none", rwiorbai = "rwi", site = "UNI")
 
 
 
@@ -168,6 +168,7 @@ detrended.age.df <- do.call(rbind, detrended.age)
 
 ggplot(detrended.age.df[detrended.age.df$site %in% "GLA",], aes(x = year, y = RWI, color = ID))+geom_point()+geom_line()+facet_wrap(~site, ncol = 5, scales = "free_y")+theme_bw()
 
+ggplot(detrended.age.df[detrended.age.df$site %in% "GLA",], aes(x = RWI_3, y = RWI, color = ID))+geom_point()
 
 age.classes <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% summarise(pre1800 = min(year) < 1880  , pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
 
@@ -223,8 +224,12 @@ get.clim <- function(site.df, climatedata){
     }
     }}
     
-    
+    # conversions to cm and mm
     MNcd.clim$PCP <- MNcd.clim$PCP*25.54
+    MNcd.clim$TMIN <- (MNcd.clim$TMIN - 32)/1.8
+    MNcd.clim$TMAX <- (MNcd.clim$TMAX - 32)/1.8
+    MNcd.clim$TAVG <- (MNcd.clim$TAVG - 32)/1.8
+    
     
     keeps <- c("Year", "Month",  "PCP")
     keepstavg <- c("Year", "Month", "TAVG")
@@ -315,7 +320,7 @@ get.clim <- function(site.df, climatedata){
     two <- merge(one, TMINs, by = "Year")
     three <- merge(two, TAVGs, by = "Year")
     ghcns <- merge(three, PDSIs, by = "Year")
-   
+    ghcns$site <- site.code
     write.csv(ghcns, paste0("/Users/kah/Documents/TreeRings/climate/",site.code, "_", climatedata, "full_mo.csv"), row.names=FALSE)
     
     annuals <- data.frame(year = annual.p$Year, 
@@ -462,7 +467,7 @@ get.clim <- function(site.df, climatedata){
     five <- merge(four, VPDmaxs, by = "Year")
     six <- merge(five, PET, by = "Year")
     prisms <- merge(six, BAL, by = "Year")
-    
+    prisms$site <- site.code
     write.csv(prisms, paste0("/Users/kah/Documents/TreeRings/climate/",site.code, "_", climatedata, "full_mo.csv"), row.names=FALSE)
     
     
@@ -491,6 +496,9 @@ get.clim <- function(site.df, climatedata){
   }
 }
 
+
+
+
 # get prism climate and merge for all:
 det.age.clim.prism <- lapply(detrended.age, get.clim, climatedata = "PRISM")
 det.age.clim.prism.df <- do.call(rbind,det.age.clim.prism)
@@ -498,7 +506,30 @@ det.age.clim.prism.df <- do.call(rbind,det.age.clim.prism)
 # get GHCN climate and merge for all:
 det.age.clim.ghcn <-  lapply(detrended.age, get.clim, climatedata = "GHCN")
 det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
-# make plots of RWI over time:
+
+
+#------------------------------ get the [full] climate datasets and collate: --------------------
+
+# list filenames
+prisms <- paste0("climate/", list.files("climate", pattern = "PRISMfull"))
+ghcns <- paste0("climate/", list.files("climate", pattern = "GHCNfull"))
+
+
+prism <- lapply( prisms, read.csv )
+ghcn <- lapply( ghcns, read.csv )
+
+ghcn.df <- do.call(rbind, ghcn)
+prism.df <- do.call(rbind, prism)
+
+write.csv(ghcn.df, "outputs/full_ghcn_all_months.csv", row.names = FALSE)
+write.csv(prism.df, "outputs/full_prism_all_months.csv", row.names = FALSE)
+
+
+
+#-------------------------------Exploratory data analysis and development of full.ghcn--------------------
+
+# make some exlploratory data plots of RWI over time:
+
 
 ggplot(det.age.clim.prism.df[det.age.clim.prism.df$site %in% "BON",], aes(x = year, y = RWI, color = ID))+geom_point()+geom_line()+facet_wrap(~site, ncol = 5, scales = "free_y")+theme_bw()
 
@@ -1128,6 +1159,17 @@ ggplot(full.ghcn, aes( log(RWI), SP24_7, color = Description))+geom_point(size =
 
 
 write.csv(full.ghcn, "outputs/full.ghcn.csv", row.names = FALSE)
+
+# merge with full climate dataset:
+ghcn.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], ghcn.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+prism.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+
+write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi.csv", row.names = FALSE)
+write.csv(prism.rwi, "outputs/full_prism_all_months_rwi.csv", row.names = FALSE)
+
+
+
+
 
 RWI <- full.ghcn$RWI
 Age <- full.ghcn$Age
