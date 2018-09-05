@@ -1168,7 +1168,7 @@ write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi.csv", row.names = FALSE)
 write.csv(prism.rwi, "outputs/full_prism_all_months_rwi.csv", row.names = FALSE)
 
 
-
+#-------------------------More Exploratory data analysis---------------------
 
 
 RWI <- full.ghcn$RWI
