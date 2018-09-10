@@ -17,19 +17,20 @@ logBAI<- hist(log(BAI)) # approximates normal when log transformed
 
 ```
 
-## Initial bayesian linear regression of climate on Basal Area Index
-# this model assumes all trees across all species + sites + forest types have the same relationship with PDSI
+# Separate Testing and Training Datasets:
+
+# 1. initial data cleaning & checking
+# 2. create dummy variables for cohort and age classes
+# 3. remove NA values for lagged RWI
+# 4. add in additional climate/stand information
 
 ```{r}
 
-
-
 summary(full.ghcn)
+
 # get all records that have all RWI and don't have negative diams or NA diams
 full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH > 0 & !is.na(full.ghcn$DBH),]
-Y <- as.vector(log(full.ghcn$RWI)) 
-#Y     <- 100*dat[,2]
-#Y     <- (Y-mean(Y))/sd(Y)
+
 
 # standardise predictor variables to have mean 0 and sd = 1
 DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
@@ -37,6 +38,14 @@ DBH.scaled = scale(full.ghcn$DBH, center= TRUE, scale=TRUE)
 full.ghcn$T.scaled = as.vector(scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE))
 full.ghcn$DI.scaled = as.vector(scale(full.ghcn$JJA.pdsi, center = TRUE, scale = TRUE))
 full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
+full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
+full.ghcn$SP1.scaled = as.vector(scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE))
+#full.ghcn$jja.VPDmax.scaled <- as.vector(scale(full.ghcn$jja.VPDmax, center = TRUE, scale = TRUE))
+
+SP1.scaled <- scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE)
+SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
+
 
 #DI <- as.vector( full.ghcn$JJA.pdsi )
 ageclass <- as.numeric( full.ghcn$ageclass)
@@ -47,8 +56,122 @@ full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRU
 site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 
-mgcv::gam(data = full.ghcn, RWI ~ DBH.scaled + DI.scaled)
+
 rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
+rwi.prism <- read.csv("outputs/full_prism_all_months_rwi.csv")
+
+
+# calculate JJA VPD for each year
+rwi.prism$jja.VPDmax <- rowMeans(rwi.prism[,c("Month_vpdmax_6", "Month_vpdmax_7", "Month_vpdmax_8")])
+rwi.prism$jja.VPDmin <- rowMeans(rwi.prism[,c("Month_vpdmin_6", "Month_vpdmin_7", "Month_vpdmin_8")])
+
+# calculate JJA BAL for each year
+rwi.prism$jja.BAL <- rowMeans(rwi.prism[,c("Month_BAL_6", "Month_BAL_7", "Month_BAL_8")])
+
+# calculate total precip for each year
+rwi.ghcn$MAP.prism <- rowMeans(rwi.prism[,c("Month_pcp_1","Month_pcp_2", "Month_pcp_3","Month_pcp_4","Month_pcp_5","Month_pcp_6", "Month_pcp_7", "Month_pcp_8", "Month_pcp_9", "Month_pcp_10", "Month_pcp_11", "Month_pcp_12")])
+
+rwi.ghcn$MAP.ghcn <- rowMeans(rwi.ghcn[,c("Month_pcp_1","Month_pcp_2", "Month_pcp_3","Month_pcp_4","Month_pcp_5","Month_pcp_6", "Month_pcp_7", "Month_pcp_8", "Month_pcp_9", "Month_pcp_10", "Month_pcp_11", "Month_pcp_12")])
+
+# make sure the prism pcp, temp values are specified in columns, so when we merge df, it won't be a huge deal:
+colnames(rwi.prism)[12:59] <- paste0("prism_",colnames(rwi.prism)[12:59])
+rwi.prism.sub <- rwi.prism[,!colnames(rwi.prism) %in% c("DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")]
+rwi.ghcn.sub <- rwi.ghcn[,!colnames(rwi.ghcn) %in% c("DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")]
+# merge rwi.ghcn and rwi.prism
+full.clim <- merge(rwi.ghcn.sub, rwi.prism.sub, by = c("year", "site", "ID"))
+
+# merge to full.ghcn
+full.ghcn <- merge(full.ghcn, full.clim, by = c("ID", "year", "site" ))
+
+full.ghcn$site_age <- paste0(full.ghcn$site, "-", full.ghcn$ageclass)
+full.ghcn$site_age.code <- as.numeric(as.factor(full.ghcn$site_age))
+
+
+#DI <- as.vector( full.ghcn$JJA.pdsi )
+ageclass <- as.numeric( full.ghcn$ageclass)
+Age <- as.numeric( full.ghcn$Age)
+n     <- length(full.ghcn$RWI)
+DBH <- full.ghcn$DBH.x
+full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+site <- full.ghcn$site
+SpecCode <- full.ghcn$SpecCode
+plot <- unique(full.ghcn$site)
+
+
+# need to define site level structures, if not already defined:
+
+if(! "structure" %in% colnames(full.ghcn)){
+  
+  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
+                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+full.ghcn <- merge(full.ghcn, structure, by = "site")
+}
+
+
+
+#struct.cohort and struct.cohort.code (if it doesnt alread exist)
+
+if(! "struct.cohort" %in% colnames(full.ghcn)){
+
+full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
+full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
+       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
+               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
+                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+}
+
+
+
+
+
+# omit NA values for RWI - 1:
+ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1) & !is.na(full.ghcn$RWI_2),]
+
+
+# split training and testing datasets:
+msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
+
+train <- ghcn.clean[msk,]
+test <- ghcn.clean[!msk,]
+
+
+
+
+# get dry and wet years and separate by ageclass:
+dry <- quantile(full.ghcn$JJA.pdsi, 0.25) # value of the driest years
+wet <- quantile(full.ghcn$JJA.pdsi, 0.75) # value of the wettest years
+
+pre.dry <- full.ghcn[full.ghcn$year < 1950 & full.ghcn$Jul.pdsi <= dry & full.ghcn$ageclass %in% "Past",]
+pre.dry$class <- "pre-1950"
+pre.dry$climclass <- "Dry_0.25"
+
+post.dry <- full.ghcn[full.ghcn$year >=1950 & full.ghcn$Jul.pdsi <= dry & full.ghcn$ageclass %in% "Modern" ,]
+post.dry$class <- "post-1950"
+post.dry$climclass <- "Dry_0.25"
+
+pre.wet <- full.ghcn[full.ghcn$year < 1950 & full.ghcn$Jul.pdsi >= wet & full.ghcn$ageclass %in% "Past",]
+pre.wet$class <- "pre-1950"
+pre.wet$climclass <- "Wet_0.25"
+post.wet <- full.ghcn[full.ghcn$year >=1950 & full.ghcn$Jul.pdsi >= wet & full.ghcn$ageclass %in% "Modern" ,]
+post.wet$class <- "post-1950"
+post.wet$climclass <- "Wet_0.25"
+
+# combine the wet and dry data sets:
+dry.yrs <- rbind(post.dry, pre.dry)
+msk <- sample.split( dry.yrs, SplitRatio = 3/4, group = NULL )
+
+train.dry <- dry.yrs[msk,]
+test.wet <- dry.yrs[!msk,]
+
+
+```
+
+
+
+## Initial bayesian linear regression of climate on Basal Area Index
+# this model assumes all trees across all species + sites + forest types have the same relationship with PDSI
+```{r}
 
 # population model for the response of each BAI to each year of climate:
 population_model <- "model{
@@ -119,10 +242,6 @@ initsList <- list(
   )
 )
 
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
 
 
 # now 
@@ -135,7 +254,10 @@ samp <- coda.samples(reg.model.age,
                      variable.names=c("beta1", "beta2", "beta3", "beta4", "beta5", "sigma", "Yp"), 
                     n.chains = 3, n.iter=2000)
 
-
+# this still does it for Y as well
+dic.reg.model.age <- dic.samples(reg.model.age, 
+                     variable.names=c("beta1", "beta2", "beta3", "beta4", "sigma"), 
+                    n.chains = 3, n.iter=2000,type =  "pD")
 
 #Extract the samples for each parameter
 
@@ -306,19 +428,6 @@ samp.basic.df.sum<- data.frame(mean = samp.df$statistics[2,"Mean"],
 
 # Create random effects for sites:
 ```{r}
-
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
-
-full.ghcn$site_age <- paste0(full.ghcn$site, "-", full.ghcn$ageclass)
-full.ghcn$site_age.code <- as.numeric(as.factor(full.ghcn$site_age))
 
 
 
@@ -1530,35 +1639,7 @@ gfuncp[i] <- beta1[structure.p[i]] + beta2[structure.p[i]]*DI.scaled.p[i] + beta
 
 
 
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
 
-
-# need to define site level structures, if not already defined:
-
-if(! "structure" %in% colnames(full.ghcn)){
-  
-  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-}
-
-
-# omit NA values for RWI - 1:
-ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1),]
-# split training and testing datasets:
-library(caTools)
-msk <- sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
-
-train <- ghcn.clean[msk,]
-test <-ghcn.clean[!msk,]
 # save these for use later:
 saveRDS(train, "outputs/growth_model/lag_reg_structure_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag_reg_structure_re/test.rds")
@@ -1849,36 +1930,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-if(! "structure" %in% colnames(full.ghcn)){
-  
-  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-}
 
-
-# add struct.cohort and struct.cohort.code (if it doesnt alread exist)
-
-if(! "struct.cohort" %in% colnames(full.ghcn)){
-
-full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-# omit NA values for RWI - 1:
-ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1),]
-
-# split training and testing datasets:
-msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
-
-train <- ghcn.clean[msk,]
-test <- ghcn.clean[!msk,]
-# save these for use later:
 saveRDS(train, "outputs/growth_model/lag_reg_struct_x_cohort_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag_reg_struct_x_cohort_re/test.rds")
 
@@ -2114,35 +2166,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-if(! "structure" %in% colnames(full.ghcn)){
-  
-  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-}
 
-
-# add struct.cohort and struct.cohort.code (if it doesnt alread exist)
-
-if(! "struct.cohort" %in% colnames(full.ghcn)){
-
-full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-# omit NA values for RWI - 1:
-ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1),]
-
-# split training and testing datasets:
-msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
-
-train <- ghcn.clean[msk,]
-test <- ghcn.clean[!msk,]
 # save these for use later:
 saveRDS(train, "outputs/growth_model/lag_site_struct_x_cohort_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag_site_struct_x_cohort_re/test.rds")
@@ -2392,35 +2416,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-if(! "structure" %in% colnames(full.ghcn)){
-  
-  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-}
 
-
-# add struct.cohort and struct.cohort.code (if it doesnt alread exist)
-
-if(! "struct.cohort" %in% colnames(full.ghcn)){
-
-full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-# omit NA values for RWI - 1:
-ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1) & !is.na(full.ghcn$RWI_2),]
-
-# split training and testing datasets:
-msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
-
-train <- ghcn.clean[msk,]
-test <- ghcn.clean[!msk,]
 # save these for use later:
 saveRDS(train, "outputs/growth_model/lag2_reg_struct_x_cohort_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re/test.rds")
@@ -2616,7 +2612,270 @@ dev.off()
 
 ```
  
+#model with stand structure by ageclass random effects and prev years growth (lag -1) and (lag - 2), but not log transformed:
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+model_structure_x_cohort_re_lag2 <- "model{
 
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]   # use Drought index as a scaled variable 
+
+#r1[i] <- Y[i] - gfunc[i]   
+
+}
+
+#RSS[1] <- sum(r1^2)
+
+# Prediction
+  for(i in 1:np){
+    Yp[i]  ~ dnorm(mup[i],inv.var)
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4[struct.cohort.p[i]]*log_RWI_1.p[i] +beta5[struct.cohort.p[i]]*log_RWI_2.p[i] 
+  }
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+beta4[s] ~ dnorm(mu_beta4, inv_beta4)
+beta5[s] ~ dnorm(mu_beta5, inv_beta5)
+
+}
+
+
+
+# use normalpriors for each  beta paramters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+mu_beta4 ~ dunif(-2, 2)
+mu_beta5 ~ dunif(-2, 2)
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.01, 0.01)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+inv_beta4   ~ dgamma(0.01, 0.01)
+sigma_beta4 <- 1/sqrt(inv_beta4)
+inv_beta5   ~ dgamma(0.01, 0.01)
+sigma_beta5 <- 1/sqrt(inv_beta5)
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+}"
+
+
+
+
+
+# save these for use later:
+saveRDS(train, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/train.rds")
+saveRDS(test, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/test.rds")
+
+
+
+lag2.model.by_structure_x_cohort <- jags.model(textConnection(model_structure_x_cohort_re_lag2), 
+                    data = list(Y=ghcn.clean$RWI, n=length(ghcn.clean$RWI), DI.scaled = ghcn.clean$DI.scaled, DBH.scaled = ghcn.clean$DBH.scaled,log_RWI_1 = log(ghcn.clean$RWI_1),log_RWI_2 = ghcn.clean$RWI_2, struct.cohort = as.numeric(ghcn.clean$struct.cohort.code), SF = unique(ghcn.clean$struct.cohort.code), np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = test$RWI_1, log_RWI_2.p = test$RWI_2), n.chains = 3, n.adapt = 100)
+
+update(lag2.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort, 
+                     variable.names=c("beta1", "beta2","beta3","beta4","beta5","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5","Yp"), 
+                    n.chains = 3, n.iter=20000, thin = 15)
+
+summary(samp.structure.cohort.re)
+plot(samp.structure.cohort.re)
+
+gelman.diag(samp.structure.cohort.re)
+acfplot(samp.structure.cohort.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.cohort.re[[1]]
+ saveRDS(samps, "outputs//growth_model/lag2_untrans_reg_struct_x_cohort_re/samps.rds")
+  samps <- readRDS("outputs//growth_model/lag2_untrans_reg_struct_x_cohort_re/samps.rds")
+
+ Yp.samps <- samps[,1:(length(test$RWI))] 
+ alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 4)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+ 5):(length(test$RWI)+ 8)]
+ beta3.samps <- samps[,(length(test$RWI)+ 9):(length(test$RWI)+ 12)]
+ beta4.samps <- samps[,(length(test$RWI)+ 13):(length(test$RWI)+ 16)]
+ beta5.samps <- samps[,(length(test$RWI)+ 17):(length(test$RWI)+ 20)]
+ sigma.samps <- samps[,(length(test$RWI)+ 21)]
+ sigma_betas <- samps[,(length(test$RWI)+ 22):(length(test$RWI)+ 26)]
+
+ 
+# plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m<- melt(Yp.samps)
+Yp.summary<- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                 ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs.r.squared, sep="")),parse=T,x=1, y=7)
+
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+
+
+# get difference between beta2.samps: (i.e are they different?)
+oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
+oneminusthree <- beta2.samps[,1] - beta2.samps[,3]
+oneminusfour <- beta2.samps[,1] - beta2.samps[,4]
+twominusthree <- beta2.samps[,2] - beta2.samps[,3]
+twominusfour <- beta2.samps[,2] - beta2.samps[,4]
+threeminusfour <- beta2.samps[,3] - beta2.samps[,4]
+# calculate MSPE
+# get posterior predictive density
+
+# plot marginal distributions of each parameter:
+png("outputs/growth_model/llag2_untrans_reg_struct_x_cohort_re/marginal_alphas.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Forest")
+hist(alpha.samps[,2], main = "alpha Modern-Forest")
+hist(alpha.samps[,3],  main = "alpha Past-Savanna ")
+hist(alpha.samps[,4],  main = "alpha Modern-Savanna")
+hist(sigma_betas[,1], main = "sigma alpha")
+dev.off()
+
+png("outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/marginal_beta1s.png")
+par(mfrow=c(3,2))
+hist(beta2.samps[,1], main = "beta2 Past-Forest")
+hist(beta2.samps[,2], main = "beta2 Modern-Forest")
+hist(beta2.samps[,3],  main = "beta2 Past-Savanna")
+hist(beta2.samps[,4],  main = "beta2 Modern-Savanna")
+hist(sigma_betas[,2], main = "sigma beta2")
+dev.off()
+
+png("outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/marginal_beta2s.png")
+par(mfrow=c(3,2))
+hist(beta3.samps[,1], main = "beta3 Past-Forest")
+hist(beta3.samps[,2], main = "beta3 Modern-Forest")
+hist(beta3.samps[,3],  main = "beta3 Past-Savanna")
+hist(beta3.samps[,4],  main = "beta3 Modern-Savanna")
+hist(sigma_betas[,3], main = "sigma beta3")
+dev.off()
+
+
+png("outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/marginal_beta3s.png")
+par(mfrow=c(3,2))
+hist(beta4.samps[,1], main = "beta4 Past-Forest")
+hist(beta4.samps[,2], main = "beta4 Modern-Forest")
+hist(beta4.samps[,3],  main = "beta4 Past-Savanna")
+hist(beta4.samps[,4],  main = "beta4 Modern-Savanna")
+hist(sigma_betas[,4], main = "sigma beta4")
+dev.off()
+
+png("outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/marginal_beta3s.png")
+par(mfrow=c(3,2))
+hist(beta5.samps[,1], main = "beta5 Past-Forest")
+hist(beta5.samps[,2], main = "beta5 Modern-Forest")
+hist(beta5.samps[,3],  main = "beta5 Past-Savanna")
+hist(beta5.samps[,4],  main = "beta5 Modern-Savanna")
+hist(sigma_betas[,5], main = "sigma beta5")
+dev.off()
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0("alpha-",c(unique(train$struct.cohort))))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Random intercepts")
+
+
+b2 <- data.frame(beta2.samps)
+colnames(b2) <- c(paste0(c(unique(train$struct.cohort))))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Drought Index slope")
+
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.003)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+b2.mean <- apply(as.matrix(b2[,1:4]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+
+plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots+ xlim(0, 0.15), b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.6))
+dev.off()
+
+# plot slightly differently:
+plot.dat.b2$forestclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Modern-Forest"), "Forest", "Savanna")
+
+plot.dat.b2$ageclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels= c("Past", "Modern"))
+
+b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
+"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/param_marginal_distn_bycohort_struct_rb.png")
+b2.dots.2
+dev.off()
+
+b3 <- data.frame(beta3.samps)
+colnames(b3) <- c(paste0("beta3-",c(unique(train$struct.cohort))))
+b3$num <- rownames(b3)
+b3.m <- melt(b3, id.vars=c("num"))
+b3.mplots <- ggplot(b3.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("DBH slope")
+
+b4 <- data.frame(beta4.samps)
+colnames(b4) <- c(paste0("beta4-",c(unique(train$struct.cohort))))
+b4$num <- rownames(b4)
+b4.m <- melt(b4, id.vars=c("num"))
+b4.mplots <- ggplot(b4.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("lag - 1 effect")
+
+b5 <- data.frame(beta5.samps)
+colnames(b5) <- c(paste0("beta5-",c(unique(train$struct.cohort))))
+b5$num <- rownames(b5)
+b5.m <- melt(b5, id.vars=c("num"))
+b5.mplots <- ggplot(b5.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("lag - 1 effect")
+
+library(cowplot)
+png(width = 5, height = 10, units = "in", res = 300, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/param_marginal_distn_bycohort_struct.png")
+plot_grid(alpha.mplots, b2.mplots, b3.mplots,b4.mplots, b5.mplots,ncol = 1)
+dev.off()
+
+```
 
 # model for cohort effects and site level effects, heirarchically:
 ```{r}
@@ -2683,20 +2942,6 @@ gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*DI.scaled.p[i] + beta3[coho
 
 
 
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-
-
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
 
 
 cohort.model.re <- jags.model(textConnection(cohort_model_site_re), 
@@ -3001,34 +3246,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
 
-#need to define site level structures, if we havent already:
-
-if(!"struct.cohort" %in% colnames(full.ghcn)){
-  full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-
-library(caTools)
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
 # save these for use later:
 saveRDS(train, "outputs/growth_model/site_reg_structure_cohort_re/train.rds")
 saveRDS(test, "outputs/growth_model/site_reg_structure_cohort_re/test.rds")
@@ -3413,49 +3631,6 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
-#need to define site level structures:
-structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
-
-
-
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-
-full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-
-
-library(caTools)
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
-
-
-
-# generate fake data to predict on:
- DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
- DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
- 
- # something like:
-full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
- 
- Xp <- full.probe
- np <- length(Xp$Var1)
-
 
 reg.model.site_structure_x_cohort_slopes <- jags.model(textConnection(site_model_structure_x_cohort_re_slopes ), 
                     data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
@@ -3752,36 +3927,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
 
-full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
-
-#need to define site level structures, if we havent already:
-
-if(!"struct.cohort" %in% colnames(full.ghcn)){
-  full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-
-library(caTools)
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
 # save these for use later:
 saveRDS(train, "outputs/growth_model/site_reg_structure_cohort_re_sp6/train.rds")
 saveRDS(test, "outputs/growth_model/site_reg_structure_cohort_re_sp6/test.rds")
@@ -4175,38 +4321,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
-
-full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
-full.ghcn$SP1.scaled = as.vector(scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE))
-SP1.scaled <- scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE)
-SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
-#need to define site level structures, if we havent already:
-
-if(!"struct.cohort" %in% colnames(full.ghcn)){
-  full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-
-library(caTools)
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
-# save these for use later:
+#save train and testing for later:
 saveRDS(train, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/train.rds")
 saveRDS(test, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/test.rds")
 
@@ -4531,37 +4646,7 @@ sigma     <- 1/sqrt(inv.var)
 
 
 
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-plot <- unique(full.ghcn$site)
 
-full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
-full.ghcn$SP1.scaled = as.vector(scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE))
-SP1.scaled <- scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE)
-SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
-#need to define site level structures, if we havent already:
-
-if(!"struct.cohort" %in% colnames(full.ghcn)){
-  full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-}
-
-
-
-library(caTools)
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
 # save these for use later:
 saveRDS(train, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/train.rds")
 saveRDS(test, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/test.rds")
@@ -4871,26 +4956,6 @@ gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*VPD.scaled.p[i] + beta3[coh
 
 }"
 
-
-
-
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-full.ghcn$jja.VPDmax.scaled <- as.vector(scale(full.ghcn$jja.VPDmax, center = TRUE, scale = TRUE))
-
-
-msk <- sample.split( full.ghcn, SplitRatio = 3/4, group = NULL )
-
-train <- full.ghcn[msk,]
-test <- full.ghcn[!msk,]
-
-
 cohort.model.VPD.re <- jags.model(textConnection(cohort_model_site_VPD_re ), 
                     data = list(Y=log(full.ghcn$RWI), n=length(full.ghcn$RWI), VPD.scaled = full.ghcn$jja.VPDmax.scaled, DBH.scaled = full.ghcn$DBH.scaled, cohort = as.numeric(full.ghcn$ageclass), S = unique(full.ghcn$ageclass),
                     plot = as.numeric(full.ghcn$site), ind = unique(full.ghcn$site), np = length(test$DBH.scaled),  VPD.scaled.p = test$jja.VPDmax.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
@@ -5156,40 +5221,6 @@ gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*DI.scaled.p[i] + beta3[coho
 
 
 
-
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass <- as.numeric( full.ghcn$ageclass)
-Age <- as.numeric( full.ghcn$Age)
-n     <- length(full.ghcn$RWI)
-DBH <- full.ghcn$DBH.x
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-site <- full.ghcn$site
-SpecCode <- full.ghcn$SpecCode
-
-dry <- quantile(full.ghcn$JJA.pdsi, 0.25) # value of the driest years
-wet <- quantile(full.ghcn$JJA.pdsi, 0.75) # value of the wettest years
-
-pre.dry <- full.ghcn[full.ghcn$year < 1950 & full.ghcn$Jul.pdsi <= dry & full.ghcn$ageclass %in% "Past",]
-pre.dry$class <- "pre-1950"
-pre.dry$climclass <- "Dry_0.25"
-post.dry <- full.ghcn[full.ghcn$year >=1950 & full.ghcn$Jul.pdsi <= dry & full.ghcn$ageclass %in% "Modern" ,]
-post.dry$class <- "post-1950"
-post.dry$climclass <- "Dry_0.25"
-
-pre.wet <- full.ghcn[full.ghcn$year < 1950 & full.ghcn$Jul.pdsi >= wet & full.ghcn$ageclass %in% "Past",]
-pre.wet$class <- "pre-1950"
-pre.wet$climclass <- "Wet_0.25"
-post.wet <- full.ghcn[full.ghcn$year >=1950 & full.ghcn$Jul.pdsi >= wet & full.ghcn$ageclass %in% "Modern" ,]
-post.wet$class <- "post-1950"
-post.wet$climclass <- "Wet_0.25"
-
-# combine the wet and dry data sets:
-dry.yrs <- rbind(post.dry, pre.dry)
-msk <- sample.split( dry.yrs, SplitRatio = 3/4, group = NULL )
-
-train <- dry.yrs[msk,]
-test <- dry.yrs[!msk,]
-
 # save training and testing for later:
 saveRDS(train, "outputs/growth_model/basic_reg_dry_cohort_site_re/train.rds")
 saveRDS(test, "outputs/growth_model/basic_reg_dry_cohort_site_re/test.rds")
@@ -5424,6 +5455,15 @@ ggplot(Xp, aes(Var1, Var2, fill = MeanY))+geom_raster()+xlab("Drought Index")+yl
 dev.off()
 
 ```
+
+
+
+
+
+
+
+# >>>>>>>>>>>>>>>>>>>>>> Stable isotope results <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 # intercept only model (mean for d13C):
 ```{r}
 # this model is specified in basically the same as the site level model, but we replace site with "cohort"

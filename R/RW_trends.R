@@ -310,6 +310,8 @@ get.clim <- function(site.df, climatedata){
     jja.pdsi <- aggregate(PDSI ~ Year, data = MNpdsi.df[MNpdsi.df$Month %in% 6:8 & MNpdsi.df$Year %in% 1895:2014,], FUN = 'mean', na.rm = T)
     jja.pdsi.m <- aggregate(PDSI ~ Year + Month, data = MNpdsi.df[MNpdsi.df$Month %in% 6:8 & MNpdsi.df$Year %in% 1895:2014,], FUN = 'mean', na.rm = T)
     
+   
+    
     PCPs <- MNcd.clim[,c("Year", "Month", "PCP")] %>% group_by(Year, Month) %>% spread(key = Month, value = PCP, sep = "_pcp_" ) 
     TMAXs <- MNcd.clim[,c("Year", "Month", "TMAX")] %>% group_by(Year, Month) %>% spread(key = Month, value = TMAX, sep = "_tmax_" ) 
     TMINs <- MNcd.clim[,c("Year", "Month", "TMIN")] %>% group_by(Year, Month) %>% spread(key = Month, value = TMIN, sep = "_tmin_" ) 
@@ -375,6 +377,7 @@ get.clim <- function(site.df, climatedata){
     MNcd.clim$BAL <- MNcd.clim$PCP - MNcd.clim$PET
     
     MNcd.clim$Month<- as.numeric(MNcd.clim$Month)
+    MNcd.clim$PRISM <- as.numeric(MNcd.clim$Month)
     # make separate DF for each of the variables:
     keeps <- c("Year", "Month",  "PCP")
     keepstavg <- c("Year", "Month", "TAVG")
@@ -451,14 +454,14 @@ get.clim <- function(site.df, climatedata){
     jja.VPDmax <- aggregate(VPDmax ~ Year, data = MNvpdmax.df[MNvpdmax.df$Month %in% 6:8 & MNvpdmax.df$Year %in% 1895:2014,], FUN = 'mean', na.rm = T)
     
     
-    PCPs <- MNcd.clim[,c("Year", "Month", "PCP")] %>% group_by(Year, Month) %>% spread(key = Month, value = PCP, sep = "_pcp_" ) 
-    TMAXs <- MNcd.clim[,c("Year", "Month", "TMAX")] %>% group_by(Year, Month) %>% spread(key = Month, value = TMAX, sep = "_tmax_" ) 
-    TMINs <- MNcd.clim[,c("Year", "Month", "TMIN")] %>% group_by(Year, Month) %>% spread(key = Month, value = TMIN, sep = "_tmin_" ) 
-    TAVGs <- MNcd.clim[,c("Year", "Month", "TAVG")] %>% group_by(Year, Month) %>% spread(key = Month, value = TAVG, sep = "_tavg_" ) 
-    VPDmins <- MNcd.clim[,c("Year", "Month", "VPDmin")] %>% group_by(Year, Month) %>% spread(key = Month, value = VPDmin, sep = "_vpdmin_" ) 
-    VPDmaxs <- MNcd.clim[,c("Year", "Month", "VPDmax")] %>% group_by(Year, Month) %>% spread(key = Month, value = VPDmax, sep = "_vpdmax_" ) 
-    PET <- MNcd.clim[,c("Year", "Month", "PET")] %>% group_by(Year, Month) %>% spread(key = Month, value = PET, sep = "_PET_" ) 
-    BAL <- MNcd.clim[,c("Year", "Month", "BAL")] %>% group_by(Year, Month) %>% spread(key = Month, value = BAL, sep = "_BAL_" ) 
+    PCPs <- MNcd.clim[,c("Year", "PRISM", "PCP")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = PCP, sep = "_pcp_" ) 
+    TMAXs <- MNcd.clim[,c("Year", "PRISM", "TMAX")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = TMAX, sep = "_tmax_" ) 
+    TMINs <- MNcd.clim[,c("Year", "PRISM", "TMIN")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = TMIN, sep = "_tmin_" ) 
+    TAVGs <- MNcd.clim[,c("Year", "PRISM", "TAVG")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = TAVG, sep = "_tavg_" ) 
+    VPDmins <- MNcd.clim[,c("Year", "PRISM", "VPDmin")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = VPDmin, sep = "_vpdmin_" ) 
+    VPDmaxs <- MNcd.clim[,c("Year", "PRISM", "VPDmax")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = VPDmax, sep = "_vpdmax_" ) 
+    PET <- MNcd.clim[,c("Year", "PRISM", "PET")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = PET, sep = "_PET_" ) 
+    BAL <- MNcd.clim[,c("Year", "PRISM", "BAL")] %>% group_by(Year, PRISM) %>% spread(key = PRISM, value = BAL, sep = "_BAL_" ) 
     
     one <- merge(PCPs, TMAXs, by = "Year")
     two <- merge(one, TMINs, by = "Year")
