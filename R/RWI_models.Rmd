@@ -1709,11 +1709,11 @@ samp.structure.re <- coda.samples(lag.model.by_structure,
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3","sigma_beta4", "Yp"), 
                     n.chains = 3, n.iter=2000, thin = 15)
 
-summary(samp.structure.re)
-plot(samp.structure.re)
+#summary(samp.structure.re)
+#plot(samp.structure.re)
 
-gelman.diag(samp.structure.re)
-acfplot(samp.structure.re)
+#gelman.diag(samp.structure.re)
+#acfplot(samp.structure.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -1907,6 +1907,8 @@ dev.off()
 
 
 ```
+# check above models
+
 
 model with stand structure by ageclass random effects and prev years growth (lag -1):
 ```{r}
@@ -1980,25 +1982,25 @@ saveRDS(test, "outputs/growth_model/lag_reg_struct_x_cohort_re/test.rds")
 
 
 lag.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re_lag), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(ghcn.clean$RWI_1), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
    struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1)), n.chains = 3, n.adapt = 100)
 
 update(lag.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
 
 
-samp.structure.cohort.re <- coda.samples(lag.model.by_structure_x_cohort, 
+lag.samp.structure.cohort.re <- coda.samples(lag.model.by_structure_x_cohort, 
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.cohort.re)
-plot(samp.structure.cohort.re)
+summary(lag.samp.structure.cohort.re)
+plot(lag.samp.structure.cohort.re)
 
-gelman.diag(samp.structure.cohort.re)
-acfplot(samp.structure.cohort.re)
+gelman.diag(lag.samp.structure.cohort.re)
+acfplot(lag.samp.structure.cohort.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
- samps       <- samp.structure.cohort.re[[1]]
+ samps       <- lag.samp.structure.cohort.re[[1]]
  saveRDS(samps, "outputs//growth_model/lag_reg_struct_x_cohort_re/samps.rds")
   samps <- readRDS("outputs//growth_model/lag_reg_struct_x_cohort_re/samps.rds")
 
@@ -2014,12 +2016,12 @@ acfplot(samp.structure.cohort.re)
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -2407,8 +2409,6 @@ dev.off()
 
 ```
 
-# kh left off here sept10 with code changes
-
 
 #model with stand structure by ageclass random effects and prev years growth (lag -1) and (lag - 2):
 ```{r}
@@ -2487,7 +2487,7 @@ saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re/test.rds")
 
 
 lag2.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re_lag2), 
-                    data = list(Y=log(ghcn.clean$RWI), n=length(ghcn.clean$RWI), DI.scaled = ghcn.clean$DI.scaled, DBH.scaled = ghcn.clean$DBH.scaled,log_RWI_1 = log(ghcn.clean$RWI_1),log_RWI_2 = log(ghcn.clean$RWI_2), struct.cohort = as.numeric(ghcn.clean$struct.cohort.code), SF = unique(ghcn.clean$struct.cohort.code), np = length(test$DBH.scaled),
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = v$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
    struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2)), n.chains = 3, n.adapt = 100)
 
 update(lag2.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
@@ -2519,18 +2519,34 @@ acfplot(samp.structure.cohort.re)
  sigma_betas <- samps[,(length(test$RWI)+ 22):(length(test$RWI)+ 26)]
 
  
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.cohort.re[[1]]
+ saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re/samps.rds")
+  samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re/samps.rds")
+
+ Yp.samps <- samps[,1:(length(test$RWI))] 
+ alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 16)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+ 17):(length(test$RWI)+ 20)]
+ beta3.samps <- samps[,(length(test$RWI)+ 21):(length(test$RWI)+ 24)]
+ beta4.samps <- samps[,(length(test$RWI)+ 25):(length(test$RWI)+ 28)]
+ sigma.samps <- samps[,(length(test$RWI)+ 29)]
+ sigma_betas <- samps[,(length(test$RWI)+ 30):(length(test$RWI)+ 33)]
+
+ 
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
-Yp.m<- melt(Yp.samps)
-Yp.summary<- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
-                                                 ci.hi = quantile(exp(value),0.975),
-                                                 ci.lo = quantile(exp(value),0.025))
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
 
-p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs.r.squared, sep="")),parse=T,x=1, y=7)
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
+# note poor model fit!
 png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re/pred_vs_obs.png")
 p.o.plot
 dev.off()
@@ -2538,8 +2554,17 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
-BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 
 
@@ -2752,7 +2777,7 @@ saveRDS(test, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/test.rds
 
 
 lag2.model.by_structure_x_cohort <- jags.model(textConnection(model_structure_x_cohort_re_lag2), 
-                    data = list(Y=ghcn.clean$RWI, n=length(ghcn.clean$RWI), DI.scaled = ghcn.clean$DI.scaled, DBH.scaled = ghcn.clean$DBH.scaled,log_RWI_1 = log(ghcn.clean$RWI_1),log_RWI_2 = ghcn.clean$RWI_2, struct.cohort = as.numeric(ghcn.clean$struct.cohort.code), SF = unique(ghcn.clean$struct.cohort.code), np = length(test$DBH.scaled),
+                    data = list(Y=train$RWI, n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = train$RWI_2, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
    struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = test$RWI_1, log_RWI_2.p = test$RWI_2), n.chains = 3, n.adapt = 100)
 
 update(lag2.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
@@ -2786,16 +2811,17 @@ acfplot(samp.structure.cohort.re)
  
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
-Yp.m<- melt(Yp.samps)
-Yp.summary<- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                 ci.hi = quantile(value,0.975),
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
                                                  ci.lo = quantile(value,0.025))
 Yp.summary$Observed <- test$RWI
 
 pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
 
-p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs.r.squared, sep="")),parse=T,x=1, y=7)
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
+# note poor model fit!
 png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag2_untrans_reg_struct_x_cohort_re/pred_vs_obs.png")
 p.o.plot
 dev.off()
@@ -2805,6 +2831,15 @@ dev.off()
 
 MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
 BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "lag2_untrans_reg_struct_x_cohort_re", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 
 
@@ -3027,17 +3062,52 @@ gelman.diag(samp)
  samps       <- samp[[1]]
  saveRDS(samps, "outputs/growth_model/basic_reg_cohort_site_re/samps.rds")
 samps <-  readRDS("outputs/growth_model/basic_reg_cohort_site_re/samps.rds")
- Yp.samps    <- samps[,1:2780] 
+ Yp.samps    <- samps[,1:length(test$RWI)] 
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
- alpha.samps  <- samps[,2781:2782]
- beta2.samps <- samps[,2783:2784]
- beta3.samps <- samps[,2785:2786]
- mu_beta1.samps <- samps[,2787:2800]
- mu_beta2.samps <- samps[,2801:2814]
- mu_beta3.samps <- samps[,2815:2828]
- sigma.samps <- samps[,2829]
- sigma_betas <- samps[,2830:2832]
+ alpha.samps  <- samps[,(1:(length(test$RWI)+1)):(1:(length(test$RWI)+2))]
+ beta2.samps <- samps[,(1:(length(test$RWI)+3)):(1:(length(test$RWI)+4))]
+ beta3.samps <- samps[,(1:(length(test$RWI)+5)):(1:(length(test$RWI)+6))]
+ mu_beta1.samps <- samps[,(1:(length(test$RWI)+7)):(1:(length(test$RWI)+10))]
+ mu_beta2.samps <- samps[,(1:(length(test$RWI)+11)):(1:(length(test$RWI)+14))]
+ mu_beta3.samps <- samps[,(1:(length(test$RWI)+15)):(1:(length(test$RWI)+18))]
+ sigma.samps <- samps[,(1:(length(test$RWI)+19))]
+ sigma_betas <- samps[,(1:(length(test$RWI)+20)):(1:(length(test$RWI)+22))]
 
+ 
+ 
+ # plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/basic_reg_cohort_site_re/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "basic_reg_cohort_site_re", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+ 
 png("outputs/growth_model/basic_reg_cohort_site_re/marginal_alphas.png")
 par(mfrow=c(3,2))
 hist(alpha.samps[,1], main = "alpha Past")
@@ -3380,12 +3450,37 @@ acfplot(samp.structure.site.cohort.re)
 
  
 # plot predicted vs. observed:
-test$mean.Y <- colMeans(exp(Yp.samps))
-png("outputs/growth_model/site_reg_structure_cohort_re/marginal_alphas.png")
-plot(colMeans(exp(Yp.samps)), test$RWI)
-abline(a = 0, b = 1, col = "red")
- dev.off()
-ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+ # plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "site_reg_structure_cohort_re", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -3725,13 +3820,37 @@ acfplot(samp.structure.site.cohort.re.slopes)
  sigma_betas <- samps[,(length(test$RWI)+12):(length(test$RWI)+13)]
 
  
-# plot predicted vs. observed:
-test$mean.Y <- colMeans(exp(Yp.samps))
-png("outputs/growth_model/site_reg_structure_cohort_re.slopes/marginal_alphas.png")
-plot(colMeans(exp(Yp.samps)), test$RWI)
-abline(a = 0, b = 1, col = "red")
- dev.off()
-ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+ # plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re.slopes/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "site_reg_structure_cohort_re.slopes", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -4039,11 +4158,11 @@ samp.structure.site.cohort.re.sp6 <- coda.samples(reg.model.site_structure_x_coh
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.site.cohort.re.sp6)
-plot(samp.structure.site.cohort.re.sp6)
+#summary(samp.structure.site.cohort.re.sp6)
+#plot(samp.structure.site.cohort.re.sp6)
 
-gelman.diag(samp.structure.site.cohort.re.sp6)
-acfplot(samp.structure.site.cohort.re.sp6)
+#gelman.diag(samp.structure.site.cohort.re.sp6)
+#acfplot(samp.structure.site.cohort.re.sp6)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -4060,13 +4179,40 @@ acfplot(samp.structure.site.cohort.re.sp6)
  sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+14):(length(test$RWI)+length(full.p$Var1)+16)]
 
  
-# plot predicted vs. observed:
-test$mean.Y <- colMeans(exp(Yp.samps))
-png("outputs/growth_model/site_reg_structure_cohort_re_sp6/marginal_alphas.png")
-plot(colMeans(exp(Yp.samps)), test$RWI)
-abline(a = 0, b = 1, col = "red")
- dev.off()
-ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+
+ # plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp6/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp6", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -4428,11 +4574,11 @@ samp.structure.site.cohort.re.sp6.sp1 <- coda.samples(reg.model.site_structure_x
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.site.cohort.re.sp6)
-plot(samp.structure.site.cohort.re.sp6)
+#summary(samp.structure.site.cohort.re.sp6)
+#plot(samp.structure.site.cohort.re.sp6)
 
-gelman.diag(samp.structure.site.cohort.re.sp6)
-acfplot(samp.structure.site.cohort.re.sp6)
+#gelman.diag(samp.structure.site.cohort.re.sp6)
+#acfplot(samp.structure.site.cohort.re.sp6)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -4450,17 +4596,37 @@ acfplot(samp.structure.site.cohort.re.sp6)
  sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+18):(length(test$RWI)+length(full.p$Var1)+20)]
 
  
-# plot predicted vs. observed:
-test$mean.Y <- colMeans(exp(Yp.samps))
-png("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/marginal_alphas.png")
-plot(colMeans(exp(Yp.samps)), test$RWI)
-abline(a = 0, b = 1, col = "red")
- dev.off()
-# get predicted vs. observed R squared:
- pred.obs<- summary(lm(test$RWI~ colMeans(exp(Yp.samps))))
-pred.obs$adj.r.squared
+# plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
 
-ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp1_sp6", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -4776,17 +4942,38 @@ acfplot(samp.structure.site.cohort.re.sp6)
  sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+18):(length(test$RWI)+length(full.p$Var1)+20)]
 
  
-# plot predicted vs. observed:
-test$mean.Y <- colMeans(exp(Yp.samps))
-png("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/marginal_alphas.png")
-plot(colMeans(exp(Yp.samps)), test$RWI)
-abline(a = 0, b = 1, col = "red")
- dev.off()
-# get predicted vs. observed R squared:
- pred.obs<- summary(lm(test$RWI~ colMeans(exp(Yp.samps))))
-pred.obs$adj.r.squared
+# plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test$RWI
 
-ggplot(test, aes(RWI, mean.Y))+geom_point()+geom_abline(intercept = 0, slope = 1,  color = "red")
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
+BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp1_sp6", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
