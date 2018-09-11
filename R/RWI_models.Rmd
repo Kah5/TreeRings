@@ -296,12 +296,12 @@ dev.off()
 # plot predicted vs. observed
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -312,8 +312,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -521,12 +521,12 @@ samp.plot.re <- coda.samples(reg.model.by_s,
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs.r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -539,9 +539,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
-
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_site_re", 
@@ -816,12 +815,12 @@ gelman.diag(samp.age.re)
  # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -833,8 +832,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -1096,12 +1095,12 @@ hist(beta1.diffs)
  # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value), 0.975),
+                                                 ci.lo = quantile(exp(value), 0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -1113,8 +1112,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -1393,12 +1392,12 @@ samp.structure.cohort.re <- coda.samples(reg.model.by_structure_x_cohort,
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -1410,8 +1409,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -1809,12 +1808,12 @@ dev.off()
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -1826,8 +1825,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -2033,8 +2032,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -2262,12 +2261,12 @@ acfplot(samp.structure.cohort.re)
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -2279,8 +2278,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -2537,12 +2536,12 @@ acfplot(samp.structure.cohort.re)
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -2554,8 +2553,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -3075,15 +3074,15 @@ samps <-  readRDS("outputs/growth_model/basic_reg_cohort_site_re/samps.rds")
 
  
  
- # plot predicted vs observed and assess model fit:
+# plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -3095,8 +3094,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -3449,16 +3448,15 @@ acfplot(samp.structure.site.cohort.re)
  sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+14):(length(test$RWI)+length(full.p$Var1)+16)]
 
  
-# plot predicted vs. observed:
- # plot predicted vs observed and assess model fit:
+# plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -3470,8 +3468,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -3820,15 +3818,15 @@ acfplot(samp.structure.site.cohort.re.slopes)
  sigma_betas <- samps[,(length(test$RWI)+12):(length(test$RWI)+13)]
 
  
- # plot predicted vs observed and assess model fit:
+# plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -3840,8 +3838,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -4180,15 +4178,15 @@ samp.structure.site.cohort.re.sp6 <- coda.samples(reg.model.site_structure_x_coh
 
  
 
- # plot predicted vs observed and assess model fit:
+# plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -4200,8 +4198,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -4599,12 +4597,12 @@ samp.structure.site.cohort.re.sp6.sp1 <- coda.samples(reg.model.site_structure_x
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -4616,8 +4614,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -4945,12 +4943,12 @@ acfplot(samp.structure.site.cohort.re.sp6)
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
 Yp.m <- melt(Yp.samps)
-Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
-                                                  ci.hi = quantile(value,0.975),
-                                                 ci.lo = quantile(value,0.025))
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
 Yp.summary$Observed <- test$RWI
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test$RWI))
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
@@ -4962,8 +4960,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(Yp.samps)-test$RWI)^2)
-BIAS1  <- mean(colMeans(Yp.samps)-test$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
@@ -5236,6 +5234,42 @@ gelman.diag(samp)
  sigma.samps <- samps[,2805]
  sigma_betas <- samps[,2806:2808]
 
+ 
+ 
+ # plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/basic_reg_cohort_site_VPD_re/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "basic_reg_cohort_site_VPD_re", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+ 
 png("outputs/growth_model/basic_reg_cohort_site_VPD_re/marginal_alphas.png")
 par(mfrow=c(3,2))
 hist(alpha.samps[,1], main = "alpha Past")
