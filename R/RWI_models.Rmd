@@ -9,6 +9,9 @@ library(rjags)
 library(ggplot2)
 library(caTools)
 library(ggridges)
+library(tidyr)
+library(reshape2)
+library(dplyr)
 
 # some initial data checking:
 full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.df")
@@ -426,10 +429,8 @@ samp.basic.df.sum<- data.frame(mean = samp.df$statistics[2,"Mean"],
 
 ```
 
-# Create random effects for sites:
+# Model random effects for sites for slopes and intercepts
 ```{r}
-
-
 
 population_model_site_re <- "model{
 
@@ -774,10 +775,10 @@ samp.age.re <- coda.samples(reg.model.by_age,
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "betadiff", "Yp", "RSS[1]", "RSS[2]", "RSS[3]", "RSS[4]"), 
                     n.chains = 3, n.iter=2000, thin = 10)
 
-summary(samp.age.re)
-plot(samp.age.re)
+#summary(samp.age.re)
+#plot(samp.age.re)
 
-gelman.diag(samp.age.re)
+#gelman.diag(samp.age.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -1817,7 +1818,7 @@ pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
-# note poor model fit!
+# note better model fit!
 png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag_reg_structure_re/pred_vs_obs.png")
 p.o.plot
 dev.off()
@@ -1991,11 +1992,11 @@ lag.samp.structure.cohort.re <- coda.samples(lag.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(lag.samp.structure.cohort.re)
-plot(lag.samp.structure.cohort.re)
+#summary(lag.samp.structure.cohort.re)
+#plot(lag.samp.structure.cohort.re)
 
-gelman.diag(lag.samp.structure.cohort.re)
-acfplot(lag.samp.structure.cohort.re)
+#gelman.diag(lag.samp.structure.cohort.re)
+#acfplot(lag.samp.structure.cohort.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -2237,11 +2238,11 @@ samp.structure.cohort.re <- coda.samples(lag.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.cohort.re)
-plot(samp.structure.cohort.re)
+#summary(samp.structure.cohort.re)
+#plot(samp.structure.cohort.re)
 
-gelman.diag(samp.structure.cohort.re)
-acfplot(samp.structure.cohort.re)
+#gelman.diag(samp.structure.cohort.re)
+#acfplot(samp.structure.cohort.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -2486,7 +2487,7 @@ saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re/test.rds")
 
 
 lag2.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re_lag2), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = v$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
    struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2)), n.chains = 3, n.adapt = 100)
 
 update(lag2.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
@@ -2496,11 +2497,11 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.cohort.re)
-plot(samp.structure.cohort.re)
+#summary(samp.structure.cohort.re)
+#plot(samp.structure.cohort.re)
 
-gelman.diag(samp.structure.cohort.re)
-acfplot(samp.structure.cohort.re)
+#gelman.diag(samp.structure.cohort.re)
+#acfplot(samp.structure.cohort.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -2518,20 +2519,6 @@ acfplot(samp.structure.cohort.re)
  sigma_betas <- samps[,(length(test$RWI)+ 22):(length(test$RWI)+ 26)]
 
  
-#Extract the samples for each parameter for a basic exploration of effects
-
- samps       <- samp.structure.cohort.re[[1]]
- saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re/samps.rds")
-  samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re/samps.rds")
-
- Yp.samps <- samps[,1:(length(test$RWI))] 
- alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 16)]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps <- samps[,(length(test$RWI)+ 17):(length(test$RWI)+ 20)]
- beta3.samps <- samps[,(length(test$RWI)+ 21):(length(test$RWI)+ 24)]
- beta4.samps <- samps[,(length(test$RWI)+ 25):(length(test$RWI)+ 28)]
- sigma.samps <- samps[,(length(test$RWI)+ 29)]
- sigma_betas <- samps[,(length(test$RWI)+ 30):(length(test$RWI)+ 33)]
-
  
 # plot predicted vs observed and assess model fit:
 Yp.samps <- data.frame(Yp.samps) 
@@ -2699,6 +2686,296 @@ dev.off()
 
 ```
  
+ #model with stand structure by ageclass random effects and prev years growth (lag -1) and (lag - 2):
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+population_model_structure_x_cohort_re_lag2_temp <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model
+Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
+
+# function g()
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i] # use Drought index as a scaled variable 
+
+#r1[i] <- Y[i] - gfunc[i]   
+
+}
+
+#RSS[1] <- sum(r1^2)
+
+# Prediction
+  for(i in 1:np){
+    Yp[i]  ~ dnorm(mup[i],inv.var)
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4[struct.cohort.p[i]]*log_RWI_1.p[i] +beta5[struct.cohort.p[i]]*log_RWI_2.p[i] + beta6[struct.cohort.p[i]]*Temp.scaled.p[i]
+  }
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+beta3[s] ~ dnorm(mu_beta3, inv_beta3)
+beta4[s] ~ dnorm(mu_beta4, inv_beta4)
+beta5[s] ~ dnorm(mu_beta5, inv_beta5)
+beta6[s] ~ dnorm(mu_beta5, inv_beta6)
+}
+
+
+
+# use normalpriors for each  beta paramters 
+mu_beta1 ~ dunif(-2, 2)
+mu_beta2 ~ dunif(-2, 2)
+mu_beta3 ~ dunif(-2, 2)
+mu_beta4 ~ dunif(-2, 2)
+mu_beta5 ~ dunif(-2, 2)
+mu_beta6 ~ dunif(-2, 2)
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+inv_beta3   ~ dgamma(0.01, 0.01)
+sigma_beta3 <- 1/sqrt(inv_beta3)
+inv_beta4   ~ dgamma(0.01, 0.01)
+sigma_beta4 <- 1/sqrt(inv_beta4)
+inv_beta5   ~ dgamma(0.01, 0.01)
+sigma_beta5 <- 1/sqrt(inv_beta5)
+inv_beta6   ~ dgamma(0.01, 0.01)
+sigma_beta6 <- 1/sqrt(inv_beta6)
+
+# Non-informative Prior for the inverse population variances
+
+#alpha_ref ~ dnorm(0,0.1)
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+}"
+
+
+
+
+
+# save these for use later:
+saveRDS(train, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/train.rds")
+saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/test.rds")
+
+
+
+lag2.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re_lag2_temp), 
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled), n.chains = 3, n.adapt = 100)
+
+update(lag2.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort, 
+                     variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5", "sigma_beta6","Yp"), 
+                    n.chains = 3, n.iter=20000, thin = 15)
+
+#summary(samp.structure.cohort.re)
+#plot(samp.structure.cohort.re)
+
+#gelman.diag(samp.structure.cohort.re)
+#acfplot(samp.structure.cohort.re)
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- samp.structure.cohort.re[[1]]
+ saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t/samps.rds")
+  samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t/samps.rds")
+
+ Yp.samps <- samps[,1:(length(test$RWI))] 
+ alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 4)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+ 5):(length(test$RWI)+ 8)]
+ beta3.samps <- samps[,(length(test$RWI)+ 9):(length(test$RWI)+ 12)]
+ beta4.samps <- samps[,(length(test$RWI)+ 13):(length(test$RWI)+ 16)]
+ beta5.samps <- samps[,(length(test$RWI)+ 17):(length(test$RWI)+ 20)]
+ beta6.samps <- samps[,(length(test$RWI)+ 21):(length(test$RWI)+ 24)]
+ sigma.samps <- samps[,(length(test$RWI)+ 25)]
+ sigma_betas <- samps[,(length(test$RWI)+ 26):(length(test$RWI)+ 31)]
+
+ 
+ 
+# plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(Yp.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value)),
+                                                  ci.hi = quantile(exp(value),0.975),
+                                                 ci.lo = quantile(exp(value),0.025))
+Yp.summary$Observed <- test$RWI
+
+pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ test$RWI))
+
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note poor model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+
+# calculate MSE & BIAS:
+
+MSE1   <- mean((colMeans(exp(Yp.samps))-test$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
+
+# write model summary output to a file!
+
+model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t", 
+           MSE = MSE1, 
+           BIAS = BIAS1, 
+           Rsq = pred.obs$r.squared)
+
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+
+# get difference between beta2.samps: (i.e are they different?)
+oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
+oneminusthree <- beta2.samps[,1] - beta2.samps[,3]
+oneminusfour <- beta2.samps[,1] - beta2.samps[,4]
+twominusthree <- beta2.samps[,2] - beta2.samps[,3]
+twominusfour <- beta2.samps[,2] - beta2.samps[,4]
+threeminusfour <- beta2.samps[,3] - beta2.samps[,4]
+# calculate MSPE
+# get posterior predictive density
+
+# plot marginal distributions of each parameter:
+png("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/marginal_alphas.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Forest")
+hist(alpha.samps[,2], main = "alpha Modern-Forest")
+hist(alpha.samps[,3],  main = "alpha Past-Savanna ")
+hist(alpha.samps[,4],  main = "alpha Modern-Savanna")
+hist(sigma_betas[,1], main = "sigma alpha")
+dev.off()
+
+png("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/marginal_beta1s.png")
+par(mfrow=c(3,2))
+hist(beta2.samps[,1], main = "beta2 Past-Forest")
+hist(beta2.samps[,2], main = "beta2 Modern-Forest")
+hist(beta2.samps[,3],  main = "beta2 Past-Savanna")
+hist(beta2.samps[,4],  main = "beta2 Modern-Savanna")
+hist(sigma_betas[,2], main = "sigma beta2")
+dev.off()
+
+png("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/marginal_beta2s.png")
+par(mfrow=c(3,2))
+hist(beta3.samps[,1], main = "beta3 Past-Forest")
+hist(beta3.samps[,2], main = "beta3 Modern-Forest")
+hist(beta3.samps[,3],  main = "beta3 Past-Savanna")
+hist(beta3.samps[,4],  main = "beta3 Modern-Savanna")
+hist(sigma_betas[,3], main = "sigma beta3")
+dev.off()
+
+
+png("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/marginal_beta3s.png")
+par(mfrow=c(3,2))
+hist(beta4.samps[,1], main = "beta4 Past-Forest")
+hist(beta4.samps[,2], main = "beta4 Modern-Forest")
+hist(beta4.samps[,3],  main = "beta4 Past-Savanna")
+hist(beta4.samps[,4],  main = "beta4 Modern-Savanna")
+hist(sigma_betas[,4], main = "sigma beta4")
+dev.off()
+
+png("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/marginal_beta4s.png")
+par(mfrow=c(3,2))
+hist(beta5.samps[,1], main = "beta5 Past-Forest")
+hist(beta5.samps[,2], main = "beta5 Modern-Forest")
+hist(beta5.samps[,3],  main = "beta5 Past-Savanna")
+hist(beta5.samps[,4],  main = "beta5 Modern-Savanna")
+hist(sigma_betas[,5], main = "sigma beta5")
+dev.off()
+
+
+png("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/marginal_beta5s.png")
+par(mfrow=c(3,2))
+hist(beta5.samps[,1], main = "beta4 Past-Forest")
+hist(beta5.samps[,2], main = "beta4 Modern-Forest")
+hist(beta5.samps[,3],  main = "beta4 Past-Savanna")
+hist(beta5.samps[,4],  main = "beta4 Modern-Savanna")
+hist(sigma_betas[,6], main = "sigma beta4")
+dev.off()
+
+# plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0("alpha-",c(unique(train$struct.cohort))))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Random intercepts")
+
+
+b2 <- data.frame(beta2.samps)
+colnames(b2) <- c(paste0(c(unique(train$struct.cohort))))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+b2.mplots <- ggplot(b2.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("Drought Index slope")
+
+b2.mplots <-ggplot(b2.m, aes(value,1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.003)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+b2.mean <- apply(as.matrix(b2[,1:4]), 2, mean)
+b2.lower <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+b2.upper <- apply(as.matrix(b2[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b2 <- data.frame(b2.mean, b2.lower, b2.upper)
+plot.dat.b2$class <- row.names(plot.dat.b2)
+
+plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b2.dots <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none")+xlab("Estimated Drought Sensitivity")
+
+png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t/drougt_beta_marginal_distn_bycohort.png")
+plot_grid(b2.dots+ xlim(0, 0.15), b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.6))
+dev.off()
+
+# plot slightly differently:
+plot.dat.b2$forestclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Modern-Forest"), "Forest", "Savanna")
+
+plot.dat.b2$ageclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels= c("Past", "Modern"))
+
+b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(0, 0.15)+theme_black(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
+"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/param_marginal_distn_bycohort_struct_rb.png")
+b2.dots.2
+dev.off()
+
+b3 <- data.frame(beta3.samps)
+colnames(b3) <- c(paste0("beta3-",c(unique(train$struct.cohort))))
+b3$num <- rownames(b3)
+b3.m <- melt(b3, id.vars=c("num"))
+b3.mplots <- ggplot(b3.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("DBH slope")
+
+b4 <- data.frame(beta4.samps)
+colnames(b4) <- c(paste0("beta4-",c(unique(train$struct.cohort))))
+b4$num <- rownames(b4)
+b4.m <- melt(b4, id.vars=c("num"))
+b4.mplots <- ggplot(b4.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("lag - 1 effect")
+
+b5 <- data.frame(beta5.samps)
+colnames(b5) <- c(paste0("beta5-",c(unique(train$struct.cohort))))
+b5$num <- rownames(b5)
+b5.m <- melt(b5, id.vars=c("num"))
+b5.mplots <- ggplot(b5.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("lag - 1 effect")
+
+library(cowplot)
+png(width = 5, height = 10, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/param_marginal_distn_bycohort_struct.png")
+plot_grid(alpha.mplots, b2.mplots, b3.mplots,b4.mplots, b5.mplots,ncol = 1)
+dev.off()
+
+```
+ 
 #model with stand structure by ageclass random effects and prev years growth (lag -1) and (lag - 2), but not log transformed:
 ```{r}
 # this model is specified in basically the same as the site level model, but we replace site with "cohort"
@@ -2786,11 +3063,11 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.cohort.re)
-plot(samp.structure.cohort.re)
+#summary(samp.structure.cohort.re)
+#plot(samp.structure.cohort.re)
 
-gelman.diag(samp.structure.cohort.re)
-acfplot(samp.structure.cohort.re)
+#gelman.diag(samp.structure.cohort.re)
+#acfplot(samp.structure.cohort.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -2987,7 +3264,7 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i] + beta4[cohort[i]]*log_RWI_1[i]  # use Drought index as a scaled variable 
 }
 
 
@@ -2997,6 +3274,7 @@ for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
 beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
 beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
+beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta4)
 
 
 
@@ -3008,7 +3286,7 @@ for(j in 1:length(ind)){
 mu_beta1[j] ~ dnorm(0, 0.5)
 mu_beta2[j] ~ dnorm(0, 0.5)
 mu_beta3[j] ~ dnorm(0, 0.5)
-
+mu_beta4[j] ~ dnorm(0, 0.5)
 }
 
 inv_beta1   ~ dgamma(0.001, 0.001)
@@ -3017,6 +3295,8 @@ inv_beta2   ~ dgamma(0.001, 0.001)
 sigma_beta2 <- 1/sqrt(inv_beta2)
 inv_beta3   ~ dgamma(0.001, 0.001)
 sigma_beta3 <- 1/sqrt(inv_beta3)
+inv_beta4   ~ dgamma(0.001, 0.001)
+sigma_beta4 <- 1/sqrt(inv_beta4)
 
 
 # Non-informative Prior for the inverse population variances
@@ -3031,7 +3311,7 @@ for(i in 1:np){
 Yp[i]   ~ dnorm(gfuncp[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*DI.scaled.p[i] + beta3[cohort.p[i]]*DBH.scaled.p[i]   # use Drought index as a scaled variable 
+gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*DI.scaled.p[i] + beta3[cohort.p[i]]*DBH.scaled.p[i] + beta4[cohort.p[i]]*log_RWI_1.p[i]  # use Drought index as a scaled variable 
 }
 
 }"
@@ -3041,20 +3321,20 @@ gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*DI.scaled.p[i] + beta3[coho
 
 
 
-cohort.model.re <- jags.model(textConnection(cohort_model_site_re), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, cohort = as.numeric(train$ageclass), S = unique(train$ageclass),
-                    plot = as.numeric(train$site), ind = unique(train$site), np = length(test$DBH.scaled), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
+cohort.model.re_lag <- jags.model(textConnection(cohort_model_site_re), 
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled, log_RWI_1 = log(train$RWI_1), cohort = as.numeric(train$ageclass), S = unique(train$ageclass),
+                    plot = as.numeric(train$site), ind = unique(train$site), np = length(test$DBH.scaled), DI.scaled.p = test$DI.scaled, DBH.scaled.p = test$DBH.scaled, log_RWI_1.p = log(test$RWI_1),cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
                     plot.p = as.numeric(test$site), ind.p = unique(test$site)), n.chains = 3, n.adapt = 100)
 
-update(cohort.model.re, 2000); # Burnin for 1000 samples to start, then go higher later
+update(cohort.model.re_lag, 2000); # Burnin for 1000 samples to start, then go higher later
 
-samp <- coda.samples(cohort.model.re, 
-                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3", "mu_beta1", "mu_beta2", "mu_beta3", "Yp"), 
+samp <- coda.samples(cohort.model.re_lag, 
+                     variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3","sigma_beta4", "mu_beta1", "mu_beta2", "mu_beta3","mu_beta3", "Yp"), 
                     n.chains = 3, n.iter=20000, thin = 10)
 
-summary(samp)
-traceplot(samp)
-gelman.diag(samp)
+#summary(samp)
+#traceplot(samp)
+#gelman.diag(samp)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -3063,14 +3343,15 @@ gelman.diag(samp)
 samps <-  readRDS("outputs/growth_model/basic_reg_cohort_site_re/samps.rds")
  Yp.samps    <- samps[,1:length(test$RWI)] 
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
- alpha.samps  <- samps[,(1:(length(test$RWI)+1)):(1:(length(test$RWI)+2))]
- beta2.samps <- samps[,(1:(length(test$RWI)+3)):(1:(length(test$RWI)+4))]
- beta3.samps <- samps[,(1:(length(test$RWI)+5)):(1:(length(test$RWI)+6))]
- mu_beta1.samps <- samps[,(1:(length(test$RWI)+7)):(1:(length(test$RWI)+10))]
- mu_beta2.samps <- samps[,(1:(length(test$RWI)+11)):(1:(length(test$RWI)+14))]
- mu_beta3.samps <- samps[,(1:(length(test$RWI)+15)):(1:(length(test$RWI)+18))]
- sigma.samps <- samps[,(1:(length(test$RWI)+19))]
- sigma_betas <- samps[,(1:(length(test$RWI)+20)):(1:(length(test$RWI)+22))]
+ alpha.samps  <- samps[,((length(test$RWI)+1)):((length(test$RWI)+2))]
+ beta2.samps <- samps[,((length(test$RWI)+3)):((length(test$RWI)+4))]
+ beta3.samps <- samps[,((length(test$RWI)+5)):((length(test$RWI)+6))]
+  beta4.samps <- samps[,((length(test$RWI)+7)):((length(test$RWI)+8))]
+ mu_beta1.samps <- samps[,((length(test$RWI)+9)):((length(test$RWI)+24))]
+ mu_beta2.samps <- samps[,((length(test$RWI)+25)):((length(test$RWI)+40))]
+ mu_beta3.samps <- samps[,((length(test$RWI)+41)):((length(test$RWI)+56))]
+ sigma.samps <- samps[,((length(test$RWI)+57))]
+ sigma_betas <- samps[,((length(test$RWI)+58)):((length(test$RWI)+61))]
 
  
  
@@ -3099,7 +3380,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
-model.summary <- data.frame(model = "basic_reg_cohort_site_re", 
+model.summary <- data.frame(model = "basic_reg_cohort_site_re_with_lag", 
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -3427,11 +3708,11 @@ samp.structure.site.cohort.re <- coda.samples(reg.model.site_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.site.cohort.re)
-plot(samp.structure.site.cohort.re)
+#summary(samp.structure.site.cohort.re)
+#plot(samp.structure.site.cohort.re)
 
-gelman.diag(samp.structure.site.cohort.re)
-acfplot(samp.structure.site.cohort.re)
+#gelman.diag(samp.structure.site.cohort.re)
+#acfplot(samp.structure.site.cohort.re)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -3799,11 +4080,11 @@ samp.structure.site.cohort.re.slopes <- coda.samples(reg.model.site_structure_x_
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.site.cohort.re.slopes)
-plot(samp.structure.site.cohort.re.slopes)
+#summary(samp.structure.site.cohort.re.slopes)
+#plot(samp.structure.site.cohort.re.slopes)
 
-gelman.diag(samp.structure.site.cohort.re.slopes)
-acfplot(samp.structure.site.cohort.re.slopes)
+#gelman.diag(samp.structure.site.cohort.re.slopes)
+#acfplot(samp.structure.site.cohort.re.slopes)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -4050,7 +4331,7 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]+ beta4[struct.cohort[i]]*log_RWI_1[i]   # use Drought index as a scaled variable 
 
 
 }
@@ -4058,13 +4339,13 @@ gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + bet
 # Prediction of test data
   for(i in 1:np){
     Yp[i]  ~ dnorm(mup[i],inv.var)
-    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] 
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] + beta4[struct.cohort.p[i]]*log_RWI_1.p[i]
   }
 
 # Prediction of probe data for plotting:
   for(i in 1:nprobe){
-    Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
-    muprobe[i] <- beta1[struct.cohort.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] + beta3[struct.cohort.probe[i]]*DBH.scaled.probe[i] 
+    Yprobe[i]  ~ dnorm(muprobe[i], inv.var)
+    muprobe[i] <- beta1[struct.cohort.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] + beta3[struct.cohort.probe[i]]*DBH.scaled.probe[i] + beta4[struct.cohort.probe[i]]*log_RWI_1.probe[i]
   }
 
 
@@ -4073,6 +4354,7 @@ for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
 beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
 beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
+beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta4)
 }
 
 
@@ -4081,7 +4363,7 @@ for(j in 1:length(ind)){
 mu_beta1[j] ~ dnorm(0, 0.5)
 mu_beta2[j] ~ dnorm(0, 0.5)
 mu_beta3[j] ~ dnorm(0, 0.5)
-
+mu_beta4[j] ~ dnorm(0, 0.5)
 }
 
 inv_beta1   ~ dgamma(0.001, 0.001)
@@ -4090,6 +4372,8 @@ inv_beta2   ~ dgamma(0.001, 0.001)
 sigma_beta2 <- 1/sqrt(inv_beta2)
 inv_beta3   ~ dgamma(0.001, 0.001)
 sigma_beta3 <- 1/sqrt(inv_beta3)
+inv_beta4   ~ dgamma(0.001, 0.001)
+sigma_beta4 <- 1/sqrt(inv_beta4)
 
 
 # Non-informative Prior for the inverse population variances
@@ -4097,9 +4381,6 @@ sigma_beta3 <- 1/sqrt(inv_beta3)
 #alpha_ref ~ dnorm(0,0.1)
 inv.var   ~ dgamma(0.0001, 0.0001)
 sigma     <- 1/sqrt(inv.var)
-
-
-
 
 
 }"
@@ -4130,30 +4411,32 @@ unscale(vals = -1.4775, norm.data = DBH.scaled) # 10 cm
  DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
  
  DI.p <- seq(range(full.ghcn$SP06_6)[1], range(full.ghcn$SP06_6)[2], by = 0.5)
- DBH.p <- c(2.9355, 2.305,1.0441,0.414, -0.217, -0.8469, -1.4775 )# for 40 cm, 30 cm, 20cm, and 10 cm trees respectivly
- full.p <- expand.grid(DI.p, DBH.p,  struct.cohort= 1:4)
+ DBH.p <- c(2.9355, 2.305,1.0441,0.414, -0.217, -0.8469, -1.4775 )# for 40 cm, 30 cm, 20cm, and 10 
+  log_RWI_1.probe <- seq(range(log(test$RWI_1))[1], range(log(test$RWI_1))[2], by = 0.25)
+#cm trees respectivly
+ full.probe <- expand.grid(DI.probe = DI.p, DBH.probe = DBH.p,  log_RWI_1.probe = log_RWI_1.probe,struct.cohort= 1:4)
  
  
 
  # something like:
-full.probe <- expand.grid( DIprobe, DBHprobe,  struct.cohort= 1:4 )
+#full.probe <- expand.grid( DI.p, DBH.p, log_RWI_1.probe,  struct.cohort= 1:4 )
  
  Xp <- full.probe
  np <- length(Xp$Var1)
 
 
 reg.model.site_structure_x_cohort_sp6 <- jags.model(textConnection(site_model_structure_x_cohort_re_SP6_06 ), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$SP06_6, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
-   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$SP06_6, 
-   nprobe = length(full.p$Var1),
-   struct.cohort.probe = as.numeric(full.p$struct.cohort), DBH.scaled.probe = full.p$Var2, DI.scaled.probe = full.p$Var1
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$SP06_6, DBH.scaled = train$DBH.scaled, log_RWI_1 = log(train$RWI_1), struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$SP06_6, log_RWI_1.p = log(test$RWI_1),
+   nprobe = length(full.probe$DI.probe),
+   struct.cohort.probe = as.numeric(full.probe$struct.cohort), DBH.scaled.probe = full.probe$DBH.probe, DI.scaled.probe = full.probe$DI.probe, log_RWI_1.probe = full.probe$log_RWI_1.probe
    ), n.chains = 3, n.adapt = 100)
 
 update(reg.model.site_structure_x_cohort_sp6, 1000); # Burnin for 1000 samples to start, then go higher later
 
 
 samp.structure.site.cohort.re.sp6 <- coda.samples(reg.model.site_structure_x_cohort_sp6, 
-                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
+                     variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3","sigma_beta4", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
 #summary(samp.structure.site.cohort.re.sp6)
@@ -4169,12 +4452,13 @@ samp.structure.site.cohort.re.sp6 <- coda.samples(reg.model.site_structure_x_coh
  test  <- readRDS(test, "outputs/growth_model/site_reg_structure_cohort_re_sp6/test.rds")
  
  Yp.samps <- samps[,1:length(test$RWI)] 
- Yprobe.samps <-samps [,(length(test$RWI)+ 1):(length(test$RWI)+ length(full.p$Var1))]
- alpha.samps  <- samps[,(length(test$RWI)+length(full.p$Var1)+1):(length(test$RWI)+length(full.p$Var1)+4)]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+5):(length(test$RWI)+length(full.p$Var1)+8)]
- beta3.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+9):(length(test$RWI)+length(full.p$Var1)+12)]
- sigma.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+13)]
- sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+14):(length(test$RWI)+length(full.p$Var1)+16)]
+ Yprobe.samps <-samps [,(length(test$RWI)+ 1):(length(test$RWI)+ length(full.probe$DI.probe))]
+ alpha.samps  <- samps[,(length(test$RWI)+length(full.probe$DI.probe)+1):(length(test$RWI)+length(full.probe$DI.probe)+4)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+length(full.probe$DI.probe)+5):(length(test$RWI)+length(full.probe$DI.probe)+8)]
+ beta3.samps <- samps[,(length(test$RWI)+length(full.probe$DI.probe)+9):(length(test$RWI)+length(full.probe$DI.probe)+12)]
+  beta4.samps <- samps[,(length(test$RWI)+length(full.probe$DI.probe)+13):(length(test$RWI)+length(full.probe$DI.probe)+16)]
+ sigma.samps <- samps[,(length(test$RWI)+length(full.probe$DI.probe)+17)]
+ sigma_betas <- samps[,(length(test$RWI)+length(full.probe$DI.probe)+18):(length(test$RWI)+length(full.probe$DI.probe)+21)]
 
  
 
@@ -4466,7 +4750,7 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +  beta3[struct.cohort[i]]*DI.scaled2[i] + beta4[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +  beta3[struct.cohort[i]]*DI.scaled2[i] + beta4[struct.cohort[i]]*DBH.scaled[i] +beta5[struct.cohort[i]]*log_RWI_1[i]  # use Drought index as a scaled variable 
 
 
 }
@@ -4474,14 +4758,14 @@ gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +  be
 # Prediction of test data
   for(i in 1:np){
     Yp[i]  ~ dnorm(mup[i],inv.var)
-    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DI.scaled2.p[i] + beta4[struct.cohort.p[i]]*DBH.scaled.p[i] 
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DI.scaled2.p[i] + beta4[struct.cohort.p[i]]*DBH.scaled.p[i]+ beta5[struct.cohort.p[i]]*log_RWI_1.p[i]
   }
 
 # Prediction of probe data for plotting:
   for(i in 1:nprobe){
     Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
     muprobe[i] <- beta1[struct.cohort.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] +
- beta3[struct.cohort.probe[i]]*DI.scaled2.probe[i]+beta4[struct.cohort.probe[i]]*DBH.scaled.probe[i] 
+ beta3[struct.cohort.probe[i]]*DI.scaled2.probe[i]+beta4[struct.cohort.probe[i]]*DBH.scaled.probe[i]+beta5[struct.cohort.probe[i]]*log_RWI_1.probe[i] 
   }
 
 
@@ -4490,8 +4774,10 @@ for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
 beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
 beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
-beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta3)
+beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta4)
+beta5[s] ~ dnorm(mu_beta5[plot[s]], inv_beta5)
 }
+
 
 
 for(j in 1:length(ind)){
@@ -4500,7 +4786,7 @@ mu_beta1[j] ~ dnorm(0, 0.5)
 mu_beta2[j] ~ dnorm(0, 0.5)
 mu_beta3[j] ~ dnorm(0, 0.5)
 mu_beta4[j] ~ dnorm(0, 0.5)
-
+mu_beta5[j] ~ dnorm(0, 0.5)
 }
 
 inv_beta1   ~ dgamma(0.001, 0.001)
@@ -4511,7 +4797,8 @@ inv_beta3   ~ dgamma(0.001, 0.001)
 sigma_beta3 <- 1/sqrt(inv_beta3)
 inv_beta4   ~ dgamma(0.001, 0.001)
 sigma_beta4 <- 1/sqrt(inv_beta4)
-
+inv_beta5   ~ dgamma(0.001, 0.001)
+sigma_beta5 <- 1/sqrt(inv_beta5)
 
 # Non-informative Prior for the inverse population variances
 
@@ -4552,18 +4839,18 @@ unscale(vals = -1.4775, norm.data = DBH.scaled) # 10 cm
  DI.p2 <- seq(range(full.ghcn$SP06_6)[1], range(full.ghcn$SP06_6)[2], by = 0.5)
  DI.p <- seq(range(full.ghcn$SP01_6)[1], range(full.ghcn$SP01_6)[2], by = 0.5)
  DBH.p <- c(2.9355, 2.305,1.0441,0.414, -0.217, -0.8469, -1.4775 )# for 40 cm, 30 cm, 20cm, and 10 cm trees respectivly
- full.p <- expand.grid(DI.p,DI.p2, DBH.p,  struct.cohort= 1:4)
+ log_RWI_1.p <-  seq(range(log(train$RWI_1))[1], range(log(train$RWI_1))[2], by = 0.25)
+ full.p <- expand.grid(DI.p,DI.p2, DBH.p, log_RWI1.probe = log_RWI_1.p, struct.cohort= 1:4)
  
  
 
 
 
 reg.model.site_structure_x_cohort_sp1_sp6 <- jags.model(textConnection(site_model_structure_x_cohort_re_SP6_01_06 ), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$SP01_6, DI.scaled2 = train$SP06_6, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
-   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$SP01_6, DI.scaled2.p = test$SP06_6,
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$SP01_6, DI.scaled2 = train$SP06_6, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), log_RWI_1 = log(train$RWI_1), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$SP01_6, DI.scaled2.p = test$SP06_6, log_RWI_1.p = log(test$RWI_1),
    nprobe = length(full.p$Var1),
-   struct.cohort.probe = as.numeric(full.p$struct.cohort), DBH.scaled.probe = full.p$Var3, DI.scaled.probe = full.p$Var1, DI.scaled2.probe = full.p$Var2
-   ), n.chains = 3, n.adapt = 100)
+   struct.cohort.probe = as.numeric(full.p$struct.cohort), DBH.scaled.probe = full.p$Var3, DI.scaled.probe = full.p$Var1, DI.scaled2.probe = full.p$Var2,  log_RWI_1.probe = full.p$log_RWI1.probe), n.chains = 3, n.adapt = 100)
 
 update(reg.model.site_structure_x_cohort_sp1_sp6, 1000); # Burnin for 1000 samples to start, then go higher later
 
@@ -4590,8 +4877,9 @@ samp.structure.site.cohort.re.sp6.sp1 <- coda.samples(reg.model.site_structure_x
  beta2.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+5):(length(test$RWI)+length(full.p$Var1)+8)]
  beta3.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+9):(length(test$RWI)+length(full.p$Var1)+12)]
  beta4.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+13):(length(test$RWI)+length(full.p$Var1)+16)]
- sigma.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+17)]
- sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+18):(length(test$RWI)+length(full.p$Var1)+20)]
+ beta5.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+17):(length(test$RWI)+length(full.p$Var1)+20)]
+ sigma.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+21)]
+ sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+22):(length(test$RWI)+length(full.p$Var1)+26)]
 
  
 # plot predicted vs observed and assess model fit:
@@ -4811,7 +5099,7 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +  beta3[struct.cohort[i]]*DI.scaled2[i] + beta4[struct.cohort[i]]*DBH.scaled[i]+ beta5[struct.cohort[i]]*prevRWI.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +  beta3[struct.cohort[i]]*DI.scaled2[i] + beta4[struct.cohort[i]]*DBH.scaled[i]+ beta5[struct.cohort[i]]*log_RWI_1[i]   # use Drought index as a scaled variable 
 
 
 }
@@ -4819,14 +5107,14 @@ gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +  be
 # Prediction of test data
   for(i in 1:np){
     Yp[i]  ~ dnorm(mup[i],inv.var)
-    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DI.scaled2.p[i] + beta4[struct.cohort.p[i]]*DBH.scaled.p[i] 
+    mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DI.scaled2.p[i] + beta4[struct.cohort.p[i]]*DBH.scaled.p[i]+ beta5[struct.cohort.p[i]]*log_RWI_1.p[i]
   }
 
 # Prediction of probe data for plotting:
   for(i in 1:nprobe){
     Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
     muprobe[i] <- beta1[struct.cohort.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] +
- beta3[struct.cohort.probe[i]]*DI.scaled2.probe[i]+beta4[struct.cohort.probe[i]]*DBH.scaled.probe[i] 
+ beta3[struct.cohort.probe[i]]*DI.scaled2.probe[i]+beta4[struct.cohort.probe[i]]*DBH.scaled.probe[i]+beta5[struct.cohort.probe[i]]*log_RWI_1.probe[i] 
   }
 
 
@@ -4835,7 +5123,8 @@ for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
 beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
 beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
-beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta3)
+beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta4)
+beta5[s] ~ dnorm(mu_beta5[plot[s]], inv_beta5)
 }
 
 
@@ -4845,7 +5134,7 @@ mu_beta1[j] ~ dnorm(0, 0.5)
 mu_beta2[j] ~ dnorm(0, 0.5)
 mu_beta3[j] ~ dnorm(0, 0.5)
 mu_beta4[j] ~ dnorm(0, 0.5)
-
+mu_beta5[j] ~ dnorm(0, 0.5)
 }
 
 inv_beta1   ~ dgamma(0.001, 0.001)
@@ -4856,16 +5145,14 @@ inv_beta3   ~ dgamma(0.001, 0.001)
 sigma_beta3 <- 1/sqrt(inv_beta3)
 inv_beta4   ~ dgamma(0.001, 0.001)
 sigma_beta4 <- 1/sqrt(inv_beta4)
-
+inv_beta5   ~ dgamma(0.001, 0.001)
+sigma_beta5 <- 1/sqrt(inv_beta5)
 
 # Non-informative Prior for the inverse population variances
 
 #alpha_ref ~ dnorm(0,0.1)
 inv.var   ~ dgamma(0.0001, 0.0001)
 sigma     <- 1/sqrt(inv.var)
-
-
-
 
 
 }"
@@ -4898,37 +5185,38 @@ unscale(vals = -1.4775, norm.data = DBH.scaled) # 10 cm
  DI.p2 <- seq(range(full.ghcn$SP06_6)[1], range(full.ghcn$SP06_6)[2], by = 0.5)
  DI.p <- seq(range(full.ghcn$SP01_6)[1], range(full.ghcn$SP01_6)[2], by = 0.5)
  DBH.p <- c(2.9355, 2.305,1.0441,0.414, -0.217, -0.8469, -1.4775 )# for 40 cm, 30 cm, 20cm, and 10 cm trees respectivly
- full.p <- expand.grid(DI.p,DI.p2, DBH.p,  struct.cohort= 1:4)
+ log_RWI_1.p <-  seq(range(log(train$RWI_1))[1], range(log(train$RWI_1))[2], by = 0.25)
+ full.p <- expand.grid(DI.p,DI.p2, DBH.p, log_RWI1.probe = log_RWI_1.p, struct.cohort= 1:4)
  
  
 
 
 
-reg.model.site_structure_x_cohort_sp1_sp6 <- jags.model(textConnection(site_model_structure_x_cohort_re_SP6_01_06 ), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$SP01_6, DI.scaled2 = train$SP06_6, DBH.scaled = train$DBH.scaled, struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
-   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$SP01_6, DI.scaled2.p = test$SP06_6,
+reg.model.site_structure_x_cohort_sp1_sp6 <- jags.model(textConnection(site_model_structure_x_cohort_re_SP6_06_prevRWI ), 
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$SP01_6, DI.scaled2 = train$SP06_6, DBH.scaled = train$DBH.scaled, log_RWI_1 = log(train$RWI_1), struct.cohort = as.numeric(train$struct.cohort.code), S = unique(train$struct.cohort.code), plot = as.numeric(train$site), ind = unique(train$site),np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), log_RWI_1.p = log(test$RWI_1),DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$SP01_6, DI.scaled2.p = test$SP06_6,
    nprobe = length(full.p$Var1),
-   struct.cohort.probe = as.numeric(full.p$struct.cohort), DBH.scaled.probe = full.p$Var3, DI.scaled.probe = full.p$Var1, DI.scaled2.probe = full.p$Var2
+   struct.cohort.probe = as.numeric(full.p$struct.cohort), DBH.scaled.probe = full.p$Var3, DI.scaled.probe = full.p$Var1, DI.scaled2.probe = full.p$Var2, log_RWI_1.probe = full.p$log_RWI1.probe
    ), n.chains = 3, n.adapt = 100)
 
 update(reg.model.site_structure_x_cohort_sp1_sp6, 1000); # Burnin for 1000 samples to start, then go higher later
 
 
 samp.structure.site.cohort.re.sp6.sp1 <- coda.samples(reg.model.site_structure_x_cohort_sp1_sp6, 
-                     variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
+                     variable.names=c("beta1", "beta2","beta3","beta4","beta5","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3","sigma_beta4", "sigma_beta5","Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
-summary(samp.structure.site.cohort.re.sp6)
-plot(samp.structure.site.cohort.re.sp6)
+#summary(samp.structure.site.cohort.re.sp6)
+#plot(samp.structure.site.cohort.re.sp6)
 
-gelman.diag(samp.structure.site.cohort.re.sp6)
-acfplot(samp.structure.site.cohort.re.sp6)
+#gelman.diag(samp.structure.site.cohort.re.sp6)
+#acfplot(samp.structure.site.cohort.re.sp6)
 
 #Extract the samples for each parameter for a basic exploration of effects
 
  samps       <- samp.structure.site.cohort.re.sp6.sp1 [[1]]
- saveRDS(samps, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/samps.rds")
- test  <- readRDS(test, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/test.rds")
+ saveRDS(samps, "outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/samps.rds")
+samps  <- readRDS("outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/sampsrds")
  
  Yp.samps <- samps[,1:length(test$RWI)] 
  Yprobe.samps <-samps [,(length(test$RWI)+ 1):(length(test$RWI)+ length(full.p$Var1))]
@@ -4936,8 +5224,9 @@ acfplot(samp.structure.site.cohort.re.sp6)
  beta2.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+5):(length(test$RWI)+length(full.p$Var1)+8)]
  beta3.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+9):(length(test$RWI)+length(full.p$Var1)+12)]
  beta4.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+13):(length(test$RWI)+length(full.p$Var1)+16)]
- sigma.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+17)]
- sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+18):(length(test$RWI)+length(full.p$Var1)+20)]
+  beta4.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+17):(length(test$RWI)+length(full.p$Var1)+20)]
+ sigma.samps <- samps[,(length(test$RWI)+length(full.p$Var1)+21)]
+ sigma_betas <- samps[,(length(test$RWI)+length(full.p$Var1)+22):(length(test$RWI)+length(full.p$Var1)+26)]
 
  
 # plot predicted vs observed and assess model fit:
@@ -4953,7 +5242,7 @@ pred.obs <- summary(lm(colMeans(exp(Yp.samps))~ test$RWI))
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
 # note poor model fit!
-png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/pred_vs_obs.png")
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/pred_vs_obs.png")
 p.o.plot
 dev.off()
 
@@ -4965,7 +5254,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
-model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp1_sp6", 
+model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp06_sp01_lag", 
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -4984,7 +5273,7 @@ threeminusfour <- beta2.samps[,3] - beta2.samps[,4]
 # get posterior predictive density
 
 # plot marginal distributions of each parameter:
-png("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/marginal_alphas.png")
+png("outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/marginal_alphas.png")
 par(mfrow=c(3,2))
 hist(alpha.samps[,1], main = "alpha Past-Forest")
 hist(alpha.samps[,2], main = "alpha Modern-Forest")
@@ -4993,7 +5282,7 @@ hist(alpha.samps[,4],  main = "alpha Modern-Savanna")
 hist(sigma_betas[,1], main = "sigma alpha")
 dev.off()
 
-png("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/marginal_beta1s.png")
+png("outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/marginal_beta1s.png")
 par(mfrow=c(3,2))
 hist(beta2.samps[,1], main = "beta2 Past-Forest")
 hist(beta2.samps[,2], main = "beta2 Modern-Forest")
@@ -5002,7 +5291,7 @@ hist(beta2.samps[,4],  main = "beta2 Modern-Savanna")
 hist(sigma_betas[,2], main = "sigma beta2")
 dev.off()
 
-png("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/marginal_beta2s.png")
+png("outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/marginal_beta2s.png")
 par(mfrow=c(3,2))
 hist(beta3.samps[,1], main = "beta3 Past-Forest")
 hist(beta3.samps[,2], main = "beta3 Modern-Forest")
@@ -5011,7 +5300,7 @@ hist(beta3.samps[,4],  main = "beta3 Modern-Savanna")
 hist(sigma_betas[,3], main = "sigma beta3")
 dev.off()
 
-png("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/marginal_beta2s.png")
+png("outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/marginal_beta2s.png")
 par(mfrow=c(3,2))
 hist(beta4.samps[,1], main = "beta4 Past-Forest")
 hist(beta4.samps[,2], main = "beta4 Modern-Forest")
@@ -5049,7 +5338,7 @@ b4.mplots <- ggplot(b4.m, aes(value,1, fill = variable))+stat_density_ridges(qua
 
 
 library(cowplot)
-png(width = 5, height = 8, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/param_marginal_distn_bycohort_struct.png")
+png(width = 5, height = 8, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/param_marginal_distn_bycohort_struct.png")
 cowplot::plot_grid(alpha.mplots, b2.mplots, b3.mplots, b4.mplots,ncol = 1)
 dev.off()
 
@@ -5062,12 +5351,12 @@ probe.m$RWI <- exp(probe.m$value)
 colnames(probe.m) <- c("num", "Ypred", "RWI")
 
 full.p$num <- 1:length(full.p[,1])
-colnames(full.p) <- c("SP01","SP06", "DBH", "struct.cohort", "num")
+colnames(full.p) <- c("SP01","SP06", "DBH","log_RWI.probe", "struct.cohort", "num")
 
 # summarize by structure + cohort class only:
 prob <- merge(probe.m, full.p, by = "num")
-preds_ci <- prob %>% group_by(num, DBH,SP01, SP06, struct.cohort) %>% dplyr::summarise(meanY = mean(RWI),
-                                                                            Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
+preds_ci <- prob %>% group_by(num, DBH,SP01, SP06, struct.cohort) %>% dplyr::summarise(meanY = mean(exp(RWI)),
+                                                                            Ci.low = quantile(exp(RWI), 0.025), Ci.high = quantile(RWI, 0.975))
 
 ggplot(preds_ci, aes(SP01, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()+facet_wrap(~as.factor(DBH))
 
@@ -5100,7 +5389,7 @@ preds.gg <- ggplot(preds_ci_mod_past, aes(SP06, meanY, color = as.factor(ageclas
   geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+stat_smooth()+facet_grid(rows = vars(SP01), cols = vars(DBH.class))+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-png(height = 10, width = 10, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/predicted_growth_mod_past_SP01_CI.png")
+png(height = 10, width = 10, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/predicted_growth_mod_past_SP01_CI.png")
 preds.gg
 dev.off()
 
@@ -5111,7 +5400,7 @@ gg.tile.past.mod2 <- ggplot(preds_ci_mod_past, aes(SP06, DBH.class, fill = meanY
 gg.tile.past.mod2 <- ggplot(preds_ci_mod_past, aes(SP06, DBH.class, fill = meanY))+geom_raster()+facet_grid(rows = vars(SP01),cols = vars(ageclass))+scale_fill_distiller(palette = "BrBG", direction = 1, name = "Tree \nGrowth")+ylab("Tree diameter")+xlab("SPEI - 6 month")+theme_bw(base_size = 12)
 
 
-png(height = 4, width = 3, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/predicted_growth_mod_past_tile.png")
+png(height = 4, width = 3, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/predicted_growth_mod_past_tile.png")
 gg.tile.past.mod
 dev.off()
 
@@ -5139,7 +5428,7 @@ gg.tile.past.mod.cohort <- ggplot(preds_ci_age_struct, aes(SP06, DBH.class, fill
 
 gg.tile.past.mod.cohort <- ggplot(preds_ci_age_struct, aes(SP01, DBH.class, fill = meanY))+geom_raster()+facet_grid(cols = vars(cohorts), rows = vars(SP06))+scale_fill_distiller(palette = "BrBG", direction = 1, name = "Tree \nGrowth")+ylab("Tree diameter")+xlab("SP01")+theme_bw(base_size = 12)
 
-png(height = 8, width = 10, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/predicted_growth_mod_past_forest_sav_tile_sp6.png")
+png(height = 8, width = 10, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp06_sp01_lag/predicted_growth_mod_past_forest_sav_tile_sp6.png")
 gg.tile.past.mod.cohort
 dev.off()
 
@@ -5158,7 +5447,7 @@ for(i in 1:n){
 Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*VPD.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable 
+gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*VPD.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]+ beta4[cohort[i]]*log_RWI_1[i]  # use Drought index as a scaled variable 
 }
 
 
@@ -5168,6 +5457,7 @@ for(s in 1:length(S)){
 beta1[s] ~ dnorm(mu_beta1[plot[s]], inv_beta1)
 beta2[s] ~ dnorm(mu_beta2[plot[s]], inv_beta2)
 beta3[s] ~ dnorm(mu_beta3[plot[s]], inv_beta3)
+beta4[s] ~ dnorm(mu_beta4[plot[s]], inv_beta4)
 }
 
 
@@ -5176,7 +5466,7 @@ for(j in 1:length(ind)){
 mu_beta1[j] ~ dnorm(0, 0.5)
 mu_beta2[j] ~ dnorm(0, 0.5)
 mu_beta3[j] ~ dnorm(0, 0.5)
-
+mu_beta4[j] ~ dnorm(0, 0.5)
 }
 
 inv_beta1   ~ dgamma(0.001, 0.001)
@@ -5185,6 +5475,8 @@ inv_beta2   ~ dgamma(0.001, 0.001)
 sigma_beta2 <- 1/sqrt(inv_beta2)
 inv_beta3   ~ dgamma(0.001, 0.001)
 sigma_beta3 <- 1/sqrt(inv_beta3)
+inv_beta4   ~ dgamma(0.001, 0.001)
+sigma_beta4 <- 1/sqrt(inv_beta4)
 
 
 # Non-informative Prior for the inverse population variances
@@ -5199,20 +5491,20 @@ for(i in 1:np){
 Yp[i]   ~ dnorm(gfuncp[i], inv.var) # where Yi is already log transformed
 
 # function g()
-gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*VPD.scaled.p[i] + beta3[cohort.p[i]]*DBH.scaled.p[i]   # use Drought index as a scaled variable 
+gfuncp[i] <- beta1[cohort.p[i]] + beta2[cohort.p[i]]*VPD.scaled.p[i] + beta3[cohort.p[i]]*DBH.scaled.p[i] + beta4[cohort.p[i]]*log_RWI_1.p[i]  # use Drought index as a scaled variable 
 }
 
 }"
 
 cohort.model.VPD.re <- jags.model(textConnection(cohort_model_site_VPD_re ), 
-                    data = list(Y=log(full.ghcn$RWI), n=length(full.ghcn$RWI), VPD.scaled = full.ghcn$jja.VPDmax.scaled, DBH.scaled = full.ghcn$DBH.scaled, cohort = as.numeric(full.ghcn$ageclass), S = unique(full.ghcn$ageclass),
-                    plot = as.numeric(full.ghcn$site), ind = unique(full.ghcn$site), np = length(test$DBH.scaled),  VPD.scaled.p = test$jja.VPDmax.scaled, DBH.scaled.p = test$DBH.scaled, cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
+                    data = list(Y=log(train$RWI), n=length(train$RWI), VPD.scaled = train$jja.VPDmax.scaled, DBH.scaled = train$DBH.scaled, log_RWI_1 = log(train$RWI_1), cohort = as.numeric(train$ageclass), S = unique(train$ageclass),
+                    plot = as.numeric(train$site), ind = unique(train$site), np = length(test$DBH.scaled),  VPD.scaled.p = test$jja.VPDmax.scaled, DBH.scaled.p = test$DBH.scaled, log_RWI_1.p = log(test$RWI_1), cohort.p = as.numeric(test$ageclass), SP = unique(test$ageclass),
                     plot.p = as.numeric(test$site), ind.p = unique(test$site)), n.chains = 3, n.adapt = 100)
 
 update(cohort.model.VPD.re , 2000); # Burnin for 1000 samples to start, then go higher later
 
 samp <- coda.samples(cohort.model.VPD.re , 
-                     variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3", "mu_beta1", "mu_beta2", "mu_beta3", "Yp"), 
+                     variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3","sigma_beta4", "mu_beta1", "mu_beta2", "mu_beta3", "mu_beta4","Yp"), 
                     n.chains = 3, n.iter=2000, thin = 10)
 
 summary(samp)
@@ -5223,16 +5515,18 @@ gelman.diag(samp)
 
  samps       <- samp[[1]]
  saveRDS(samps, "outputs/growth_model/basic_reg_cohort_site_VPD_re/samps.rds")
- Yp.samps    <- samps[,1:2756] 
+ Yp.samps    <- samps[,1:length(test$RWI)] 
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
- alpha.samps  <- samps[,2757:2758]
- beta2.samps <- samps[,2759:2760]
- beta3.samps <- samps[,2761:2762]
- mu_beta1.samps <- samps[,2763:2776]
- mu_beta2.samps <- samps[,2777:2790]
- mu_beta3.samps <- samps[,2791:2804]
- sigma.samps <- samps[,2805]
- sigma_betas <- samps[,2806:2808]
+ alpha.samps  <- samps[,(length(test$RWI)+1):(length(test$RWI)+2)]
+ beta2.samps <- samps[,(length(test$RWI)+3):(length(test$RWI)+4)]
+ beta3.samps <- samps[,(length(test$RWI)+5):(length(test$RWI)+6)]
+ beta4.samps <- samps[,(length(test$RWI)+7):(length(test$RWI)+8)]
+ mu_beta1.samps <- samps[,(length(test$RWI)+9):(length(test$RWI)+10)]
+ mu_beta2.samps <- samps[,(length(test$RWI)+11):(length(test$RWI)+12)]
+ mu_beta3.samps <- samps[,(length(test$RWI)+13):(length(test$RWI)+14)]
+ mu_beta4.samps <- samps[,(length(test$RWI)+15):(length(test$RWI)+16)]
+ sigma.samps <- samps[,(length(test$RWI)+17)]
+ sigma_betas <- samps[,(length(test$RWI)+18):(length(test$RWI)+21)]
 
  
  
