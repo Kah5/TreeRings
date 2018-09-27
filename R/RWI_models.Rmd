@@ -2707,10 +2707,16 @@ gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   b
 
 #RSS[1] <- sum(r1^2)
 
-# Prediction
+# Prediction from known data
   for(i in 1:np){
     Yp[i]  ~ dnorm(mup[i],inv.var)
     mup[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4[struct.cohort.p[i]]*log_RWI_1.p[i] +beta5[struct.cohort.p[i]]*log_RWI_2.p[i] + beta6[struct.cohort.p[i]]*Temp.scaled.p[i]
+  }
+
+# probe for prediction plots:
+  for(i in 1:nprobe){
+    Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
+    muprobe[i] <- beta1[struct.cohort.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] + beta3[struct.cohort.probe[i]]*DBH.scaled.probe[i] +beta4[struct.cohort.probe[i]]*log_RWI_1.probe[i] +beta5[struct.cohort.probe[i]]*log_RWI_2.probe[i] + beta6[struct.cohort.probe[i]]*Temp.scaled.probe[i]
   }
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
@@ -2763,18 +2769,30 @@ sigma     <- 1/sqrt(inv.var)
 saveRDS(train, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/train.rds")
 saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/test.rds")
 
+# generate probe dataset:
+ DIprobe <- seq(range(train$DI.scaled)[1], range(train$DI.scaled)[2], by = 0.75)
+ DBHprobe <- seq(range(train$DBH.scaled)[1], range(train$DBH.scaled)[2], by = 0.75)
+ Tempprobe <- seq(range(train$T.scaled)[1], range(train$T.scaled)[2], by = 0.75)
+ RWI1probe <- seq(range(log(train$RWI_1))[1], range(log(train$RWI_1))[2], by = 0.5)
+ RWI2probe <- seq(range(log(train$RWI_2))[1], range(log(train$RWI_2))[2], by = 0.5)
+ 
+ # expand into full probe
+probe <- expand.grid(DI.scaled = DIprobe, DBH.scaled = DBHprobe, T.scaled = Tempprobe,
+                         RWI_1 = RWI1probe, RWI_2= RWI2probe ,struct.cohort.code= 1:4)
+
 
 
 lag2.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re_lag2_temp), 
                     data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
-   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled), n.chains = 3, n.adapt = 100)
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled, nprobe = length(probe$DBH.scaled),
+   struct.cohort.probe = as.numeric(probe$struct.cohort.code), DBH.scaled.probe = probe$DBH.scaled, DI.scaled.probe = probe$DI.scaled, log_RWI_1.probe = probe$RWI_1, log_RWI_2.probe = probe$RWI_2, Temp.scaled.probe = probe$T.scaled), n.chains = 3, n.adapt = 100)
 
 update(lag2.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to start, then go higher later
 
 
 samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort, 
-                     variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5", "sigma_beta6","Yp"), 
-                    n.chains = 3, n.iter=20000, thin = 15)
+                     variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5", "sigma_beta6","Yp", "Yprobe"), 
+                    n.chains = 3, n.iter=2000, thin = 15)
 
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
@@ -2787,16 +2805,19 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort,
  samps       <- samp.structure.cohort.re[[1]]
  saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t/samps.rds")
   samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t/samps.rds")
+test <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t/test.rds")
+train <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t/train.rds")
 
  Yp.samps <- samps[,1:(length(test$RWI))] 
- alpha.samps  <- samps[,(length(test$RWI)+ 1):(length(test$RWI)+ 4)]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps <- samps[,(length(test$RWI)+ 5):(length(test$RWI)+ 8)]
- beta3.samps <- samps[,(length(test$RWI)+ 9):(length(test$RWI)+ 12)]
- beta4.samps <- samps[,(length(test$RWI)+ 13):(length(test$RWI)+ 16)]
- beta5.samps <- samps[,(length(test$RWI)+ 17):(length(test$RWI)+ 20)]
- beta6.samps <- samps[,(length(test$RWI)+ 21):(length(test$RWI)+ 24)]
- sigma.samps <- samps[,(length(test$RWI)+ 25)]
- sigma_betas <- samps[,(length(test$RWI)+ 26):(length(test$RWI)+ 31)]
+Yprobe.samps <- samps[,(length(test$RWI)+1):(length(probe$DI.scaled))] 
+ alpha.samps  <- samps[,(length(test$RWI)+ (length(probe$DI.scaled))+1):(length(test$RWI)+(length(probe$DI.scaled))+ 4)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test$RWI)+ (length(probe$DI.scaled))+5):(length(test$RWI)+ (length(probe$DI.scaled))+8)]
+ beta3.samps <- samps[,(length(test$RWI)+ (length(probe$DI.scaled))+9):(length(test$RWI)+ (length(probe$DI.scaled))+12)]
+ beta4.samps <- samps[,(length(test$RWI)+ (length(probe$DI.scaled))+13):(length(test$RWI)+(length(probe$DI.scaled))+ 16)]
+ beta5.samps <- samps[,(length(test$RWI)+(length(probe$DI.scaled))+ 17):(length(test$RWI)+(length(probe$DI.scaled))+ 20)]
+ beta6.samps <- samps[,(length(test$RWI)+(length(probe$DI.scaled))+ 21):(length(test$RWI)+(length(probe$DI.scaled))+ 24)]
+ sigma.samps <- samps[,(length(test$RWI)+ (length(probe$DI.scaled))+25)]
+ sigma_betas <- samps[,(length(test$RWI)+(length(probe$DI.scaled))+ 26):(length(test$RWI)+(length(probe$DI.scaled))+ 31)]
 
  
  
@@ -2812,7 +2833,7 @@ pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ test$RWI))
 
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
 
-# note poor model fit!
+# note best model fit so far
 png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/pred_vs_obs.png")
 p.o.plot
 dev.off()
@@ -2973,6 +2994,63 @@ library(cowplot)
 png(width = 5, height = 10, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/param_marginal_distn_bycohort_struct.png")
 plot_grid(alpha.mplots, b2.mplots, b3.mplots,b4.mplots, b5.mplots,ncol = 1)
 dev.off()
+
+# --------------------make plots of probed predicted growth responses:
+# plot probed values of tree growth predictions:
+Yprobe <- data.frame(Yprobe.samps)
+colnames(Yprobe) <- 1:length(Yprobe)
+probe.m <- melt(Yprobe)
+probe.m$RWI <- exp(probe.m$value) 
+colnames(probe.m) <- c("num", "Ypred", "RWI")
+
+probe$num <- 1:length(probe[,1])
+colnames(probe) <- c("Drought", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort", "num")
+
+# summarize by structure + cohort class only:
+prob <- merge(probe.m, probe, by = "num")
+preds_ci <- prob %>% group_by(num, DBH,Drought,Tmax, RWI_1,RWI_2,struct.cohort) %>% summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
+
+ggplot(preds_ci, aes(Drought, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()+facet_wrap(~as.factor(DBH))
+
+
+
+ggplot(prob, aes(x = Ypred, y = as.factor(Drought))) + 
+  geom_density_ridges()+facet_grid(~ DBH)+coord_flip()
+
+# summarize by ageclass only:
+prob$ageclass <- ifelse(prob$struct.cohort %in% c("1", "3"),"Past","Modern")
+dbh.df <- data.frame(DBH = unique(prob$DBH)[order(unique(prob$DBH))], DBH.class = c("10cm", "20cm", "30cm", "40cm", "50cm", "60cm","70cm", "80cm"))
+
+
+prob <- merge(dbh.df, prob, by = "DBH")
+
+preds_ci_mod_past <- prob %>% group_by( DBH.class,Drought,Tmax,RWI_1,RWI_2, ageclass) %>% summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
+
+preds_ci_mod_past$DBH.class <- factor(preds_ci_mod_past$DBH.class, levels = c("10cm", "20cm", "30cm", "40cm", "50cm", "60cm", "70cm"))
+preds_ci_mod_past$PDSI <- unscale(preds_ci_mod_past$Drought, norm.data = DI.scaled)
+
+preds.gg <- ggplot(preds_ci_mod_past, aes(PDSI, meanY, color = as.factor(ageclass)))+
+  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+stat_smooth()+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+ 
+
+
+png(height = 8, width = 8, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/predicted_growth_mod_past_CI.png")
+preds.gg
+dev.off()
+
+
+preds_ci_mod_past$ageclass <- factor(preds_ci_mod_past$ageclass, levels = c("Past", "Modern"))
+gg.tile.past.mod <- ggplot(preds_ci_mod_past, aes(PDSI, DBH.class, fill = meanY))+geom_raster()+facet_wrap(~ageclass, ncol = 1)+scale_fill_distiller(palette = "BrBG", direction = 1, name = "Tree \nGrowth")+ylab("Tree diameter")+xlab("Palmer Drought Severity Index")+theme_bw(base_size = 12)
+
+
+png(height = 4, width = 3, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re/predicted_growth_mod_past_tile.png")
+gg.tile.past.mod
+dev.off()
+
+
+
 
 ```
  
@@ -4832,14 +4910,16 @@ unscale(vals = -0.217, norm.data = DBH.scaled) # 30 cm
 unscale(vals = -0.8469, norm.data = DBH.scaled) # 20 cm
 unscale(vals = -1.4775, norm.data = DBH.scaled) # 10 cm
 
+unscale(vals = -5, norm.data = DI.scaled) # 10 cm
+
 
  SPprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
  DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
  
- DI.p2 <- seq(range(full.ghcn$SP06_6)[1], range(full.ghcn$SP06_6)[2], by = 0.5)
- DI.p <- seq(range(full.ghcn$SP01_6)[1], range(full.ghcn$SP01_6)[2], by = 0.5)
+ DI.p2 <- round(seq(range(full.ghcn$SP06_6)[1], range(full.ghcn$SP06_6)[2], by = 0.5),3)
+ DI.p <- round(seq(range(full.ghcn$SP01_6)[1], range(full.ghcn$SP01_6)[2], by = 0.5),3)
  DBH.p <- c(2.9355, 2.305,1.0441,0.414, -0.217, -0.8469, -1.4775 )# for 40 cm, 30 cm, 20cm, and 10 cm trees respectivly
- log_RWI_1.p <-  seq(range(log(train$RWI_1))[1], range(log(train$RWI_1))[2], by = 0.25)
+ log_RWI_1.p <-  round(seq(range(log(train$RWI_1))[1], range(log(train$RWI_1))[2], by = 0.25), 3)
  full.p <- expand.grid(DI.p,DI.p2, DBH.p, log_RWI1.probe = log_RWI_1.p, struct.cohort= 1:4)
  
  
@@ -4869,7 +4949,8 @@ samp.structure.site.cohort.re.sp6.sp1 <- coda.samples(reg.model.site_structure_x
 
  samps       <- samp.structure.site.cohort.re.sp6.sp1 [[1]]
  saveRDS(samps, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/samps.rds")
- test  <- readRDS(test, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/test.rds")
+ samps <- readRDS( "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/samps.rds")
+ test  <- readRDS("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/test.rds")
  
  Yp.samps <- samps[,1:length(test$RWI)] 
  Yprobe.samps <-samps [,(length(test$RWI)+ 1):(length(test$RWI)+ length(full.p$Var1))]
@@ -4988,10 +5069,15 @@ b4$num <- as.numeric(rownames(b4))
 b4.m <- melt(b4, id.vars=c("num"))
 b4.mplots <- ggplot(b4.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), alpha = 0.5)+theme_black()+ylab("frequency")+xlab("DBH random slopes")
 
+b5 <- data.frame(beta5.samps)
+colnames(b5) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+b5$num <- as.numeric(rownames(b5))
+b5.m <- melt(b5, id.vars=c("num"))
+b5.mplots <- ggplot(b5.m, aes(value,1, fill = variable))+stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, 0.95), alpha = 0.5)+theme_black()+ylab("frequency")+xlab("Lag-1 random slopes")
 
 library(cowplot)
 png(width = 5, height = 8, units = "in", res = 300, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/param_marginal_distn_bycohort_struct.png")
-cowplot::plot_grid(alpha.mplots, b2.mplots, b3.mplots, b4.mplots,ncol = 1)
+cowplot::plot_grid(alpha.mplots, b2.mplots, b3.mplots, b4.mplots, b5.mplots,ncol = 1)
 dev.off()
 
 
@@ -5003,11 +5089,15 @@ probe.m$RWI <- exp(probe.m$value)
 colnames(probe.m) <- c("num", "Ypred", "RWI")
 
 full.p$num <- 1:length(full.p[,1])
-colnames(full.p) <- c("SP01","SP06", "DBH", "struct.cohort", "num")
+colnames(full.p) <- c("SP01","SP06", "DBH","Log_lag_RWI_1", "struct.cohort", "num")
 
 # summarize by structure + cohort class only:
-prob <- merge(probe.m, full.p, by = "num")
-preds_ci <- prob %>% group_by(num, DBH,SP01, SP06, struct.cohort) %>% dplyr::summarise(meanY = mean(RWI),
+full.p$num <- as.factor(as.character(full.p$num))
+probtest <- dplyr::inner_join(probe.m, full.p, by=c("num"))
+
+prob <- probtest
+
+preds_ci <- prob %>% group_by(num, DBH,SP01, SP06,Log_lag_RWI_1, struct.cohort) %>% dplyr::summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
 
 ggplot(preds_ci, aes(SP01, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()+facet_wrap(~as.factor(DBH))
@@ -5018,7 +5108,38 @@ ggplot(prob, aes(x = Ypred, y = as.factor(SP01))) +
 ggplot(prob, aes(x = Ypred, y = as.factor(SP06))) + 
   geom_density_ridges()+facet_grid(~ DBH)+coord_flip()
 
-# summarize by ageclass only:
+saveRDS(prob, "outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/full_yprobe_preds.rds")
+prob <- readRDS("outputs/growth_model/site_reg_structure_cohort_re_sp1_sp6/full_yprobe_preds.rds")
+
+# plot response to sp01-drought for small and large DBH trees in savanna + forest for modern + past
+# with sp06 = very droughty, an average prev years growth:
+
+prob_10_60cm_avg <- prob %>% filter(DBH == -0.8469 | DBH ==  2.3050, Log_lag_RWI_1 == 0.284, SP06 == -3.09 | SP06 == -1.09 | SP06 == 2.91 ) 
+
+preds_ci_10 <- prob_10_60cm_avg %>% group_by(DBH, SP01,SP06, struct.cohort) %>% dplyr::summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+#prob_40cm_avg <- filter(prob, DBH == -0.8469 | DBH == -0.8469, SP06 == 0.41, Log_lag_RWI_1 == 0.03388714)
+
+ggplot(preds_ci_10, aes(SP01, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()+facet_grid(~DBH + SP06)
+
+ggplot(preds_ci_10, aes(SP01, meanY, color = as.factor(DBH)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()+facet_grid(~struct.cohort+SP06)
+
+
+# same plots 
+prob_10_60cm_avg <- dplyr::filter(prob, DBH == -0.8469) 
+
+preds_ci_10 <- prob_10_60cm_avg %>% group_by( SP01, struct.cohort) %>% dplyr::summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
+#prob_40cm_avg <- filter(prob, DBH == -0.8469 | DBH == -0.8469, SP06 == 0.41, Log_lag_RWI_1 == 0.03388714)
+
+
+ggplot(preds_ci_10, aes(SP01, meanY, color = as.factor(struct.cohort)))+geom_point()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high), alpha = 0.1, fill = "grey60", linetype = "dashed")+stat_smooth()
+
+
+
+
+
+# -----------------------------summarize by ageclass only:---------------------------------
 prob$ageclass <- ifelse(prob$struct.cohort %in% c("1", "3"),"Past","Modern")
 dbh.df <- data.frame(DBH = unique(prob$DBH)[order(unique(prob$DBH))], DBH.class = c("10cm", "20cm", "30cm", "40cm", "50cm", "60cm","70cm"))
 
