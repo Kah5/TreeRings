@@ -3532,44 +3532,55 @@ prob$Tmax <- as.numeric(round(unscale(vals = prob$Tmax, norm.data = T.scaled)))
 prob_10_60cm_avg <- prob %>% dplyr::filter(DBH == 3 | DBH == 27 | DBH == 63 , Tmax == 72 | Tmax == 89, RWI_1 == 0.285, RWI_2 == 0.103 ) 
 
  struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
+ struc.conversion$ageclass <- ifelse(struc.conversion$cohort %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
  prob_10_60cm_avg <- merge(prob_10_60cm_avg,struc.conversion, by  = "struct.cohort")
  
  
 preds_ci_10 <- prob_10_60cm_avg %>% group_by(DBH, Drought, Tmax, struct.cohort, cohort) %>% dplyr::summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
+preds_ci_10_age <- prob_10_60cm_avg %>% group_by(DBH, Drought, Tmax, ageclass) %>% dplyr::summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+
 # same thing but with LOWER than average tree growth the years before:
 
 prob_10_60cm_low <- prob %>% dplyr::filter(DBH == 3 | DBH == 27 | DBH == 63 , Tmax == 72 | Tmax == 89, RWI_1 == -1.215, RWI_2 == -1.397  ) 
 
- struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
- prob_10_60cm_low <- merge(prob_10_60cm_low,struc.conversion, by  = "struct.cohort")
+ 
+ prob_10_60cm_low <- merge(prob_10_60cm_low, struc.conversion, by  = "struct.cohort")
  
  
 preds_ci_10_low <- prob_10_60cm_low %>% group_by(DBH, Drought, Tmax, struct.cohort, cohort) %>% dplyr::summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+
+
+preds_ci_10_low_age <- prob_10_60cm_low %>% group_by(DBH, Drought, Tmax, ageclass) %>% dplyr::summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
 # same thing but with HIGHER than average tree growth the years before:
 
 prob_10_60cm_high <- prob %>% dplyr::filter(DBH == 3 | DBH == 27 | DBH == 63 , Tmax == 72 | Tmax == 89, RWI_1 == 1.785, RWI_2 == 1.603  ) 
 
- struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
- prob_10_60cm_high <- merge(prob_10_60cm_high,struc.conversion, by  = "struct.cohort")
+
+ prob_10_60cm_high <- merge(prob_10_60cm_high, struc.conversion, by  = "struct.cohort")
  
  
 preds_ci_10_high <- prob_10_60cm_high %>% group_by(DBH, Drought, Tmax, struct.cohort, cohort) %>% dplyr::summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
+preds_ci_10_high_age <- prob_10_60cm_high %>% group_by(DBH, Drought, Tmax, ageclass) %>% dplyr::summarise(meanY = mean(RWI),
+                                                                            Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+
 #----------- plot drought response by max temperature and Dimaeter + cohort-struct class -----------
 
-Drought.resp.DBH.temp.avgpyr <- ggplot(preds_ci_10, aes(Drought, meanY, color = cohort))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.1, linetype = "dashed")+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+ylab("Tree growth (mm)")+xlab("MAP index")
+Drought.resp.DBH.temp.avgpyr <- ggplot(preds_ci_10, aes(Drought, meanY, color = cohort))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, linetype = "dashed", colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+ylab("Tree growth (mm)")+xlab("Precipitation index")+theme_bw()
 
 
 
-Drought.resp.DBH.temp.lowpyr <- ggplot(preds_ci_10_low, aes(Drought, meanY, color = cohort))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.1, linetype = "dashed")+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+xlab("MAP index")
+Drought.resp.DBH.temp.lowpyr <- ggplot(preds_ci_10_low, aes(Drought, meanY, color = cohort))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, linetype = "dashed", colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+xlab("Precipitation index")+theme_bw()
 
 
-Drought.resp.DBH.temp.highpyr <- ggplot(preds_ci_10_high, aes(Drought, meanY, color = cohort))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.1, linetype = "dashed")+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+xlab("MAP index")
+Drought.resp.DBH.temp.highpyr <- ggplot(preds_ci_10_high, aes(Drought, meanY, color = cohort))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, linetype = "dashed", colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+xlab("Precipitation index")+theme_bw()
 
 
 # output the above plots to PNG:
@@ -3586,6 +3597,32 @@ Drought.resp.DBH.temp.highpyr
 dev.off()
 
 
+#----------- plot drought response by max temperature and Dimaeter + AGECLASS -----------
+
+Drought.resp.DBH.temp.avgpyr.age <- ggplot(preds_ci_10_age, aes(Drought, meanY, color = ageclass))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+ylab("Predicted Tree growth (mm)")+xlab("Precipitation index")+theme_bw()
+
+
+
+
+Drought.resp.DBH.temp.lowpyr.age <- ggplot(preds_ci_10_low_age, aes(Drought, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_10_low_age,aes(ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+ylab("Predicted Tree growth (mm)")+xlab("Precipitation index")+theme_bw()
+
+
+Drought.resp.DBH.temp.highpyr.age <- ggplot(preds_ci_10_high_age, aes(Drought, meanY, color = ageclass))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+facet_grid(vars(DBH), vars(Tmax),labeller=label_both)+ylab("Predicted Tree growth (mm)")+xlab("Precipitation index")+theme_bw()
+
+
+# output the above plots to PNG:
+png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/MAP_response_low_prevyr_high_temp_low_high_DBH_ageclass.png")
+Drought.resp.DBH.temp.lowpyr.age 
+dev.off()
+
+png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/MAP_response_avg_prevyr_high_temp_low_high_DBH_ageclass.png")
+Drought.resp.DBH.temp.avgpyr.age
+dev.off()
+
+png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/MAP_response_high_prevyr_high_temp_low_high_DBH_ageclass.png")
+Drought.resp.DBH.temp.highpyr.age 
+dev.off()
+
 
 
 #------- get sensitivity to temperature by dbh, site, etc.
@@ -3601,79 +3638,75 @@ prob$ageclass <- ifelse(prob$struct.cohort %in% c("1", "3"),"Past","Modern")
 dbh.df <- data.frame(DBH = unique(prob$DBH)[order(unique(prob$DBH))], DBH.class = c("3cm", "15cm", "30cm", "40cm", "50cm", "60cm"))
 
 
-prob <- merge(dbh.df, prob, by = "DBH")
+prob.dbh.classes <- left_join(dbh.df, prob, by = "DBH")
 
-preds_ci_mod_past <- prob %>% group_by( DBH.class,DBH,Drought,Tmax,RWI_1,RWI_2, ageclass) %>% summarise(meanY = mean(RWI),
+preds_ci_mod_past <- prob.dbh.classes %>% group_by( DBH.class,DBH,Drought,Tmax,RWI_1,RWI_2, ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
 
-preds_ci_mod_past$DBH.class <- factor(preds_ci_mod_past$DBH.class, levels = c(">5cm", "20cm", "30cm", "45cm", "60cm", "70cm", "80cm"))
+preds_ci_mod_past$DBH.class <- factor(preds_ci_mod_past$DBH.class, levels = c("3cm", "15cm", "30cm", "40cm", "50cm", "60cm"))
 
 
-preds.gg <- ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 68 & preds_ci_mod_past$RWI_1 == -1.966  & preds_ci_mod_past$RWI_2 == -1.897,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+
-  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+preds.gg <- ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 68 & preds_ci_mod_past$RWI_1 == -1.966  & preds_ci_mod_past$RWI_2 == -1.897,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 88 & preds_ci_mod_past$RWI_1 == -1.966  & preds_ci_mod_past$RWI_2 == -1.897,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+
-  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 88 & preds_ci_mod_past$RWI_1 == -1.966  & preds_ci_mod_past$RWI_2 == -1.897,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 68 & preds_ci_mod_past$RWI_1 == 0.034  & preds_ci_mod_past$RWI_2 == 0.103,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+
-  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 68 & preds_ci_mod_past$RWI_1 == 0.034  & preds_ci_mod_past$RWI_2 == 0.103,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 88 & preds_ci_mod_past$RWI_1 == 0.034  & preds_ci_mod_past$RWI_2 == 0.103,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+
-  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 88 & preds_ci_mod_past$RWI_1 == 0.034  & preds_ci_mod_past$RWI_2 == 0.103,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 68 & preds_ci_mod_past$RWI_1 == 1.534  & preds_ci_mod_past$RWI_2 == 1.603,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+
-  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 68 & preds_ci_mod_past$RWI_1 == 1.534  & preds_ci_mod_past$RWI_2 == 1.603,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 88 & preds_ci_mod_past$RWI_1 == 1.534  & preds_ci_mod_past$RWI_2 == 1.603,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+
-  geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
+ggplot(preds_ci_mod_past[preds_ci_mod_past$Tmax == 88 & preds_ci_mod_past$RWI_1 == 1.534  & preds_ci_mod_past$RWI_2 == 1.603,], aes(Drought, meanY, color = as.factor(ageclass)))+geom_line()+geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = as.factor(ageclass)), alpha = 0.1, linetype = "dashed")+scale_color_manual (values = c("Modern" = "red", "Past" = "blue"))+facet_wrap(~DBH.class)+theme(legend.title = element_blank())+ylab("Predicted Ring Width")
  
 
-# plot marginal effects of climate and previous years growth 
+#--------------- plot marginal effects of climate and previous years growth ----------------
 # Marginal MAP effect:
-preds_ci_mod_past_MAP <- prob %>% group_by( MAP,ageclass) %>% summarise(meanY = mean(RWI),
-                                                                            Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+preds_ci_mod_past_MAP <- prob %>% group_by( MAP, ageclass) %>% summarise(meanY = mean(RWI),                                                                           Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_MAP_marg<- ggplot(preds_ci_mod_past_MAP, aes(MAP,meanY, color = ageclass))+geom_smooth(data = preds_ci_mod_past_MAP,aes(x = MAP, y = meanY))+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Mean Predicted Tree growth")+ylim(0.5, 2.5)
+Y_MAP_marg <- ggplot(preds_ci_mod_past_MAP, aes(MAP,meanY, color = ageclass)) + geom_line()+#geom_smooth(data = preds_ci_mod_past_MAP, aes(x = MAP, y = meanY, se = FALSE)) + 
+  geom_ribbon(data = preds_ci_mod_past_MAP,aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+ scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("Total Annual Precipitation (mm)")+ylim(0, 10)
 
 
 # marginal TMAX effect
 preds_ci_mod_past_Tmax <- prob %>% group_by( Tmax,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_Tmax_marg<- ggplot(preds_ci_mod_past_Tmax, aes(Tmax,meanY, color = ageclass))+geom_smooth(data = preds_ci_mod_past_Tmax,aes(x = Tmax, y = meanY))+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Mean Predicted Tree growth")+ylim(0.5,2.5)
+Y_Tmax_marg <- ggplot(preds_ci_mod_past_Tmax, aes(Tmax, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_Tmax, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("Max. Temp. (DegF)")+ylim(0,10)
 
 # marginal DBH effect
 preds_ci_mod_past_DBH <- prob %>% group_by( DBH,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_DBH_marg <- ggplot(preds_ci_mod_past_DBH, aes(DBH,meanY, color = ageclass))+geom_smooth(data = preds_ci_mod_past_DBH,aes(x = DBH, y = meanY))+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Mean Predicted Tree growth")+ylim(0.5,2.5)
+Y_DBH_marg <- ggplot(preds_ci_mod_past_DBH, aes(DBH, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_DBH, aes(x = DBH, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)") + xlab("Tree DBH (cm)")+ylim(0,10)
 
 # marginal lag-1 effect
 preds_ci_mod_past_RWI1 <- prob %>% group_by( RWI_1,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_RWI_1_marg <- ggplot(preds_ci_mod_past_RWI1, aes(RWI_1,meanY, color = ageclass))+geom_smooth(data = preds_ci_mod_past_RWI1,aes(x = RWI_1, y = meanY))+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Mean Predicted Tree growth")+xlab("Previous (-1) Year's growth")+ylim(0, 4)
+Y_RWI_1_marg <- ggplot(preds_ci_mod_past_RWI1, aes(RWI_1, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI1, aes(x = RWI_1, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("log(Previous (-1) Year's growth)")+ylim(0, 10)
 
 # marginal lag-2 effect
 preds_ci_mod_past_RWI2 <- prob %>% group_by( RWI_2,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_RWI_2_marg<- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2,meanY, color = ageclass))+geom_smooth(aes(x = RWI_2, y = meanY))+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Mean Predicted Tree growth")+ylim(0, 4)+xlab("-2 Year's growth")
+Y_RWI_2_marg <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2,meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI2, aes(x = RWI_2, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("log(Previous (-2) Year's growth)")+ylim(0, 10)
 
 
+legend <- get_legend(Y_MAP_marg)
 
-png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr/marginal_post_predictive_effects_ageclass.png")
-plot_grid(Y_MAP_marg, Y_Tmax_marg, Y_DBH_marg,Y_RWI_1_marg, Y_RWI_2_marg, align = "v", nrow = 3)
+png(height = 10, width = 4, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/marginal_post_predictive_effects_ageclass.png")
+plts <- plot_grid(Y_MAP_marg+theme(legend.position = "none"), Y_Tmax_marg+theme(legend.position = "none"), Y_DBH_marg+theme(legend.position = "none"), Y_RWI_1_marg+theme(legend.position = "none"), Y_RWI_2_marg+theme(legend.position = "none"), align = "v", ncol = 1)
+plot_grid(plts, legend, ncol = 2, rel_widths = c(1, 0.35))
 dev.off()
 
 # --------------plot marginal effects for each stand structure and cohort class:
 struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
-prob <- merge(prob, struc.conversion, by  = "struct.cohort")
+prob <- left_join(prob, struc.conversion, by  = "struct.cohort")
  
 # plot marginal effects of climate and previous years growth 
 # Marginal MAP effect:
