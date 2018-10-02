@@ -7702,10 +7702,219 @@ dev.off()
 
 ```
 
+# intercept and VPDmax model for d13C:
+
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+d13_VPD_re <- "model{
+
+# for each the overall population include re for sites:
+
+# Likelihood
+for(i in 1:n){
+# process model for iWUE:
+d13[i]   ~ dnorm(d13func[i], inv.var) # where Yi is already log transformed
+
+# function g()
+d13func[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*VPD_scaled[i]
+
+}
+
+
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+}
+
+
+
+# use normal hyperpriors for each hyperparamters 
+
+mu_beta1 ~ dnorm(0, 0.1)
+mu_beta2 ~ dnorm(0, 0.1)
+
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+
+
+
+# Non-informative Prior for the inverse population variances
+
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+# Predict test data
+for(i in 1:np){
+# process model for iWUE:
+d13.p[i]   ~ dnorm(d13func.p[i], inv.var) # where Yi is already log transformed
+
+# function g()
+d13func.p[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*VPD_scaled.p[i]
+
+}
+
+
+}"
+
+
+
+d13_vpd <- jags.model(textConnection(d13_VPD_re), 
+                    data = list(d13 = train.iso[!train.iso$site %in% "BON",]$Cor.d13C.suess, n=length(train.iso[!train.iso$site %in% "BON",]$iWUE), struct.cohort = as.numeric(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), SF = unique(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), VPD_scaled = train.iso[!train.iso$site %in% "BON",]$jja.VPDmax.scaled, np = length(test.iso[!test.iso$site %in% "BON",]$site), struct.cohort.p = as.numeric(test.iso[!test.iso$site %in% "BON",]$struct.cohort.code), VPD_scaled.p = test.iso[!test.iso$site %in% "BON",]$jja.VPDmax.scaled), n.chains = 3, n.adapt = 100)
+
+update(d13_vpd, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+d13.mean.re <- coda.samples(d13_vpd, 
+                     variable.names=c("beta1", "beta2","mu_beta1","mu_beta2", "d13.p"), 
+                    n.chains = 3, n.iter = 20000, thin = 15)
+
+summary(d13.mean.re )
+plot(d13.mean.re )
+
+gelman.diag(d13.mean.re )
+acfplot(d13.mean.re )
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- d13.mean.re [[1]]
+ saveRDS(samps, "outputs/growth_model/d13_VPD/samps.d13_nobon.rds")
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ #d13pred <- samps
+ alpha.samps  <- samps[,1:4]
+ beta.samps  <- samps[,5:8]
+d13.samps  <- samps[,9:(8+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
+ #d13p.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
+
+
+ #------------------ plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(d13.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))
+
+# this does a poor job representing d13 values by itself, but explains som of the variation
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note better model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/d13_VPD/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+# ----------------- Plot intercepts/params ---------------------
+
+png("outputs/growth_model/d13_VPD/marginal_alphas_v3_d13.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Savanna")
+hist(alpha.samps[,2], main = "alpha Modern-Savanna")
+hist(alpha.samps[,3],  main = "alpha Past-Forest")
+hist(alpha.samps[,4],  main = "alpha Modern-Forest")
+
+dev.off()
+
+
+png("outputs/growth_model/d13_VPD/marginal_alphas_v3_d13.png")
+par(mfrow=c(3,2))
+hist(beta.samps[,1], main = "alpha Past-Savanna")
+hist(beta.samps[,2], main = "alpha Modern-Savanna")
+hist(beta.samps[,3],  main = "alpha Past-Forest")
+hist(beta.samps[,4],  main = "alpha Modern-Forest")
+
+dev.off()
+
+# -----------plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna")))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+
+
+ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+a.mplots <-ggplot(a.m, aes(value, 1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.5)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+
+# for VPD:
+b <- data.frame(beta.samps)
+colnames(b) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+
+b$num <- rownames(b)
+b.m <- melt(b, id.vars=c("num"))
+b.mplots <-ggplot(b.m, aes(value, 1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE)+theme_bw()+xlab("Estimated VPDmax Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))
+
+
+
+# calculate dot plots
+a.mean <- apply(as.matrix(a[,1:4]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+a.upper <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
+plot.dat.a$class <- row.names(plot.dat.a)
+plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+
+
+
+plot.dat.a$ageclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
+plot.dat.a$ageclass <- factor(plot.dat.a$ageclass, levels = c("Past", "Modern"))
+plot.dat.a$forestclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Modern-Savanna"), "Savanna", "Forest")
+
+
+a.dots.2 <- ggplot(plot.dat.a, aes(x = a.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+theme_black(base_size = 18)+xlim(-25.5, -22)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("d13C")+facet_wrap(~forestclass)
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/d13_VPD/param_marginal_distn_bycohort_struct_v3_d13_random_slopes.png")
+a.dots.2
+dev.off()
+
+
+b.mean <- apply(as.matrix(b[,1:4]), 2, mean)
+b.lower <- apply(as.matrix(b[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+b.upper <- apply(as.matrix(b[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b <- data.frame(b.mean, b.lower, b.upper)
+plot.dat.b$class <- row.names(plot.dat.b)
+plot.dat.b$class <- factor(plot.dat.b$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+
+
+
+plot.dat.b$ageclass <- ifelse(plot.dat.b$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
+plot.dat.b$ageclass <- factor(plot.dat.b$ageclass, levels = c("Past", "Modern"))
+plot.dat.b$forestclass <- ifelse(plot.dat.b$class %in% c("Past-Savanna", "Modern-Savanna"), "Savanna", "Forest")
+
+
+b.dots.2 <- ggplot(plot.dat.b, aes(x = b.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+geom_point()+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("d13C")+facet_wrap(~forestclass)+xlim(-0.25, 1)
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/d13_VPD/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes_VPD_impact.png")
+b.dots.2
+dev.off()
+
+```
 
 
 # intercept only model (mean for iWUE):
-
 
 ```{r}
 # this model is specified in basically the same as the site level model, but we replace site with "cohort"
@@ -7879,8 +8088,9 @@ dev.off()
 
 ```
 
-# intercept and VPDmax models for mean iWUE:
 
+
+# intercept and VPDmax models for mean iWUE:
 
 ```{r}
 # this model is specified in basically the same as the site level model, but we replace site with "cohort"
