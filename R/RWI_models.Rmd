@@ -187,6 +187,29 @@ train.dry <- dry.yrs[msk,]
 test.dry <- dry.yrs[!msk,]
 
 
+#---------------Develop test and training sets for the stable isotope data-------------------
+# read in the d13 data:
+
+
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+d13 <- d13[!is.na(d13$DBH),]
+
+full.iso <- merge(ghcn.clean, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
+
+
+full.iso$iWUE.scaled <- as.numeric(scale(full.iso$iWUE))
+d13index <- !is.na(full.ghcn$Cor.d13C.suess)
+
+# split into testing and training:
+library(caTools)
+#full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
+#full.iso <- full.ghcn
+iWUE.med <- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
+msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
+
+train.iso <- full.iso[msk,]
+test.iso <- full.iso[!msk,]
+
 
 
 ```
@@ -3616,7 +3639,7 @@ Drought.resp.DBH.temp.lowpyr.age
 dev.off()
 
 png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/MAP_response_avg_prevyr_high_temp_low_high_DBH_ageclass.png")
-Drought.resp.DBH.temp.avgpyr.age
+Drought.resp.DBH.temp.avgpyr.age+theme_bw(base_size = 14)
 dev.off()
 
 png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/MAP_response_high_prevyr_high_temp_low_high_DBH_ageclass.png")
@@ -3625,42 +3648,45 @@ dev.off()
 
 
 
-#------- get sensitivity to temperature by dbh, site, etc.
-preds_ci <- prob %>% group_by(num, DBH, Drought, Tmax, RWI_1, RWI_2,struct.cohort) %>% summarise(meanY = mean(RWI),
-                                                                            Ci.low = quantile(RWI, 0.025), Ci.high = quantile(RWI, 0.975))
 
 
 #--------------- plot marginal effects of climate and previous years growth ----------------
-# Marginal MAP effect:
+
+ struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
+ struc.conversion$ageclass <- ifelse(struc.conversion$cohort %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+
+ prob <- left_join(prob, struc.conversion, by  = "struct.cohort")
+
+ # Marginal MAP effect:
 preds_ci_mod_past_MAP <- prob %>% group_by( MAP, ageclass) %>% summarise(meanY = mean(RWI),                                                                           Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
 Y_MAP_marg <- ggplot(preds_ci_mod_past_MAP, aes(MAP,meanY, color = ageclass)) + geom_line()+#geom_smooth(data = preds_ci_mod_past_MAP, aes(x = MAP, y = meanY, se = FALSE)) + 
-  geom_ribbon(data = preds_ci_mod_past_MAP,aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+ scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("Total Annual Precipitation (mm)")+ylim(0, 10)
+  geom_ribbon(data = preds_ci_mod_past_MAP,aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+ scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("Total Annual Precipitation (mm)")+ylim(0, 10)+theme_bw()
 
 
 # marginal TMAX effect
 preds_ci_mod_past_Tmax <- prob %>% group_by( Tmax,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_Tmax_marg <- ggplot(preds_ci_mod_past_Tmax, aes(Tmax, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_Tmax, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("Max. Temp. (DegF)")+ylim(0,10)
+Y_Tmax_marg <- ggplot(preds_ci_mod_past_Tmax, aes(Tmax, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_Tmax, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("Max. Temp. (DegF)")+ylim(0,10)+theme_bw()
 
 # marginal DBH effect
 preds_ci_mod_past_DBH <- prob %>% group_by( DBH,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_DBH_marg <- ggplot(preds_ci_mod_past_DBH, aes(DBH, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_DBH, aes(x = DBH, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)") + xlab("Tree DBH (cm)")+ylim(0,10)
+Y_DBH_marg <- ggplot(preds_ci_mod_past_DBH, aes(DBH, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_DBH, aes(x = DBH, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)") + xlab("Tree DBH (cm)")+ylim(0,10)+theme_bw()
 
 # marginal lag-1 effect
 preds_ci_mod_past_RWI1 <- prob %>% group_by( RWI_1,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_RWI_1_marg <- ggplot(preds_ci_mod_past_RWI1, aes(RWI_1, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI1, aes(x = RWI_1, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("log(Previous (-1) Year's growth)")+ylim(0, 10)
+Y_RWI_1_marg <- ggplot(preds_ci_mod_past_RWI1, aes(RWI_1, meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI1, aes(x = RWI_1, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("log(Previous (-1) Year's growth)")+ylim(0, 10)+theme_bw()
 
 # marginal lag-2 effect
 preds_ci_mod_past_RWI2 <- prob %>% group_by( RWI_2,ageclass) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_RWI_2_marg <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2,meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI2, aes(x = RWI_2, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("log(Previous (-2) Year's growth)")+ylim(0, 10)
+Y_RWI_2_marg <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2,meanY, color = ageclass))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI2, aes(x = RWI_2, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+scale_color_manual (values = c("Modern" = "red", "Past" = "blue")) + ylab("Tree growth (mm)")+xlab("log(Previous (-2) Year's growth)")+ylim(0, 10)+theme_bw()
 
 
 legend <- get_legend(Y_MAP_marg)
@@ -3671,62 +3697,77 @@ plot_grid(plts, legend, ncol = 2, rel_widths = c(1, 0.35))
 dev.off()
 
 # --------------plot marginal effects for each stand structure and cohort class:
-struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
-prob <- left_join(prob, struc.conversion, by  = "struct.cohort")
- 
 # plot marginal effects of climate and previous years growth 
 # Marginal MAP effect:
-preds_ci_mod_past_MAP <- prob %>% group_by( MAP,cohort) %>% summarise(meanY = mean(RWI),
+preds_ci_mod_past_MAP <- prob %>% group_by( MAP, cohort) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_MAP_marg_c <- ggplot(preds_ci_mod_past_MAP, aes(MAP,meanY, color = cohort))+geom_smooth(data = preds_ci_mod_past_MAP,aes(x = MAP, y = meanY))+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+Y_MAP_marg_c <- ggplot(preds_ci_mod_past_MAP, aes(MAP,meanY, color = cohort))+geom_line()+geom_ribbon(data = preds_ci_mod_past_MAP, aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571')) + ylab("Mean Predicted Tree growth")+ylim(0.5, 2.5)
+"Past-Forest"='#018571')) +scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+ ylab("Tree growth")+ylim(0, 10)+xlab("Total Precipitation")
 
 
 # marginal TMAX effect
 preds_ci_mod_past_Tmax <- prob %>% group_by( Tmax, cohort) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_Tmax_marg_c <- ggplot(preds_ci_mod_past_Tmax, aes(Tmax,meanY, color = cohort))+geom_smooth(data = preds_ci_mod_past_Tmax,aes(x = Tmax, y = meanY))+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+Y_Tmax_marg_c <- ggplot(preds_ci_mod_past_Tmax, aes(Tmax,meanY, color = cohort))+geom_line()+geom_ribbon(data = preds_ci_mod_past_Tmax, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571')) + ylab("Mean Predicted Tree growth")+ylim(0.5,2.5)
+"Past-Forest"='#018571')) +scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+ ylab("Tree growth")+ylim(0, 10)+xlab("Max. Temperature (DegF)")
 
 # marginal DBH effect
 preds_ci_mod_past_DBH <- prob %>% group_by( DBH, cohort) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_DBH_marg_c <- ggplot(preds_ci_mod_past_DBH, aes(DBH,meanY, color = cohort))+geom_smooth(data = preds_ci_mod_past_DBH,aes(x = DBH, y = meanY))+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+Y_DBH_marg_c <- ggplot(preds_ci_mod_past_DBH, aes(DBH, meanY, color = cohort))+geom_line()+geom_ribbon(data = preds_ci_mod_past_DBH, aes(x = DBH, ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))  + ylab("Mean Predicted Tree growth")+ylim(0.5,2.5)
+"Past-Forest"='#018571')) +scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+ ylab("Tree growth")+ylim(0, 10)+xlab("Tree DBH (cm)")
 
 # marginal lag-1 effect
 preds_ci_mod_past_RWI1 <- prob %>% group_by( RWI_1, cohort) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_RWI_1_marg_c <- ggplot(preds_ci_mod_past_RWI1, aes(RWI_1,meanY, color = cohort))+geom_smooth(data = preds_ci_mod_past_RWI1,aes(x = RWI_1, y = meanY))+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+Y_RWI_1_marg_c <- ggplot(preds_ci_mod_past_RWI1, aes(RWI_1, meanY, color = cohort))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI1, aes(x = RWI_1, ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))  + ylab("Mean Predicted Tree growth")+xlab("Previous (-1) Year's growth")+ylim(0, 4)
+"Past-Forest"='#018571')) +scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+ ylab("Tree growth")+ylim(0, 10)+xlab("log(Prev (-1) year's growth)")
 
 # marginal lag-2 effect
 preds_ci_mod_past_RWI2 <- prob %>% group_by( RWI_2, cohort) %>% summarise(meanY = mean(RWI),
                                                                             Ci.low = quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
-Y_RWI_2_marg_c <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2,meanY, color = cohort))+geom_smooth(aes(x = RWI_2, y = meanY))+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+Y_RWI_2_marg_c <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2, meanY, color = cohort))+geom_line()+geom_ribbon(data = preds_ci_mod_past_RWI2, aes(x = RWI_2, ymin = Ci.low, ymax = Ci.high, fill = cohort), alpha = 0.25, colour = NA)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571')) + ylab("Mean Predicted Tree growth")+ylim(0, 4)+xlab("-2 Year's growth")
+"Past-Forest"='#018571')) +scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))+ ylab("Tree growth")+ylim(0, 10)+xlab("log(Prev (-2) year's growth)")
 
-
-
-png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr/marginal_post_predictive_effects_ageclass_cohort.png")
-plot_grid(Y_MAP_marg_c, Y_Tmax_marg_c, Y_DBH_marg_c,Y_RWI_1_marg_c, Y_RWI_2_marg_c, align = "v", nrow = 3)
+png(height = 10, width = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/marginal_post_predictive_effects_ageclassXStruct.png")
+legend <- get_legend(Y_MAP_marg_c)
+plts <- plot_grid(Y_MAP_marg_c+theme(legend.position = "none"), Y_Tmax_marg_c+theme(legend.position = "none"), Y_DBH_marg_c+theme(legend.position = "none"), Y_RWI_1_marg_c+theme(legend.position = "none"), Y_RWI_2_marg_c+theme(legend.position = "none"), align = "v", ncol = 1)
+plot_grid(plts, legend, ncol = 2, rel_widths = c(1, 0.45))
 dev.off()
 
+
+
+# below is some extra code
 
 # -------plot point estimates of growth based on low moisutre under hot and cold conditions by DBH, colored by cohort x stand, and with facets by previous years growth:
 
@@ -7493,10 +7534,10 @@ d13C_intercept_re <- "model{
 # Likelihood
 for(i in 1:n){
 # process model for iWUE:
-iWUE[i]   ~ dnorm(iwuefunc[i], inv.var) # where Yi is already log transformed
+d13[i]   ~ dnorm(d13func[i], inv.var) # where Yi is already log transformed
 
 # function g()
-iwuefunc[i] <- beta1[struct.cohort[i]]
+d13func[i] <- beta1[struct.cohort[i]]
 
 }
 
@@ -7524,101 +7565,68 @@ inv.var   ~ dgamma(0.001, 0.001)
 sigma     <- 1/sqrt(inv.var)
 
 
+# Predict test data:
+for(i in 1:np){
+# process model for 13:
+d13.p[i]   ~ dnorm(d13func.p[i], inv.var) # where Yi is already log transformed
+
+# function g()
+d13func.p[i] <- beta1[struct.cohort.p[i]]
+
+}
+
+
 }"
 
+test.iso <- test.iso[!is.na(test.iso$Cor.d13C.suess),]
+train.iso <- train.iso[!is.na(train.iso$Cor.d13C.suess),]
 
-# read in the d13 data:
+d13_mean <- jags.model(textConnection(d13C_intercept_re), 
+                    data = list(d13 = train.iso[!train.iso$site %in% "BON",]$Cor.d13C.suess, n=length(train.iso[!train.iso$site %in% "BON",]$iWUE), struct.cohort = as.numeric(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), SF = unique(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), struct.cohort.p =as.numeric(test.iso[!test.iso$site %in% "BON",]$struct.cohort.code), np = length(as.numeric(test.iso[!test.iso$site %in% "BON",]$struct.cohort.code)) ), n.chains = 3, n.adapt = 100)
 
-
-d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
-d13 <- d13[!is.na(d13$DBH),]
-Y.d13 <- log(d13$RWI)
-Y.iwue <- d13$iWUE
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass.d13 <- as.numeric( d13$ageclass)
-Age.d13 <- as.numeric( d13$Age)
-n.d13     <- length(d13$RWI)
-DBH.d13 <- d13$DBH
-d13$DBH.scaled = as.vector(scale(d13$DBH, center = TRUE, scale = TRUE))
-d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
-site.d13 <- d13$site
-SpecCode.d13 <- d13$SpecCode
-plot.d13 <- unique(d13$site)
-#need to define site level structures:
-structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
+update(d13_mean, 1000); # Burnin for 1000 samples to start, then go higher later
 
 
-if(!"structure" %in% colnames(full.ghcn)){
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-}
-full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-full.ghcn <- merge(full.ghcn, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
-# read in VPD data and merge with full data:
-full.prism <- read.csv("outputs/data/full_det_prism_rwi.csv")
-full.ghcn <- merge(full.ghcn, full.prism[,c("year", "site", "ID", "VPDmax", "jja.VPDmax", "BAL", "jul.BAL", "jul.VPDmax")], by = c("year", "site", "ID"))
-full.ghcn$jul.VPDmax.scaled <- as.numeric(scale(full.ghcn$jul.VPDmax))
-full.ghcn$iWUE.scaled <- as.numeric(scale(full.ghcn$iWUE))
-d13index <- !is.na(full.ghcn$Cor.d13C.suess)
-# generate fake data to predict on:
- DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
- DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
- 
- # something like:
-full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
- # use these vals to get ypred
- # compare y pred to y acutal
- # for each value of DI and DBH and site, find the predicted growth based on the model:
-
-
-
-
-
- Xp <- full.probe
- np <- length(Xp$Var1)
-n = length(full.ghcn$Cor.d13C.suess)
-
-
-# split into testing and training:
-library(caTools)
-full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
-#full.iso <- full.ghcn
-iWUE.med<- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
-msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
-
-train <- full.iso[msk,]
-test <- full.iso[!msk,]
-
-iwue_mean <- jags.model(textConnection(d13C_intercept_re), 
-                    data = list(iWUE = full.iso$Cor.d13C.suess, n=length(full.iso$iWUE), struct.cohort = as.numeric(full.iso$struct.cohort.code), SF = unique(full.iso$struct.cohort.code)), n.chains = 3, n.adapt = 100)
-
-update(iwue_mean, 1000); # Burnin for 1000 samples to start, then go higher later
-
-
-iwue.mean.re <- coda.samples(iwue_mean, 
-                     variable.names=c("beta1", "mu_beta1"), 
+d13.mean.re <- coda.samples(d13_mean, 
+                     variable.names=c("beta1", "mu_beta1", "d13.p"), 
                     n.chains = 3, n.iter = 20000, thin = 15)
 
-summary(iwue.mean.re )
-plot(iwue.mean.re )
+#summary(d13.mean.re )
+#plot(d13.mean.re )
 
-gelman.diag(iwue.mean.re )
-acfplot(iwue.mean.re )
+#gelman.diag(d13.mean.re  )
+#acfplot(d13.mean.re )
 
 #Extract the samples for each parameter for a basic exploration of effects
 
- samps       <- iwue.mean.re [[1]]
- saveRDS(samps, "outputs/growth_model/d13C_intercept_mode/samps.d13_nobon.rds")
+ samps       <- d13.mean.re [[1]]
+ saveRDS(samps, "outputs/growth_model/d13C_intercept_mode/samps.d13_noBON.rds")
+ saveRDS(samps, "outputs/growth_model/d13C_intercept_mode/train_iso_noBON.rds")
+saveRDS(samps, "outputs/growth_model/d13C_intercept_mode/test_iso_noBON.rds")
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
  #d13pred <- samps
  alpha.samps  <- samps[,1:4]
+ d13p.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
 
 
+ #------------------ plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(d13p.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))
+
+# this does a poor job representing d13 values by itself, but explains som of the variation
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note better model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/d13C_intercept_mode/pred_vs_obs.png")
+p.o.plot
+dev.off()
+ 
 
 png("outputs/growth_model/d13C_intercept_mode/marginal_alphas_v3_iWUE.png")
 par(mfrow=c(3,2))
@@ -7632,13 +7640,13 @@ dev.off()
 
 # plot marginal distributions of cohort + structure specific parameters:
 a <- data.frame(alpha.samps)
-colnames(a) <- c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna")))
+colnames(a) <- c(paste0(c(unique(train.iso$struct.cohort)[order(unique(train.iso$struct.cohort.code))])))
 a$num <- rownames(a)
 a.m <- melt(a, id.vars=c("num"))
-alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("d13C")
 
 
-ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("d13C")
 
 a <- data.frame(alpha.samps)
 colnames(a) <- c(paste0(c(unique(full.iso$struct.cohort)[order(unique(full.iso$struct.cohort.code))])))
@@ -7668,9 +7676,12 @@ plot_grid(a.dots, a.mplots+coord_flip()+ xlim(-26, -22)+ylab("frequency")+theme(
 dev.off()
 
 library(cowplot)
-png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
+png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/d13C_intercept_mode/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
 plot_grid(alpha.mplots, ncol = 1)
 dev.off()
+
+
+
 
 plot.dat.a$ageclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
 plot.dat.a$ageclass <- factor(plot.dat.a$ageclass, levels = c("Past", "Modern"))
@@ -7680,15 +7691,20 @@ plot.dat.a$forestclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Modern
 a.dots.2 <- ggplot(plot.dat.a, aes(x = a.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(-26, -22)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='blue',
 "Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.text.x = element_blank())+xlab(expression(paste("Estimated " ,delta^{13}, "C (\u2030)")))+facet_wrap(~forestclass)
 
-png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_d13_random_slopes.png")
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/d13C_intercept_mode/param_marginal_distn_bycohort_struct_v3_d13_random_slopes.png")
 a.dots.2
 dev.off()
+
+
+png(width = 7, height = 3, units = "in", res = 300, "outputs/growth_model/d13C_intercept_mode/param_marginal_distn_bycohort_struct_v3_d13_random_slopes_bw.png")
+plot_grid(a.dots.2 + theme_bw(base_size = 14)+theme(legend.position = "none"), ncol = 1)
+dev.off()
+
 ```
 
 
 
 # intercept only model (mean for iWUE):
-
 
 
 ```{r}
@@ -7731,93 +7747,29 @@ inv.var   ~ dgamma(0.001, 0.001)
 sigma     <- 1/sqrt(inv.var)
 
 
+# Predict test data
+for(i in 1:np){
+# process model for iWUE:
+iWUE.p[i]   ~ dnorm(iwuefunc.p[i], inv.var) # where Yi is already log transformed
+
+# function g()
+iwuefunc.p[i] <- beta1[struct.cohort.p[i]]
+
+}
+
+
 }"
 
 
-# read in the d13 data, if it doesnt exist already
-
-if(!exists("d13")){
-d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
-d13 <- d13[!is.na(d13$DBH),]
-Y.d13 <- log(d13$RWI)
-Y.iwue <- d13$iWUE
-#DI <- as.vector( full.ghcn$JJA.pdsi )
-ageclass.d13 <- as.numeric( d13$ageclass)
-Age.d13 <- as.numeric( d13$Age)
-n.d13     <- length(d13$RWI)
-DBH.d13 <- d13$DBH
-d13$DBH.scaled = as.vector(scale(d13$DBH, center = TRUE, scale = TRUE))
-d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
-site.d13 <- d13$site
-SpecCode.d13 <- d13$SpecCode
-plot.d13 <- unique(d13$site)
-
-#need to define site level structures:
-
-if(!"structure" %in% colnames(full.ghcn)){
-  structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
-                        structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
-full.ghcn <- merge(full.ghcn, structure, by = "site")
-}
-
-
-
-
-#full.ghcn <- merge(full.ghcn, structure, by = "site")
-
-full.ghcn$struct.cohort <- paste0(full.ghcn$ageclass,"-", full.ghcn$structure)
-full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest", 1,
-       ifelse(full.ghcn$struct.cohort %in% "Modern-Forest", 2, 
-               ifelse(full.ghcn$struct.cohort %in% "Past-Savanna", 3,
-                     ifelse(full.ghcn$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
-
-full.ghcn <- merge(full.ghcn, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
-# read in VPD data and merge with full data:
-full.prism <- read.csv("outputs/data/full_det_prism_rwi.csv")
-full.ghcn <- merge(full.ghcn, full.prism[,c("year", "site", "ID", "VPDmax", "jja.VPDmax", "BAL", "jul.BAL", "jul.VPDmax")], by = c("year", "site", "ID"))
-full.ghcn$jul.VPDmax.scaled <- as.numeric(scale(full.ghcn$jul.VPDmax))
-full.ghcn$iWUE.scaled <- as.numeric(scale(full.ghcn$iWUE))
-d13index <- !is.na(full.ghcn$Cor.d13C.suess)
-# generate fake data to predict on:
- DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
- DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
- 
- # something like:
-full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
- # use these vals to get ypred
- # compare y pred to y acutal
- # for each value of DI and DBH and site, find the predicted growth based on the model:
-
-
-
-
-
- Xp <- full.probe
- np <- length(Xp$Var1)
-n = length(full.ghcn$Cor.d13C.suess)
-
-
-# split into testing and training:
-library(caTools)
-full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
-#full.iso <- full.ghcn
-iWUE.med<- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
-}
-
-
-msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
-
-train <- full.iso[msk,]
-test <- full.iso[!msk,]
 
 iwue_mean <- jags.model(textConnection(iWUE_intercept_re), 
-                    data = list(iWUE = full.iso$iWUE, n=length(full.iso$iWUE), struct.cohort = as.numeric(full.iso$struct.cohort.code), SF = unique(full.iso$struct.cohort.code)), n.chains = 3, n.adapt = 100)
+                    data = list(iWUE = train.iso[!train.iso$site %in% "BON",]$iWUE, n=length(train.iso[!train.iso$site %in% "BON",]$iWUE), struct.cohort = as.numeric(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), SF = unique(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), np = length(test.iso[!test.iso$site %in% "BON",]$site), struct.cohort.p = as.numeric(test.iso[!test.iso$site %in% "BON",]$struct.cohort.code)), n.chains = 3, n.adapt = 100)
 
 update(iwue_mean, 1000); # Burnin for 1000 samples to start, then go higher later
 
 
 iwue.mean.re <- coda.samples(iwue_mean, 
-                     variable.names=c("beta1", "mu_beta1"), 
+                     variable.names=c("beta1", "mu_beta1", "iWUE.p"), 
                     n.chains = 3, n.iter = 20000, thin = 15)
 
 summary(iwue.mean.re )
@@ -7833,8 +7785,30 @@ acfplot(iwue.mean.re )
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
  #d13pred <- samps
  alpha.samps  <- samps[,1:4]
+alpha.samps  <- samps[,1:4]
+iWUE.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
+ #d13p.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
 
 
+ #------------------ plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(iWUE.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test.iso[!test.iso$site %in% "BON",]$iWUE
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test.iso[!test.iso$site %in% "BON",]$iWUE))
+
+# this does a poor job representing d13 values by itself, but explains som of the variation
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note better model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/pred_vs_obs.png")
+p.o.plot
+dev.off()
+
+# ----------------- Plot intercepts/params ---------------------
 
 png("outputs/growth_model/iWUE_intercept_mod/marginal_alphas_v3_iWUE.png")
 par(mfrow=c(3,2))
@@ -7902,85 +7876,224 @@ png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_i
 a.dots.2
 dev.off()
 
-#predict the 
-# Compute the posterior mean for the plug-in predictions  
 
- beta1.mn  <- colMeans(beta1.samps)
- beta2.mn  <- colMeans(beta2.samps)
- sigma.mn <- mean(sigma.samps)
- alpha1.mn <- colMeans(alpha.samps) 
-beta131.mn <- mean(betad131.samps) 
-beta132.mn <- mean(betad132.samps) 
+```
+
+# intercept and VPDmax models for mean iWUE:
 
 
-# Plot the plug-in Posterior predictive denisty using "fake data"
-# want to plaot posteror predictive distributions:
- 
-# can probe either within the JAGS model or in R after the model runs:
- # specify "x probe" values for DBH + DI:
- #xprobe <- matrix(rep(-2.102618, 3.321394))
- DIprobe <- seq(range(DI.scaled)[1], range(DI.scaled)[2], by = 0.5)
- DBHprobe <- seq(range(DBH.scaled)[1], range(DBH.scaled)[2], by = 0.5)
- 
- # something like:
-full.probe <- expand.grid(DIprobe, DBHprobe,  struct.cohort= 1:4)
- # use these vals to get ypred
- # compare y pred to y acutal
- # for each value of DI and DBH and site, find the predicted growth based on the model:
+```{r}
+# this model is specified in basically the same as the site level model, but we replace site with "cohort"
+iWUE_VPD_re <- "model{
 
+# for each the overall population include re for sites:
 
+# Likelihood
+for(i in 1:n){
+# process model for iWUE:
+iWUE[i]   ~ dnorm(iwuefunc[i], inv.var) # where Yi is already log transformed
 
+# function g()
+iwuefunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*VPD_scaled[i]
 
-
- Xp <- full.probe
- np <- length(Xp$Var1)
- ypred <- list()
-
- d13pred <- list()
- for(j in 1:np){
-
-   # PPD
-   #plot(density(Yp.samps[,j]),xlab="Y",main="PPD")
-
-   
-   mu <- alpha1.mn[Xp[j,3]] + beta1.mn[Xp[j,3]]*Xp[j,1] + beta2.mn[Xp[j,3]]*Xp[j,2]   # use
-   
-   ypred[[j]]  <- rnorm(np, mu, sigma.mn)
-
-   # make a prediction of d13 based on MU:
-   
-   
-   
-   d13func <- beta131.mn + beta132.mn*ypred[[j]]   # use
-   d13pred[[j]]  <- d13func
-   # Truth
-   #abline(v=Y[j],col=3,lwd=2)
-
-   #legend("topright",c("PPD","Plug-in","Truth"),col=1:3,lty=1,inset=0.05)
 }
 
-ypred.df <- do.call(rbind, ypred)
-d13pred.df <- do.call(rbind, d13pred)
-#ypred.yp.df <- do.call(rbind, ypred.yp)
-png("outputs/growth_model/d13_reg_struct_x_cohort/predicted_y_d13.png")
-par(mfrow = c(1,2))
-plot(density(ypred.df), main = "Ypred, line = Ydata")
-abline(v = mean(Y), col = "red")
 
-plot(density(d13pred.df), main = "d13pred, line = d13data")
-abline(v= mean(d13$Cor.d13C.suess), col = "red")
+# Assume normal priors for betas, but generate a beta + alpha for each ageclass
+for(s in 1:length(SF)){
+beta1[s] ~ dnorm(mu_beta1, inv_beta1)
+beta2[s] ~ dnorm(mu_beta2, inv_beta2)
+}
+
+
+
+# use normal hyperpriors for each hyperparamters 
+
+mu_beta1 ~ dnorm(0, 0.1)
+mu_beta2 ~ dnorm(0, 0.1)
+
+
+inv_beta1   ~ dgamma(0.01, 0.01)
+sigma_beta1 <- 1/sqrt(inv_beta1)
+
+inv_beta2   ~ dgamma(0.01, 0.01)
+sigma_beta2 <- 1/sqrt(inv_beta2)
+
+
+
+# Non-informative Prior for the inverse population variances
+
+inv.var   ~ dgamma(0.001, 0.001)
+sigma     <- 1/sqrt(inv.var)
+
+
+# Predict test data
+for(i in 1:np){
+# process model for iWUE:
+iWUE.p[i]   ~ dnorm(iwuefunc.p[i], inv.var) # where Yi is already log transformed
+
+# function g()
+iwuefunc.p[i] <- beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*VPD_scaled.p[i]
+
+}
+
+
+}"
+
+
+
+iwue_vpd <- jags.model(textConnection(iWUE_VPD_re), 
+                    data = list(iWUE = train.iso[!train.iso$site %in% "BON",]$iWUE, n=length(train.iso[!train.iso$site %in% "BON",]$iWUE), struct.cohort = as.numeric(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), SF = unique(train.iso[!train.iso$site %in% "BON",]$struct.cohort.code), VPD_scaled = train.iso[!train.iso$site %in% "BON",]$jja.VPDmax.scaled, np = length(test.iso[!test.iso$site %in% "BON",]$site), struct.cohort.p = as.numeric(test.iso[!test.iso$site %in% "BON",]$struct.cohort.code), VPD_scaled.p = test.iso[!test.iso$site %in% "BON",]$jja.VPDmax.scaled), n.chains = 3, n.adapt = 100)
+
+update(iwue_vpd, 1000); # Burnin for 1000 samples to start, then go higher later
+
+
+iwue.mean.re <- coda.samples(iwue_vpd, 
+                     variable.names=c("beta1", "beta2","mu_beta1","mu_beta2", "iWUE.p"), 
+                    n.chains = 3, n.iter = 20000, thin = 15)
+
+summary(iwue.mean.re )
+plot(iwue.mean.re )
+
+gelman.diag(iwue.mean.re )
+acfplot(iwue.mean.re )
+
+#Extract the samples for each parameter for a basic exploration of effects
+
+ samps       <- iwue.mean.re [[1]]
+ saveRDS(samps, "outputs/growth_model/iWUE_VPD/samps.d13_nobon.rds")
+ #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
+ #d13pred <- samps
+ alpha.samps  <- samps[,1:4]
+ beta.samps  <- samps[,5:8]
+ iWUE.samps  <- samps[,9:(8+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
+ #d13p.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))]
+
+
+ #------------------ plot predicted vs observed and assess model fit:
+Yp.samps <- data.frame(iWUE.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                  ci.hi = quantile(value,0.975),
+                                                 ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test.iso[!test.iso$site %in% "BON",]$iWUE
+
+pred.obs <- summary(lm(colMeans(Yp.samps)~ test.iso[!test.iso$site %in% "BON",]$iWUE))
+
+# this does a poor job representing d13 values by itself, but explains som of the variation
+p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)
+
+# note better model fit!
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/iWUE_VPD/pred_vs_obs.png")
+p.o.plot
 dev.off()
 
-# need to calculate pvalues
+# ----------------- Plot intercepts/params ---------------------
+
+png("outputs/growth_model/iWUE_VPD/marginal_alphas_v3_iWUE.png")
+par(mfrow=c(3,2))
+hist(alpha.samps[,1], main = "alpha Past-Savanna")
+hist(alpha.samps[,2], main = "alpha Modern-Savanna")
+hist(alpha.samps[,3],  main = "alpha Past-Forest")
+hist(alpha.samps[,4],  main = "alpha Modern-Forest")
+
+dev.off()
+
+
+png("outputs/growth_model/iWUE_VPD/marginal_alphas_v3_iWUE.png")
+par(mfrow=c(3,2))
+hist(beta.samps[,1], main = "alpha Past-Savanna")
+hist(alpha.samps[,2], main = "alpha Modern-Savanna")
+hist(alpha.samps[,3],  main = "alpha Past-Forest")
+hist(alpha.samps[,4],  main = "alpha Modern-Forest")
+
+dev.off()
+# -----------plot marginal distributions of cohort + structure specific parameters:
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna")))
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+alpha.mplots <- ggplot(a.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+
+
+ggplot(a.m, aes(variable, value, fill = variable))+geom_boxplot(alpha = 0.5)+theme_black()+ylab("frequency")+xlab("iWUE")
+
+a <- data.frame(alpha.samps)
+colnames(a) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+a.mplots <-ggplot(a.m, aes(value, 1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE, quantiles = c(0.025, 0.975), bandwidth  = 0.5)+theme_bw()+xlab("Estimated Drought Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',
+"Modern-Savanna"='#dfc27d',
+
+"Modern-Forest"='#c7eae5',
+"Past-Forest"='#018571'))
+
+
+# for VPD:
+b <- data.frame(beta.samps)
+colnames(b) <- c(paste0(c(unique(train$struct.cohort)[order(unique(train$struct.cohort.code))])))
+
+b$num <- rownames(b)
+b.m <- melt(b, id.vars=c("num"))
+b.mplots <-ggplot(b.m, aes(value, 1, fill = variable))+stat_density_ridges(alpha = 0.5, quantile_lines = TRUE)+theme_bw()+xlab("Estimated VPDmax Sensitivity")+theme_black(base_size = 16)+scale_fill_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5',"Past-Forest"='#018571'))
 
 
 
+# calculate dot plots
+a.mean <- apply(as.matrix(a[,1:4]), 2, mean)
+a.lower <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+a.upper <- apply(as.matrix(a[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.a <- data.frame(a.mean, a.lower, a.upper)
+plot.dat.a$class <- row.names(plot.dat.a)
+plot.dat.a$class <- factor(plot.dat.a$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+
+
+
+plot.dat.a$ageclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
+plot.dat.a$ageclass <- factor(plot.dat.a$ageclass, levels = c("Past", "Modern"))
+plot.dat.a$forestclass <- ifelse(plot.dat.a$class %in% c("Past-Savanna", "Modern-Savanna"), "Savanna", "Forest")
+
+
+a.dots.2 <- ggplot(plot.dat.a, aes(x = a.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point()+xlim(100, 160)+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='blue',
+"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("iWUE")+facet_wrap(~forestclass)
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes.png")
+a.dots.2
+dev.off()
+
+
+b.mean <- apply(as.matrix(b[,1:4]), 2, mean)
+b.lower <- apply(as.matrix(b[,1:4]), 2, function(x) quantile(x, probs = c(0.025)))
+b.upper <- apply(as.matrix(b[,1:4]), 2, function(x) quantile(x, probs = c(0.975)))
+
+## Combine both estimates
+plot.dat.b <- data.frame(b.mean, b.lower, b.upper)
+plot.dat.b$class <- row.names(plot.dat.b)
+plot.dat.b$class <- factor(plot.dat.b$class, levels = c("Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+
+
+
+plot.dat.b$ageclass <- ifelse(plot.dat.b$class %in% c("Past-Savanna", "Past-Forest"), "Past", "Modern")
+plot.dat.b$ageclass <- factor(plot.dat.b$ageclass, levels = c("Past", "Modern"))
+plot.dat.b$forestclass <- ifelse(plot.dat.b$class %in% c("Past-Savanna", "Modern-Savanna"), "Savanna", "Forest")
+
+
+b.dots.2 <- ggplot(plot.dat.b, aes(x = b.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+geom_point()+theme_black(base_size = 18)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("iWUE")+facet_wrap(~forestclass)+xlim(-7.1, 1.4)
+
+png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_intercept_mod/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes_VPD_impact.png")
+b.dots.2
+dev.off()
 
 ```
 
 
 
-
+# more complicated teste models::
 
 # adding a prediction for stable isotopes (d13C) from tree growth predictions
 ```{r}
@@ -8764,6 +8877,7 @@ d13$DI.scaled = as.vector(scale(d13$JJA.pdsi, center = TRUE, scale = TRUE))
 site.d13 <- d13$site
 SpecCode.d13 <- d13$SpecCode
 plot.d13 <- unique(d13$site)
+
 #need to define site level structures:
 structure <- data.frame(site = c("AVO","BON","COR",  "ENG",  "GLA",  "GLL1", "GLL2", "GLL3","GLL4", "HIC",  "MOU",  "PLE",  "PVC",  "STC",  "TOW", "UNC" ),
                         structure = c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Forest","Savanna", "Savanna", "Savanna", "Forest", "Savanna"))
