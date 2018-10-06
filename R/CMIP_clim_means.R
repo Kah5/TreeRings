@@ -21,9 +21,10 @@ extract.site.rcps <- function(climate, rcp, sites, time){
   
   setwd(paste0('/Users/kah/Documents/bimodality/data/cc',rcp,climate,time,'/'))
   tr_sites <- read.csv("/Users/kah/Documents/TreeRings/outputs/priority_sites_locs.csv")
-  
+  tr_sites$site <- c("AVO", "BAC", "BON","BOO", "CAC", "COR", "DUF", "ENG", "GLL1", "GLL2", "GLL3", "GLL4", 
+                     "GLA", "HIC", "LED", "MOU", "PAM", "PLE", "PVC","STC", "TOW", "UNC", "UNI")
   # select sites of interest:
-  tr_sites <- tr_sites[tr_sites$code %in% sites,]
+  tr_sites <- tr_sites[tr_sites$site %in% sites,]
   
   coordinates(tr_sites) <- ~coords.x1 +coords.x2
   proj4string(tr_sites) <- '+init=epsg:3175' # tr_sites is currently in great lakes albers + we need to re-project
@@ -80,7 +81,7 @@ extract.site.rcps <- function(climate, rcp, sites, time){
     colnames(avgs.df) <- c('x', "y", paste0(climate,"-", rcp), paste0(climate,'-',rcp,'cv'), paste0(climate,'-',rcp,'GS')) 
     
   }
-  avgs.df$site <- tr_sites$code
+  avgs.df$site <- tr_sites$site
   avgs.df
 }
 
@@ -119,7 +120,15 @@ Tmin.70$`tn-85GS` <- toFahrenheit(Tmin.70$`tn-85GS`)
 # compile Tmaxes and precips into one data fram with a site column:
 rcp8.5_2070 <- merge(Tmax.70, pr85.70, by = c("site", "x","y"))
 rcp8.5_2050 <- merge(Tmax.50, pr85.50, by = c("site", "x","y"))
+colnames(rcp8.5_2050)[4:8] <- c("Tx_85_50", "Tx_85_50cv", "Tx_85_50GS",
+                                "Pr_85_50", "Pr_85_50si")
+
+colnames(rcp8.5_2070)[4:8] <- c("Tx_85_70", "Tx_85_70cv", "Tx_85_70GS",
+                                "Pr_85_70", "Pr_85_70si")
 
 setwd("/Users/kah/Documents/TreeRings/")
 rcp85 <- merge(rcp8.5_2050, rcp8.5_2070, by = c("site", "x","y"))
+
+ggplot(rcp85, aes(Tx_85_70GS, Pr_85_70, color = site))+geom_point()
+
 write.csv(rcp85, "outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
