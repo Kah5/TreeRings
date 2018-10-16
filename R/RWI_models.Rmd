@@ -4006,10 +4006,39 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
     muprobe[i] <- beta1[site.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] + beta3[struct.cohort.probe[i]]*DBH.scaled.probe[i] +beta4[struct.cohort.probe[i]]*log_RWI_1.probe[i] +beta5[struct.cohort.probe[i]]*log_RWI_2.probe[i] + beta6[struct.cohort.probe[i]]*Temp.scaled.probe[i]
   }
 
-# project into the future:
+# project into the future (assuming no further change in drought senseiivty):
   for(i in 1:nfut){
    Yfut[i]  ~ dnorm(mufut[i],inv.var)
     mufut[i] <- beta1[site.fut[i]] + beta2[struct.cohort.fut[i]]*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
+  }
+
+# project into the future (assuming 35% further change in drought senseiivty):
+  for(i in 1:nfut){
+   Yfut.35[i]  ~ dnorm(mufut2[i],inv.var)
+    mufut2[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.65)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
+  }
+
+
+
+# project into the future (assuming 50% further change in drought senseiivty):
+  for(i in 1:nfut){
+   Yfut.50[i]  ~ dnorm(mufut3[i],inv.var)
+    mufut3[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.50)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
+  }
+
+
+# project into the future (assuming 35% further change in drought senseiivty & temperature):
+  for(i in 1:nfut){
+   Yfut.35.35[i]  ~ dnorm(mufut35[i],inv.var)
+    mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.65)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*0.65)*Temp.scaled.fut[i]
+  }
+
+
+
+# project into the future (assuming 50% further change in drought senseiivty):
+  for(i in 1:nfut){
+   Yfut.50.50[i]  ~ dnorm(mufut50[i],inv.var)
+    mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.50)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*0.50)*Temp.scaled.fut[i]
   }
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
@@ -4150,6 +4179,21 @@ Y.probe <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 
 Y.fut <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut"), 
+                    n.chains = 3, n.iter=5000, thin = 15)
+Y.fut.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
+                     variable.names=c("Yfut.35"), 
+                    n.chains = 3, n.iter=5000, thin = 15)
+
+Y.fut.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
+                     variable.names=c("Yfut.50"), 
+                    n.chains = 3, n.iter=5000, thin = 15)
+
+Y.fut.35.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
+                     variable.names=c("Yfut.35.35"), 
+                    n.chains = 3, n.iter=5000, thin = 15)
+
+Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
+                     variable.names=c("Yfut.50.50"), 
                     n.chains = 3, n.iter=5000, thin = 15)
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
@@ -4921,8 +4965,6 @@ ggplot(prob_highMAP_ci[prob_highMAP_ci$Tmax == 88,], aes(DBH, meanY, color = coh
 
 Yfut.samps <- data.frame(Y.fut[[1]])
 
-
-
 colnames(Yfut.samps) <- paste0(fut$site, "_",fut$year)
 Yfut.samps$num <- 1:length(Yfut.samps$AVO_2015)
 fut.m <- melt(Yfut.samps)
@@ -4992,6 +5034,234 @@ dev.off()
 png(height = 5, width = 10, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_by_site.png")
 plot_grid(site.fut.tmax, sit.fut.map, ncol = 2)
 dev.off()
+
+
+# -------- Plot future predictions with further declines in drought sensitivity --------------
+
+Yfut.35.samps <- data.frame(Y.fut.35[[1]])
+
+colnames(Yfut.35.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.35.samps$num <- 1:length(Yfut.35.samps$AVO_2015)
+fut.m <- melt(Yfut.35.samps)
+fut.m$RWI <- exp(fut.m$value)
+colnames(fut.m) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year")
+
+# summarize by structure + cohort class only:
+
+fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
+
+fut.summary <- fut.proj %>% group_by(site_year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+
+fut.sum<- merge(fut.summary, fut, by = "site_year")
+
+ #ggplot(fut.sum, aes(MAP, meanY, color = struct.cohort))+geom_point()
+ ggplot(fut.sum, aes(MAP, meanY, color = struct.cohort))+geom_point()+geom_errorbar(data = fut.sum, aes(x = MAP, ymin = Ci.low, ymax = Ci.high, color = struct.cohort), alpha = 0.25, colour = NA)+facet_wrap(~year)
+ 
+ ggplot(fut.sum, aes(Tmax, meanY, color = struct.cohort))+geom_point()+geom_errorbar(data = fut.sum, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, color = struct.cohort), alpha = 0.25, colour = NA)+facet_wrap(~year)
+ 
+  ggplot(fut.sum, aes(site, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =site, ymin = Ci.low, ymax = Ci.high, color = year))+facet_wrap(~year)+ylim(0,5)
+ 
+
+   ggplot(fut.sum, aes(as.character(year), meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =as.character(year), ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)
+   
+   
+fut.sum$DBH <- as.numeric(round(unscale(vals =fut.sum$DBH, norm.data = DBH.scaled))) 
+fut.sum$MAP <- as.numeric(round(unscale(vals = fut.sum$MAP, norm.data = MAP.scaled)))
+fut.sum$Tmax <- as.numeric(round(unscale(vals = fut.sum$Tmax, norm.data = T.scaled))) 
+fut.sum$year <- as.character(fut.sum$year)
+ 
+ site.fut.tmax <- ggplot(fut.sum, aes(Tmax, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)+theme_bw(base_size = 10)
+ 
+ 
+ sit.fut.map <- ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)+theme_bw(base_size = 10)+geom_smooth(method = "lm")
+ 
+ ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~year)+ylim(0,3)+geom_smooth(method = "lm")+theme_bw()
+
+  site.fut.tmax2 <- ggplot(fut.sum, aes(Tmax, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+ylim(0,3)+geom_smooth(method = "lm", se = FALSE)+theme_bw(base_size = 12)
+
+  site.fut.map2 <- ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+ylim(0,3)+geom_smooth(method = "lm", se = FALSE)+theme_bw(base_size = 12)
+  
+  
+  fut.full <- fut.proj %>% group_by(year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95), MAP = mean(MAP), Tmax = mean(Tmax))
+
+#fut.full<- merge(fut.full, fut, by = "year")
+
+#fut.sum$DBH <- as.numeric(round(unscale(vals =fut.sum$DBH, norm.data = DBH.scaled))) 
+fut.full$MAP <- as.numeric(round(unscale(vals = fut.full$MAP, norm.data = MAP.scaled)))
+fut.full$Tmax <- as.numeric(round(unscale(vals = fut.full$Tmax, norm.data = T.scaled))) 
+fut.full$year <- as.character(fut.full$year)
+
+fut.year <- ggplot(fut.full, aes(year, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =year, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+theme_bw(base_size = 15)+theme(legend.position = "none")
+
+fut.T<- ggplot(fut.full, aes(Tmax, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+xlab("Max. Temp")+theme_bw(base_size = 15)+theme(legend.position = "none")
+ 
+
+fut.map<- ggplot(fut.full, aes(MAP, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =MAP, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+xlab("Precipitation")+theme_bw(base_size = 15)+theme(legend.position = "none")
+
+png(height = 3.5, width = 8, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_0.35_decline_drought_sens.png")
+plot_grid(fut.year, fut.T, fut.map, align = "v", nrow = 1)
+dev.off()
+ 
+
+png(height = 5, width = 10, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_by_site.png")
+plot_grid(site.fut.tmax, sit.fut.map, ncol = 2)
+dev.off()
+
+
+# -------- Plot future predictions with further declines i.e. 50% in drought sensitivity --------------
+
+Yfut.50.samps <- data.frame(Y.fut.50[[1]])
+
+colnames(Yfut.50.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.50.samps$num <- 1:length(Yfut.50.samps$AVO_2015)
+fut.m <- melt(Yfut.50.samps)
+fut.m$RWI <- exp(fut.m$value)
+colnames(fut.m) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year")
+
+# summarize by structure + cohort class only:
+
+fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
+
+fut.summary <- fut.proj %>% group_by(site_year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+
+fut.sum<- merge(fut.summary, fut, by = "site_year")
+
+ #ggplot(fut.sum, aes(MAP, meanY, color = struct.cohort))+geom_point()
+ ggplot(fut.sum, aes(MAP, meanY, color = struct.cohort))+geom_point()+geom_errorbar(data = fut.sum, aes(x = MAP, ymin = Ci.low, ymax = Ci.high, color = struct.cohort), alpha = 0.25, colour = NA)+facet_wrap(~year)
+ 
+ ggplot(fut.sum, aes(Tmax, meanY, color = struct.cohort))+geom_point()+geom_errorbar(data = fut.sum, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, color = struct.cohort), alpha = 0.25, colour = NA)+facet_wrap(~year)
+ 
+  ggplot(fut.sum, aes(site, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =site, ymin = Ci.low, ymax = Ci.high, color = year))+facet_wrap(~year)+ylim(0,5)
+ 
+
+   ggplot(fut.sum, aes(as.character(year), meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =as.character(year), ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)
+   
+   
+fut.sum$DBH <- as.numeric(round(unscale(vals =fut.sum$DBH, norm.data = DBH.scaled))) 
+fut.sum$MAP <- as.numeric(round(unscale(vals = fut.sum$MAP, norm.data = MAP.scaled)))
+fut.sum$Tmax <- as.numeric(round(unscale(vals = fut.sum$Tmax, norm.data = T.scaled))) 
+fut.sum$year <- as.character(fut.sum$year)
+ 
+ site.fut.tmax <- ggplot(fut.sum, aes(Tmax, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)+theme_bw(base_size = 10)
+ 
+ 
+ sit.fut.map <- ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)+theme_bw(base_size = 10)+geom_smooth(method = "lm")
+ 
+ ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~year)+ylim(0,3)+geom_smooth(method = "lm")+theme_bw()
+
+  site.fut.tmax2 <- ggplot(fut.sum, aes(Tmax, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+ylim(0,3)+geom_smooth(method = "lm", se = FALSE)+theme_bw(base_size = 12)
+
+  site.fut.map2 <- ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+ylim(0,3)+geom_smooth(method = "lm", se = FALSE)+theme_bw(base_size = 12)
+  
+  
+  fut.full <- fut.proj %>% group_by(year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95), MAP = mean(MAP), Tmax = mean(Tmax))
+
+#fut.full<- merge(fut.full, fut, by = "year")
+
+#fut.sum$DBH <- as.numeric(round(unscale(vals =fut.sum$DBH, norm.data = DBH.scaled))) 
+fut.full$MAP <- as.numeric(round(unscale(vals = fut.full$MAP, norm.data = MAP.scaled)))
+fut.full$Tmax <- as.numeric(round(unscale(vals = fut.full$Tmax, norm.data = T.scaled))) 
+fut.full$year <- as.character(fut.full$year)
+
+fut.year <- ggplot(fut.full, aes(year, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =year, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+theme_bw(base_size = 15)+theme(legend.position = "none")
+
+fut.T <- ggplot(fut.full, aes(Tmax, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+xlab("Max. Temp")+theme_bw(base_size = 15)+theme(legend.position = "none")
+ 
+
+fut.map <- ggplot(fut.full, aes(MAP, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =MAP, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+xlab("Precipitation")+theme_bw(base_size = 15)+theme(legend.position = "none")
+
+png(height = 3.5, width = 8, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_0.50_decline_drought_sens.png")
+plot_grid(fut.year, fut.T, fut.map, align = "v", nrow = 1)
+dev.off()
+ 
+
+png(height = 5, width = 10, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_by_site_50.png")
+plot_grid(site.fut.tmax, sit.fut.map, ncol = 2)
+dev.off()
+
+
+
+# -------- Plot future predictions with further declines i.e. 50% in drought sensitivity+ 50% increase in t sensitivity --------------
+
+Yfut.50.50.samps <- data.frame(Y.fut.50.50[[1]])
+
+colnames(Yfut.50.50.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.50.50.samps$num <- 1:length(Yfut.50.50.samps$AVO_2015)
+fut.m <- melt(Yfut.50.50.samps)
+fut.m$RWI <- exp(fut.m$value)
+colnames(fut.m) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year")
+
+# summarize by structure + cohort class only:
+
+fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
+
+fut.summary <- fut.proj %>% group_by(site_year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
+
+fut.sum<- merge(fut.summary, fut, by = "site_year")
+
+ #ggplot(fut.sum, aes(MAP, meanY, color = struct.cohort))+geom_point()
+ ggplot(fut.sum, aes(MAP, meanY, color = struct.cohort))+geom_point()+geom_errorbar(data = fut.sum, aes(x = MAP, ymin = Ci.low, ymax = Ci.high, color = struct.cohort), alpha = 0.25, colour = NA)+facet_wrap(~year)
+ 
+ ggplot(fut.sum, aes(Tmax, meanY, color = struct.cohort))+geom_point()+geom_errorbar(data = fut.sum, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, color = struct.cohort), alpha = 0.25, colour = NA)+facet_wrap(~year)
+ 
+  ggplot(fut.sum, aes(site, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =site, ymin = Ci.low, ymax = Ci.high, color = year))+facet_wrap(~year)+ylim(0,5)
+ 
+
+   ggplot(fut.sum, aes(as.character(year), meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =as.character(year), ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)
+   
+   
+fut.sum$DBH <- as.numeric(round(unscale(vals =fut.sum$DBH, norm.data = DBH.scaled))) 
+fut.sum$MAP <- as.numeric(round(unscale(vals = fut.sum$MAP, norm.data = MAP.scaled)))
+fut.sum$Tmax <- as.numeric(round(unscale(vals = fut.sum$Tmax, norm.data = T.scaled))) 
+fut.sum$year <- as.character(fut.sum$year)
+ 
+ site.fut.tmax <- ggplot(fut.sum, aes(Tmax, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)+theme_bw(base_size = 10)
+ 
+ 
+ sit.fut.map <- ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~site)+ylim(0,3)+theme_bw(base_size = 10)+geom_smooth(method = "lm")
+ 
+ ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+facet_wrap(~year)+ylim(0,3)+geom_smooth(method = "lm")+theme_bw()
+
+  site.fut.tmax2 <- ggplot(fut.sum, aes(Tmax, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+ylim(0,3)+geom_smooth(method = "lm", se = FALSE)+theme_bw(base_size = 12)
+
+  site.fut.map2 <- ggplot(fut.sum, aes(MAP, meanY, fill = year))+geom_point(position = "dodge2")+geom_errorbar(data = fut.sum, aes(x =MAP, ymin = Ci.low, ymax = Ci.high, color = year), width = 0.1)+ylim(0,3)+geom_smooth(method = "lm", se = FALSE)+theme_bw(base_size = 12)
+  
+  
+  fut.full <- fut.proj %>% group_by(year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95), MAP = mean(MAP), Tmax = mean(Tmax))
+
+#fut.full<- merge(fut.full, fut, by = "year")
+
+#fut.sum$DBH <- as.numeric(round(unscale(vals =fut.sum$DBH, norm.data = DBH.scaled))) 
+fut.full$MAP <- as.numeric(round(unscale(vals = fut.full$MAP, norm.data = MAP.scaled)))
+fut.full$Tmax <- as.numeric(round(unscale(vals = fut.full$Tmax, norm.data = T.scaled))) 
+fut.full$year <- as.character(fut.full$year)
+
+fut.year <- ggplot(fut.full, aes(year, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =year, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+theme_bw(base_size = 15)+theme(legend.position = "none")
+
+fut.T <- ggplot(fut.full, aes(Tmax, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =Tmax, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+xlab("Max. Temp")+theme_bw(base_size = 15)+theme(legend.position = "none")
+ 
+
+fut.map <- ggplot(fut.full, aes(MAP, meanY, color = year))+geom_point(size = 3)+geom_errorbar(data = fut.full, aes(x =MAP, ymin = Ci.low, ymax = Ci.high),color = "grey", width = 0.1)+ylab("Predicted Growth (mm)")+xlab("Precipitation")+theme_bw(base_size = 15)+theme(legend.position = "none")
+
+png(height = 3.5, width = 8, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_0.50_decline_drought_sens50.50.png")
+plot_grid(fut.year, fut.T, fut.map, align = "v", nrow = 1)
+dev.off()
+ 
+
+png(height = 5, width = 10, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/future_average_growth_by_site_50.50.png")
+plot_grid(site.fut.tmax, sit.fut.map, ncol = 2)
+dev.off()
+
+
 ```
  
  
@@ -5030,6 +5300,13 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
   }
 
 # project into the future:
+  for(i in 1:nfut){
+   Yfut[i]  ~ dnorm(mufut[i],inv.var)
+    mufut[i] <- beta1[site.fut[i]] + beta2[struct.cohort.fut[i]]*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i] + beta7[struct.cohort.fut[i]]*Temp.scaled.fut[i]*DI.scaled.fut[i]
+  }
+
+
+# project into the future with further %50 change in drought sensitivity:
   for(i in 1:nfut){
    Yfut[i]  ~ dnorm(mufut[i],inv.var)
     mufut[i] <- beta1[site.fut[i]] + beta2[struct.cohort.fut[i]]*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i] + beta7[struct.cohort.fut[i]]*Temp.scaled.fut[i]*DI.scaled.fut[i]
@@ -5200,8 +5477,8 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[1]'], auto.layout = FALSE
 #Extract the samples for each parameter for a basic exploration of effects
 
  samps       <- samp.structure.cohort.re[[1]]
- saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
- samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inters/samps.rds")
+ saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site/samps.rds")
+ samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site/samps.rds")
  test.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
  train.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 #Yfut.samps <- samps[, 1:length(fut$RWI_1)]
