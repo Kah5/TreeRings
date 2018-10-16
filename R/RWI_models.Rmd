@@ -4030,7 +4030,7 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
 # project into the future (assuming 35% further change in drought senseiivty & temperature):
   for(i in 1:nfut){
    Yfut.35.35[i]  ~ dnorm(mufut35[i],inv.var)
-    mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.65)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*0.65)*Temp.scaled.fut[i]
+    mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.65)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.35)*Temp.scaled.fut[i]
   }
 
 
@@ -4038,7 +4038,7 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
 # project into the future (assuming 50% further change in drought senseiivty):
   for(i in 1:nfut){
    Yfut.50.50[i]  ~ dnorm(mufut50[i],inv.var)
-    mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.50)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*0.50)*Temp.scaled.fut[i]
+    mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.50)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.50)*Temp.scaled.fut[i]
   }
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
@@ -4962,7 +4962,7 @@ ggplot(prob_highMAP_ci[prob_highMAP_ci$Tmax == 88,], aes(DBH, meanY, color = coh
 
 
 # ----------------------- Plot future predictions ------------------------
-
+# scenario # 1: no change from modern
 Yfut.samps <- data.frame(Y.fut[[1]])
 
 colnames(Yfut.samps) <- paste0(fut$site, "_",fut$year)
@@ -4972,11 +4972,91 @@ fut.m$RWI <- exp(fut.m$value)
 colnames(fut.m) <- c("site_year", "Ypred", "RWI")
 
 fut$site_year <- paste0(fut$site, "_",fut$year)
-colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year")
+fut$scenario <- "constant"
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
 # summarize by structure + cohort class only:
 
 fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
+
+
+# scenario # 2: 35% decrease in drought sensitivie from modern
+Yfut.35.samps <- data.frame(Y.fut.35[[1]])
+
+colnames(Yfut.35.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.35.samps$num <- 1:length(Yfut.35.samps$AVO_2015)
+fut.35.m <- melt(Yfut.35.samps)
+fut.35.m $RWI <- exp(fut.35.m $value)
+colnames(fut.35.m ) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$scenario <- "decrease_35"
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
+
+fut.35.proj <- dplyr::inner_join(fut.35.m, fut, by=c("site_year"))
+
+
+# scenario # 3: 50% decrease in drought sensitivie from modern
+Yfut.50.samps <- data.frame(Y.fut.50[[1]])
+
+colnames(Yfut.50.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.50.samps$num <- 1:length(Yfut.50.samps$AVO_2015)
+fut.50.m <- melt(Yfut.50.samps)
+fut.50.m $RWI <- exp(fut.50.m $value)
+colnames(fut.50.m ) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$scenario <- "decrease_50"
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
+
+fut.50.proj <- dplyr::inner_join(fut.50.m, fut, by=c("site_year"))
+
+# scenario # 4: 50% decrease in drought sensitivy from modern & 50% increase in T sensitivity
+Yfut.35.35.samps <- data.frame(Y.fut.35.35[[1]])
+
+colnames(Yfut.35.35.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.35.35.samps$num <- 1:length(Yfut.35.35.samps$AVO_2015)
+fut.35.35.m <- melt(Yfut.35.35.samps)
+fut.35.35.m $RWI <- exp(fut.35.35.m $value)
+colnames(fut.35.35.m ) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$scenario <- "decrease_35.35"
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
+
+fut.35.35.proj <- dplyr::inner_join(fut.35.35.m, fut, by=c("site_year"))
+
+
+
+# scenario # 5: 50% decrease in drought sensitivy from modern & 50% increase in T sensitivity
+Yfut.50.50.samps <- data.frame(Y.fut.50.50[[1]])
+
+colnames(Yfut.50.50.samps) <- paste0(fut$site, "_",fut$year)
+Yfut.50.50.samps$num <- 1:length(Yfut.50.50.samps$AVO_2015)
+fut.50.50.m <- melt(Yfut.50.50.samps)
+fut.50.50.m $RWI <- exp(fut.50.50.m $value)
+colnames(fut.50.50.m ) <- c("site_year", "Ypred", "RWI")
+
+fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$scenario <- "decrease_50.50"
+colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
+
+fut.50.50.proj <- dplyr::inner_join(fut.50.50.m, fut, by=c("site_year"))
+
+
+# now join all together :
+all.proj <- rbind(fut.proj, fut.35.proj[!fut.35.proj$year == 2000,], fut.50.proj[!fut.50.proj$year == 2000,], fut.35.35.proj[!fut.35.35.proj$year == 2000,], fut.50.50.proj[!fut.50.50.proj$year == 2000,])
+
+
+# make one big plot
+ggplot(all.proj, aes(as.factor(year), RWI, fill = scenario))+geom_boxplot(position = "dodge2")
+
+ggplot(all.proj, aes(as.factor(year), RWI, fill = scenario))+geom_boxplot(position = "dodge2")+facet_wrap(~site)
+
+# make one big plot, but with a line for the modern predictions:
+
+
+
 
 fut.summary <- fut.proj %>% group_by(site_year) %>% summarise(meanY = mean(RWI), Ci.low =quantile(RWI, 0.05), Ci.high = quantile(RWI, 0.95))
 
