@@ -4153,6 +4153,11 @@ fut <- rbind(future.probe_50, future.probe_70, train.clim.summary[,c("MAP.scaled
 fut <- merge(fut, site.num.df, by = "site")
 
 short.fut <- fut
+fut.small <- fut
+fut.large <- fut
+fut.small$DBH.scaled <- -0.413
+fut.large$DBH.scaled <- 1.900
+long.fut <- rbind(fut.small, fut.large)
 
 lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP.f), 
                     data = list(Y=log(train.dry.pair$RWI), n=length(train.dry.pair$RWI), DI.scaled = train.dry.pair$DI.scaled, DBH.scaled = train.dry.pair$DBH.scaled,log_RWI_1 = log(train.dry.pair$RWI_1),log_RWI_2 = log(train.dry.pair$RWI_2), Temp.scaled = train.dry.pair$T.scaled, struct.cohort = as.numeric(train.dry.pair$struct.cohort.code), SF = as.numeric(unique(train.dry.pair$struct.cohort.code)), site = train.dry.pair$site.num, Nsites = length(unique(train.dry.pair$site)),
@@ -4160,7 +4165,7 @@ lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_mo
   
   struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
  
-  struct.cohort.fut = as.numeric(short.fut$struct.cohort.code), DBH.scaled.fut = short.fut$DBH.scaled, DI.scaled.fut = short.fut$MAP.scaled, log_RWI_1.fut = short.fut$RWI_1, log_RWI_2.fut =short.fut$RWI_2, Temp.scaled.fut = short.fut$T.scaled, site.fut = short.fut$site.num, nfut = length(as.numeric(short.fut$struct.cohort.code))
+  struct.cohort.fut = as.numeric(long.fut$struct.cohort.code), DBH.scaled.fut = long.fut$DBH.scaled, DI.scaled.fut = long.fut$MAP.scaled, log_RWI_1.fut = long.fut$RWI_1, log_RWI_2.fut =long.fut$RWI_2, Temp.scaled.fut = long.fut$T.scaled, site.fut = long.fut$site.num, nfut = length(as.numeric(long.fut$struct.cohort.code))
  
   
   ),
@@ -4175,26 +4180,26 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 
 Y.probe <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yprobe"), 
-                    n.chains = 3, n.iter=5000, thin = 15)
+                    n.chains = 3, n.iter=10000, thin = 15)
 
 Y.fut <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut"), 
-                    n.chains = 3, n.iter=5000, thin = 15)
+                    n.chains = 3, n.iter=10000, thin = 15)
 Y.fut.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.35"), 
-                    n.chains = 3, n.iter=5000, thin = 15)
+                    n.chains = 3, n.iter=10000, thin = 15)
 
 Y.fut.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.50"), 
-                    n.chains = 3, n.iter=5000, thin = 15)
+                    n.chains = 3, n.iter=10000, thin = 15)
 
 Y.fut.35.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.35.35"), 
-                    n.chains = 3, n.iter=5000, thin = 15)
+                    n.chains = 3, n.iter=10000, thin = 15)
 
 Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.50.50"), 
-                    n.chains = 3, n.iter=5000, thin = 15)
+                    n.chains = 3, n.iter=10000,thin = 15)
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -4962,16 +4967,17 @@ ggplot(prob_highMAP_ci[prob_highMAP_ci$Tmax == 88,], aes(DBH, meanY, color = coh
 
 
 # ----------------------- Plot future predictions ------------------------
+fut <- long.fut
 # scenario # 1: no change from modern
 Yfut.samps <- data.frame(Y.fut[[1]])
 
-colnames(Yfut.samps) <- paste0(fut$site, "_",fut$year)
-Yfut.samps$num <- 1:length(Yfut.samps$AVO_2015)
+colnames(Yfut.samps) <- paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+Yfut.samps$num <- 1:length(Yfut.samps$`AVO_2050_-0.413`)
 fut.m <- melt(Yfut.samps)
 fut.m$RWI <- exp(fut.m$value)
 colnames(fut.m) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$site_year <- paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
 fut$scenario <- "constant"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -4983,13 +4989,13 @@ fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
 # scenario # 2: 35% decrease in drought sensitivie from modern
 Yfut.35.samps <- data.frame(Y.fut.35[[1]])
 
-colnames(Yfut.35.samps) <- paste0(fut$site, "_",fut$year)
-Yfut.35.samps$num <- 1:length(Yfut.35.samps$AVO_2015)
+colnames(Yfut.35.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+Yfut.35.samps$num <- 1:length(Yfut.35.samps[,2])
 fut.35.m <- melt(Yfut.35.samps)
 fut.35.m $RWI <- exp(fut.35.m $value)
 colnames(fut.35.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
 fut$scenario <- "decrease_35"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -4999,13 +5005,13 @@ fut.35.proj <- dplyr::inner_join(fut.35.m, fut, by=c("site_year"))
 # scenario # 3: 50% decrease in drought sensitivie from modern
 Yfut.50.samps <- data.frame(Y.fut.50[[1]])
 
-colnames(Yfut.50.samps) <- paste0(fut$site, "_",fut$year)
-Yfut.50.samps$num <- 1:length(Yfut.50.samps$AVO_2015)
+colnames(Yfut.50.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+Yfut.50.samps$num <- 1:length(Yfut.50.samps[,2])
 fut.50.m <- melt(Yfut.50.samps)
 fut.50.m $RWI <- exp(fut.50.m $value)
 colnames(fut.50.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
 fut$scenario <- "decrease_50"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5014,13 +5020,13 @@ fut.50.proj <- dplyr::inner_join(fut.50.m, fut, by=c("site_year"))
 # scenario # 4: 50% decrease in drought sensitivy from modern & 50% increase in T sensitivity
 Yfut.35.35.samps <- data.frame(Y.fut.35.35[[1]])
 
-colnames(Yfut.35.35.samps) <- paste0(fut$site, "_",fut$year)
-Yfut.35.35.samps$num <- 1:length(Yfut.35.35.samps$AVO_2015)
+colnames(Yfut.35.35.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+Yfut.35.35.samps$num <- 1:length(Yfut.35.35.samps[,2])
 fut.35.35.m <- melt(Yfut.35.35.samps)
 fut.35.35.m $RWI <- exp(fut.35.35.m $value)
 colnames(fut.35.35.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
 fut$scenario <- "decrease_35.35"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5031,13 +5037,13 @@ fut.35.35.proj <- dplyr::inner_join(fut.35.35.m, fut, by=c("site_year"))
 # scenario # 5: 50% decrease in drought sensitivy from modern & 50% increase in T sensitivity
 Yfut.50.50.samps <- data.frame(Y.fut.50.50[[1]])
 
-colnames(Yfut.50.50.samps) <- paste0(fut$site, "_",fut$year)
-Yfut.50.50.samps$num <- 1:length(Yfut.50.50.samps$AVO_2015)
+colnames(Yfut.50.50.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+Yfut.50.50.samps$num <- 1:length(Yfut.50.50.samps[,2])
 fut.50.50.m <- melt(Yfut.50.50.samps)
 fut.50.50.m $RWI <- exp(fut.50.50.m $value)
 colnames(fut.50.50.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <- paste0(fut$site, "_",fut$year)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
 fut$scenario <- "decrease_50.50"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5047,11 +5053,40 @@ fut.50.50.proj <- dplyr::inner_join(fut.50.50.m, fut, by=c("site_year"))
 # now join all together :
 all.proj <- rbind(fut.proj, fut.35.proj[!fut.35.proj$year == 2000,], fut.50.proj[!fut.50.proj$year == 2000,], fut.35.35.proj[!fut.35.35.proj$year == 2000,], fut.50.50.proj[!fut.50.50.proj$year == 2000,])
 
+small.proj <- all.proj[all.proj$DBH == -0.413,]
+small.proj$year <- ifelse(small.proj$year == 2050, "2050-2069",
+                          ifelse(small.proj$year == 2070, "2070-2099", "2000"))
+scenario_names <- c(
+                    'constant' = "sensitivity constant",
+                    'decrease_35' = "drought (taper 35%)",
+                    'decrease_35.35' = "drought & temp. (taper 35%)",
+                    'decrease_50.50' = "drought & temp. (no taper 50%)",
+                    'decrease_50' = "drought (no taper 50%)"
+                    )
 
 # make one big plot
-ggplot(all.proj, aes(as.factor(year), RWI, fill = scenario))+geom_boxplot(position = "dodge2")
+by.scenario <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill = as.character(year)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000,]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+facet_wrap(~scenario, nrow = 1, labeller = as_labeller(scenario_names))+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c("blue", "red"))+theme(legend.title = element_blank())
 
-ggplot(all.proj, aes(as.factor(year), RWI, fill = scenario))+geom_boxplot(position = "dodge2")+facet_wrap(~site)
+
+png(height = 4, width = 12, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_scenarios_26cm_avg_growth.png")
+by.scenario+theme(legend.position = "none")
+dev.off()
+
+
+by.period <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill = scenario))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000 & small.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
+))+theme(legend.title = element_blank())
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_time_scenarios_26cm_avg_growth.png")
+by.period
+dev.off()
+
+ggplot(all.proj[!all.proj$year == 2000, ], aes(as.factor(year), RWI, fill = as.character(DBH)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(all.proj[all.proj$year ==2000,]$RWI, na.rm=TRUE))+facet_wrap(~scenario)
+
+
+medians <- all.proj %>% group_by(year, site, DBH) %>% summarize(med.int = median(RWI))
+medians<- medians[medians$year == 2000,]
+
+ggplot(all.proj[!all.proj$year == 2000 & all.proj$DBH ==1.9 , ], aes(as.factor(year), RWI, fill = scenario))+geom_boxplot(position = "dodge2")+geom_hline(aes(yintercept = med.int), data = medians[medians$DBH == 1.9,])+facet_grid(~site)
 
 # make one big plot, but with a line for the modern predictions:
 
