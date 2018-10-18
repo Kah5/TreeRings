@@ -4152,12 +4152,27 @@ fut <- rbind(future.probe_50, future.probe_70, train.clim.summary[,c("MAP.scaled
 
 fut <- merge(fut, site.num.df, by = "site")
 
+# look at the effects under two different DBH values
 short.fut <- fut
 fut.small <- fut
 fut.large <- fut
 fut.small$DBH.scaled <- -0.413
 fut.large$DBH.scaled <- 1.900
 long.fut <- rbind(fut.small, fut.large)
+
+
+# look at the effects under average, below average, and above average different prev year growth values
+lfut.low <- long.fut
+lfut.avg <- long.fut
+lfut.high <- long.fut
+
+lfut.low$RWI_1 <- -1.609
+lfut.low$RWI_2 <- -1.47
+
+lfut.high$RWI_1 <- 1.891
+lfut.high$RWI_2 <- 2.03
+
+long.fut <- rbind(lfut.high, lfut.avg, lfut.low)
 
 lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP.f), 
                     data = list(Y=log(train.dry.pair$RWI), n=length(train.dry.pair$RWI), DI.scaled = train.dry.pair$DI.scaled, DBH.scaled = train.dry.pair$DBH.scaled,log_RWI_1 = log(train.dry.pair$RWI_1),log_RWI_2 = log(train.dry.pair$RWI_2), Temp.scaled = train.dry.pair$T.scaled, struct.cohort = as.numeric(train.dry.pair$struct.cohort.code), SF = as.numeric(unique(train.dry.pair$struct.cohort.code)), site = train.dry.pair$site.num, Nsites = length(unique(train.dry.pair$site)),
@@ -4971,13 +4986,13 @@ fut <- long.fut
 # scenario # 1: no change from modern
 Yfut.samps <- data.frame(Y.fut[[1]])
 
-colnames(Yfut.samps) <- paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
-Yfut.samps$num <- 1:length(Yfut.samps$`AVO_2050_-0.413`)
+colnames(Yfut.samps) <- paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, "_", fut$RWI_1, "_", fut$RWI_2)
+Yfut.samps$num <- 1:length(Yfut.samps[,2])
 fut.m <- melt(Yfut.samps)
 fut.m$RWI <- exp(fut.m$value)
 colnames(fut.m) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <- paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+fut$site_year <- paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, "_", fut$RWI_1, "_", fut$RWI_2)
 fut$scenario <- "constant"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -4989,13 +5004,13 @@ fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
 # scenario # 2: 35% decrease in drought sensitivie from modern
 Yfut.35.samps <- data.frame(Y.fut.35[[1]])
 
-colnames(Yfut.35.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+colnames(Yfut.35.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 Yfut.35.samps$num <- 1:length(Yfut.35.samps[,2])
 fut.35.m <- melt(Yfut.35.samps)
 fut.35.m $RWI <- exp(fut.35.m $value)
 colnames(fut.35.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 fut$scenario <- "decrease_35"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5005,13 +5020,13 @@ fut.35.proj <- dplyr::inner_join(fut.35.m, fut, by=c("site_year"))
 # scenario # 3: 50% decrease in drought sensitivie from modern
 Yfut.50.samps <- data.frame(Y.fut.50[[1]])
 
-colnames(Yfut.50.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+colnames(Yfut.50.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 Yfut.50.samps$num <- 1:length(Yfut.50.samps[,2])
 fut.50.m <- melt(Yfut.50.samps)
 fut.50.m $RWI <- exp(fut.50.m $value)
 colnames(fut.50.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 fut$scenario <- "decrease_50"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5020,13 +5035,13 @@ fut.50.proj <- dplyr::inner_join(fut.50.m, fut, by=c("site_year"))
 # scenario # 4: 50% decrease in drought sensitivy from modern & 50% increase in T sensitivity
 Yfut.35.35.samps <- data.frame(Y.fut.35.35[[1]])
 
-colnames(Yfut.35.35.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+colnames(Yfut.35.35.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 Yfut.35.35.samps$num <- 1:length(Yfut.35.35.samps[,2])
 fut.35.35.m <- melt(Yfut.35.35.samps)
 fut.35.35.m $RWI <- exp(fut.35.35.m $value)
 colnames(fut.35.35.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 fut$scenario <- "decrease_35.35"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5037,13 +5052,13 @@ fut.35.35.proj <- dplyr::inner_join(fut.35.35.m, fut, by=c("site_year"))
 # scenario # 5: 50% decrease in drought sensitivy from modern & 50% increase in T sensitivity
 Yfut.50.50.samps <- data.frame(Y.fut.50.50[[1]])
 
-colnames(Yfut.50.50.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+colnames(Yfut.50.50.samps) <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 Yfut.50.50.samps$num <- 1:length(Yfut.50.50.samps[,2])
 fut.50.50.m <- melt(Yfut.50.50.samps)
 fut.50.50.m $RWI <- exp(fut.50.50.m $value)
 colnames(fut.50.50.m ) <- c("site_year", "Ypred", "RWI")
 
-fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled)
+fut$site_year <-  paste0(fut$site, "_",fut$year, "_", fut$DBH.scaled, fut$RWI_1, "_", fut$RWI_2)
 fut$scenario <- "decrease_50.50"
 colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort",  "year", "site.num","site_year", "scenario")
 
@@ -5053,7 +5068,10 @@ fut.50.50.proj <- dplyr::inner_join(fut.50.50.m, fut, by=c("site_year"))
 # now join all together :
 all.proj <- rbind(fut.proj, fut.35.proj[!fut.35.proj$year == 2000,], fut.50.proj[!fut.50.proj$year == 2000,], fut.35.35.proj[!fut.35.35.proj$year == 2000,], fut.50.50.proj[!fut.50.50.proj$year == 2000,])
 
-small.proj <- all.proj[all.proj$DBH == -0.413,]
+
+
+# ------------ For 26 cm tree and average prev years growth ----------------------
+small.proj <- all.proj[all.proj$DBH == -0.413 & all.proj$RWI_1 == 0.103 & all.proj$RWI_2 == 0.103,]
 small.proj$year <- ifelse(small.proj$year == 2050, "2050-2069",
                           ifelse(small.proj$year == 2070, "2070-2099", "2000"))
 scenario_names <- c(
@@ -5064,7 +5082,9 @@ scenario_names <- c(
                     'decrease_50' = "drought (no taper 50%)"
                     )
 
-# make one big plot
+
+
+# make one big plot for average previous years growth 
 by.scenario <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill = as.character(year)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000,]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+facet_wrap(~scenario, nrow = 1, labeller = as_labeller(scenario_names))+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c("blue", "red"))+theme(legend.title = element_blank())
 
 
@@ -5073,12 +5093,84 @@ by.scenario+theme(legend.position = "none")
 dev.off()
 
 
-by.period <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill = scenario))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000 & small.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
+by.period <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill =factor( scenario, labels = c("constant", "taper P 35%", "taper P & T 35%", "no taper P 50%", "no taper P & T 50%"))))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000 & small.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
 ))+theme(legend.title = element_blank())
 
 png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_time_scenarios_26cm_avg_growth.png")
 by.period
 dev.off()
+
+
+
+# ------------ For 26 cm tree and high prev years growth ----------------------
+small.high.proj <- all.proj[all.proj$DBH == -0.413 & all.proj$RWI_1 == 1.891 & all.proj$RWI_2 == 2.030,]
+small.high.proj$year <- ifelse(small.high.proj$year == 2050, "2050-2069",
+                          ifelse(small.high.proj$year == 2070, "2070-2099", "2000"))
+scenario_names <- c(
+                    'constant' = "sensitivity constant",
+                    'decrease_35' = "drought (taper 35%)",
+                    'decrease_35.35' = "drought & temp. (taper 35%)",
+                    'decrease_50.50' = "drought & temp. (no taper 50%)",
+                    'decrease_50' = "drought (no taper 50%)"
+                    )
+
+
+
+# make one big plot for average previous years growth 
+by.scenario.hi <- ggplot(small.high.proj[!small.high.proj$year == 2000, ], aes(year, RWI, fill = as.character(year)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.high.proj[small.high.proj$year ==2000,]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+facet_wrap(~scenario, nrow = 1, labeller = as_labeller(scenario_names))+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c("blue", "red"))+theme(legend.title = element_blank())
+
+
+png(height = 4, width = 12, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_scenarios_26cm_high_growth.png")
+by.scenario.hi+theme(legend.position = "none")
+dev.off()
+
+
+by.period.hi <- ggplot(small.high.proj[!small.high.proj$year == 2000, ], aes(year, RWI, fill =factor( scenario, labels = c("constant", "taper P 35%", "taper P & T 35%", "no taper P 50%", "no taper P & T 50%"))))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.high.proj[small.high.proj$year ==2000 & small.high.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
+))+theme(legend.title = element_blank())
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_time_scenarios_26cm_high_growth.png")
+by.period.hi
+dev.off()
+
+# ------------ For 26 cm tree and low prev years growth ----------------------
+small.low.proj <- all.proj[all.proj$DBH == -0.413 & all.proj$RWI_1 == -1.609 & all.proj$RWI_2 == -1.470,]
+small.low.proj$year <- ifelse(small.low.proj$year == 2050, "2050-2069",
+                          ifelse(small.low.proj$year == 2070, "2070-2099", "2000"))
+scenario_names <- c(
+                    'constant' = "sensitivity constant",
+                    'decrease_35' = "drought (taper 35%)",
+                    'decrease_35.35' = "drought & temp. (taper 35%)",
+                    'decrease_50.50' = "drought & temp. (no taper 50%)",
+                    'decrease_50' = "drought (no taper 50%)"
+                    )
+
+
+
+# make one big plot for average previous years growth 
+by.scenario.low <- ggplot(small.low.proj[!small.low.proj$year == 2000, ], aes(year, RWI, fill = as.character(year)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.low.proj[small.low.proj$year ==2000,]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+facet_wrap(~scenario, nrow = 1, labeller = as_labeller(scenario_names))+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c("blue", "red"))+theme(legend.title = element_blank())
+
+
+png(height = 4, width = 12, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_scenarios_26cm_low_growth.png")
+by.scenario.low+theme(legend.position = "none")
+dev.off()
+
+
+by.period.low <- ggplot(small.low.proj[!small.low.proj$year == 2000, ], aes(year, RWI, fill =factor( scenario, labels = c("constant", "taper P 35%", "taper P & T 35%", "no taper P 50%", "no taper P & T 50%"))))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.low.proj[small.low.proj$year ==2000 & small.low.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
+))+theme(legend.title = element_blank())
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_time_scenarios_26cm_low_growth.png")
+by.period.low
+dev.off()
+
+
+
+
+
+
+
+
+# extra future figures:
+
 
 ggplot(all.proj[!all.proj$year == 2000, ], aes(as.factor(year), RWI, fill = as.character(DBH)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(all.proj[all.proj$year ==2000,]$RWI, na.rm=TRUE))+facet_wrap(~scenario)
 
