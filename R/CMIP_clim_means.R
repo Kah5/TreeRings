@@ -135,6 +135,7 @@ ggplot(rcp85, aes(Tx_85_70GS, Pr_85_70, color = site))+geom_point()
 write.csv(rcp85, "outputs/CCESM_rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
 
 
+
 # -----extract model projections for IND-----
 # predictions for the 2050s:
 IN_pr85.50 <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "in")
@@ -184,12 +185,114 @@ ggplot(IN_rcp85, aes(Tx_85_70GS, Pr_85_70, color = site))+geom_point()
 
 write.csv(IN_rcp85, "outputs/INMCM4_rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
 
+# -----extract model projections for mcD-----
+# predictions for the 2050s:
+mc_pr85.50 <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "mc")
+mc_Tmax.50 <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "mc")
+mc_Tmmc.50 <- extract.site.rcps ("tn", "85", sites = sites, time = "50", model = "mc")
+
+# predictions for the 2070s
+mc_pr85.70 <- extract.site.rcps ("pr", "85", sites = sites, time = "70", model = "mc")
+mc_Tmax.70 <- extract.site.rcps ("tx", "85", sites = sites, time = "70", model = "mc")
+mc_Tmmc.70 <- extract.site.rcps ("tn", "85", sites = sites, time = "70", model = "mc")
+
+# need to convert to C and then F
+toFahrenheit = function(celsius) {
+  f = (9/5) * celsius + 32; 
+}
+
+mc_Tmax.50$`tx-85` <- toFahrenheit(mc_Tmax.50$`tx-85`)
+mc_Tmax.50$`tx-85cv` <- toFahrenheit(mc_Tmax.50$`tx-85cv`)
+mc_Tmax.50$`tx-85GS` <- toFahrenheit(mc_Tmax.50$`tx-85GS`)
+
+mc_Tmax.70$`tx-85` <- toFahrenheit(mc_Tmax.70$`tx-85`)
+mc_Tmax.70$`tx-85cv` <- toFahrenheit(mc_Tmax.70$`tx-85cv`)
+mc_Tmax.70$`tx-85GS` <- toFahrenheit(mc_Tmax.70$`tx-85GS`)
+
+mc_Tmmc.50$`tn-85` <- toFahrenheit(mc_Tmmc.50$`tn-85`)
+mc_Tmmc.50$`tn-85cv` <- toFahrenheit(mc_Tmmc.50$`tn-85cv`)
+mc_Tmmc.50$`tn-85GS` <- toFahrenheit(mc_Tmmc.50$`tn-85GS`)
+
+mc_Tmmc.70$`tn-85` <- toFahrenheit(mc_Tmmc.70$`tn-85`)
+mc_Tmmc.70$`tn-85cv` <- toFahrenheit(mc_Tmmc.70$`tn-85cv`)
+mc_Tmmc.70$`tn-85GS` <- toFahrenheit(mc_Tmmc.70$`tn-85GS`)
+
+
+# compile Tmaxes and precips mcto one data fram with a site column:
+mc_rcp8.5_2070 <- merge(mc_Tmax.70, mc_pr85.70, by = c("site", "x","y"))
+mc_rcp8.5_2050 <- merge(mc_Tmax.50, mc_pr85.50, by = c("site", "x","y"))
+colnames(mc_rcp8.5_2050)[4:8] <- c("Tx_85_50", "Tx_85_50cv", "Tx_85_50GS",
+                                   "Pr_85_50", "Pr_85_50si")
+
+colnames(mc_rcp8.5_2070)[4:8] <- c("Tx_85_70", "Tx_85_70cv", "Tx_85_70GS",
+                                   "Pr_85_70", "Pr_85_70si")
+
+setwd("/Users/kah/Documents/TreeRings/")
+mc_rcp85 <- merge(mc_rcp8.5_2050, mc_rcp8.5_2070, by = c("site", "x","y"))
+
+ggplot(mc_rcp85, aes(Tx_85_70GS, Pr_85_70, color = site))+geom_point()
+
+write.csv(mc_rcp85, "outputs/mcMCM4_rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
+
+
+
+# -----extract model projections for HE-----
+# predictions for the 2050s:
+he_pr85.50 <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "he")
+he_Tmax.50 <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "he")
+he_Tmhe.50 <- extract.site.rcps ("tn", "85", sites = sites, time = "50", model = "he")
+
+# predictions for the 2070s
+he_pr85.70 <- extract.site.rcps ("pr", "85", sites = sites, time = "70", model = "he")
+he_Tmax.70 <- extract.site.rcps ("tx", "85", sites = sites, time = "70", model = "he")
+he_Tmhe.70 <- extract.site.rcps ("tn", "85", sites = sites, time = "70", model = "he")
+
+# need to convert to C and then F
+toFahrenheit = function(celsius) {
+  f = (9/5) * celsius + 32; 
+}
+
+he_Tmax.50$`tx-85` <- toFahrenheit(he_Tmax.50$`tx-85`)
+he_Tmax.50$`tx-85cv` <- toFahrenheit(he_Tmax.50$`tx-85cv`)
+he_Tmax.50$`tx-85GS` <- toFahrenheit(he_Tmax.50$`tx-85GS`)
+
+he_Tmax.70$`tx-85` <- toFahrenheit(he_Tmax.70$`tx-85`)
+he_Tmax.70$`tx-85cv` <- toFahrenheit(he_Tmax.70$`tx-85cv`)
+he_Tmax.70$`tx-85GS` <- toFahrenheit(he_Tmax.70$`tx-85GS`)
+
+he_Tmhe.50$`tn-85` <- toFahrenheit(he_Tmhe.50$`tn-85`)
+he_Tmhe.50$`tn-85cv` <- toFahrenheit(he_Tmhe.50$`tn-85cv`)
+he_Tmhe.50$`tn-85GS` <- toFahrenheit(he_Tmhe.50$`tn-85GS`)
+
+he_Tmhe.70$`tn-85` <- toFahrenheit(he_Tmhe.70$`tn-85`)
+he_Tmhe.70$`tn-85cv` <- toFahrenheit(he_Tmhe.70$`tn-85cv`)
+he_Tmhe.70$`tn-85GS` <- toFahrenheit(he_Tmhe.70$`tn-85GS`)
+
+
+# compile Tmaxes and precips heto one data fram with a site column:
+he_rcp8.5_2070 <- merge(he_Tmax.70, he_pr85.70, by = c("site", "x","y"))
+he_rcp8.5_2050 <- merge(he_Tmax.50, he_pr85.50, by = c("site", "x","y"))
+colnames(he_rcp8.5_2050)[4:8] <- c("Tx_85_50", "Tx_85_50cv", "Tx_85_50GS",
+                                   "Pr_85_50", "Pr_85_50si")
+
+colnames(he_rcp8.5_2070)[4:8] <- c("Tx_85_70", "Tx_85_70cv", "Tx_85_70GS",
+                                   "Pr_85_70", "Pr_85_70si")
+
+setwd("/Users/kah/Documents/TreeRings/")
+he_rcp85 <- merge(he_rcp8.5_2050, he_rcp8.5_2070, by = c("site", "x","y"))
+
+ggplot(he_rcp85, aes(Tx_85_70GS, Pr_85_70, color = site))+geom_point()
+
+write.csv(he_rcp85, "outputs/heMCM4_rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
 
 
 # merge into one big df for rcp8.5:
-rcp85$model <- "CCESM"
+#rcp85$model <- "CCESM"
 IN_rcp85$model <- "INMCM4"
-rcp85.full <- rbind(rcp85, IN_rcp85)
+mc_rcp85$model <- "MIROC"
+he_rcp85$model <- "HadGEM-ES2"
+
+rcp85.full <- rbind( IN_rcp85, mc_rcp85, he_rcp85)
 write.csv(rcp85.full, "outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
 
 # precip comparison:
@@ -219,3 +322,32 @@ mg$model <- "mg"
 pr50<- rbind(mc, ccsm, mr, bc, he, gs, ip, ind, no, mg)
 colnames(pr50) <- c("x", "y", "pr85", "pr85si", "site", "model")
 ggplot(pr50, aes( model, pr85,color = site))+geom_point()+geom_line()
+
+
+# do the same for temmac
+mc <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "mc")
+ccsm <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "cc")
+mr <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "mr")
+bc <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "bc")
+he <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "he")
+gs <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "gs")
+ip <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "ip")
+ind <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "in")
+no <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "no")
+mg <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "mg")
+
+
+mc$model <- "mc"
+ccsm$model <- "cc"
+mr$model <- "mr"
+bc$model <- "bc"
+he$model <- "he"
+gs$model <- "gs"
+ip$model <- "ip"
+ind$model <- "ind"
+no$model <- "no"
+mg$model <- "mg"
+
+tx50<- rbind(mc, ccsm, mr, he, gs, ip, ind, no, mg)
+colnames(tx50) <- c("x", "y", "tx85", "tx85si", "tx85GS","site", "model")
+ggplot(tx50, aes( model, tx85GS, color = site))+geom_point()
