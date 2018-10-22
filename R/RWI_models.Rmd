@@ -4015,7 +4015,7 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
 # project into the future (assuming 35% further change in drought senseiivty):
   for(i in 1:nfut){
    Yfut.35[i]  ~ dnorm(mufut2[i],inv.var)
-    mufut2[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.65)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
+    mufut2[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
   }
 
 
@@ -4023,22 +4023,22 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
 # project into the future (assuming 50% further change in drought senseiivty):
   for(i in 1:nfut){
    Yfut.50[i]  ~ dnorm(mufut3[i],inv.var)
-    mufut3[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.50)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
+    mufut3[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]
   }
 
 
-# project into the future (assuming 35% further change in drought senseiivty & temperature):
+# project into the future (assuming 8% further change in drought senseiivty & temperature):
   for(i in 1:nfut){
    Yfut.35.35[i]  ~ dnorm(mufut35[i],inv.var)
-    mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.65)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.35)*Temp.scaled.fut[i]
+    mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.08)*Temp.scaled.fut[i]
   }
 
 
 
-# project into the future (assuming 50% further change in drought senseiivty):
+# project into the future (assuming 7% further change in drought senseiivty):
   for(i in 1:nfut){
    Yfut.50.50[i]  ~ dnorm(mufut50[i],inv.var)
-    mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.50)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.50)*Temp.scaled.fut[i]
+    mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.15)*Temp.scaled.fut[i]
   }
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
@@ -4574,7 +4574,7 @@ dev.off()
 locs <- read.csv("outputs/priority_sites_locs_with_soil_clim.csv")
 locs <- data.frame(locs)
 locs$code <- as.character(locs$code)
-locs[9:12,]$code <- c( "GLL1", "GLL2", "GLL3", "GLL4")
+locs[6:9,]$code <- c( "GLL1", "GLL2", "GLL3", "GLL4")
 sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4", "GLL3", "GLL2", "GLL1", "PVC", "AVO", "PLE", "UNI")
 
 # merge with a1.sum.age
@@ -4586,12 +4586,12 @@ alpha.pr30yr <-ggplot(site.summary, aes(x = pr30yr, y = mean.val, color = struct
 summary(lm(mean.val ~ pr30yr,data = site.summary))
 
 # plot mean + 95% confidence interval vs. Tmean
-alpha.tm30yr <-ggplot(site.summary, aes(x = tm30yr, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("Mean Temp")
+alpha.tm30yr <- ggplot(site.summary, aes(x = tm30yr, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("Mean Temp")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ tm30yr,data = site.summary))
 
 # plot mean + 95% confidence interval vs. sand %
-alpha.sand <-ggplot(site.summary, aes(x = sand, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("sand")#+stat_smooth(method = "lm")
+alpha.sand <- ggplot(site.summary, aes(x = sand, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("sand")#+stat_smooth(method = "lm")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ sand,data = site.summary))
 
@@ -4604,11 +4604,20 @@ summary(lm(mean.val ~ ksat,data = site.summary))
 
 alpha.awc <- ggplot(site.summary, aes(x = awc, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("AWC")
 # get an idea if there might be relationship
-summary(lm(mean.val ~ awc,data = site.summary))
+summary(lm(mean.val ~ awc, data = site.summary))
 
 # plot mean + 95% confidence interval vs. n. species 
 
 alpha.nspecies <- ggplot(site.summary, aes(x = nspecies, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("nspecies")#+stat_smooth(data = site.summary, aes(x = nspecies, y = mean.val), method = "lm")
+summary(lm(mean.val ~ nspecies, data = site.summary))
+
+
+ 
+
+alpha.DBH <- ggplot(site.summary, aes(x = DBH, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("Basal Area")
+
+summary(lm(mean.val ~ DBH, data = site.summary))
+
 
 # there seems to be no relationship between alpha and site characteristics
 # but plot the relationships out here:
@@ -5080,10 +5089,10 @@ small.proj$year <- ifelse(small.proj$year == 2050, "2050-2069",
                           ifelse(small.proj$year == 2070, "2070-2099", "2000"))
 scenario_names <- c(
                     'constant' = "sensitivity constant",
-                    'decrease_35' = "drought (taper 35%)",
-                    'decrease_35.35' = "drought & temp. (taper 35%)",
-                    'decrease_50.50' = "drought & temp. (no taper 50%)",
-                    'decrease_50' = "drought (no taper 50%)"
+                    'decrease_35' = "drought (taper 8%)",
+                    'decrease_35.35' = "drought & temp. (taper 8%)",
+                    'decrease_50.50' = "drought & temp. (no taper 15%)",
+                    'decrease_50' = "drought (no taper 15%)"
                     )
 
 
@@ -5113,6 +5122,26 @@ png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/lag2_r
 by.model
 dev.off()
 
+small.proj$model <- factor(small.proj$model, levels = c("INMCM4", "HadGEM-ES2", "MIROC"))
+model_names <- c(
+                    'INMCM4' = "INMCM4 \n low Tmax - low Precip",
+                    'HadGEM-ES2' = "HadGEM-ES2 \n high Tmax - low Precip",
+                    'MIROC' = "MIROC \n high Tmax - high Precip"
+                    
+                    )
+
+
+model_names <- c("INMCM4 \n low Tmax - low Precip",
+                 "HadGEM-ES2 \n high Tmax - low Precip",
+                 "MIROC \n high Tmax - high Precip")
+
+by.model.2050 <- ggplot(small.proj[!small.proj$year == 2000 , ], aes(year, RWI, fill =factor( scenario, labels = c("constant", "taper P 8%", "taper P & T 8%", "no taper P 15%", "no taper P & T 15%"))))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000 & small.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
+))+theme(legend.title = element_blank())+facet_grid(~model)
+
+
+png(height = 5, width = 9, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/fut_growth_by_model_2050_26cm_avg_growth.png")
+by.model.2050
+dev.off()
 
 ggplot(small.proj[!small.proj$year == 2000 & !small.proj$year %in% "2070-2099", ], aes(year, RWI, fill =factor( scenario, labels = c("constant", "taper P 35%", "taper P & T 35%", "no taper P 50%", "no taper P & T 50%"))))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000 & small.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
 ))+theme(legend.title = element_blank())+facet_grid(rows=vars(model), cols= vars(site))
