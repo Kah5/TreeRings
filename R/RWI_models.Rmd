@@ -4581,48 +4581,48 @@ sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GLL4"
 site.summary <- merge(a1.sum.age, locs, by.x = "variable", by.y = "code")
 
 # plot mean + 95% confidence interval vs. MAP
-alpha.pr30yr <-ggplot(site.summary, aes(x = pr30yr, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("Total Precip")
+alpha.pr30yr <-ggplot(site.summary, aes(x = pr30yr, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept")+xlab("Total Precip")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ pr30yr,data = site.summary))
 
 # plot mean + 95% confidence interval vs. Tmean
-alpha.tm30yr <- ggplot(site.summary, aes(x = tm30yr, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("Mean Temp")
+alpha.tm30yr <- ggplot(site.summary, aes(x = tm30yr, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept")+xlab("Mean Temp")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ tm30yr,data = site.summary))
 
 # plot mean + 95% confidence interval vs. sand %
-alpha.sand <- ggplot(site.summary, aes(x = sand, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("sand")#+stat_smooth(method = "lm")
+alpha.sand <- ggplot(site.summary, aes(x = sand, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept")+xlab("sand")#+stat_smooth(method = "lm")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ sand,data = site.summary))
 
 # plot mean + 95% confidence interval vs. ksat
-alpha.ksat <-ggplot(site.summary, aes(x = ksat, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("ksat")
+alpha.ksat <-ggplot(site.summary, aes(x = ksat, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept")+xlab("ksat")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ ksat,data = site.summary))
 
 # plot mean + 95% confidence interval vs. awc
 
-alpha.awc <- ggplot(site.summary, aes(x = awc, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("AWC")
+alpha.awc <- ggplot(site.summary, aes(x = awc, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept")+xlab("AWC")
 # get an idea if there might be relationship
 summary(lm(mean.val ~ awc, data = site.summary))
 
 # plot mean + 95% confidence interval vs. n. species 
 
-alpha.nspecies <- ggplot(site.summary, aes(x = nspecies, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("nspecies")#+stat_smooth(data = site.summary, aes(x = nspecies, y = mean.val), method = "lm")
+alpha.nspecies <- ggplot(site.summary, aes(x = nspecies, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept ")+xlab("nspecies")#+stat_smooth(data = site.summary, aes(x = nspecies, y = mean.val), method = "lm")
 summary(lm(mean.val ~ nspecies, data = site.summary))
 
 
  
 
-alpha.DBH <- ggplot(site.summary, aes(x = DBH, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+xlab("Estimated Intercept (alpha)")+ylab("Basal Area")
+alpha.DBH <- ggplot(site.summary, aes(x = DBH, y = mean.val, color = structure, size = 2))+geom_errorbar( aes(ymin = Ci.low, ymax = Ci.high, size = 1,width = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme(legend.position = "none")+ylab("Estimated Intercept")+xlab("Average Site DBH")
 
 summary(lm(mean.val ~ DBH, data = site.summary))
 
 
 # there seems to be no relationship between alpha and site characteristics
 # but plot the relationships out here:
-png(height = 10, width = 4, units = "in",res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/alpha_site_ints_vs_site_quality.png")
-plot_grid(alpha.pr30yr, alpha.tm30yr, alpha.awc, alpha.sand, alpha.nspecies, ncol = 1, align = "v")
+png(height = 8, width = 6, units = "in",res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/alpha_site_ints_vs_site_quality.png")
+plot_grid(alpha.pr30yr, alpha.tm30yr, alpha.awc, alpha.sand, alpha.nspecies, alpha.DBH, ncol = 2, align = "v", labels = "AUTO", label_x = 0.1)
 dev.off()
 
 #---------------------- More beta summary plots -----------------------------

@@ -295,6 +295,19 @@ he_rcp85$model <- "HadGEM-ES2"
 rcp85.full <- rbind( IN_rcp85, mc_rcp85, he_rcp85)
 write.csv(rcp85.full, "outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
 
+# plot rcpfull:
+
+P.50 <- ggplot(rcp85.full, aes( model, Pr_85_50))+geom_boxplot()+geom_point()+ylab("Total Annual Precipitation (mm) \n 2050 - 2069")
+P.70 <- ggplot(rcp85.full, aes( model, Pr_85_70))+geom_boxplot()+geom_point()+ylab("Total Annual Precipitation (mm) \n 2070 - 2099")
+
+t.50 <- ggplot(rcp85.full, aes( model, Tx_85_50GS))+geom_boxplot()+geom_point()+ylab("July Maximum Temperature (DegF)  \n 2050 - 2069")+ylim(84, 95)
+t.70 <- ggplot(rcp85.full, aes( model, Tx_85_70GS))+geom_boxplot()+geom_point()+ylab("July Maximum Temperature (DegF) \n 2070 - 2099")+ylim(84, 95)
+
+png(height = 8, width = 9, units = "in", res = 300, "/Users/kah/Documents/TreeRings/outputs/growth_model/future_climate_model_scenarios.png")
+plot_grid(P.50,  t.50, P.70, t.70, ncol = 2, labels = "AUTO", label_x = 0.1)
+dev.off()
+
+
 # precip comparison:
 mc <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "mc")
 ccsm <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "cc")
