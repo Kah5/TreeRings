@@ -2851,6 +2851,8 @@ locs$tm30yr <- raster::extract(prismt.alb, locs[,c("coords.x1","coords.x2")])
 
 workingdir <- "/Users/kah/Documents/TreeRings"
 
+
+write.csv(locs, "outputs/priority_sites_locs_with_soil_clim.csv")
 # read in the N & S deposition data:
 #sdep.files <- list.files("data/total_Sdep/")
 #ndep.files <- list.files("data/total_Ndep/")

@@ -1098,8 +1098,8 @@ det.age.clim.class.prism.dbh.df <- merge(det.age.clim.prism.dbh.df, spec[,c("ID"
 
 ggplot(det.age.clim.class.ghcn.dbh.df, aes(year, RWI, color = ageclass))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site)
 
-write.csv(det.age.clim.class.ghcn.dbh.df, "outputs/data/rwi_age_dbh_ghcn.df")
-write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.df")
+write.csv(det.age.clim.class.ghcn.dbh.df, "outputs/data/rwi_age_dbh_ghcn.csv")
+write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.csv")
 
 
 
