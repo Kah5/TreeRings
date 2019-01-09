@@ -308,6 +308,49 @@ plot_grid(P.50,  t.50, P.70, t.70, ncol = 2, labels = "AUTO", label_x = 0.1)
 dev.off()
 
 
+# -------------------------Get the change between current PRISM and future projections--------------------
+
+prism.df <- read.csv( "outputs/full_prism_all_months.csv")
+prism.df$MAP <- rowSums(prism.df[,c("PRISM_pcp_1","PRISM_pcp_2", "PRISM_pcp_3","PRISM_pcp_4","PRISM_pcp_5","PRISM_pcp_6", "PRISM_pcp_7", "PRISM_pcp_8", "PRISM_pcp_9", "PRISM_pcp_10", "PRISM_pcp_11", "PRISM_pcp_12")])
+
+
+prism.df$Tmean <- rowMeans(prism.df[,c("PRISM_tavg_1","PRISM_tavg_2", "PRISM_tavg_3","PRISM_tavg_4","PRISM_tavg_5","PRISM_tavg_6", "PRISM_tavg_7", "PRISM_tavg_8", "PRISM_tavg_9", "PRISM_tavg_10", "PRISM_tavg_11", "PRISM_tavg_12")])
+
+prism.df$Tmax_gs <- rowMeans(prism.df[,c("PRISM_tmax_6","PRISM_tmax_7")])
+
+
+full.current.summary <- prism.df %>% group_by(site) %>% summarise(MAP = mean(MAP, na.rm = TRUE), 
+                                                                  Tmax = mean(Tmax_gs, na.rm = TRUE))
+
+rcp85.full.C <- rcp85.full[,c("site", "x", "y", "Tx_85_50GS", "Tx_85_70GS", "Pr_85_50","Pr_85_70", "model")]
+rcp85.full.C$Tx_85_50GS <- 5/9 * (rcp85.full.C$Tx_85_50GS - 32)
+rcp85.full.C$Tx_85_70GS <- 5/9 * (rcp85.full.C$Tx_85_70GS - 32)
+
+# get the differences between projected and mean of current climate
+merged.full <- merge(rcp85.full.C, full.current.summary, by = "site")
+merged.full$Tx_85_50_GS_diff <- merged.full$Tx_85_50GS - merged.full$Tmax
+merged.full$Tx_85_70_GS_diff <- merged.full$Tx_85_70GS - merged.full$Tmax
+merged.full$Pr_85_50_diff <- merged.full$Pr_85_50 - merged.full$MAP
+merged.full$Pr_85_70_diff <- merged.full$Pr_85_70 - merged.full$MAP
+
+ggplot(merged.full, aes(Tx_85_50_GS_diff, Tmax, color = model))+geom_point()
+ggplot(merged.full, aes(Tx_85_70_GS_diff, Tmax, color = model))+geom_point()
+
+ggplot(merged.full, aes(Pr_85_50_diff, Tmax, color = model))+geom_point()
+ggplot(merged.full, aes(Pr_85_70_diff, Tmax, color = model))+geom_point()
+
+P.50.diff <- ggplot()+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")+geom_boxplot(data = merged.full, aes( model, Pr_85_50_diff))+geom_point(data = merged.full, aes( model, Pr_85_50_diff))+ylab("Changes in Total Annual Precipitation (mm) \n future - historical (2050 - 2069)")+ylim(-135, 100)
+P.70.diff <- ggplot()+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")+geom_boxplot(data = merged.full, aes( model, Pr_85_70_diff))+geom_point(data = merged.full, aes( model, Pr_85_70_diff))+ylab("Changes in Total Annual Precipitation (mm) \n future - historical (2070 - 2099)")+ylim(-135, 100)
+
+t.50.diff <- ggplot(merged.full, aes( model, Tx_85_50_GS_diff))+geom_boxplot()+geom_point()+ylab("Changes in July Maximum Temperature (DegC)  \n future - historical (2050 - 2069)")+ylim(0, 8)
+t.70.diff <- ggplot(merged.full, aes( model, Tx_85_70_GS_diff))+geom_boxplot()+geom_point()+ylab("Changes in July Maximum Temperature (DegC) \n future - historical (2070 - 2099)")+ylim(0, 8)
+
+
+png(height = 10, width = 9, units = "in", res = 300, "/Users/kah/Documents/TreeRings/outputs/growth_model/future_climate_model_scenarios_differences.png")
+plot_grid(P.50.diff,  t.50.diff, P.70.diff, t.70.diff, ncol = 2, labels = "AUTO", label_x = 0.1)
+dev.off()
+
+
 # precip comparison:
 mc <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "mc")
 ccsm <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "cc")
