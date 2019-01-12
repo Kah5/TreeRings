@@ -12,6 +12,7 @@ library(ggridges)
 library(tidyr)
 library(reshape2)
 library(dplyr)
+library(cowplot)
 
 # some initial data checking:
 full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.csv")
@@ -67,6 +68,7 @@ rwi.ghcn$MAP.prism <- rowSums(rwi.prism[,c("Month_pcp_1","Month_pcp_2", "Month_p
 prism.df <- read.csv( "outputs/full_prism_all_months.csv")
 prism.df$MAP <- rowSums(prism.df[,c("PRISM_pcp_1","PRISM_pcp_2", "PRISM_pcp_3","PRISM_pcp_4","PRISM_pcp_5","PRISM_pcp_6", "PRISM_pcp_7", "PRISM_pcp_8", "PRISM_pcp_9", "PRISM_pcp_10", "PRISM_pcp_11", "PRISM_pcp_12")])
 
+require(dplyr)
 MAP.roll.means <- unique(prism.df[,c("site", "Year", "MAP"),]) %>%
   group_by(site, Year) %>%
   arrange(site, Year) %>%
@@ -77,15 +79,17 @@ MAP.roll.means <- unique(prism.df[,c("site", "Year", "MAP"),]) %>%
 colnames(MAP.roll.means) <- c("site", "year", "MAP", "MAP.5", "MAP.10", "MAP.15")
 
 
-prism.df$Tmean <- rowSums(prism.df[,c("PRISM_tavg_1","PRISM_tavg_2", "PRISM_tavg_3","PRISM_tavg_4","PRISM_tavg_5","PRISM_tavg_6", "PRISM_tavg_7", "PRISM_tavg_8", "PRISM_tavg_9", "PRISM_tavg_10", "PRISM_tavg_11", "PRISM_tavg_12")])
+prism.df$Tmean <- rowMeans(prism.df[,c("PRISM_tavg_1","PRISM_tavg_2", "PRISM_tavg_3","PRISM_tavg_4","PRISM_tavg_5","PRISM_tavg_6", "PRISM_tavg_7", "PRISM_tavg_8", "PRISM_tavg_9", "PRISM_tavg_10", "PRISM_tavg_11", "PRISM_tavg_12")])
 
 
+require(dplyr)
 Tmean.roll.means <- unique(prism.df[,c("site", "Year", "Tmean"),]) %>%
   group_by(site, Year) %>%
-  arrange(site, Year) %>%
+  arrange(site, Year) %>% 
   mutate(Tmean.5 = zoo::rollmean(x = Tmean, 5, align = "right", fill = NA),
          Tmean.10 = zoo::rollmean(x = Tmean, 10, align = "right", fill = NA), 
          Tmean.15 = zoo::rollmean(x = Tmean, 15, align = "right", fill = NA))
+
 colnames(Tmean.roll.means) <- c("site", "year", "Tmean", "Tmean.5", "Tmean.10", "Tmean.15")
 
 ggplot(Tmean.roll.means, aes(year, Tmean.15, color = site))+geom_point()+geom_line()+stat_smooth()
@@ -121,6 +125,10 @@ full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRU
 site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 plot <- unique(full.ghcn$site)
+
+# convert Tmax to Celcius
+ #full.ghcn$JUNTmax <- 5/9 * (full.ghcn$JUNTmax - 32)
+
 
 # standardise predictor variables to have mean 0 and sd = 1
 DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
@@ -267,9 +275,14 @@ rcp85 <- read.csv("outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv")
 
 # scale to the same scale as t.scaled
 rcp85$Tx_50.scaled <- as.numeric(scale(rcp85$Tx_85_50GS, attr(T.scaled, "scaled:center"), attr(T.scaled, "scaled:scale")))
+
 rcp85$Tx_70.scaled <- as.numeric(scale(rcp85$Tx_85_70GS, attr(T.scaled, "scaled:center"), attr(T.scaled, "scaled:scale")))
 
 # scale to the same scale as MAP.scaled
+
+#scaled.new <- scale(rcp85$Tx_85_50GS, center = mean(full.ghcn$JUNTmax), scale = attr(T.scaled, "scaled:scale"))
+#scaled.new2 <- scale(rcp85$Tx_85_50GS, attr(full.ghcn$JUNTmax, "scaled:center"))
+
 rcp85$Pr_85_50.scaled <- as.numeric(scale(rcp85$Pr_85_50, attr(MAP.scaled, "scaled:center"), attr(MAP.scaled, "scaled:scale")))
 rcp85$PR_85_70.scaled <- as.numeric(scale(rcp85$Pr_85_70, attr(MAP.scaled, "scaled:center"), attr(MAP.scaled, "scaled:scale")))
 
@@ -2604,6 +2617,11 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
+
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_DIC.rds")
+
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -2904,6 +2922,11 @@ update(lag2.model.by_structure_x_cohort_t_pr, 1000); # Burnin for 1000 samples t
 samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5", "sigma_beta6","Yp", "Yprobe"), 
                     n.chains = 3, n.iter=1000, thin = 15)
+
+
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_DIC.rds")
 
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
@@ -3416,6 +3439,12 @@ Y.fut.35.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.50.50"), 
                     n.chains = 3, n.iter=10000,thin = 15)
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_full_DIC.rds")
+
+#s
+
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -3491,7 +3520,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test.full$RWI)
 
 # write model summary output to a file!
 
-model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full", 
+model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_dataset", 
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -4756,6 +4785,13 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
     mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.15)*Temp.scaled.fut[i]
   }
 
+# project into the future (assuming 7% further change in drought senseiivty):
+  for(i in 1:ndegree){
+   Yfut.degree[i]  ~ dnorm(mufutdegree[i],inv.var)
+    mufutdegree[i] <- beta1[site.deg[i]] + (beta2[struct.cohort.deg[i]]*0.85)*DI.scaled.deg[i] + beta3[struct.cohort.deg[i]]*DBH.scaled.deg[i] +beta4[struct.cohort.deg[i]]*log_RWI_1.deg[i] +beta5[struct.cohort.deg[i]]*log_RWI_2.deg[i] + (beta6[struct.cohort.deg[i]]*1.15)*Temp.scaled.deg[i]
+  }
+
+
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
 for(s in 1:length(SF)){
 
@@ -4891,7 +4927,51 @@ lfut.low$RWI_2 <- -1.47
 lfut.high$RWI_1 <- 1.891
 lfut.high$RWI_2 <- 2.03
 
+
 long.fut <- rbind(lfut.high, lfut.avg, lfut.low)
+
+# ------another probe, but super simple-------
+# we want to know how much increasing temperature by 1 deg C from the modern cohort at each site will change tree growth:
+
+mod.mean.clim <- test %>% filter(ageclass %in% "Modern" & year > 1950) %>% group_by(site) %>% dplyr::summarize(mod.mean.Tmax = mean(JUNTmax, na.rm = TRUE), one = mean(JUNTmax, na.rm = TRUE) + 1,
+          two = mean(JUNTmax, na.rm = TRUE) + 2,
+         three = mean(JUNTmax, na.rm = TRUE) + 3,
+         four = mean(JUNTmax, na.rm = TRUE) + 4,
+         five = mean(JUNTmax, na.rm = TRUE) + 5,
+         six = mean(JUNTmax, na.rm = TRUE) + 6,
+        seven =  mean(JUNTmax, na.rm = TRUE) + 7,
+        eight =  mean(JUNTmax, na.rm = TRUE) + 8, 
+        mod.mean.MAP = mean(MAP.prism, na.rm = TRUE), 
+        MAPminus100 = mean(MAP.prism, na.rm = TRUE)-100,
+        MAPminus50 = mean(MAP.prism, na.rm = TRUE)-50,
+        MAPplus50 = mean(MAP.prism, na.rm = TRUE)+50,
+        MAPplus100 = mean(MAP.prism, na.rm = TRUE)+100
+       )
+
+MAP.scenarios <- mod.mean.clim %>% select(site, mod.mean.MAP:MAPplus100) %>% group_by(site) %>% gather(MAP.Scenario, MAP, mod.mean.MAP:MAPplus100)
+
+temp.scenarios <- mod.mean.clim %>% select(site, mod.mean.Tmax:eight) %>% group_by(site) %>% gather(Temp.Scenario,Tmax, mod.mean.Tmax:eight)
+
+#next merge by site but keep all
+all.scen <- merge(MAP.scenarios, temp.scenarios, by = "site", all = TRUE)
+
+# get the scaled values for MAP and TMAX:
+all.scen$MAP.scaled <- as.numeric(scale(all.scen$MAP, attr(MAP.scaled, "scaled:center"), attr(MAP.scaled, "scaled:scale")))
+
+all.scen$T.scaled <- as.numeric(scale(all.scen$Tmax, attr(T.scaled, "scaled:center"), attr(T.scaled, "scaled:scale")))
+
+# expand grid to add structure + cohort class - add 1 diameter, add 1 lag, add 2 lag, then add probe to the model....will need to re-run model
+
+extras <- expand.grid(RWI_1 = 0.103, 
+                     RWI_2 = 0.103, 
+                     site = unique(all.scen$site), 
+                     DBH.scaled = 0.1322, # ~ 35 cm tree
+                     struct.cohort.code = 1:4)
+
+degree.scenario <- merge(all.scen, extras, by = "site", all = TRUE)
+degree.scenario <- merge(degree.scenario, site.num.df, by = "site")
+
+# actually run the model:
 
 lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP.f), 
                     data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = as.numeric(unique(train$struct.cohort.code)), site = train$site.num, Nsites = length(unique(train$site)),
@@ -4899,7 +4979,9 @@ lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_mo
   
   struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
  
-  struct.cohort.fut = as.numeric(long.fut$struct.cohort.code), DBH.scaled.fut = long.fut$DBH.scaled, DI.scaled.fut = long.fut$MAP.scaled, log_RWI_1.fut = long.fut$RWI_1, log_RWI_2.fut =long.fut$RWI_2, Temp.scaled.fut = long.fut$T.scaled, site.fut = long.fut$site.num, nfut = length(as.numeric(long.fut$struct.cohort.code))
+  struct.cohort.fut = as.numeric(long.fut$struct.cohort.code), DBH.scaled.fut = long.fut$DBH.scaled, DI.scaled.fut = long.fut$MAP.scaled, log_RWI_1.fut = long.fut$RWI_1, log_RWI_2.fut =long.fut$RWI_2, Temp.scaled.fut = long.fut$T.scaled, site.fut = long.fut$site.num, nfut = length(as.numeric(long.fut$struct.cohort.code)),
+  
+  struct.cohort.deg = as.numeric(degree.scenario$struct.cohort.code), DBH.scaled.deg = degree.scenario$DBH.scaled, DI.scaled.deg = degree.scenario$MAP.scaled, log_RWI_1.deg = degree.scenario$RWI_1, log_RWI_2.deg =degree.scenario$RWI_2, Temp.scaled.deg = degree.scenario$T.scaled, site.deg = degree.scenario$site.num, ndegree = length(as.numeric(degree.scenario$struct.cohort.code))
  
   
   ),
@@ -4914,6 +4996,10 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 
 Y.probe <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
                      variable.names=c("Yprobe"), 
+                    n.chains = 3, n.iter=10000, thin = 15)
+
+Y.degree <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
+                     variable.names=c("Yfut.degree"), 
                     n.chains = 3, n.iter=10000, thin = 15)
 
 Y.fut <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
@@ -4934,6 +5020,12 @@ Y.fut.35.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.50.50"), 
                     n.chains = 3, n.iter=10000,thin = 15)
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_full_pair_DIC.rds")
+
+
+
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -4946,12 +5038,22 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[1]'], auto.layout = FALSE
 
  samps       <- samp.structure.cohort.re[[1]]
  saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/samps.rds")
+ samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/samps.rds")
  
 
   Yprobe.samps      <- Y.probe[[1]]
  saveRDS(Yprobe.samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Yprobe.samps.rds")
+ Yprobe.samps <- readRDS( "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Yprobe.samps.rds")
+ 
+ 
+ Y.degree.samps      <- Y.degree[[1]]
+ saveRDS( Y.degree.samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Y.degree.samps.rds")
+  Y.degree.samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Y.degree.samps.rds")
+  Y.degree <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Y.degree.samps.rds")
+  
   Y.fut.samps      <- Y.fut[[1]]
  saveRDS(Y.fut.samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Y.fut.samps.rds")
+ Y.fut.samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Y.fut.samps.rds")
  
   Y.fut.35.samps      <- Y.fut.35[[1]]
  saveRDS(Y.fut.35.samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full_pair/Y.fut.35.samps.rds")
@@ -5696,7 +5798,7 @@ dev.off()
 
 
 # ----------------------- Plot future predictions ------------------------
-fut <-short.fut
+fut <- short.fut
 # scenario # 1: no change from modern
 Yfut.samps <- data.frame(Y.fut[[1]])
 
@@ -5715,6 +5817,252 @@ colnames(fut) <- c("site","MAP", "DBH","Tmax", "RWI_1","RWI_2","struct.cohort","
 fut.proj <- dplyr::inner_join(fut.m, fut, by=c("site_year"))
 
 
+# calculate the average change in growth relative to modern growth under higher Maximum Temperatures:
+fut.proj$DBH_unscale <- as.numeric(round(unscale(vals = as.numeric(fut.proj$DBH), norm.data = DBH.scaled))) 
+fut.proj$MAP_unscale <- as.numeric(round(unscale(vals = fut.proj$MAP, norm.data = MAP.scaled)))
+fut.proj$Tmax_unscale <- as.numeric(round(unscale(vals = fut.proj$Tmax, norm.data = T.scaled), 1)) 
+
+#-------------------Degree scenarios------------------
+# get the Ydegree samples &  calculate % change in growth from the modern average overall:
+
+Y.degree.samps <- data.frame(Y.degree)
+
+colnames(Y.degree.samps) <- paste0(degree.scenario$site, "_",degree.scenario$MAP.Scenario, "_", degree.scenario$Temp.Scenario, "_", degree.scenario$DBH.scaled, "_", degree.scenario$RWI_1, "_", fut$RWI_2)
+
+Y.degree.samps$num <- 1:length(Y.degree.samps[,2])
+deg.m <- melt(Y.degree.samps)
+deg.m$RWI <- exp(deg.m$value)
+colnames(deg.m) <- c("id", "Ypred", "RWI")
+
+
+
+degree.scenario$id <- paste0(degree.scenario$site, "_",degree.scenario$MAP.Scenario, "_", degree.scenario$Temp.Scenario, "_", degree.scenario$DBH.scaled, "_", degree.scenario$RWI_1, "_", fut$RWI_2)
+
+pred.degree <- left_join(degree.scenario, deg.m, by = "id")
+pred.degree$rownum <- 1:length(pred.degree$site)
+
+# get average growth increase relative to mod.mean:
+
+
+pct.change.low.ci <- pred.degree %>% select(rownum, site, MAP.Scenario, struct.cohort.code, Temp.Scenario, RWI) %>% group_by(site, MAP.Scenario, struct.cohort.code) %>% select( -Temp.Scenario)
+
+# spread function was adding nas so, create dfs with RWI values:
+
+
+past.Temp <- pred.degree %>% select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "mod.mean.Tmax") %>% rename(zero = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, zero)
+
+one <- pred.degree %>% select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "one" ) %>% rename(one = RWI) %>% select( -Temp.Scenario)%>% arrange(site, MAP.Scenario, struct.cohort.code, one)
+
+two <- pred.degree %>%  select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "two" ) %>% rename(two = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, two)
+
+three <- pred.degree %>% select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "three" ) %>% rename(three = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, three)
+
+four <- pred.degree %>%  select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "four" ) %>% rename(four = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, four)
+
+five <-  pred.degree %>% select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "five" ) %>% rename(five = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, five)
+
+six <-  pred.degree %>%  select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "six" ) %>% rename(six = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, six)
+
+seven <-  pred.degree %>% select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "seven" ) %>% rename(seven = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, seven)
+
+eight <-  pred.degree %>% select(site, MAP.Scenario, struct.cohort.code, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "eight" ) %>% rename(eight = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, eight)
+    
+
+                                                                                                                                                                                                 
+newdf <- cbind( past.Temp, one$one, two[,c("two")], three[,c("three")], four[,c("four")], five[, c("five")], six[, c("six")], seven[, c("seven")], eight[, c("eight")])       
+colnames(newdf) <- c("site", "MAP.Scenario", "struct.cohort.code", "base", "one", "two", "three", "four", "five", "six", "seven", "eight")
+
+
+
+
+pct.change.temp <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario)  %>%
+  summarise(zero = mean(((base-base)/base)*100, na.rm = TRUE),
+            one = mean(((one-base)/base)*100, na.rm = TRUE),
+            two = mean(((two-base)/base)*100, na.rm = TRUE),
+            three = mean(((three-base)/base)*100, na.rm = TRUE),
+            four = mean(((four-base)/base)*100, na.rm = TRUE),
+            five = mean(((five-base)/base)*100, na.rm = TRUE),
+            six = mean(((six-base)/base)*100, na.rm = TRUE),
+            seven = mean(((seven-base)/base)*100, na.rm = TRUE),
+            eight = mean(((eight-base)/base)*100, na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, pct_change, zero:eight)
+
+pct.change.hi.ci <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario)  %>%
+  summarise(zero = quantile(((base-base)/base)*100, 0.975 ,na.rm = TRUE),
+            one = quantile(((one-base)/base)*100, 0.975 ,na.rm = TRUE),
+            two = quantile(((two-base)/base)*100, 0.975 ,na.rm = TRUE),
+            three = quantile(((three-base)/base)*100, 0.975 ,na.rm = TRUE),
+            four = quantile(((four-base)/base)*100,0.975 , na.rm = TRUE),
+            five = quantile(((five-base)/base)*100,0.975 , na.rm = TRUE),
+            six = quantile(((six-base)/base)*100,0.975 , na.rm = TRUE),
+            seven = quantile(((seven-base)/base)*100,0.975 , na.rm = TRUE),
+            eight = quantile(((eight-base)/base)*100,0.975 , na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, ci.hi, zero:eight)
+
+pct.change.low.ci <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario)  %>%
+  summarise(zero = quantile(((base-base)/base)*100, 0.025 ,na.rm = TRUE),
+            one = quantile(((one-base)/base)*100, 0.025 ,na.rm = TRUE),
+            two = quantile(((two-base)/base)*100, 0.025 ,na.rm = TRUE),
+            three = quantile(((three-base)/base)*100, 0.025 ,na.rm = TRUE),
+            four = quantile(((four-base)/base)*100, 0.025 , na.rm = TRUE),
+            five = quantile(((five-base)/base)*100, 0.025 , na.rm = TRUE),
+            six = quantile(((six-base)/base)*100, 0.025 , na.rm = TRUE),
+            seven = quantile(((seven-base)/base)*100, 0.025 , na.rm = TRUE),
+            eight = quantile(((eight-base)/base)*100, 0.025 , na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, ci.low, zero:eight)
+
+cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("site", "incT", "struct.cohort.code", "MAP.Scenario") )
+pct.change.temp <- merge(pct.change.temp, cis, by = c("site","incT", "struct.cohort.code", "MAP.Scenario")) 
+
+Tdf <- data.frame(incT = c("zero", "one", "two", "three", "four", "five","six","seven", "eight"), 
+           deltaT = 0:8)
+
+pct.change.temp <- merge(pct.change.temp, Tdf, by = "incT")
+pct.change.temp$struct.cohort.code <- as.character(pct.change.temp$struct.cohort.code)
+
+ggplot(pct.change.temp[pct.change.temp$MAP.Scenario %in% "MAPplus100",], aes(deltaT, pct_change, color = struct.cohort.code))+geom_point()+geom_line() + geom_ribbon(data = pct.change.temp, aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = struct.cohort.code), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+ggplot(pct.change.temp[pct.change.temp$MAP.Scenario %in% "MAPminus100",], aes(deltaT, pct_change, color = struct.cohort.code))+geom_point()+geom_line() + geom_ribbon(data = pct.change.temp, aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = struct.cohort.code), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
+# lets look at the summaries overall:
+
+
+pct.change.temp <- newdf %>% group_by(MAP.Scenario)  %>%
+  summarise(zero = mean(((base-base)/base)*100, na.rm = TRUE),
+            one = mean(((one-base)/base)*100, na.rm = TRUE),
+            two = mean(((two-base)/base)*100, na.rm = TRUE),
+            three = mean(((three-base)/base)*100, na.rm = TRUE),
+            four = mean(((four-base)/base)*100, na.rm = TRUE),
+            five = mean(((five-base)/base)*100, na.rm = TRUE),
+            six = mean(((six-base)/base)*100, na.rm = TRUE),
+            seven = mean(((seven-base)/base)*100, na.rm = TRUE),
+            eight = mean(((eight-base)/base)*100, na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, pct_change, zero:eight)
+
+pct.change.hi.ci <- newdf %>% group_by( MAP.Scenario)  %>%
+  summarise(zero = quantile(((base-base)/base)*100, 0.9 ,na.rm = TRUE),
+            one = quantile(((one-base)/base)*100, 0.9 ,na.rm = TRUE),
+            two = quantile(((two-base)/base)*100, 0.9 ,na.rm = TRUE),
+            three = quantile(((three-base)/base)*100, 0.9 ,na.rm = TRUE),
+            four = quantile(((four-base)/base)*100,0.9 , na.rm = TRUE),
+            five = quantile(((five-base)/base)*100,0.9 , na.rm = TRUE),
+            six = quantile(((six-base)/base)*100,0.9 , na.rm = TRUE),
+            seven = quantile(((seven-base)/base)*100,0.9 , na.rm = TRUE),
+            eight = quantile(((eight-base)/base)*100,0.9 , na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, ci.hi, zero:eight)
+
+pct.change.low.ci <- newdf %>% group_by( MAP.Scenario)  %>%
+  summarise(zero = quantile(((base-base)/base)*100, 0.1 ,na.rm = TRUE),
+            one = quantile(((one-base)/base)*100, 0.1 ,na.rm = TRUE),
+            two = quantile(((two-base)/base)*100, 0.1 ,na.rm = TRUE),
+            three = quantile(((three-base)/base)*100, 0.1 ,na.rm = TRUE),
+            four = quantile(((four-base)/base)*100, 0.1 , na.rm = TRUE),
+            five = quantile(((five-base)/base)*100, 0.1 , na.rm = TRUE),
+            six = quantile(((six-base)/base)*100, 0.1 , na.rm = TRUE),
+            seven = quantile(((seven-base)/base)*100, 0.1 , na.rm = TRUE),
+            eight = quantile(((eight-base)/base)*100, 0.1 , na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, ci.low, zero:eight)
+
+cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("incT", "MAP.Scenario") )
+pct.change.temp <- merge(pct.change.temp, cis, by = c("incT", "MAP.Scenario")) 
+
+Tdf <- data.frame(incT = c("zero", "one", "two", "three", "four", "five","six","seven", "eight"), 
+           deltaT = 0:8)
+
+pct.change.temp <- merge(pct.change.temp, Tdf, by = "incT")
+#pct.change.temp$struct.cohort.code <- as.character(pct.change.temp$struct.cohort.code)
+
+ggplot(pct.change.temp, aes(deltaT, pct_change, color = MAP.Scenario))+geom_point()+geom_line() + geom_ribbon(data = pct.change.temp, aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = MAP.Scenario), alpha = 0.25, colour = NA)
+
+
+newdf.m <- newdf %>% group_by(MAP.Scenario, struct.cohort.code) %>% gather(key = incT, RWI, base:eight) %>% group_by(MAP.Scenario,incT, struct.cohort.code) %>%  summarise(meanRWI = mean(RWI, na.rm=TRUE),
+                                                                                                                      ci.low = quantile(RWI, 0.025, na.rm = TRUE), 
+                                                                                                                      ci.hi = quantile(RWI, 0.975, na.rm = TRUE))
+
+Tdf <- data.frame(incT = c("zero", "one", "two", "three", "four", "five","six","seven", "eight"), 
+           deltaT = 0:8)
+
+newdf.m <- merge(newdf.m, Tdf, by = "incT")
+
+# small, but continous declines:
+ggplot()+geom_point(data = newdf.m, aes(deltaT, meanRWI, color = MAP.Scenario))+geom_line(data = newdf.m, aes(deltaT, meanRWI, color = MAP.Scenario)) + geom_ribbon(data = newdf.m, aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = MAP.Scenario), alpha = 0.2) + ylim(0, 3) + xlab("Increase in Summer Tmax (deg C)") + ylab("Predicted Growth Increment")
+
+pct.change.temp <- newdf %>% group_by(MAP.Scenario)  %>% 
+  summarise(zero =mean ( base, na.rm = TRUE), one = mean(one, na.rm=TRUE), zero.low =quantile ( base,0.025, na.rm = TRUE), one.low = quantile(one, 0.025,na.rm=TRUE), zero.hi =quantile ( base,0.975, na.rm = TRUE), one.hi = mean(one, 0.975,na.rm=TRUE)) %>% group_by(MAP.Scenario) %>%
+  summarize (one.pct = mean(((one-zero)/zero)*100,na.rm = TRUE),
+             one.low = mean(((one.low-zero.low)/zero.low)*100,na.rm = TRUE),
+             one.hi = mean(((one.hi-zero.hi)/zero.hi)*100,na.rm = TRUE))
+
+ggplot(pct.change.temp, aes())
+
+
+
+
+#get the difference in growth:
+
+
+
+
+pct.change.temp <- newdf %>% group_by(MAP.Scenario)  %>%
+  summarise(zero = mean(((base-base)), na.rm = TRUE),
+            one = mean(((one-base)), na.rm = TRUE),
+            two = mean(((two-base)), na.rm = TRUE),
+            three = mean(((three-base)), na.rm = TRUE),
+            four = mean(((four-base)), na.rm = TRUE),
+            five = mean(((five-base)), na.rm = TRUE),
+            six = mean(((six-base)), na.rm = TRUE),
+            seven = mean(((seven-base)), na.rm = TRUE),
+            eight = mean(((eight-base)), na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, pct_change, zero:eight)
+
+pct.change.hi.ci <- newdf %>% group_by( MAP.Scenario)  %>%
+  summarise(zero = quantile(((base-base)), 0.975 ,na.rm = TRUE),
+            one = quantile(((one-base)), 0.975 ,na.rm = TRUE),
+            two = quantile(((two-base)), 0.975 ,na.rm = TRUE),
+            three = quantile(((three-base)), 0.975 ,na.rm = TRUE),
+            four = quantile(((four-base)),0.975 , na.rm = TRUE),
+            five = quantile(((five-base)),0.975 , na.rm = TRUE),
+            six = quantile(((six-base)),0.975 , na.rm = TRUE),
+            seven = quantile(((seven-base)),0.975 , na.rm = TRUE),
+            eight = quantile(((eight-base)),0.975 , na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, ci.hi, zero:eight)
+
+pct.change.low.ci <- newdf %>% group_by( MAP.Scenario)  %>%
+  summarise(zero = quantile(((base-base)), 0.025 ,na.rm = TRUE),
+            one = quantile(((one-base)), 0.025 ,na.rm = TRUE),
+            two = quantile(((two-base)), 0.025 ,na.rm = TRUE),
+            three = quantile(((three-base)), 0.025 ,na.rm = TRUE),
+            four = quantile(((four-base)), 0.025 , na.rm = TRUE),
+            five = quantile(((five-base)), 0.025 , na.rm = TRUE),
+            six = quantile(((six-base)), 0.025 , na.rm = TRUE),
+            seven = quantile(((seven-base)), 0.025 , na.rm = TRUE),
+            eight = quantile(((eight-base)), 0.025 , na.rm = TRUE)
+            ) %>% 
+  gather(key = incT, ci.low, zero:eight)
+
+cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("incT", "MAP.Scenario") )
+pct.change.temp <- merge(pct.change.temp, cis, by = c("incT", "MAP.Scenario")) 
+
+Tdf <- data.frame(incT = c("zero", "one", "two", "three", "four", "five","six","seven", "eight"), 
+           deltaT = 0:8)
+
+pct.change.temp <- merge(pct.change.temp, Tdf, by = "incT")
+#pct.change.temp$struct.cohort.code <- as.character(pct.change.temp$struct.cohort.code)
+
+ggplot(pct.change.temp, aes(deltaT, pct_change, color = MAP.Scenario))+geom_point()+geom_line() + geom_ribbon(data = pct.change.temp, aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = MAP.Scenario), alpha = 0.25, colour = NA)
+
+
+
+#-------------------------Scenario 2--------------------
 # scenario # 2: 35% decrease in drought sensitivie from modern
 Yfut.35.samps <- data.frame(Y.fut.35[[1]])
 
@@ -6468,6 +6816,10 @@ Y.fut.35.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.50.50"), 
                     n.chains = 3, n.iter=10000,thin = 15)
+
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=10000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_full_pair_MAP5_DIC.rds")
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -7558,6 +7910,9 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5", "sigma_beta6","Yp", "Yprobe", "Yfut"), 
                     n.chains = 3, n.iter=5000, thin = 15)
 
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=10000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_DIC.rds")
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -8386,10 +8741,12 @@ sigma     <- 1/sqrt(inv.var)
 }"
 
 # save these for use later:
-saveRDS(train.dry, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/train.rds")
-saveRDS(test.dry, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/test.rds")
-train.dry <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/train.rds")
-test.dry <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/test.rds")
+
+
+saveRDS(train.dry, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/train.rds")
+saveRDS(test.dry, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/test.rds")
+train.dry <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/train.rds")
+test.dry <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/test.rds")
 # assign site numbers to each site:
 site.num.df <- data.frame(site = as.character(unique(train.dry.pair$site)), 
            site.num = 1:length(as.character(unique(train.dry.pair$site))))
@@ -8518,6 +8875,10 @@ Y.fut.35.35 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
 Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr, 
                      variable.names=c("Yfut.50.50"), 
                     n.chains = 3, n.iter=10000,thin = 15)
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=10000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_DIC.rds")
+
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 

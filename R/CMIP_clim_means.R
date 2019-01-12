@@ -147,26 +147,26 @@ IN_pr85.70 <- extract.site.rcps ("pr", "85", sites = sites, time = "70", model =
 IN_Tmax.70 <- extract.site.rcps ("tx", "85", sites = sites, time = "70", model = "in")
 IN_Tmin.70 <- extract.site.rcps ("tn", "85", sites = sites, time = "70", model = "in")
 
-# need to convert to C and then F
-toFahrenheit = function(celsius) {
-  f = (9/5) * celsius + 32; 
-}
-
-IN_Tmax.50$`tx-85` <- toFahrenheit(IN_Tmax.50$`tx-85`)
-IN_Tmax.50$`tx-85cv` <- toFahrenheit(IN_Tmax.50$`tx-85cv`)
-IN_Tmax.50$`tx-85GS` <- toFahrenheit(IN_Tmax.50$`tx-85GS`)
-
-IN_Tmax.70$`tx-85` <- toFahrenheit(IN_Tmax.70$`tx-85`)
-IN_Tmax.70$`tx-85cv` <- toFahrenheit(IN_Tmax.70$`tx-85cv`)
-IN_Tmax.70$`tx-85GS` <- toFahrenheit(IN_Tmax.70$`tx-85GS`)
-
-IN_Tmin.50$`tn-85` <- toFahrenheit(IN_Tmin.50$`tn-85`)
-IN_Tmin.50$`tn-85cv` <- toFahrenheit(IN_Tmin.50$`tn-85cv`)
-IN_Tmin.50$`tn-85GS` <- toFahrenheit(IN_Tmin.50$`tn-85GS`)
-
-IN_Tmin.70$`tn-85` <- toFahrenheit(IN_Tmin.70$`tn-85`)
-IN_Tmin.70$`tn-85cv` <- toFahrenheit(IN_Tmin.70$`tn-85cv`)
-IN_Tmin.70$`tn-85GS` <- toFahrenheit(IN_Tmin.70$`tn-85GS`)
+# # need to convert to C and then F
+# toFahrenheit = function(celsius) {
+#   f = (9/5) * celsius + 32; 
+# }
+# 
+# IN_Tmax.50$`tx-85` <- toFahrenheit(IN_Tmax.50$`tx-85`)
+# IN_Tmax.50$`tx-85cv` <- toFahrenheit(IN_Tmax.50$`tx-85cv`)
+# IN_Tmax.50$`tx-85GS` <- toFahrenheit(IN_Tmax.50$`tx-85GS`)
+# 
+# IN_Tmax.70$`tx-85` <- toFahrenheit(IN_Tmax.70$`tx-85`)
+# IN_Tmax.70$`tx-85cv` <- toFahrenheit(IN_Tmax.70$`tx-85cv`)
+# IN_Tmax.70$`tx-85GS` <- toFahrenheit(IN_Tmax.70$`tx-85GS`)
+# 
+# IN_Tmin.50$`tn-85` <- toFahrenheit(IN_Tmin.50$`tn-85`)
+# IN_Tmin.50$`tn-85cv` <- toFahrenheit(IN_Tmin.50$`tn-85cv`)
+# IN_Tmin.50$`tn-85GS` <- toFahrenheit(IN_Tmin.50$`tn-85GS`)
+# 
+# IN_Tmin.70$`tn-85` <- toFahrenheit(IN_Tmin.70$`tn-85`)
+# IN_Tmin.70$`tn-85cv` <- toFahrenheit(IN_Tmin.70$`tn-85cv`)
+# IN_Tmin.70$`tn-85GS` <- toFahrenheit(IN_Tmin.70$`tn-85GS`)
 
 
 # compile Tmaxes and precips into one data fram with a site column:
@@ -196,26 +196,26 @@ mc_pr85.70 <- extract.site.rcps ("pr", "85", sites = sites, time = "70", model =
 mc_Tmax.70 <- extract.site.rcps ("tx", "85", sites = sites, time = "70", model = "mc")
 mc_Tmmc.70 <- extract.site.rcps ("tn", "85", sites = sites, time = "70", model = "mc")
 
-# need to convert to C and then F
-toFahrenheit = function(celsius) {
-  f = (9/5) * celsius + 32; 
-}
-
-mc_Tmax.50$`tx-85` <- toFahrenheit(mc_Tmax.50$`tx-85`)
-mc_Tmax.50$`tx-85cv` <- toFahrenheit(mc_Tmax.50$`tx-85cv`)
-mc_Tmax.50$`tx-85GS` <- toFahrenheit(mc_Tmax.50$`tx-85GS`)
-
-mc_Tmax.70$`tx-85` <- toFahrenheit(mc_Tmax.70$`tx-85`)
-mc_Tmax.70$`tx-85cv` <- toFahrenheit(mc_Tmax.70$`tx-85cv`)
-mc_Tmax.70$`tx-85GS` <- toFahrenheit(mc_Tmax.70$`tx-85GS`)
-
-mc_Tmmc.50$`tn-85` <- toFahrenheit(mc_Tmmc.50$`tn-85`)
-mc_Tmmc.50$`tn-85cv` <- toFahrenheit(mc_Tmmc.50$`tn-85cv`)
-mc_Tmmc.50$`tn-85GS` <- toFahrenheit(mc_Tmmc.50$`tn-85GS`)
-
-mc_Tmmc.70$`tn-85` <- toFahrenheit(mc_Tmmc.70$`tn-85`)
-mc_Tmmc.70$`tn-85cv` <- toFahrenheit(mc_Tmmc.70$`tn-85cv`)
-mc_Tmmc.70$`tn-85GS` <- toFahrenheit(mc_Tmmc.70$`tn-85GS`)
+# # need to convert to C and then F
+# toFahrenheit = function(celsius) {
+#   f = (9/5) * celsius + 32; 
+# }
+# 
+# mc_Tmax.50$`tx-85` <- toFahrenheit(mc_Tmax.50$`tx-85`)
+# mc_Tmax.50$`tx-85cv` <- toFahrenheit(mc_Tmax.50$`tx-85cv`)
+# mc_Tmax.50$`tx-85GS` <- toFahrenheit(mc_Tmax.50$`tx-85GS`)
+# 
+# mc_Tmax.70$`tx-85` <- toFahrenheit(mc_Tmax.70$`tx-85`)
+# mc_Tmax.70$`tx-85cv` <- toFahrenheit(mc_Tmax.70$`tx-85cv`)
+# mc_Tmax.70$`tx-85GS` <- toFahrenheit(mc_Tmax.70$`tx-85GS`)
+# 
+# mc_Tmmc.50$`tn-85` <- toFahrenheit(mc_Tmmc.50$`tn-85`)
+# mc_Tmmc.50$`tn-85cv` <- toFahrenheit(mc_Tmmc.50$`tn-85cv`)
+# mc_Tmmc.50$`tn-85GS` <- toFahrenheit(mc_Tmmc.50$`tn-85GS`)
+# 
+# mc_Tmmc.70$`tn-85` <- toFahrenheit(mc_Tmmc.70$`tn-85`)
+# mc_Tmmc.70$`tn-85cv` <- toFahrenheit(mc_Tmmc.70$`tn-85cv`)
+# mc_Tmmc.70$`tn-85GS` <- toFahrenheit(mc_Tmmc.70$`tn-85GS`)
 
 
 # compile Tmaxes and precips mcto one data fram with a site column:
@@ -247,26 +247,26 @@ he_pr85.70 <- extract.site.rcps ("pr", "85", sites = sites, time = "70", model =
 he_Tmax.70 <- extract.site.rcps ("tx", "85", sites = sites, time = "70", model = "he")
 he_Tmhe.70 <- extract.site.rcps ("tn", "85", sites = sites, time = "70", model = "he")
 
-# need to convert to C and then F
-toFahrenheit = function(celsius) {
-  f = (9/5) * celsius + 32; 
-}
-
-he_Tmax.50$`tx-85` <- toFahrenheit(he_Tmax.50$`tx-85`)
-he_Tmax.50$`tx-85cv` <- toFahrenheit(he_Tmax.50$`tx-85cv`)
-he_Tmax.50$`tx-85GS` <- toFahrenheit(he_Tmax.50$`tx-85GS`)
-
-he_Tmax.70$`tx-85` <- toFahrenheit(he_Tmax.70$`tx-85`)
-he_Tmax.70$`tx-85cv` <- toFahrenheit(he_Tmax.70$`tx-85cv`)
-he_Tmax.70$`tx-85GS` <- toFahrenheit(he_Tmax.70$`tx-85GS`)
-
-he_Tmhe.50$`tn-85` <- toFahrenheit(he_Tmhe.50$`tn-85`)
-he_Tmhe.50$`tn-85cv` <- toFahrenheit(he_Tmhe.50$`tn-85cv`)
-he_Tmhe.50$`tn-85GS` <- toFahrenheit(he_Tmhe.50$`tn-85GS`)
-
-he_Tmhe.70$`tn-85` <- toFahrenheit(he_Tmhe.70$`tn-85`)
-he_Tmhe.70$`tn-85cv` <- toFahrenheit(he_Tmhe.70$`tn-85cv`)
-he_Tmhe.70$`tn-85GS` <- toFahrenheit(he_Tmhe.70$`tn-85GS`)
+# # need to convert to C and then F
+# toFahrenheit = function(celsius) {
+#   f = (9/5) * celsius + 32; 
+# }
+# 
+# he_Tmax.50$`tx-85` <- toFahrenheit(he_Tmax.50$`tx-85`)
+# he_Tmax.50$`tx-85cv` <- toFahrenheit(he_Tmax.50$`tx-85cv`)
+# he_Tmax.50$`tx-85GS` <- toFahrenheit(he_Tmax.50$`tx-85GS`)
+# 
+# he_Tmax.70$`tx-85` <- toFahrenheit(he_Tmax.70$`tx-85`)
+# he_Tmax.70$`tx-85cv` <- toFahrenheit(he_Tmax.70$`tx-85cv`)
+# he_Tmax.70$`tx-85GS` <- toFahrenheit(he_Tmax.70$`tx-85GS`)
+# 
+# he_Tmhe.50$`tn-85` <- toFahrenheit(he_Tmhe.50$`tn-85`)
+# he_Tmhe.50$`tn-85cv` <- toFahrenheit(he_Tmhe.50$`tn-85cv`)
+# he_Tmhe.50$`tn-85GS` <- toFahrenheit(he_Tmhe.50$`tn-85GS`)
+# 
+# he_Tmhe.70$`tn-85` <- toFahrenheit(he_Tmhe.70$`tn-85`)
+# he_Tmhe.70$`tn-85cv` <- toFahrenheit(he_Tmhe.70$`tn-85cv`)
+# he_Tmhe.70$`tn-85GS` <- toFahrenheit(he_Tmhe.70$`tn-85GS`)
 
 
 # compile Tmaxes and precips heto one data fram with a site column:
@@ -323,8 +323,8 @@ full.current.summary <- prism.df %>% group_by(site) %>% summarise(MAP = mean(MAP
                                                                   Tmax = mean(Tmax_gs, na.rm = TRUE))
 
 rcp85.full.C <- rcp85.full[,c("site", "x", "y", "Tx_85_50GS", "Tx_85_70GS", "Pr_85_50","Pr_85_70", "model")]
-rcp85.full.C$Tx_85_50GS <- 5/9 * (rcp85.full.C$Tx_85_50GS - 32)
-rcp85.full.C$Tx_85_70GS <- 5/9 * (rcp85.full.C$Tx_85_70GS - 32)
+#rcp85.full.C$Tx_85_50GS <- 5/9 * (rcp85.full.C$Tx_85_50GS - 32)
+#rcp85.full.C$Tx_85_70GS <- 5/9 * (rcp85.full.C$Tx_85_70GS - 32)
 
 # get the differences between projected and mean of current climate
 merged.full <- merge(rcp85.full.C, full.current.summary, by = "site")
