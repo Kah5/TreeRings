@@ -10298,14 +10298,14 @@ sigma     <- 1/sqrt(inv.var)
 # save these for use later:
 saveRDS(train.dry.pair, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 saveRDS(test.dry.pair, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
-#train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
-#test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
 # assign site numbers to each site:
 
 site.num.df <- data.frame(site = as.character(unique(train.dry.pair$site)), 
            site.num = 1:length(as.character(unique(train.dry.pair$site))))
-train.dry.pair <- merge(train.dry.pair, site.num.df, by = "site" )
-test.dry.pair <- merge(test.dry.pair, site.num.df, by = "site" )
+#train.dry.pair <- merge(train.dry.pair, site.num.df, by = "site" )
+#test.dry.pair <- merge(test.dry.pair, site.num.df, by = "site" )
 
 
 # generate probe dataset:
@@ -10342,7 +10342,7 @@ future.probe_50$year <- 2050
 # get climate averages from 1950 - present at each site:
 train.dry.pair$struct.cohort.code2 <- as.numeric(train.dry.pair$struct.cohort.code)
 train.clim.summary <-
-  train.dry.pair[train.dry.pair$ageclass %in% "Modern", ] %>% group_by(site) %>% summarise(
+  train.dry.pair[train.dry.pair$ageclass %in% "Modern", ] %>% group_by(site) %>% dplyr::summarise(
     MAP.scaled = mean(MAP.scaled),
     DBH.scaled = -0.413,
     T.scaled = mean(T.scaled),
@@ -10390,6 +10390,7 @@ long.fut <- rbind(lfut.high, lfut.avg, lfut.low)
 
 lag2.model.by_structure_x_cohort_t_pr_int <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP_interaction.f), 
                     data = list(Y=log(train.dry.pair$RWI), n=length(train.dry.pair$RWI), DI.scaled = train.dry.pair$DI.scaled, DBH.scaled = train.dry.pair$DBH.scaled,log_RWI_1 = log(train.dry.pair$RWI_1),log_RWI_2 = log(train.dry.pair$RWI_2), Temp.scaled = train.dry.pair$T.scaled, struct.cohort = as.numeric(train.dry.pair$struct.cohort.code), SF = as.numeric(unique(train.dry.pair$struct.cohort.code)), site = train.dry.pair$site.num, Nsites = length(unique(train.dry.pair$site)),
+                                
   struct.cohort.p = as.numeric(test.dry.pair$struct.cohort.code), DBH.scaled.p = test.dry.pair$DBH.scaled, DI.scaled.p = test.dry.pair$DI.scaled, log_RWI_1.p = log(test.dry.pair$RWI_1), log_RWI_2.p = log(test.dry.pair$RWI_2), Temp.scaled.p = test.dry.pair$T.scaled, site.p = test.dry.pair$site.num, np = length(as.numeric(test.dry.pair$struct.cohort.code)), 
   
   struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
@@ -10436,6 +10437,10 @@ Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int,
                      variable.names=c("Yfut.50.50"), 
                     n.chains = 3, n.iter=10000,thin = 15)
 
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=10000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_DIC.rds")
+
 summary(samp.structure.cohort.re)
 
 traceplot(samp.structure.cohort.re)
@@ -10450,8 +10455,8 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[1]'], auto.layout = FALSE
 #Extract the samples for each parameter for a basic exploration of effects
 
  samps       <- samp.structure.cohort.re[[1]]
- saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site/samps.rds")
- samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site/samps.rds")
+ saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
+ samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
  test.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
  train.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 #Yfut.samps <- samps[, 1:length(fut$RWI_1)]
@@ -10490,8 +10495,8 @@ dev.off()
 
 # calculate MSE & BIAS:
 
-MSE1   <- mean((colMeans(exp(Yp.samps))-test.dry$RWI)^2)
-BIAS1  <- mean(colMeans(exp(Yp.samps))-test.dry$RWI)
+MSE1   <- mean((colMeans(exp(Yp.samps))-test.dry.pair$RWI)^2)
+BIAS1  <- mean(colMeans(exp(Yp.samps))-test.dry.pair$RWI)
 
 # write model summary output to a file!
 
