@@ -370,9 +370,8 @@ samp <- coda.samples(reg.model.age,
 gelman.diag(samp)
 traceplot(samp)
 # this still does it for Y as well
-dic.reg.model.age <- dic.samples(reg.model.age, 
-                     variable.names=c("beta1", "beta2", "beta3", "beta4", "sigma"), 
-                    n.chains = 3, n.iter=2000,type =  "pD")
+dic.full <- dic.samples(reg.model.age, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_DIC.rds")
 
 #Extract the samples for each parameter
 
@@ -441,6 +440,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg", 
+         model.structure = "beta1 +  beta2*DI.scaled[i] + beta3*DBH.scaled[i] +  beta4*T.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -625,6 +625,10 @@ samp.plot.re <- coda.samples(reg.model.by_s,
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
                     n.chains = 3, n.iter=3000)
 
+
+dic.full <- dic.samples(reg.model.by_s, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_site_re_DIC.rds")
+
 #summary(samp.plot.re)
 #plot(samp.plot.re)
 
@@ -665,6 +669,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_site_re", 
+                            model.structure = "beta1[SITE[i]] + beta2[SITE[i]]*DI.scaled[i] + beta3[SITE[i]]*DBH.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -895,6 +900,10 @@ samp.age.re <- coda.samples(reg.model.by_age,
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "betadiff", "Yp", "RSS[1]", "RSS[2]", "RSS[3]", "RSS[4]"), 
                     n.chains = 3, n.iter=2000, thin = 10)
 
+dic.full <- dic.samples(reg.model.by_age, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_cohort_re_DIC.rds")
+
+
 #summary(samp.age.re)
 #plot(samp.age.re)
 
@@ -959,6 +968,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_cohort_re", 
+                            model.summary = "beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -1190,6 +1200,11 @@ samp.structure.re <- coda.samples(reg.model.by_structure,
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
+
+dic.full <- dic.samples(reg.model.by_structure, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_structure_re_DIC.rds")
+
+
 # not run b/c takes too long with Yp as outputs
 #summary(samp.structure.re)
 #plot(samp.structure.re)
@@ -1239,6 +1254,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_structure_re", 
+                            model.summary = "beta1[structure[i]] + beta2[structure[i]]*DI.scaled[i] + beta3[structure[i]]*DBH.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -1489,6 +1505,9 @@ samp.structure.cohort.re <- coda.samples(reg.model.by_structure_x_cohort,
                     n.chains = 3, n.iter=20000, thin = 15)
 
 
+dic.full <- dic.samples(reg.model.by_structure_x_cohort, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_struct_x_cohort_re_DIC.rds")
+
 # check for convergence (not run, but checked)
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
@@ -1536,6 +1555,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_struct_x_cohort_re", 
+                            model.summary = "beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -1814,8 +1834,8 @@ gfuncp[i] <- beta1[structure.p[i]] + beta2[structure.p[i]]*DI.scaled.p[i] + beta
 # save these for use later:
 saveRDS(train, "outputs/growth_model/lag_reg_structure_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag_reg_structure_re/test.rds")
-
-
+train <- readRDS("outputs/growth_model/lag_reg_structure_re/train.rds")
+test <- readRDS("outputs/growth_model/lag_reg_structure_re/test.rds")
 
 # run the JAGS model:
 lag.model.by_structure <- jags.model(textConnection(population_model_structure_re_lag), 
@@ -1828,6 +1848,10 @@ update(lag.model.by_structure, 1000);
 samp.structure.re <- coda.samples(lag.model.by_structure, 
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3","sigma_beta4", "Yp"), 
                     n.chains = 3, n.iter=2000, thin = 15)
+
+
+dic.full <- dic.samples(lag.model.by_structure, n.chains = 3, n.iter=2000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag_reg_structure_re_DIC.rds")
 
 #summary(samp.structure.re)
 #plot(samp.structure.re)
@@ -1952,6 +1976,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag_reg_structure_re", 
+                            model.summary = "beta1[structure[i]] + beta2[structure[i]]*DI.scaled[i] + beta3[structure[i]]*DBH.scaled[i] +beta4[structure[i]]*log_RWI_1[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -2098,8 +2123,8 @@ sigma     <- 1/sqrt(inv.var)
 
 saveRDS(train, "outputs/growth_model/lag_reg_struct_x_cohort_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag_reg_struct_x_cohort_re/test.rds")
-
-
+test <- readRDS("outputs/growth_model/lag_reg_struct_x_cohort_re/test.rds")
+train <- readRDS("outputs/growth_model/lag_reg_struct_x_cohort_re/train.rds")
 
 lag.model.by_structure_x_cohort <- jags.model(textConnection(population_model_structure_x_cohort_re_lag), 
                     data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1), struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
@@ -2111,6 +2136,9 @@ update(lag.model.by_structure_x_cohort, 1000); # Burnin for 1000 samples to star
 lag.samp.structure.cohort.re <- coda.samples(lag.model.by_structure_x_cohort, 
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
+
+dic.full <- dic.samples(lag.model.by_structure_x_cohort, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag_reg_struct_x_cohort_re_DIC.rds")
 
 #summary(lag.samp.structure.cohort.re)
 #plot(lag.samp.structure.cohort.re)
@@ -2159,6 +2187,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag_reg_struct_x_cohort_re", 
+                            model.summary = "beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4[struct.cohort.p[i]]*log_RWI_1.p[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -2358,6 +2387,9 @@ samp.structure.cohort.re <- coda.samples(lag.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","Yp"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
+dic.full <- dic.samples(lag.model.by_structure_x_cohort, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag_site_struct_x_cohort_re_DIC.rds")
+
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -2405,6 +2437,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag_site_struct_x_cohort_re", 
+                            model.summary = "beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -2603,6 +2636,7 @@ sigma     <- 1/sqrt(inv.var)
 # save these for use later:
 saveRDS(train, "outputs/growth_model/lag2_reg_struct_x_cohort_re/train.rds")
 saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re/test.rds")
+test <- readRDS( "outputs/growth_model/lag2_reg_struct_x_cohort_re/test.rds")
 
 
 
@@ -2671,6 +2705,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re", 
+                            model.summary = "beta1[struct.cohort.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4[struct.cohort.p[i]]*log_RWI_1.p[i] +beta5[struct.cohort.p[i]]*log_RWI_2.p[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -2981,6 +3016,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr", 
+                            model.summary = "beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -3312,10 +3348,10 @@ saveRDS(test.full, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/t
 train.full <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/train.full.rds")
 test.full <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/test.full.rds")
 # assign site numbers to each site:
-site.num.df <- data.frame(site = as.character(unique(train.full$site)), 
-           site.num = 1:length(as.character(unique(train.full$site))))
-train.full <- merge(train.full, site.num.df, by = "site" )
-test.full <- merge(test.full, site.num.df, by = "site" )
+# site.num.df <- data.frame(site = as.character(unique(train.full$site)), 
+#            site.num = 1:length(as.character(unique(train.full$site))))
+# train.full <- merge(train.full, site.num.df, by = "site" )
+# test.full <- merge(test.full, site.num.df, by = "site" )
 
 
 # generate probe dataset:
@@ -3441,7 +3477,7 @@ Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr,
                     n.chains = 3, n.iter=10000,thin = 15)
 
 dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr, n.chains = 3, n.iter=20000,thin = 15)
-saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_full_DIC.rds")
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_full_dataset_DIC.rds")
 
 #s
 
@@ -3478,8 +3514,8 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[1]'], auto.layout = FALSE
  
  
  samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/samps.rds")
- test.full.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/test.full.rds")
- train.full.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/train.full.rds")
+ #test.full.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/test.full.rds")
+ #train.full.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/train.full.rds")
 #Yfut.samps <- samps[, 1:length(fut$RWI_1)]
 #samps <- samps[,(length(fut$RWI_1)+1):length(colnames(samps))]
  Yp.samps <- samps[,1:(length(test.full$RWI))] 
@@ -3521,6 +3557,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test.full$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_dataset", 
+                            model.summary = "beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -5112,6 +5149,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_pair", 
+                            model.summary = "beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -6907,6 +6945,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_pair_MAP5", 
+                            model.summary = "beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i] + beta7[struct.cohort[i]]*MAP.5.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -7967,6 +8006,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test.dry.pair$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs", 
+                            model.summary = "beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i] ",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -8935,6 +8975,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test.dry$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs", 
+                            model.summary = "beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -10408,7 +10449,7 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_i
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
                     n.chains = 3, n.iter=10000, thin = 15)
 
-Yp<- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+Yp <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
                      variable.names=c("Yp"), 
                     n.chains = 3, n.iter=10000, thin = 15)
 
@@ -10501,6 +10542,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test.dry.pair$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter", 
+                            model.summary = "beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i] + beta7[struct.cohort[i]]*Temp.scaled[i]*DI.scaled[i] ",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -11602,6 +11644,8 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test.dry$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs", 
+                            model.summary = "beta1.p[struct.cohort.p[i]] + beta2.p[struct.cohort.p[i]]*DI.scaled.p[i] + beta3.p[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4.p[struct.cohort.p[i]]*log_RWI_1.p[i] +beta5.p[struct.cohort.p[i]]*log_RWI_2.p[i] + beta6.p[struct.cohort.p[i]]*Temp.scaled.p[i]
+ and multilevel by site",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -12338,7 +12382,7 @@ sigma     <- 1/sqrt(inv.var)
 saveRDS(train, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/train.rds")
 saveRDS(test, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t/test.rds")
 train <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/train.rds")
-
+test <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t/test.rds")
 # generate probe dataset:
  DIprobe <- seq(range(train$DI.scaled)[1], range(train$DI.scaled)[2], by = 0.75)
  DBHprobe <- seq(range(train$DBH.scaled)[1], range(train$DBH.scaled)[2], by = 0.75)
@@ -12364,6 +12408,9 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "sigma_beta4","sigma_beta5", "sigma_beta6","Yp", "Yprobe"), 
                     n.chains = 3, n.iter=2000, thin = 15)
 
+
+dic.full <- dic.samples(lag2.model.by_structure_x_cohort, n.chains = 3, n.iter=2000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_DIC.rds")
 #summary(samp.structure.cohort.re)
 #plot(samp.structure.cohort.re)
 
@@ -12417,6 +12464,9 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t", 
+                            
+                      model.summary = "beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[struct.cohort[i]]*DBH.scaled[i]+beta4[struct.cohort[i]]*log_RWI_1[i]+beta5[struct.cohort[i]]*log_RWI_2[i]  + beta6[struct.cohort[i]]*Temp.scaled[i] # use Drought index as a scaled variable 
+",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -13222,6 +13272,10 @@ samp <- coda.samples(cohort.model.re_lag,
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2", "sigma_beta3","sigma_beta4", "mu_beta1", "mu_beta2", "mu_beta3","mu_beta3", "Yp"), 
                     n.chains = 3, n.iter=20000, thin = 10)
 
+
+dic.full <- dic.samples(cohort.model.re_lag, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_cohort_site_re_with_lag_DIC.rds")
+
 #summary(samp)
 #traceplot(samp)
 #gelman.diag(samp)
@@ -13271,6 +13325,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_cohort_site_re_with_lag", 
+                            model.summary = "gfunc[i] <- beta1[cohort[i]] + beta2[cohort[i]]*DI.scaled[i] + beta3[cohort[i]]*DBH.scaled[i] + beta4[cohort[i]]*log_RWI_1[i]" ,
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -13598,6 +13653,10 @@ samp.structure.site.cohort.re <- coda.samples(reg.model.site_structure_x_cohort,
                      variable.names=c("beta1", "beta2","beta3","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
+
+dic.full <- dic.samples(reg.model.site_structure_x_cohort, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/site_reg_structure_cohort_re_DIC.rds")
+
 #summary(samp.structure.site.cohort.re)
 #plot(samp.structure.site.cohort.re)
 
@@ -13644,7 +13703,8 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 
 # write model summary output to a file!
 
-model.summary <- data.frame(model = "site_reg_structure_cohort_re", 
+model.summary <- data.frame(model = "site_reg_structure_cohort_re",
+                            model.summary = "gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*DI.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]   # use Drought index as a scaled variable ",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -14329,6 +14389,10 @@ samp.structure.site.cohort.re.sp6 <- coda.samples(reg.model.site_structure_x_coh
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3","sigma_beta4", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
+
+dic.full <- dic.samples(reg.model.site_structure_x_cohort_sp6, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/site_reg_structure_cohort_re_sp6_DIC.rds")
+
 #summary(samp.structure.site.cohort.re.sp6)
 #plot(samp.structure.site.cohort.re.sp6)
 
@@ -14378,6 +14442,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp6", 
+                            model.structure = "gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*SP6_06.scaled[i] + beta3[struct.cohort[i]]*DBH.scaled[i]+ beta4[struct.cohort[i]]*log_RWI_1[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -14751,6 +14816,11 @@ samp.structure.site.cohort.re.sp6.sp1 <- coda.samples(reg.model.site_structure_x
                      variable.names=c("beta1", "beta2","beta3","beta4","sigma", "sigma_beta1", "sigma_beta2","sigma_beta3", "Yp", "Yprobe"), 
                     n.chains = 3, n.iter=20000, thin = 15)
 
+dic.full <- dic.samples(reg.model.site_structure_x_cohort_sp1_sp6, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/site_reg_structure_cohort_re_sp1_sp6_DIC.rds")
+
+
+
 #summary(samp.structure.site.cohort.re.sp6)
 #plot(samp.structure.site.cohort.re.sp6)
 
@@ -14801,6 +14871,7 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp1_sp6", 
+                            model.summary = "gfunc[i] <- beta1[struct.cohort[i]] + beta2[struct.cohort[i]]*SP01.scaled[i] +  beta3[struct.cohort[i]]*SP06_scaled2[i] + beta4[struct.cohort[i]]*DBH.scaled[i] +beta5[struct.cohort[i]]*log_RWI_1[i]"   , 
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
@@ -15441,8 +15512,12 @@ samp <- coda.samples(cohort.model.VPD.re ,
                     n.chains = 3, n.iter=2000, thin = 10)
 
 summary(samp)
-traceplot(samp)
-gelman.diag(samp)
+#traceplot(samp)
+#gelman.diag(samp)
+
+
+dic.full <- dic.samples(cohort.model.VPD.re, n.chains = 3, n.iter=20000,thin = 15)
+saveRDS(dic.full, "outputs/growth_model/model_summary/basic_reg_cohort_site_VPD_re_DIC.rds")
 
 #Extract the samples for each parameter for a basic exploration of effects
 
@@ -15489,11 +15564,13 @@ BIAS1  <- mean(colMeans(exp(Yp.samps))-test$RWI)
 # write model summary output to a file!
 
 model.summary <- data.frame(model = "basic_reg_cohort_site_VPD_re", 
+          model.structure = "beta1[cohort[i]] + beta2[cohort[i]]*VPD.scaled[i] + beta3[cohort[i]]*DBH.scaled[i]+ beta4[cohort[i]]*log_RWI_1[i]",
            MSE = MSE1, 
            BIAS = BIAS1, 
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
 
 
  

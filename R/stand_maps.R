@@ -222,11 +222,11 @@ map.plot <- function(sitecode){
   species <-c("Bur Oak","Bur oak", "White Oak", "Red Oak", "Northern Red Oak","Chinkapin Oak", "Shagbark Hickory","Sugar Maple",
               "Red Maple",
               "Basswood", "Quaking Aspen", "Aspen","Red Pine", "White Pine", "White Spruce", 
-              "Green Ash", "Black Cherry", "Hophornbeam","Ironwood","Standing Dead")
+              "Green Ash", "Black Cherry", "Hophornbeam","Ironwood","Standing Dead", "Birch")
  
    colorsforspec <- c("#FF0000FF","#FF0000FF" ,"#FF5500FF" ,"#FFAA00FF" ,"#FFFF00FF", "#AAFF00FF", "#55FF00FF", "#00FF00FF" ,"#00FF55FF",
-  "#00FFAAFF", "#00FFFFFF", "#00AAFFFF", "#0055FFFF" ,"#0000FFFF" ,"#5500FFFF" ,"#AA00FFFF" ,"#FF00FFFF",
-  "#FF00AAFF" , "black", "blue", "forestgreen")
+  "#00FFAAFF", "#00FFFFFF", "#00AAFFFF", "red" ,"blue" ,"#5500FFFF" ,"#AA00FFFF" ,"#FF00FFFF",
+  "#FF00AAFF" , "blue", "blue", "forestgreen", "#0055FFFF")
    
    names(colorsforspec) <- species
    #names(colorsforspec) <- species
@@ -311,6 +311,26 @@ map.plot <- function(sitecode){
   mapped.plot
 }
 
+png(height = 5, width = 6, units = "in", res = 300, "outputs/standmaps/ITA1_gl_albers_proj.png")
+map.plot("ITA1")+ggtitle(" ")
+dev.off()
+
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/standmaps/GLL1_gl_albers_proj.png")
+map.plot("GLL1")
+dev.off()
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/standmaps/GLL2_gl_albers_proj.png")
+map.plot("GLL2")
+dev.off()
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/standmaps/GLL3_gl_albers_proj.png")
+map.plot("GLL3")
+dev.off()
+
+png(height = 5, width = 6, units = "in", res = 300, "outputs/standmaps/GLL4_gl_albers_proj.png")
+map.plot("GLL4")
+dev.off()
 
 pdf("outputs/standmaps/plot_maps_all.pdf")
 map.plot("ITA1")
@@ -335,6 +355,7 @@ map.plot("PLE")
 
 #map.plot("GLA-1")
 dev.off()
+
 
 
 ########################################

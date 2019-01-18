@@ -4,16 +4,25 @@
 
 setwd("/Users/kah/Documents/TreeRings/outputs/growth_model/model_summary/")
 
+#-----------------read in model summaries-----------------------
 summary.files <- list.files(pattern = ".csv$") # get all the data files
 summary.data <- lapply(summary.files, FUN = read.csv) 
-summary.data.df <- do.call(rbind, summary.data) # converte from list of df to df
 
-# get DIC estimates:
+# rename because some have model.structure listed as model summary
+colnames.ls <- c("model", "model.structure", "MSE", "BIAS", "Rsq")
+
+summary.data <- lapply(summary.data, setNames, colnames.ls)
+summary.data.df <- do.call(rbind, summary.data) # convert from list of df to df
+
+
+
+
+#--------------------- get DIC estimates from each model--------
 
 summary.files.DIC <- list.files(pattern = "DIC.rds$") # get all the data files
-summary.dic.DATA <- lapply(summary.files, FUN = readRDS)
+summary.dic.DATA <- lapply(summary.files.DIC, FUN = readRDS)
 
-# get names of models:
+# get names of models: (in theory these should be the same as "model" in summary.data.df)
 model.names <- stringr::str_remove(summary.files.DIC, "_DIC.rds")
 names(summary.dic.DATA) <- model.names
 
@@ -31,8 +40,20 @@ deviance.df$model <- rownames(deviance.df)
 deviance.df$penalized_deviance <- deviance.df$penalties + deviance.df$deviances
 
 
-summary.data.df.dev <- merge(summary.data.df, deviance.df, by = "model", all.x = TRUE)
+length(deviance.df$penalties) # only have for 18 models, need to run for the rest:
 
 # merge with the summary.data.df dataframe:
+summary.data.df.dev <- merge(summary.data.df, deviance.df, by = "model", all.x = TRUE)
+
+# list any models with missing dic samples
+summary.data.df[is.na(summary.data.df.dev$deviances),]$model
+summary.data.df.dev<- summary.data.df.dev %>% arrange(Rsq,penalized_deviance) # order by rsq and dev
+
+setwd("/Users/kah/Documents/TreeRings")
 
 write.csv(summary.data.df.dev ,"/Users/kah/Documents/TreeRings/outputs/growth_model/model_summary_full.csv", row.names = FALSE)
+
+
+
+
+
