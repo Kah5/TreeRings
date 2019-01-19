@@ -157,7 +157,7 @@ detrended.list <- list(Hickory.rwi, StCroix.rwi, Bonanza.rwi,Townsend.rwi,Pleasa
                        Uncas.rwi, Glacial.rwi, Englund.rwi, Mound.rwi, GLL1.rwi, GLL2.rwi, 
                        GLL3.rwi, GLL4.rwi, PVC.rwi, AVO.rwi)#, UNI.bai) # omitting UNI right now
 
-
+saveRDS(detrended.list,"data/no_detrend_list_site.rds")
 source("R/tree_age_agg.R")
 
 # apply the tree_age_agg function on all of the detrended tree ring series

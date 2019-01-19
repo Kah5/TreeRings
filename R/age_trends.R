@@ -71,6 +71,12 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   mean.rwi.stat <- rwl.stats(detrended.mean)
   write.csv(mean.rwi.stat, paste0("outputs/Stats/mean.rwi.stats.", site,".csv"))
   
+  # save chronology for plotting moving correlations of chronologies:
+  crnl <-  chron(detrended.mean)
+  write.crn(crnl, paste0("outputs/chron/", site, "_",rwiorbai,"_",method,".crn"))
+  
+  #read.crn(paste0("outputs/chron/", site, "_",rwiorbai,"_",method,".crn"))
+  
   # plot spag plots:
   png(paste0("outputs/spagplots/", site, "_", rwiorbai,"_mean_", method,"_detrended.png"))
   plot(detrended.mean, "spag")
@@ -84,6 +90,25 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
 
 
 #calculate BAI or the detrended RWI: switch the rwiorbai argument 
+Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "HIC")
+StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "STC")
+Bonanza.bai <- read_detrend_year("cleanrwl/BONww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "BON")
+Townsend.bai <- read_detrend_year("cleanrwl/TOWww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "TOW")#townsedn woods
+Pleasant.bai <- read_detrend_year("cleanrwl/PLEww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "PLE") #Pleasant valley conservency
+Coral.bai <- read_detrend_year("cleanrwl/CORww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "COR")
+Uncas.bai <- read_detrend_year("cleanrwl/UNCww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "UNC")
+Glacial.bai <- read_detrend_year("cleanrwl/GLAww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "GLA")
+Englund.bai <- read_detrend_year("cleanrwl/ENGww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "ENG")
+Mound.bai <- read_detrend_year("cleanrwl/MOUww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "MOU")
+GLL1.bai <- read_detrend_year(filename = "cleanrwl/GLL1ww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "GLL1")
+GLL2.bai <- read_detrend_year("cleanrwl/GLL2ww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "GLL2")
+GLL3.bai <- read_detrend_year("cleanrwl/GLL3ww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "GLL3")
+GLL4.bai <- read_detrend_year("cleanrwl/GLL4ww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "GLL4")
+PVC.bai <- read_detrend_year("cleanrwl/PVCww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "PVC")
+AVO.bai <- read_detrend_year(filename = "cleanrwl/AVOww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "AVO")
+UNI.bai <- read_detrend_year("cleanrwl/UNIww.rwl", method = "ModNegExp", rwiorbai = "rwi", site = "UNI")
+
+
 
 Hickory.bai <- read_detrend_year(filename = "cleanrwl/HICww.rwl", method = "Spline", rwiorbai = "rwi", site = "HIC")
 StCroix.bai <- read_detrend_year("cleanrwl/STCww.rwl", method = "Spline", rwiorbai = "rwi", site = "STC")
