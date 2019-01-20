@@ -54,6 +54,18 @@ setwd("/Users/kah/Documents/TreeRings")
 write.csv(summary.data.df.dev ,"/Users/kah/Documents/TreeRings/outputs/growth_model/model_summary_full.csv", row.names = FALSE)
 
 
+# But also we need to compare models that use the same data sources, so read in all the data summaries:
+setwd("/Users/kah/Documents/TreeRings/outputs/growth_model/data_summary/")
 
+#-----------------read in model summaries-----------------------
+data.files <- list.files(pattern = ".csv$") # get all the data files
+data.file.summary <- lapply(data.files, FUN = read.csv) 
 
+train.data.df <- do.call(rbind, data.file.summary) # convert from list of df to df
+
+summary.full <- merge(train.data.df, summary.data.df, by = "model")
+
+summary.sorted <- summary.full %>% group_by(train) %>% dplyr::arrange(desc(Rsq))
+setwd("/Users/kah/Documents/TreeRings")
+write.csv(summary.data.df.dev ,"/Users/kah/Documents/TreeRings/outputs/growth_model/data_summary_full.csv", row.names = FALSE)
 

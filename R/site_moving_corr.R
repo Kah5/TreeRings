@@ -1,5 +1,9 @@
 # new R script to repplot moving correlations as a heatmap overtime
 # this is an additional plot to show that we observe decline in sensitivity
+
+# This makes use of the treeclim package: 
+# Zang, C., and F. Biondi. 2015. treeclim: an R package for the numerical calibration of proxy-climate relationships. Ecography 38:431–436.
+
 # need to do this for:
 #       -each site
 #       -each cohort class at each site
@@ -88,7 +92,8 @@ make.static.cor <- function(x){
           geom_errorbar(data = BAL.data, aes(x = id, ymin = ci_lower, ymax = ci_upper, lty = significant, color = significant), size = 0.5)+scale_linetype_manual(values = c("dashed", "solid"))+
           scale_color_manual(values = c("grey", "red"))+ylim(-1,1)+ggtitle("Moisture Balance")+theme(panel.grid.minor = element_blank())
         
-        pcp <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "pcp")]) , dynamic = "static", win_size = 20)
+        pcp <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "pcp")]) ,.sum(-4:-9, "pcp") +
+                     .sum(4:9, "pcp") + .sum(1:12,"pcp"), dynamic = "static", win_size = 20)
         pcp.data <- coef(pcp)   
         pcp.plt <- ggplot(data = pcp.data, aes(x = id, y = coef) ) +
           geom_point(aes(color = significant), size = 3) +
@@ -252,3 +257,5 @@ make.moving.cor <- function(x){
 
 make.moving.cor(data.frame(all.chrons[[5]]))
 lapply(all.chrons, FUN = make.moving.cor) # output plots in outputs/correlations/moving_site_cor/
+
+

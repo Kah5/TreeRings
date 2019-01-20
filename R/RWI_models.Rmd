@@ -2195,6 +2195,14 @@ model.summary <- data.frame(model = "lag_reg_struct_x_cohort_re",
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag_reg_struct_x_cohort_re", 
+                           train = "cohort.omit", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
+
 # get difference between beta2.samps: (i.e are they different?)
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
 oneminusthree <- beta2.samps[,1] - beta2.samps[,3]
@@ -2443,6 +2451,15 @@ model.summary <- data.frame(model = "lag_site_struct_x_cohort_re",
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag_site_struct_x_cohort_re", 
+                           train = "ghcn.clean", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
 
 
 # get difference between beta2.samps: (i.e are they different?)
@@ -2713,6 +2730,12 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re",
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re", 
+                          train = "cohort.omit", 
+                          DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 # get difference between beta2.samps: (i.e are they different?)
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -2947,8 +2970,8 @@ probe <- expand.grid(DI.scaled = DIprobe, DBH.scaled = DBHprobe, T.scaled = Temp
 
 
 lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_model_structure_x_cohort_re_lag2_temp_MAP), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
-   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled, nprobe = length(probe$DBH.scaled),
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$MAP.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = unique(train$struct.cohort.code), np = length(test$DBH.scaled),
+   struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$MAP.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled, nprobe = length(probe$DBH.scaled),
    struct.cohort.probe = as.numeric(probe$struct.cohort.code), DBH.scaled.probe = probe$DBH.scaled, DI.scaled.probe = probe$DI.scaled, log_RWI_1.probe = probe$RWI_1, log_RWI_2.probe = probe$RWI_2, Temp.scaled.probe = probe$T.scaled), n.chains = 3, n.adapt = 100)
 
 update(lag2.model.by_structure_x_cohort_t_pr, 1000); # Burnin for 1000 samples to start, then go higher later
@@ -3022,6 +3045,13 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr",
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_p", 
+                           train = "cohort.omit", 
+                           DI.scaled = "MAP")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 
@@ -3348,10 +3378,10 @@ saveRDS(test.full, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/t
 train.full <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/train.full.rds")
 test.full <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_full/test.full.rds")
 # assign site numbers to each site:
-# site.num.df <- data.frame(site = as.character(unique(train.full$site)), 
-#            site.num = 1:length(as.character(unique(train.full$site))))
-# train.full <- merge(train.full, site.num.df, by = "site" )
-# test.full <- merge(test.full, site.num.df, by = "site" )
+site.num.df <- data.frame(site = as.character(unique(train.full$site)), 
+            site.num = 1:length(as.character(unique(train.full$site))))
+train.full <- merge(train.full, site.num.df, by = "site" )
+test.full <- merge(test.full, site.num.df, by = "site" )
 
 
 # generate probe dataset:
@@ -3435,8 +3465,9 @@ lfut.high$RWI_2 <- 2.03
 long.fut <- rbind(lfut.high, lfut.avg, lfut.low)
 
 lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP.f), 
-                    data = list(Y=log(train.full$RWI), n=length(train.full$RWI), DI.scaled = train.full$DI.scaled, DBH.scaled = train.full$DBH.scaled,log_RWI_1 = log(train.full$RWI_1),log_RWI_2 = log(train.full$RWI_2), Temp.scaled = train.full$T.scaled, struct.cohort = as.numeric(train.full$struct.cohort.code), SF = as.numeric(unique(train.full$struct.cohort.code)), site = train.full$site.num, Nsites = length(unique(train.full$site)),
-  struct.cohort.p = as.numeric(test.full$struct.cohort.code), DBH.scaled.p = test.full$DBH.scaled, DI.scaled.p = test.full$DI.scaled, log_RWI_1.p = log(test.full$RWI_1), log_RWI_2.p = log(test.full$RWI_2), Temp.scaled.p = test.full$T.scaled, site.p = test.full$site.num, np = length(as.numeric(test.full$struct.cohort.code)), 
+                    data = list(Y=log(train.full$RWI), n=length(train.full$RWI), DI.scaled = train.full$MAP.scaled, DBH.scaled = train.full$DBH.scaled,log_RWI_1 = log(train.full$RWI_1),log_RWI_2 = log(train.full$RWI_2), Temp.scaled = train.full$T.scaled, struct.cohort = as.numeric(train.full$struct.cohort.code), SF = as.numeric(unique(train.full$struct.cohort.code)), site = train.full$site.num, Nsites = length(unique(train.full$site)),
+  
+                                struct.cohort.p = as.numeric(test.full$struct.cohort.code), DBH.scaled.p = test.full$DBH.scaled, DI.scaled.p = test.full$MAP.scaled, log_RWI_1.p = log(test.full$RWI_1), log_RWI_2.p = log(test.full$RWI_2), Temp.scaled.p = test.full$T.scaled, site.p = test.full$site.num, np = length(as.numeric(test.full$struct.cohort.code)), 
   
   struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
  
@@ -3563,6 +3594,13 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_datas
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_dataset", 
+                           train = "train.full", 
+                           DI.scaled = "MAP")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 
@@ -5018,8 +5056,8 @@ lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_mo
  
   struct.cohort.fut = as.numeric(long.fut$struct.cohort.code), DBH.scaled.fut = long.fut$DBH.scaled, DI.scaled.fut = long.fut$MAP.scaled, log_RWI_1.fut = long.fut$RWI_1, log_RWI_2.fut =long.fut$RWI_2, Temp.scaled.fut = long.fut$T.scaled, site.fut = long.fut$site.num, nfut = length(as.numeric(long.fut$struct.cohort.code)),
   
-  struct.cohort.deg = as.numeric(degree.scenario$struct.cohort.code), DBH.scaled.deg = degree.scenario$DBH.scaled, DI.scaled.deg = degree.scenario$MAP.scaled, log_RWI_1.deg = degree.scenario$RWI_1, log_RWI_2.deg =degree.scenario$RWI_2, Temp.scaled.deg = degree.scenario$T.scaled, site.deg = degree.scenario$site.num, ndegree = length(as.numeric(degree.scenario$struct.cohort.code))
- 
+   struct.cohort.deg = as.numeric(degree.scenario$struct.cohort.code), DBH.scaled.deg = degree.scenario$DBH.scaled, DI.scaled.deg = degree.scenario$MAP.scaled, log_RWI_1.deg = degree.scenario$RWI_1, log_RWI_2.deg =degree.scenario$RWI_2, Temp.scaled.deg = degree.scenario$T.scaled, site.deg = degree.scenario$site.num, ndegree = length(as.numeric(degree.scenario$struct.cohort.code))
+  # 
   
   ),
   n.chains = 3, n.adapt = 100)
@@ -5156,6 +5194,13 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_pair"
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_pair", 
+                           train = "cohort.omit", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 # get difference between beta2.samps: (i.e are they different?)
@@ -6813,9 +6858,9 @@ long.fut <- rbind(lfut.high, lfut.avg, lfut.low)
 
 
 lag2.model.by_structure_x_cohort_t_pr <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP_MAP_lag.f), 
-                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$DI.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, MAP.5.scaled = train$MAP.5.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = as.numeric(unique(train$struct.cohort.code)), site = train$site.num, Nsites = length(unique(train$site)),
+                    data = list(Y=log(train$RWI), n=length(train$RWI), DI.scaled = train$MAP.scaled, DBH.scaled = train$DBH.scaled,log_RWI_1 = log(train$RWI_1),log_RWI_2 = log(train$RWI_2), Temp.scaled = train$T.scaled, MAP.5.scaled = train$MAP.5.scaled, struct.cohort = as.numeric(train$struct.cohort.code), SF = as.numeric(unique(train$struct.cohort.code)), site = train$site.num, Nsites = length(unique(train$site)),
                                 
-  struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$DI.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled, MAP.5.scaled.p = test$MAP.5.scaled, site.p = test$site.num, np = length(as.numeric(test$struct.cohort.code)), 
+  struct.cohort.p = as.numeric(test$struct.cohort.code), DBH.scaled.p = test$DBH.scaled, DI.scaled.p = test$MAP.scaled, log_RWI_1.p = log(test$RWI_1), log_RWI_2.p = log(test$RWI_2), Temp.scaled.p = test$T.scaled, MAP.5.scaled.p = test$MAP.5.scaled, site.p = test$site.num, np = length(as.numeric(test$struct.cohort.code)), 
   
   struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, MAP.5.scaled.probe = short.probe$MAP.5.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
  
@@ -6951,6 +6996,15 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_pair_
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_full_pair_MAP5", 
+                           train = "cohort.omit", 
+                           DI.scaled = "MAP")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
 
 
 
@@ -7965,6 +8019,7 @@ saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_r
   samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/samps.rds")
 test.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/test.rds")
 train.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs/train.rds")
+
 Yfut.samps <- samps[, 1:length(fut$RWI_1)]
 samps <- samps[,(length(fut$RWI_1)+1):length(colnames(samps))]
  Yp.samps <- samps[,1:(length(test.dry.pair$RWI))] 
@@ -8013,6 +8068,13 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs",
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs", 
+                           train = "cohort.omit.dry.yrs", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 # get difference between beta2.samps: (i.e are they different?)
@@ -8982,6 +9044,13 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_si
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs", 
+                           train = "cohort.omit.dry.years", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 # get difference between beta2.samps: (i.e are they different?)
@@ -10548,6 +10617,14 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_si
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter", 
+                           train = "cohort.omit.dry.years", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 
@@ -12475,6 +12552,15 @@ write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.sum
 
 
 
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t", 
+                           train = "cohort.omit", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
+
+
 # get difference between beta2.samps: (i.e are they different?)
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
 oneminusthree <- beta2.samps[,1] - beta2.samps[,3]
@@ -13331,6 +13417,15 @@ model.summary <- data.frame(model = "basic_reg_cohort_site_re_with_lag",
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "basic_reg_cohort_site_re_with_lag", 
+                           train = "cohort.omit", 
+                           DI.scaled = "JJApdsi")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
 
  
 png("outputs/growth_model/basic_reg_cohort_site_re/marginal_alphas.png")
@@ -14450,6 +14545,15 @@ model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp6",
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "site_reg_structure_cohort_re_sp6", 
+                           train = "cohort.omit", 
+                           DI.scaled = "SP06-6")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
+
+
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -14877,6 +14981,16 @@ model.summary <- data.frame(model = "site_reg_structure_cohort_re_sp1_sp6",
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "site_reg_structure_cohort_re_sp1_sp6", 
+                           train = "cohort.omit", 
+                           DI.scaled = "SP_06-6 & SP01-06")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
+
+
+
 
 # get difference between beta2.samps:
 oneminustwo <- beta2.samps[,1] - beta2.samps[,2]
@@ -15570,6 +15684,14 @@ model.summary <- data.frame(model = "basic_reg_cohort_site_VPD_re",
            Rsq = pred.obs$r.squared)
 
 write.csv(model.summary, paste0("outputs/growth_model/model_summary/", model.summary$model, "_summary.csv"), row.names = FALSE)
+
+
+# summarise the datasource to make model comparisons for best fit models
+data.summary <- data.frame(model = "basic_reg_cohort_site_VPD_re", 
+                           train = "cohort.omit", 
+                           DI.scaled = "JJAVPDmax")
+
+write.csv(data.summary, paste0("outputs/growth_model/data_summary/", data.summary$model, "_data.csv"), row.names = FALSE)
 
 
 
