@@ -1,7 +1,5 @@
 # This script calculate ratio of EW to LW for each year:
 
-# do i need to detrend?
-
 library(dplR)
 library(ggplot2)
 library(reshape2)
