@@ -10,7 +10,13 @@ library(ggplot2)
 deltas <- read.csv("outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
 deltas <- deltas[!is.na(deltas$d13C_12C_corr),]
 
+
+# calculate discrimination:
+deltas$bigD <- (deltas$d13atm-deltas$Cor.d13C.suess)/(1+deltas$Cor.d13C.suess/1000)
+
 # make some preliminary plots of the data:
+ggplot(deltas, aes(x = year, y = bigD, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen"))
+
 
 ggplot(deltas[!deltas$site %in% c("UNI", "BON"), ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen"))+ylim(-29, -23)
 

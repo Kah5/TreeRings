@@ -198,8 +198,8 @@ SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
 
 # alternative scaling-> center on site level means:
 full.ghcn$prism_tmax_jja <- rowMeans(full.ghcn[, c("prism_Month_tmax_6", "prism_Month_tmax_7", "prism_Month_tmax_8")])
-
-site.means <- full.ghcn %>% group_by(site) %>% summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
+full.ghcn.unique <- unique(full.ghcn[, c("site", "JUNTmax", "MAP.prism", "prism_Month_tmax_6", "prism_tmax_jja", "jja.VPDmax")])
+site.means <- full.ghcn.unique %>% group_by(site) %>% summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
                                                          site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
                                                          site.MAP = mean(MAP.prism, na.rm = TRUE), 
                                                          site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
@@ -258,7 +258,7 @@ full.ghcn$struct.cohort.code <- ifelse(full.ghcn$struct.cohort %in% "Past-Forest
 }
 
 
-
+write.csv(full.ghcn, "outputs/full.ghcn.sites.struct.before.splitting.csv", row.names = FALSE)
 
 
 # omit NA values for RWI - 1:
@@ -11571,6 +11571,131 @@ ggplot(small.proj[!small.proj$year == 2000 & !small.proj$year %in% "2070-2099", 
 
 
 
+# ------------------------ Plot posterior response to climate ------------------------------------
+# get together a dataframe to probe with:
+
+Tmax.range <- round(seq(range(train.dry.pair$T.scaled)[1], range(train.dry.pair$T.scaled)[2], by = 0.1), 10)
+
+MAP.range <- round(seq(range(train.dry.pair$MAP.scaled)[1], range(train.dry.pair$MAP.scaled)[2], by = 0.1), 10)
+
+prob.vals <- expand.grid(T.scaled = Tmax.range, MAP.scaled = MAP.range, site.num = unique(train.dry.pair$site.num))
+
+prob.vals <- left_join(unique(train.dry.pair[,c("struct.cohort.code", "site", "site.num", "ageclass", "structure")]), prob.vals, by = "site.num")
+
+prob.vals$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
+prob.vals$RWI_1 <- log(mean(train.dry.pair$RWI_1))
+prob.vals$RWI_2 <- log(mean(train.dry.pair$RWI_2))
+
+# now lets use the betasamps to predict posterior growth for all these conditions:
+
+int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+int.mcmc.mat <- as.matrix(int.mcmc)
+int.mcmc.dat <- data.frame(int.mcmc.mat)
+
+int.1 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(prob.vals$T.scaled)), nrow = nrow(int.mcmc.dat))
+
+# need to clean this up but this is the basic idea:
+
+
+# simulate the effect of beta 1 conditional on Tmax
+for(i in 1:length(prob.vals$T.scaled)){
+  # for struct.cohort == 1
+  int.1[,i] <- int.mcmc.dat[,paste0("beta1.", prob.vals[i,"site.num"], ".")]+
+    int.mcmc.dat[,paste0("beta2.", prob.vals[i,"struct.cohort.code"], ".")]*prob.vals[i,]$MAP.scaled+    
+    int.mcmc.dat[,paste0("beta3.", prob.vals[i,"struct.cohort.code"], ".")]*prob.vals[i,"DBH.scaled"] + 
+    int.mcmc.dat[,paste0("beta4.", prob.vals[i,"struct.cohort.code"], ".")]*prob.vals[i,"RWI_1"]  + 
+    int.mcmc.dat[,paste0("beta5.", prob.vals[i,"struct.cohort.code"], ".")]*prob.vals[i,"RWI_2"] +
+    int.mcmc.dat[,paste0("beta6.", prob.vals[i,"struct.cohort.code"], ".")]*prob.vals[i,"T.scaled"] + 
+   int.mcmc.dat[,paste0("beta7.", prob.vals[i,"struct.cohort.code"], ".")] * (prob.vals[i,"MAP.scaled"] *prob.vals[i,"T.scaled"])
+  
+  
+}
+
+
+# columns are the different degree-site scenario combinations
+prob.vals$idval <- 1:length(prob.vals$T.scaled)
+# rows are the mcmc values
+colnames(int.1) <- 1:length(prob.vals$T.scaled)
+test.m <- melt(int.1)
+colnames(test.m) <- c("MCMC", "idval", "Ypred")
+full.pred <- left_join(test.m, prob.vals, by = "idval")
+full.pred$RWI <- exp(full.pred$Ypred)
+full.pred$Tmax <-  round(DMwR::unscale(full.pred$T.scaled, T.scaled), digits = 3)
+full.pred$MAP <-  round(DMwR::unscale(full.pred$MAP.scaled, MAP.scaled), digits = 3)
+
+site.summary <- full.pred %>% group_by(site.num, Tmax, MAP, struct.cohort.code) %>% dplyr::summarise(mean = mean(exp(RWI)), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+ggplot(site.summary[site.summary$MAP == 499.649,], aes(x = Tmax, y =mean, color = site.num))+geom_bar(stat = "identity", position = "dodge")+facet_wrap(~struct.cohort.code)
+
+
+
+ageclass.summary <- full.pred %>% group_by(site, ageclass, Tmax, MAP) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+
+ggplot(ageclass.summary[ageclass.summary$MAP == 259.338,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
+ggplot(ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
+ggplot(ageclass.summary[ageclass.summary$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
+ageclass.only <- full.pred %>% group_by( ageclass, Tmax, MAP) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+
+ggplot(ageclass.only[ageclass.only$MAP == 259.338,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
+
+
+ggplot(ageclass.only[ageclass.only$MAP == 516.814,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
+
+
+ggplot(ageclass.only[ageclass.only$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
+
+
+# now by ageclass and stand structure:
+
+ageclass.ss.only <- full.pred %>% group_by(structure, ageclass, Tmax, MAP) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+
+ag.ss.pred.200MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 259.338,], aes(x = Tmax, y =mean, color = ageclass))+geom_point(size = 0.5)+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
+
+
+ag.ss.pred.500MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 516.814,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
+
+
+ag.ss.pred.950MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
+
+# read in future climate for the region:
+June.rcps <- read.csv("outputs/June_summer_cmip5_preds_allyears_2025_2099.csv")
+
+#ggplot(train.dry.pair, aes(JUNTmax, fill = ageclass))+geom_density(alpha = 0.5)
+
+unique.clim <- unique(train.dry.pair[, c("site", "year", "JUNTmax", "ageclass")])
+
+
+Jun.rcps.clim <- June.rcps[,c("year", "value", "fut.class", "rcp")]
+unique.clim$fut.class <- ifelse(unique.clim$year <= 1950, "1895-1950", "1950-2015")
+unique.clim2 <- unique.clim[,c("year", "JUNTmax", "fut.class", "ageclass")]
+colnames(unique.clim2) <- c("year", "value", "fut.class", "rcp")
+
+clim.full <- rbind(unique.clim2, Jun.rcps.clim)
+
+reclass <- data.frame(class = c(1.5,2.5, 4,4.5,5,5.5, 8,8.5, 9, 9.5), 
+           fut.class = c("1895-1950", "1950-2015", "2025-2060","2025-2060","2025-2060","2025-2060",
+                         "2060-2099","2060-2099","2060-2099","2060-2099" ),
+          rcp = c("Past", "Modern", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5"))
+
+clim.full2<- merge( reclass,clim.full, by = c("fut.class", "rcp"))
+
+ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))
+
+boxplot.tmax <- ggplot(clim.full2, aes(x = class, y = value, fill = rcp, group = class))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))+ scale_x_continuous(name = "Time Period", breaks = c(1.5, 2.5, 4.5, 8.5 ), minor_breaks = NULL,labels = sort(unique(clim.full2$fut.class)))+theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank(), axis.title.y  = element_blank()) +scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp2.6" = "#ffffb2", "rcp4.5" = "#984ea3", "rcp6.0" = "#e0f3f8", "rcp8.5" ="#fc8d59" ))+ylim(20,40)
+
+png(height = 8, width = 4, units = "in", res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_marginal_fut_climate_boxes.png")
+plot_grid(ag.ss.pred.500MAP, ag.ss.pred.950MAP, boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,1,0.75), labels = "AUTO")
+dev.off()
+
 # --------Get future growth if we change temperature given mean precip, DBH, and RWI------------------
 
 mod.mean.clim <- test.dry.pair %>% filter(ageclass %in% "Modern" & year > 1950) %>% group_by(site) %>% dplyr::summarize(mod.mean.Tmax = mean(JUNTmax, na.rm = TRUE), one = mean(JUNTmax, na.rm = TRUE) + 1,
@@ -11588,9 +11713,9 @@ mod.mean.clim <- test.dry.pair %>% filter(ageclass %in% "Modern" & year > 1950) 
         MAPplus100 = mean(MAP.prism, na.rm = TRUE)+100
        )
 
-MAP.scenarios <- mod.mean.clim %>% select(site, mod.mean.MAP:MAPplus100) %>% group_by(site) %>% gather(MAP.Scenario, MAP, mod.mean.MAP:MAPplus100)
+MAP.scenarios <- mod.mean.clim %>% dplyr::select(site, mod.mean.MAP:MAPplus100) %>% group_by(site) %>% gather(MAP.Scenario, MAP, mod.mean.MAP:MAPplus100)
 
-temp.scenarios <- mod.mean.clim %>% select(site, mod.mean.Tmax:eight) %>% group_by(site) %>% gather(Temp.Scenario,Tmax, mod.mean.Tmax:eight)
+temp.scenarios <- mod.mean.clim %>% dplyr::select(site, mod.mean.Tmax:eight) %>% group_by(site) %>% gather(Temp.Scenario,Tmax, mod.mean.Tmax:eight)
 
 #next merge by site but keep all
 all.scen <- merge(MAP.scenarios, temp.scenarios, by = "site", all = TRUE)
@@ -11622,14 +11747,10 @@ int.mcmc.mat <- as.matrix(int.mcmc)
 int.mcmc.dat <- data.frame(int.mcmc.mat)
 
 int.1 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(meanMAP.sim$T.scaled)), nrow = nrow(int.mcmc.dat))
-#int.2 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(meanMAP.sim$T.scaled)), nrow = nrow(int.mcmc.dat))
-#int.3 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(meanMAP.sim$T.scaled)), nrow = nrow(int.mcmc.dat))
-#int.4 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(meanMAP.sim$T.scaled)), nrow = nrow(int.mcmc.dat))
-
 
 # need to clean this up but this is the basic idea:
 
-# could also do it all in one loop--> would be easier
+
 # simulate the effect of beta 1 conditional on Tmax
 for(i in 1:length(meanMAP.sim$T.scaled)){
   # for struct.cohort == 1
@@ -11641,31 +11762,7 @@ for(i in 1:length(meanMAP.sim$T.scaled)){
     int.mcmc.dat[,paste0("beta6.", meanMAP.sim[i,"struct.cohort.code"], ".")]*meanMAP.sim[i,"T.scaled"] + 
    int.mcmc.dat[,paste0("beta7.", meanMAP.sim[i,"struct.cohort.code"], ".")] * (meanMAP.sim[i,"MAP.scaled"] *meanMAP.sim[i,"T.scaled"])
   
-  # # for struct.cohort == 2
-  #   int.2[,i] <- int.mcmc.dat[,paste0("beta1.", meanMAP.sim[i,"site.num"], ".")]+
-  #   int.mcmc.dat$beta2.2.*meanMAP.sim[i,]$MAP.scaled+    int.mcmc.dat$beta3.2.*meanMAP.sim[i,"DBH.scaled"] + 
-  #   int.mcmc.dat$beta4.2.*meanMAP.sim[i,"RWI_1"]  + 
-  #   int.mcmc.dat$beta5.2.*meanMAP.sim[i,"RWI_2"] +
-  #   int.mcmc.dat$beta6.2.*meanMAP.sim[i,"T.scaled"] + 
-  #  int.mcmc.dat$beta7.2. * (meanMAP.sim[i,"MAP.scaled"] *meanMAP.sim[i,"T.scaled"])
-  # 
-  #   
-  #   # for struct.cohort == 3
-  #   int.3[,i] <- int.mcmc.dat[,paste0("beta1.", meanMAP.sim[i,"site.num"], ".")]+
-  #   int.mcmc.dat$beta2.3.*meanMAP.sim[i,]$MAP.scaled+    int.mcmc.dat$beta3.3.*meanMAP.sim[i,"DBH.scaled"] + 
-  #   int.mcmc.dat$beta4.3.*meanMAP.sim[i,"RWI_1"]  + 
-  #   int.mcmc.dat$beta5.3.*meanMAP.sim[i,"RWI_2"] +
-  #   int.mcmc.dat$beta6.3.*meanMAP.sim[i,"T.scaled"] + 
-  #  int.mcmc.dat$beta7.3. * (meanMAP.sim[i,"MAP.scaled"] *meanMAP.sim[i,"T.scaled"])
-  # 
-  #   # for struct.cohort == 4
-  #   int.4[,i] <- int.mcmc.dat[,paste0("beta1.", meanMAP.sim[i,"site.num"], ".")]+
-  #   int.mcmc.dat$beta2.4.*meanMAP.sim[i,]$MAP.scaled+    int.mcmc.dat$beta3.4.*meanMAP.sim[i,"DBH.scaled"] + 
-  #   int.mcmc.dat$beta4.4.*meanMAP.sim[i,"RWI_1"]  + 
-  #   int.mcmc.dat$beta5.4.*meanMAP.sim[i,"RWI_2"] +
-  #   int.mcmc.dat$beta6.4.*meanMAP.sim[i,"T.scaled"] + 
-  #  int.mcmc.dat$beta7.4. * (meanMAP.sim[i,"MAP.scaled"] *meanMAP.sim[i,"T.scaled"])
-
+  
 }
 
 
@@ -11687,28 +11784,28 @@ ggplot(site.summary[site.summary$MAP.Scenario %in% "MAPminus100",], aes(x = Temp
 # get average growth increase relative to mod.mean:
 
 
-pct.change.low.ci <- full.pred %>% select(idval,MCMC,  site, MAP.Scenario, struct.cohort.code, Temp.Scenario, RWI) %>% group_by(site, MAP.Scenario, struct.cohort.code) %>% select( -Temp.Scenario)
+pct.change.low.ci <- full.pred %>% dplyr::select(idval,MCMC,  site, MAP.Scenario, struct.cohort.code, Temp.Scenario, RWI) %>% group_by(site, MAP.Scenario, struct.cohort.code) %>% dplyr::select( -Temp.Scenario)
 
 # spread function was adding nas so, create dfs with RWI values:
 
 
-past.Temp <- full.pred %>% select(site, MAP.Scenario, struct.cohort.code, MCMC, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "mod.mean.Tmax") %>% rename(zero = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,zero)
+past.Temp <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC, RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "mod.mean.Tmax") %>% dplyr::rename(zero = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,zero)
 
-one <- full.pred %>% select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "one" ) %>% rename(one = RWI) %>% select( -Temp.Scenario)%>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,one)
+one <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "one" ) %>% dplyr::rename(one = RWI) %>% dplyr::select( -Temp.Scenario)%>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,one)
 
-two <- full.pred %>%  select(site, MAP.Scenario, struct.cohort.code,MCMC, RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "two" ) %>% rename(two = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, two)
+two <- full.pred %>%  dplyr::select(site, MAP.Scenario, struct.cohort.code,MCMC, RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "two" ) %>% dplyr::rename(two = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, two)
 
-three <- full.pred %>% select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "three" ) %>% rename(three = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, three)
+three <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "three" ) %>% dplyr::rename(three = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, three)
 
-four <- full.pred %>%  select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "four" ) %>% rename(four = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,four)
+four <- full.pred %>%  dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "four" ) %>% dplyr::rename(four = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,four)
 
-five <-  full.pred %>% select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "five" ) %>% rename(five = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, five)
+five <-  full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "five" ) %>% dplyr::rename(five = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, five)
 
-six <-  full.pred %>%  select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "six" ) %>% rename(six = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, six)
+six <-  full.pred %>%  dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>%filter(Temp.Scenario %in% "six" ) %>% dplyr::rename(six = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, six)
 
-seven <- full.pred %>% select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "seven" ) %>% rename(seven = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, seven)
+seven <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "seven" ) %>% dplyr::rename(seven = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, seven)
 
-eight <-  full.pred %>% select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "eight" ) %>% rename(eight = RWI) %>% select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,eight)
+eight <-  full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario) %>% filter(Temp.Scenario %in% "eight" ) %>% dplyr::rename(eight = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,eight)
     
 
                                                                                                                                                                                                  

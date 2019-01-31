@@ -21,8 +21,9 @@ extract.site.rcps <- function(climate, rcp, sites, time, model){
   
   setwd(paste0('/Users/kah/Documents/bimodality/data/',model,rcp,climate,time,'/'))
   tr_sites <- read.csv("/Users/kah/Documents/TreeRings/outputs/priority_sites_locs.csv")
+  tr_sites <- tr_sites[order(tr_sites$code),]
   tr_sites$site <- c("AVO", "BAC", "BON","BOO", "CAC", "COR", "DUF", "ENG", "GLL1", "GLL2", "GLL3", "GLL4", 
-                     "GLA", "HIC", "LED", "MOU", "PAM", "PLE", "PVC","STC", "TOW", "UNC", "UNI")
+                     "GLA","GLE","GLL", "HIC", "ITA","LED", "MAP","MOU", "PAM", "PLE", "PVC","STC", "TOW", "UNC", "UNI")
   # select sites of interest:
   tr_sites <- tr_sites[tr_sites$site %in% sites,]
   
@@ -88,7 +89,7 @@ extract.site.rcps <- function(climate, rcp, sites, time, model){
 # -----extract model projections for CCESM-----
 # predictions for the 2050s:
 pr85.50 <- extract.site.rcps ("pr", "85", sites = sites, time = "50", model = "cc")
-Tmax.50 <- extract.site.rcps ("tx", "85", sites = sites, time = "50", model = "cc")
+Tmax.50 <- extract.site.rcps (climate = "tx", rcp = "85", sites = sites, time = "50", model = "cc")
 Tmin.50 <- extract.site.rcps ("tn", "85", sites = sites, time = "50", model = "cc")
 
 # predictions for the 2070s
