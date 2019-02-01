@@ -11,11 +11,6 @@ library(ggrepel)
 library(grid)
 
 
-
-
-
-
-
 # reading in data from google maps (not all are exact site points)
 
 MN.priority <- readOGR("data/priority.kml", layer = "Priority")
@@ -289,6 +284,7 @@ sites.map <- sites.map +geom_polygon(data=data.frame(mapdata), aes(x=long, y=lat
         panel.grid.minor = element_blank())
 sites.map
 
+priority <- data.frame(priority)
 sites.map2 <- sites.map + geom_point(data = priority, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
   scale_shape_manual(values=1:4)+
   geom_text_repel(data = priority, aes(x = coords.x1, y = coords.x2,label=code),
@@ -358,7 +354,7 @@ library(rnaturalearth)
 #  1:50m "Medium" scale data.
 
 # lakes
-ne_lakes <- ne_download(scale = 110, type = 'lakes', category = 'physical')
+ne_lakes <- ne_download(scale = 50, type = 'lakes', category = 'physical')
 sp::plot(ne_lakes, col = 'blue')
 
 # rivers
@@ -418,11 +414,12 @@ rast.table$rgb <- with(rast.table, rgb(NE2_50M_SR_W.1,
 # et voila!
 
 NEmap <- ggplot()+
-  geom_raster(data = rast.table, aes(x = x, y = y, fill = NE2_50M_SR_W.1)) +scale_fill_gradientn(colours = rev(cbpalette))+
-  geom_polygon(data=lakes.subset, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
-  scale_alpha_discrete(range=c(1,0)) +
+  geom_raster(data = rast.table, aes(x = x, y = y, fill = NE2_50M_SR_W.1)) +scale_fill_gradientn(colours = rev(cbPalette), guide = FALSE)+
+  
   geom_path(data=state.subset, aes(x = long, y = lat, group = group), color = 'grey40')+
   geom_path(data=lakes.subset, aes(x = long, y = lat, group = group), color = 'blue') +
+  geom_polygon(data=lakes.subset, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
+  scale_alpha_discrete(range=c(1,0)) +
   #geom_path(data=river.subset, aes(x = long, y = lat, group = group), color = 'blue') +
   #geom_path(data=coast.subset, aes(x = long, y = lat, group = group), color = 'blue') + 
   #coord_equal()+#geom_raster(fill = rast.table$MSR_50M)+
@@ -441,11 +438,90 @@ png(height= 8, width = 9, units = "in", res = 300, "outputs/NE_map_sites.png")
 NEmapfull
 dev.off()
 
-NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))#+
+NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))+
   geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'black',
                   box.padding = unit(0.5, "lines"),
                   point.padding = unit(0.5, "lines"))
+
+
+
+# plot with the sites that have:
+site.bays <- data.frame(code = c("MOU", "BON", "ENG", "GLA", "UNC", "GL1", "GL2", "GL3", "AVO","COR"),
+                        site = c("MOU", "BON", "ENG", "GLA", "UNC", "GLL1", "GLL2", "GLL3", "AVO", "COR"))
+# need to reclassify the woodlands to forests for mapping:
+
+
+# map out one the google earth pretty map:
+NEmap + geom_point(data = priority.lat[priority.lat$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,shape=Description, color = Description))+ 
+  geom_text_repel(data = priority.lat[priority.lat$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
+                        fontface = 'bold', color = 'black',
+                        box.padding = unit(0.5, "lines"),
+                        point.padding = unit(0.5, "lines"))
+
+# merge the sites with climate data pulled for tree ring analysis:
+full.ghcn.sites <- read.csv("outputs/full.ghcn.sites.struct.before.splitting.csv")
+
+full.ghcn.sites <- merge(full.ghcn.sites, site.bays, by = "site")
+
+full.ghcn.unique <- unique(full.ghcn.sites[, c("site", "JUNTmax", "MAP.prism", "prism_Month_tmax_6", "prism_tmax_jja", "jja.VPDmax","year")])
+
+site.means <- full.ghcn.sites %>% group_by(site, code, structure ) %>% dplyr::summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
+                                                                site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
+                                                                site.ci.lo.tmax = quantile(JUNTmax, 0.025, na.rm = TRUE),
+                                                                site.ci.high.tmax = quantile(JUNTmax, 0.975, na.rm = TRUE),
+                                                                site.MAP = mean(MAP.prism, na.rm = TRUE), 
+                                                                site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
+                                                                site.ci.lo.MAP = quantile(MAP.prism, 0.025, na.rm = TRUE),
+                                                                site.ci.high.MAP = quantile(MAP.prism, 0.975, na.rm = TRUE),
+                                                                site.tmax.prism = mean(prism_Month_tmax_6), 
+                                                                site.tmax.prism.jja = mean(prism_tmax_jja), 
+                                                                site.VPDmax = mean(jja.VPDmax))
+
+
+full.ghcn.priority <- left_join(priority.lat, site.means, by = "code")
+
+
+
+# ---------plot Precipitation vs. summer tmax of each site & projections
+climate.space.ci <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax, shape = structure, color = structure))+geom_point(size = 3)+scale_color_manual(values = c("Savanna"='sienna4',
+                                                                                                                                                       "Forest"='forestgreen'))+
+  geom_errorbar(aes(x = site.MAP, ymin = site.ci.lo.tmax ,ymax = site.ci.high.tmax), alpha = 0.5)+
+  geom_errorbarh(aes(y = site.tmax, xmin = site.ci.lo.MAP, xmax = site.ci.high.MAP), alpha = 0.5)+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Mean Maximum Temperature (" *
+                                                                                                                                              degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
+
+climate.space.sd <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax, shape = structure, color = structure))+geom_point(size = 3)+scale_color_manual(values = c("Savanna"='sienna4',
+                                                                                                                                                       "Forest"='forestgreen'))+
+  geom_errorbar(aes(x = site.MAP, ymin = site.tmax -site.sd.tmax ,ymax = site.tmax+site.sd.tmax))+
+  geom_errorbarh(aes(y = site.tmax, xmin = site.MAP-site.sd.MAP, xmax = site.MAP+site.sd.MAP))+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Mean Maximum Temperature (" *
+                                                                                                                                                        degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
+
+# plot out the sites along the map
+full.ghcn.priority$coords.x1.jitter <- full.ghcn.priority$coords.x1
+full.ghcn.priority$coords.x2.jitter <- full.ghcn.priority$coords.x2
+
+full.ghcn.priority[full.ghcn.priority$code %in% "GL1",]$coords.x1.jitter <- full.ghcn.priority[full.ghcn.priority$code %in% "GL1",]$coords.x1 + 0.05
+full.ghcn.priority[full.ghcn.priority$code %in% "GL2",]$coords.x1.jitter <- full.ghcn.priority[full.ghcn.priority$code %in% "GL2",]$coords.x1 - 0.05
+full.ghcn.priority[full.ghcn.priority$code %in% "GL3",]$coords.x2.jitter <- full.ghcn.priority[full.ghcn.priority$code %in% "GL3",]$coords.x2 - 0.05
+
+full.ghcn.priority$coords.x2
+
+sites.bays.map <- NEmap + geom_point(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
+  scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+
+  geom_text_repel(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(0.5, "lines"),
+                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+theme(legend.title = element_blank(), legend.position= c(0.2, 0.2),  
+                                                                                                                               legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
+                                                                                                                               legend.text=element_text(size=12))
+
+png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space.png")
+plot_grid(sites.bays.map, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+dev.off()
+
+png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space_sd.png")
+plot_grid(sites.bays.map, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
+dev.off()
 
 # map of sites cored in 2016 only:
 map2016 <- sites.map + geom_point(data = sites16, aes(x = coords.x1, y = coords.x2, shape = Description), cex = 2.5)+
