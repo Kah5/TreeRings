@@ -411,7 +411,7 @@ rast.table$rgb <- with(rast.table, rgb(NE2_50M_SR_W.1,
                                        NE2_50M_SR_W.2,
                                      NE2_50M_SR_W.3,
                                        1))
-# et voila!
+# plot out map
 
 NEmap <- ggplot()+
   geom_raster(data = rast.table, aes(x = x, y = y, fill = NE2_50M_SR_W.1)) +scale_fill_gradientn(colours = rev(cbPalette), guide = FALSE)+
@@ -438,6 +438,50 @@ png(height= 8, width = 9, units = "in", res = 300, "outputs/NE_map_sites.png")
 NEmapfull
 dev.off()
 
+# add inset of full US:
+
+
+domain <- c(-125, -65, 24, 55)
+lakes.full <- quick.subset(ne_lakes, domain)
+river.full <- quick.subset(ne_rivers, domain)
+coast.full <- quick.subset(ne_coast, domain)
+state.full <- quick.subset(ne_state, domain)
+nat.full <- crop(nat.earth, y=extent(domain))
+
+rast.table <- data.frame(xyFromCell(nat.full, 1:ncell(nat.full)),
+                         getValues(nat.full/255))
+
+rast.table$rgb <- with(rast.table, rgb(NE2_50M_SR_W.1,
+                                       NE2_50M_SR_W.2,
+                                       NE2_50M_SR_W.3,
+                                       1))
+# get inset bounding box:
+bbox <- data.frame(long = c(-100, -83,  -83, -100, -100),
+                   lat = c(36.5, 36.5, 50, 50, 36.5))
+
+# full map of US for creating an inset
+
+NEmap.full.us <- ggplotGrob( ggplot()+
+  geom_raster(data = rast.table, aes(x = x, y = y, fill = NE2_50M_SR_W.1)) +scale_fill_gradientn(colours = rev(cbPalette), guide = FALSE)+
+  
+  geom_path(data=state.full, aes(x = long, y = lat, group = group), color = 'grey40')+
+  geom_path(data=lakes.full, aes(x = long, y = lat, group = group), color = 'blue') +
+  geom_polygon(data=lakes.full, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
+  scale_alpha_discrete(range=c(1,0)) +
+  geom_path(data = bbox, aes(x = long, y = lat), size = 0.75, color = "red")+
+  #geom_path(data=river.full, aes(x = long, y = lat, group = group), color = 'blue') +
+  #geom_path(data=coast.full, aes(x = long, y = lat, group = group), color = 'blue') + 
+  #coord_equal()+#geom_raster(fill = rast.table$MSR_50M)+
+  #scale_x_continuous(expand=c(0,0)) +
+  #scale_y_continuous(expand=c(0,0)) +
+  xlab('') + ylab('')+ coord_cartesian(xlim = c(-122, -69), ylim=c(26, 50))+theme_bw() +
+    theme(panel.background = element_rect(fill = "transparent",colour = NA),
+          plot.background = element_rect(fill = "transparent",colour = NA), 
+          axis.text = element_blank(), axis.ticks = element_blank())
+)
+
+
+
 NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))+
   geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'black',
@@ -458,6 +502,8 @@ NEmap + geom_point(data = priority.lat[priority.lat$code %in% site.bays$code,], 
                         fontface = 'bold', color = 'black',
                         box.padding = unit(0.5, "lines"),
                         point.padding = unit(0.5, "lines"))
+
+
 
 # merge the sites with climate data pulled for tree ring analysis:
 full.ghcn.sites <- read.csv("outputs/full.ghcn.sites.struct.before.splitting.csv")
@@ -511,9 +557,14 @@ sites.bays.map <- NEmap + geom_point(data = full.ghcn.priority[full.ghcn.priorit
   geom_text_repel(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
                   fontface = 'bold', color = 'black',
                   box.padding = unit(0.5, "lines"),
-                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+theme(legend.title = element_blank(), legend.position= c(0.2, 0.2),  
-                                                                                                                               legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
-                                                                                                                               legend.text=element_text(size=12))
+                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
+  theme(legend.title = element_blank(), legend.position= c(0.8, 0.15),  
+    legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
+    legend.text=element_text(size=12))
+
+# now add an inset map within our regional map:
+site.bayes.map.inset <- sites.bays.map + annotation_custom(grob = NEmap.full.us, xmin = -102, xmax = -92.5,
+                    ymin = 36.5, ymax = 41.5)
 
 png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space.png")
 plot_grid(sites.bays.map, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
@@ -521,6 +572,15 @@ dev.off()
 
 png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space_sd.png")
 plot_grid(sites.bays.map, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
+dev.off()
+
+# create the same maps but with inset of US
+png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space_inset.png")
+plot_grid(site.bayes.map.inset, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+dev.off()
+
+png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space_sd_inset.png")
+plot_grid(site.bayes.map.inset, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
 dev.off()
 
 # map of sites cored in 2016 only:
