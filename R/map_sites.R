@@ -468,7 +468,7 @@ NEmap.full.us <- ggplotGrob( ggplot()+
   geom_path(data=lakes.full, aes(x = long, y = lat, group = group), color = 'blue') +
   geom_polygon(data=lakes.full, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
   scale_alpha_discrete(range=c(1,0)) +
-  geom_path(data = bbox, aes(x = long, y = lat), size = 0.75, color = "red")+
+  geom_path(data = bbox, aes(x = long, y = lat), size = 0.75, color = "black")+
   #geom_path(data=river.full, aes(x = long, y = lat, group = group), color = 'blue') +
   #geom_path(data=coast.full, aes(x = long, y = lat, group = group), color = 'blue') + 
   #coord_equal()+#geom_raster(fill = rast.table$MSR_50M)+

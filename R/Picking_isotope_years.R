@@ -1,7 +1,7 @@
 # find the similar drought and wet years before + after 1950:
 sites <- c( "HIC","STC",#"GLA",
             "TOW", "ENG","UNC","BON","MOU",#"GLL4",
-            "GLL3","GLL2", "GLL1", "PVC","AVO" )
+            "GLL3","GLL2", "GLL1", "PVC","AVO", "GLA")
 
 for(j in 1:length(sites)){
   
