@@ -10,15 +10,13 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-
-```{r, results="asis"}
-library(xtable)
-library(tidyr)
-library(dplyr)
-library(reshape2)
-library(kableExtra)
-library(knitr)
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+library(xtable, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(reshape2, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(knitr, quietly = TRUE)
 
 # 1. Read in the site level summaries generated during crossdating (these come from my Crossdating Repo & were generated using dplR)
 
@@ -33,41 +31,23 @@ summaries <- lapply(full_filenames, read.csv)
 summary.table <- do.call(rbind, summaries)
 summary.table <- summary.table %>% dplyr::select(site, ntrees, Avg.age, TimeSpan, intercorrelation, AR.mean, eps, rbar.eff)
 
-new.table <- xtable(summary.table)
-new.table
+# new.table <- xtable(summary.table)
+# new.table
 
 colnames(summary.table) <- c("Site", "Trees", "Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")
-print(xtable(summary.table, align = rep("c", 9)), type="latex", include.rownames = FALSE)
+#print(xtable(summary.table, align = rep("c", 9)), type="latex", include.rownames = FALSE)
 
 site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC")
 
 ```
-
-# Table 1: Site summaries
-```{r, results="asis"}
+## Table 1: Site summaries
+```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
 sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
 rownames(sites.modeled) <- NULL
-print(xtable(sites.modeled, align = rep("c", 9)), type="latex", include.rownames = FALSE)
+kable(sites.modeled, "latex", align = "c", booktabs = TRUE,caption = "Site level chronology summaries",digits = 3, linesep = "")
 ```
-
-# Table 2: D13C summaries
-```{r, results="asis"}
-deltas <- read.csv("/Users/kah/Documents/TreeRings/outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
-deltas <- deltas[!is.na(deltas$d13C_12C_corr),]
-
-samples_per_id <- deltas %>% group_by(site, ID) %>% summarise(n())
-print(xtable(samples_per_id, type="latex"))
-      
-      
-samples_per_site <- deltas %>% group_by(site) %>% summarise(n())
-print(xtable(samples_per_site, type="latex"), include.rownames = FALSE)
-      
-      
-```
-
-
-# Table 2: Model summaries for struct x cohort model for dry years
-```{r, results="asis"}
+## Table 2: Model summaries for struct x cohort model for dry years
+```{r, results="asis", echo = FALSE}
 # read in tables from the following models run on dry years:
 
 # Mod1 = full model, site int, structure/cohort params, no interaction
@@ -84,10 +64,10 @@ mod2 <- summary.sorted[summary.sorted$model %in% "lag2_reg_struct_x_cohort_re_t_
 samps <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/samps.rds")
 test.dry <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/test.rds")
 train.dry <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/train.rds")
-#samps[,1:2]
+
 
  Yp.samps <- samps[,1:(length(test.dry$RWI))] 
-# Yprobe.samps <- Y.probe
+
  alpha.samps  <- samps[,(length(test.dry$RWI)+1):(length(test.dry$RWI)+ 16)]# one alpha for each of 4 cohort-strcuture groups
  beta2.samps <- samps[,(length(test.dry$RWI)+17):(length(test.dry$RWI)+20)]
  beta3.samps <- samps[,(length(test.dry$RWI)+21):(length(test.dry$RWI)+24)]
@@ -166,10 +146,10 @@ all.betas$mean.val <- round(all.betas$mean.val, 3)
 all.betas <- all.betas[,c("param", "variable", "mean.val", "Ci.95")]
 colnames(all.betas) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 
-print(xtable(all.betas, align = rep("c", 5)), include.rownames = FALSE)
-
-kable(all.betas, "latex", align = "c", booktabs = T) %>%
-kable_styling() %>% collapse_rows(1, latex_hline = "major")
+# print(xtable(all.betas, align = rep("c", 5)), include.rownames = FALSE)
+# 
+# kable(all.betas, "latex", align = "c", booktabs = T) %>%
+# kable_styling() %>% collapse_rows(1, latex_hline = "major")
 
 
 # # --------read in estimates  + 95% CI for Mod:
@@ -271,11 +251,11 @@ all.betas.mod2$mean.val <- round(all.betas.mod2$mean.val, 3)
 all.betas.mod2 <- all.betas.mod2[,c("param", "variable", "mean.val", "Ci.95")]
 colnames(all.betas.mod2) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 
-print(xtable(all.betas.mod2, align = rep("c", 5)), include.rownames = FALSE)
-
-kable(all.betas.mod2, "latex", booktabs = T) %>%
-  
-kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% kable_styling(latex_options = c("repeat_header"))
+# print(xtable(all.betas.mod2, align = rep("c", 5)), include.rownames = FALSE)
+# 
+# kable(all.betas.mod2, "latex", booktabs = T) %>%
+#   
+# kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% kable_styling(latex_options = c("repeat_header"))
 
 
 # combine the two tables:
@@ -286,14 +266,14 @@ beta.params[is.na(beta.params)] <- " "
 beta.params<- beta.params %>% arrange(match(Parameter, c("DBH", "Lag-1", "Lag-2", "June Tmax", "MAP", "June Tmax x MAP")), desc(Cohort))
 colnames(beta.params) <- c("Parameter", "Cohort", "Estimate", "95% CI", "Estimate", "95% CI")
 
-kable(beta.params, "latex", align = "c", booktabs = T) %>%
-  add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
-kable_styling() %>% collapse_rows(1, latex_hline = "major")
-
-# okay now add the model summaries to the dataframe:
-kable(beta.params, "latex", align = "c", booktabs = T) %>%
-  add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
-kable_styling() %>% collapse_rows(1, latex_hline = "major")
+# kable(beta.params, "latex", align = "c", booktabs = T) %>%
+#   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
+# kable_styling() %>% collapse_rows(1, latex_hline = "major")
+# 
+# # okay now add the model summaries to the dataframe:
+# kable(beta.params, "latex", align = "c", booktabs = T) %>%
+#   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
+# kable_styling() %>% collapse_rows(1, latex_hline = "major")
 
 
 model.stats <- rbind(mod1, mod2)
@@ -324,7 +304,7 @@ row.names(beta.full) <- NULL
 
 
 
-kable(beta.full, "latex", align = "c", booktabs = T, caption = "Parameter Estimates & Model Fit") %>%
+kable(beta.full, "latex", align = "c", booktabs = T, caption = "Parameter Estimates and Model Fit") %>%
   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
 kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 25, 30) %>% row_spec(24, hline_after = TRUE)
 ```
