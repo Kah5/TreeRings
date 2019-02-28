@@ -148,7 +148,16 @@ ggplot(ppet.rast.df.8.5, aes(x,y, color = X2059_2))+geom_point()
 
 
 
+
 temp.extracted <- rbind(ppet.rast.df, ppet.rast.df.4.5, ppet.rast.df.6.0, ppet.rast.df.8.5)
+
+
+
+# get full midwest
+pet.long.nona <- pet.long2[!is.na(pet.long2),]
+midwest.region <- unique(pet.long.nona[,c("lat", "lon")])
+region.8.5 <- raster::extract(ppet.rast.8.5, midwest.region[,c("lat", "lon")], df = TRUE)
+
 
 
 # 

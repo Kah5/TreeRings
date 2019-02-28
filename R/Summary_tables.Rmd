@@ -1,0 +1,51 @@
+---
+title: "summary_tables"
+author: "Kelly Heilman"
+date: "2/27/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, results="asis"}
+library(xtable)
+library(tidyr)
+
+# 1. Read in the site level summaries generated during crossdating (these come from my Crossdating Repo & were generated using dplR)
+
+
+# directory that all the csv files are in
+data.dir <- "/Users/kah/Documents/crossdating/data/site_summaries/"
+
+file_names = list.files(data.dir)
+full_filenames <- paste0(data.dir, file_names)
+summaries <- lapply(full_filenames, read.csv)
+
+summary.table <- do.call(rbind, summaries)
+summary.table <- summary.table %>% dplyr::select(site, ntrees, Avg.age, TimeSpan, intercorrelation, AR.mean, eps, rbar.eff)
+
+new.table <- xtable(summary.table)
+new.table
+
+colnames(summary.table) <- c("Site", "Trees", "Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")
+print(xtable(summary.table, align = rep("c", 9)), type="latex")
+
+site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC")
+
+```
+
+# Table 1: Site summaries
+```{r, results="asis"}
+sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
+rownames(sites.modeled) <- NULL
+print(xtable(sites.modeled, align = rep("c", 9)), type="latex")
+```
+
+# Table 2: Model summaries
+```{r, results="asis"}
+```
