@@ -3,8 +3,8 @@ title: "summary_tables"
 author: "Kelly Heilman"
 date: "2/27/2019"
 output:
-  pdf_document: default
   word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -150,6 +150,7 @@ b6.sum$param <- "June Tmax"
 all.betas <- rbind(a.sum, b3.sum, b4.sum, b5.sum, b2.sum, b6.sum)
 all.betas$Ci.95 <- paste0("(",round(all.betas$Ci.low, 2), " - ", round(all.betas$Ci.high, 2), ")")
 all.betas$mean.val <- round(all.betas$mean.val, 3)
+all.betas$mean.val <- ifelse(all.betas$Ci.low < 0 & all.betas$Ci.high< 0, paste(all.betas$mean.val, "*"), ifelse(all.betas$Ci.low > 0 & all.betas$Ci.high > 0, paste(all.betas$mean.val, "*"), all.betas$mean.val)) # add significance stars if CI does not include 0
 all.betas <- all.betas[,c("param", "variable", "mean.val", "Ci.95")]
 colnames(all.betas) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 
@@ -261,6 +262,8 @@ b7.sum.mod2$param <- "June Tmax x MAP"
 all.betas.mod2 <- rbind(a.sum.mod2, b3.sum.mod2, b4.sum.mod2, b5.sum.mod2, b2.sum.mod2, b6.sum.mod2, b7.sum.mod2)
 all.betas.mod2$Ci.95 <- paste0("(",round(all.betas.mod2$Ci.low, 2), " - ", round(all.betas.mod2$Ci.high, 2), ")")
 all.betas.mod2$mean.val <- round(all.betas.mod2$mean.val, 3)
+all.betas.mod2$mean.val <- ifelse(all.betas.mod2$Ci.low < 0 & all.betas.mod2$Ci.high< 0, paste(all.betas.mod2$mean.val, "*"),
+                                  ifelse(all.betas.mod2$Ci.low > 0 & all.betas.mod2$Ci.high > 0, paste(all.betas.mod2$mean.val, "*"), all.betas.mod2$mean.val))
 all.betas.mod2 <- all.betas.mod2[,c("param", "variable", "mean.val", "Ci.95")]
 colnames(all.betas.mod2) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 
@@ -277,6 +280,8 @@ beta.params <- merge(all.betas, all.betas.mod2, by = c("Parameter", "Cohort"), a
 beta.params[is.na(beta.params)] <- " "
 
 beta.params <- beta.params %>% arrange(match(Parameter, c("Intercept","DBH", "Lag-1", "Lag-2", "June Tmax", "MAP", "June Tmax x MAP")), desc(Cohort))
+
+
 colnames(beta.params) <- c("Parameter", "Cohort", "Estimate", "95% CI", "Estimate", "95% CI")
 
 # kable(beta.params, "latex", align = "c", booktabs = T) %>%
@@ -312,12 +317,15 @@ model.stats.cols <- model.stats.cols %>% filter(!cohort %in% "modelname")
 
 model.statsv <- model.stats.cols[, c("Parameter","cohort", "Model.1","Ci.95.x", "Model.2", "Ci.95.y")]
 colnames(model.statsv) <- colnames(beta.params)
+
+# combine the model parameter estimates & the model summaries
 beta.full <- rbind( beta.params, model.statsv)
 row.names(beta.full) <- NULL
 
 
-
-kable(beta.full, "latex", align = "c", booktabs = T, caption = "Parameter Estimates and Model Fit") %>%
+# finally print out a pretty table!
+ 
+kable(beta.full, "latex", align=c("c", "c", "l", "c", "l", "c"), booktabs = T, caption = "Parameter Estimates and Model Fit") %>%
   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
-kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 34, 38) %>% row_spec(33, hline_after = TRUE)
+kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 34, 38) %>% row_spec(33, hline_after = TRUE) %>% footnote(symbol = c("95% CI does not contain zero"), footnote_as_chunk = T)
 ```
