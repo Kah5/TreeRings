@@ -110,6 +110,13 @@ b6.m <- melt(b6, id.vars=c("num"))
 
 
 # get means and ci for each 
+a.sum <- a.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+
+a.sum$param <- "Intercept"
+
+
 b2.sum <- b2.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
@@ -140,7 +147,7 @@ b6.sum <- b6.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value
 b6.sum$variable <- factor(b6.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
 b6.sum$param <- "June Tmax"
 
-all.betas <- rbind( b3.sum, b4.sum, b5.sum, b2.sum, b6.sum)
+all.betas <- rbind(a.sum, b3.sum, b4.sum, b5.sum, b2.sum, b6.sum)
 all.betas$Ci.95 <- paste0("(",round(all.betas$Ci.low, 2), " - ", round(all.betas$Ci.high, 2), ")")
 all.betas$mean.val <- round(all.betas$mean.val, 3)
 all.betas <- all.betas[,c("param", "variable", "mean.val", "Ci.95")]
@@ -208,6 +215,12 @@ b7.m <- melt(b7, id.vars=c("num"))
 
 
 # get means and ci for each 
+a.sum.mod2 <- a.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+
+a.sum.mod2$param <- "Intercept"
+
 b2.sum.mod2 <- b2.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
@@ -245,7 +258,7 @@ b7.sum.mod2$variable <- factor(b7.sum.mod2$variable, levels = c( "Past-Forest", 
 b7.sum.mod2$param <- "June Tmax x MAP"
 
 
-all.betas.mod2 <- rbind( b3.sum.mod2, b4.sum.mod2, b5.sum.mod2, b2.sum.mod2, b6.sum.mod2, b7.sum.mod2)
+all.betas.mod2 <- rbind(a.sum.mod2, b3.sum.mod2, b4.sum.mod2, b5.sum.mod2, b2.sum.mod2, b6.sum.mod2, b7.sum.mod2)
 all.betas.mod2$Ci.95 <- paste0("(",round(all.betas.mod2$Ci.low, 2), " - ", round(all.betas.mod2$Ci.high, 2), ")")
 all.betas.mod2$mean.val <- round(all.betas.mod2$mean.val, 3)
 all.betas.mod2 <- all.betas.mod2[,c("param", "variable", "mean.val", "Ci.95")]
@@ -263,7 +276,7 @@ colnames(all.betas.mod2) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 beta.params <- merge(all.betas, all.betas.mod2, by = c("Parameter", "Cohort"), all.y = TRUE)
 beta.params[is.na(beta.params)] <- " "
 
-beta.params<- beta.params %>% arrange(match(Parameter, c("DBH", "Lag-1", "Lag-2", "June Tmax", "MAP", "June Tmax x MAP")), desc(Cohort))
+beta.params <- beta.params %>% arrange(match(Parameter, c("Intercept","DBH", "Lag-1", "Lag-2", "June Tmax", "MAP", "June Tmax x MAP")), desc(Cohort))
 colnames(beta.params) <- c("Parameter", "Cohort", "Estimate", "95% CI", "Estimate", "95% CI")
 
 # kable(beta.params, "latex", align = "c", booktabs = T) %>%
@@ -306,5 +319,5 @@ row.names(beta.full) <- NULL
 
 kable(beta.full, "latex", align = "c", booktabs = T, caption = "Parameter Estimates and Model Fit") %>%
   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
-kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 25, 30) %>% row_spec(24, hline_after = TRUE)
+kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 34, 38) %>% row_spec(33, hline_after = TRUE)
 ```
