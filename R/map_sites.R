@@ -9,7 +9,8 @@ library(ggplot2)
 library(rgdal)
 library(ggrepel)
 library(grid)
-
+library(tidyr)
+library(dplyr)
 
 # reading in data from google maps (not all are exact site points)
 
@@ -525,7 +526,7 @@ site.means <- full.ghcn.sites %>% group_by(site, code, structure ) %>% dplyr::su
                                                                 site.VPDmax = mean(jja.VPDmax))
 
 
-full.ghcn.priority <- left_join(priority.lat, site.means, by = "code")
+full.ghcn.priority <- dplyr::left_join(priority.lat, site.means, by = "code")
 
 
 
@@ -581,6 +582,28 @@ dev.off()
 
 png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space_sd_inset.png")
 plot_grid(site.bayes.map.inset, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
+dev.off()
+
+
+# color the site text that have isotope data in 
+full.ghcn.priority$isotopes <- ifelse(full.ghcn.priority$code %in% c("BON", "GL2", "MOU", "GLA"), "d13C run", "no d13C")
+
+sites.bays.map.isotopes <- NEmap + geom_point(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =isotopes), size = 2, show.legend = FALSE)+
+  scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen', "no d13C" = "black", "d13C run" = "red"))+
+  geom_text_repel(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2, label=code, color = isotopes),
+                  fontface = 'bold',
+                  box.padding = unit(0.5, "lines"),
+                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
+  theme(legend.title = element_blank(), legend.position= c(0.8, 0.15),  
+        legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
+        legend.text=element_text(size=12))
+
+# now add an inset map within our regional map:
+site.bayes.map.inset.isotopes <- sites.bays.map.isotopes + annotation_custom(grob = NEmap.full.us , xmin = -102, xmax = -92.5,
+                                                           ymin = 36.5, ymax = 41.5)
+
+png(height = 4, width = 8, units = "in", res = 300, "outputs/site_map_and_climate_space_isotopes.png")
+cowplot::plot_grid(site.bayes.map.inset.isotopes, climate.space.ci+ theme(legend.position = c(0.8, 0.15)), ncol = 2, align = "hv", labels = "AUTO")
 dev.off()
 
 # map of sites cored in 2016 only:
