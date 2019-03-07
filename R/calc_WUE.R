@@ -20,7 +20,7 @@ ggplot(deltas, aes(x = year, y = bigD, color = site))+geom_point()+theme_bw()+st
 
 ggplot(deltas[!deltas$site %in% c("UNI", "BON"), ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen"))+ylim(-29, -23)
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen"))+ylim(-29, -23)
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "purple"))+ylim(-29, -23)
 #ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
 
 
@@ -42,17 +42,21 @@ b <- 27
 deltas$iWUE <- deltas$ppm*(1-(deltas$d13C_12C_corr-deltas$d13atm + a))/(b-a)*0.625
 summary(deltas$iWUE)
 
+ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = Cor.d13C.suess, color = ID))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+
+
+
 # just make plots of all the tree replicates:
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/IWUE_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "grey"))+theme_black()
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "grey"))#+theme_black()
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_suess_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+theme_black()+ylab(expression(paste(delta^{13}, "C (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C (\u2030)")))
 dev.off()
 
 
