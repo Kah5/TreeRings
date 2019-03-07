@@ -170,14 +170,14 @@ ggplot(detrended.age.df[detrended.age.df$site %in% "GLA",], aes(x = year, y = RW
 
 ggplot(detrended.age.df[detrended.age.df$site %in% "GLA",], aes(x = RWI_3, y = RWI, color = ID))+geom_point()
 
-age.classes <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% summarise(pre1800 = min(year) < 1880  , pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
+age.classes <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% dplyr::summarise(pre1800 = min(year) < 1880  , pre1950 = min(year, na.rm = TRUE) <1930 & min(year, na.rm = TRUE) >=1880 , post1950 = min(year, na.rm = TRUE) >1930)
 
-age.classes  %>% group_by(site) %>% summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
+age.classes  %>% group_by(site) %>% dplyr::summarise(pre1800_n=sum(pre1800, na.rm=TRUE), pre1950_n = sum(pre1950, na.rm=TRUE), post1950_n = sum(post1950, na.rm=TRUE))
 
 # get establishment dates
-est.dates <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% summarise(est = min(year))
-est.dates$class <- ifelse(est.dates$est <= 1900, "old/mature", ifelse(est.dates$est <=1950, "mature", "young"))
-write.csv(age.classes, "data/site_stats/n_trees_ageclass_by_site_rwi.csv")
+est.dates <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% dplyr::summarise(est = min(year))
+est.dates$class <- ifelse(est.dates$est <= 1890, "old/mature", ifelse(est.dates$est <=1940, "mid", "young"))
+write.csv(age.classes, "data/site_stats/n_trees_ageclass_by_site_rwi_v2.csv")
 
 ###################################
 # add climate data to the age trends

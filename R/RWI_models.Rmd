@@ -14,12 +14,12 @@ library(reshape2)
 library(dplyr)
 library(cowplot)
 
+
 # some initial data checking:
 full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.csv")
-BAI <- full.ghcn$RWI
-hist(BAI)
-logBAI<- hist(log(BAI)) # approximates normal when log transformed
+hist(full.ghcn$RWI)
 
+hist(log(full.ghcn$RWI))
 ```
 
 # Separate Testing and training Datasets:
@@ -8947,7 +8947,7 @@ sit.cohorts <- unique(train.dry[,c("struct.cohort.code", "site.num")])
 probe <- merge(probe, sit.cohorts, by = c("struct.cohort.code", "site.num")) # make sure that each site only has savanna or forest in the probe
 
 # make probe smaller to help with saving:
-short.probe <- probe[probe$RWI_1 %in% c("-1.609", "0.391", "1.891") & probe$RWI_2 %in% c("-1.47", "0.03", "2.03") & probe$DBH.scaled %in% c("-0.376", "0.374", "1.874"),]
+short.probe <- probe[probe$RWI_1 %in% c("-1.609", "0.391", "1.891") & probe$RWI_2 %in% c("-1.484", "0.016", "2.016") & probe$DBH.scaled %in% c("-0.413", "0.337", "1.087"),]
 
 #short.probe <- probe
 
@@ -8966,7 +8966,7 @@ future.probe_50$year <- 2050
 # get climate averages from 1950 - present at each site:
 train.dry$struct.cohort.code2 <- as.numeric(train.dry$struct.cohort.code)
 train.clim.summary <-
-  train.dry[train.dry$ageclass %in% "Modern", ] %>% group_by(site) %>% summarise(
+  train.dry[train.dry$ageclass %in% "Modern", ] %>% group_by(site) %>% dplyr::summarise(
     MAP.scaled = mean(MAP.scaled),
     DBH.scaled = -0.413,
     T.scaled = mean(T.scaled),
@@ -9076,13 +9076,13 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[1]'], auto.layout = FALSE
 #samps <- samps[,(length(fut$RWI_1)+1):length(colnames(samps))]
  Yp.samps <- samps[,1:(length(test.dry$RWI))] 
  Yprobe.samps <- Y.probe
- alpha.samps  <- samps[,(length(test.dry$RWI)+1):(length(test.dry$RWI)+ 16)]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps <- samps[,(length(test.dry$RWI)+17):(length(test.dry$RWI)+20)]
- beta3.samps <- samps[,(length(test.dry$RWI)+21):(length(test.dry$RWI)+24)]
- beta4.samps <- samps[,(length(test.dry$RWI)+25):(length(test.dry$RWI)+ 28)]
- beta5.samps <- samps[,(length(test.dry$RWI)+ 29):(length(test.dry$RWI)+ 32)]
- beta6.samps <- samps[,(length(test.dry$RWI)+ 33):(length(test.dry$RWI)+ 36)]
- sigma.samps <- samps[,(length(test.dry$RWI)+ 37)]
+ alpha.samps  <- samps[,(length(test.dry$RWI)+1):(length(test.dry$RWI)+ 9)]# one alpha for each of 9 sites 
+ beta2.samps <- samps[,(length(test.dry$RWI)+10):(length(test.dry$RWI)+13)]
+ beta3.samps <- samps[,(length(test.dry$RWI)+14):(length(test.dry$RWI)+17)]
+ beta4.samps <- samps[,(length(test.dry$RWI)+18):(length(test.dry$RWI)+ 21)]
+ beta5.samps <- samps[,(length(test.dry$RWI)+ 22):(length(test.dry$RWI)+ 25)]
+ beta6.samps <- samps[,(length(test.dry$RWI)+ 26):(length(test.dry$RWI)+ 29)]
+ sigma.samps <- samps[,(length(test.dry$RWI)+ 36)]
  sigma_betas <- samps[,(length(test.dry$RWI)+ 30):(length(test.dry$RWI)+ 35)]
 
  
@@ -10523,7 +10523,7 @@ sit.cohorts <- unique(train.dry.pair[,c("struct.cohort.code", "site.num")])
 probe <- merge(probe, sit.cohorts, by = c("struct.cohort.code", "site.num")) # make sure that each site only has savanna or forest in the probe
 
 # make probe smaller to help with saving:
-short.probe <- probe[probe$RWI_1 %in% c("-1.609", "0.391", "1.891") & probe$RWI_2 %in% c("-1.196", "0.304", "1.804") & probe$DBH.scaled %in% c("-0.413", "0.337", "1.837"),]
+short.probe <- probe[probe$RWI_1 %in% c("-1.609", "0.391", "1.891") & probe$RWI_2 %in% c("-1.484", "0.016", "1.516") & probe$DBH.scaled %in% c("-0.413", "0.337", "1.837"),]
 
 #short.probe <- probe
 
@@ -10662,8 +10662,10 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[2]'], auto.layout = FALSE
  samps   <- samp.structure.cohort.re[[1]]
  saveRDS(samps, "outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
  samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
- #test.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
- #train.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+ test.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+ train.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+# Yp <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/")
+# Y.probe <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
 #Yfut.samps <- samps[, 1:length(fut$RWI_1)]
 #samps <- samps[,(length(fut$RWI_1)+1):length(colnames(samps))]
  Yp.samps <- Yp
@@ -11030,7 +11032,7 @@ bayes.c.eff.lower4 <- apply(int.4, 2, function(x) quantile(x, probs = c(0.025)))
 bayes.c.eff.upper4 <- apply(int.4, 2, function(x) quantile(x, probs = c(0.975)))
 
 # summarise all the data -> this is ugly but it does the job
-
+library(DMwR)
 
 plot.dat1 <- data.frame(T.sim, Tmax = as.numeric(unscale(vals = T.sim, norm.data = T.scaled)), mean = bayes.c.eff.mean1, Ci.low = bayes.c.eff.lower1, Ci.high = bayes.c.eff.upper1, struct.cohort = 1)
 
@@ -11159,7 +11161,7 @@ prob$MAP <- as.numeric(round(unscale(vals = prob$Drought, norm.data = MAP.scaled
 prob$Tmax <- as.numeric(round(unscale(vals = prob$Tmax, norm.data = T.scaled))) 
 
 
-prob_10_60cm_avg <- prob %>% dplyr::filter(DBH == 27 | DBH == 39 | DBH == 63 ,  RWI_1 == 0.391, RWI_2 == 0.304 ) 
+prob_10_60cm_avg <- prob %>% dplyr::filter(DBH == 27 | DBH == 39 | DBH == 63 ,  RWI_1 == 0.391, RWI_2 == 0.016 ) 
 
  struc.conversion <- data.frame(struct.cohort = 1:4, cohort = c(paste0(c(unique(train$struct.cohort)))))
  struc.conversion$ageclass <- ifelse(struc.conversion$cohort %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
@@ -11174,7 +11176,7 @@ preds_ci_10_age <- prob_10_60cm_avg %>% group_by(DBH, Drought, MAP,Tmax, ageclas
 
 # same thing but with LOWER than average tree growth the years before:
 
-prob_10_60cm_low <- prob %>% dplyr::filter(DBH == 27 | DBH == 39 | DBH == 63 ,  RWI_1 == -1.609, RWI_2 == -1.196 ) 
+prob_10_60cm_low <- prob %>% dplyr::filter(DBH == 27 | DBH == 39 | DBH == 63 ,  RWI_1 == -1.609, RWI_2 == -1.484 ) 
 
  
  prob_10_60cm_low <- merge(prob_10_60cm_low, struc.conversion, by  = "struct.cohort")
@@ -11189,7 +11191,7 @@ preds_ci_10_low_age <- prob_10_60cm_low %>% group_by(DBH, Drought, MAP,Tmax, age
 
 # same thing but with HIGHER than average tree growth the years before:
 
-prob_10_60cm_high <- prob %>% dplyr::filter(DBH == 27 | DBH == 39 | DBH == 63 , RWI_1 == 1.891, RWI_2 == 1.804  ) 
+prob_10_60cm_high <- prob %>% dplyr::filter(DBH == 27 | DBH == 39 | DBH == 63 , RWI_1 == 1.891, RWI_2 == 1.516  ) 
 
 
  prob_10_60cm_high <- merge(prob_10_60cm_high, struc.conversion, by  = "struct.cohort")
@@ -11666,6 +11668,15 @@ ag.ss.pred.500MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 516.814,], 
 
 ag.ss.pred.950MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
 
+
+
+# make a plot of modern only responses for high and low precipitaiton only:
+modern.hi.low <- ageclass.ss.only %>% filter(MAP == 945.942 & ageclass %in% "Modern" | MAP == 516.814 & ageclass %in% "Modern")
+modern.hi.low$MAP_scenario <- ifelse(modern.hi.low$MAP >= 900, "950 mm", "515 mm")
+
+ag.ss.pred.MAP.modonly <- ggplot(modern.hi.low, aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+geom_ribbon(data = modern.hi.low, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294"), name = "MAP scenario")+scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294"), name = "MAP scenario")+theme()
+
+
 # read in future climate for the region:
 June.rcps <- read.csv("outputs/June_summer_cmip5_preds_allyears_2025_2099.csv")
 
@@ -11694,6 +11705,12 @@ boxplot.tmax <- ggplot(clim.full2, aes(x = class, y = value, fill = rcp, group =
 
 png(height = 8, width = 4, units = "in", res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_marginal_fut_climate_boxes.png")
 plot_grid(ag.ss.pred.500MAP, ag.ss.pred.950MAP, boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,1,0.75), labels = "AUTO")
+dev.off()
+
+
+
+png(height = 6, width = 5, units = "in", res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes.png")
+plot_grid(ag.ss.pred.MAP.modonly  , boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,0.75), labels = "AUTO") 
 dev.off()
 
 # --------Get future growth if we change temperature given mean precip, DBH, and RWI------------------
