@@ -11710,7 +11710,7 @@ dev.off()
 
 
 png(height = 6, width = 5, units = "in", res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes.png")
-plot_grid(ag.ss.pred.MAP.modonly, boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,0.75), labels = "AUTO") 
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly,ncol=1, align = "hv", rel_heights = c(1,0.75), labels = "AUTO") 
 dev.off()
 
 
@@ -11746,9 +11746,10 @@ mod.mean.clim <-
   50,
   
   MAP750 = 750,
-  MAP515 = 515,
+  
+  MAP515 = 516.814,
   MAP850 = 850,
-  MAP950 = 950,
+  MAP950 = 945.942,
   MAPplus100 = mean(MAP.prism, na.rm = TRUE) +
   100
   )
@@ -11987,19 +11988,31 @@ pct.change.temp.reg <- merge(pct.change.temp.reg, Tdf, by = "incT")
 pct.change.temp.reg$struct.cohort.code <- as.character(pct.change.temp.reg$struct.cohort.code)
 
 
+# select only the low and high map values & plot out
+pct.change.low.high.MAP <- pct.change.temp.reg %>% filter(ageclass %in% "Modern" & MAP.Scenario %in% c("MAP950", "MAP515")) 
+
+#1b9e77
+#d95f02
+#7570b3
+
 # plot out pct change in growth estimated:
-ggplot(pct.change.temp.reg[pct.change.temp.reg$ageclass %in% "Modern",], aes(deltaT, pct_change, color = MAP.Scenario))+geom_point()+
-  geom_line() + geom_ribbon(data = pct.change.temp.reg[pct.change.temp.reg$ageclass %in% "Modern",], aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = MAP.Scenario), alpha = 0.25, colour = NA)+
-  geom_hline(yintercept = 0, linetype = "dashed")+ylab("% change in growth")+xlab("change in mean Tmax (degC)")+facet_wrap(~structure, ncol = 1)
+pct.change.low.high.MAP$Precipitation <- ifelse(pct.change.low.high.MAP$MAP.Scenario %in% "MAP950", "950 mm",
+       ifelse(pct.change.low.high.MAP$MAP.Scenario %in% "MAP515","515 mm", "580 mm (current mean)"))
+
+pct.change.plot <- ggplot(pct.change.low.high.MAP, aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() + geom_ribbon(data = pct.change.low.high.MAP, aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab(expression("% change in growth relative to (26" * degree * "C)"))+facet_wrap(~structure, ncol = 1)+scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw(base_size = 12)+theme(panel.grid = element_blank())
 
 
-ggplot(pct.change.temp.reg[pct.change.temp.reg$ageclass %in% "Modern" & pct.change.temp.reg$MAP.Scenario %in% c("MAP950", "MAP515", "mod.mean.MAP"),], aes(Temperature, pct_change, color = MAP.Scenario))+
-  geom_line() + geom_ribbon(data = pct.change.temp.reg[pct.change.temp.reg$ageclass %in% "Modern" & pct.change.temp.reg$MAP.Scenario %in% c("MAP950", "MAP515", "mod.mean.MAP"),], aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = MAP.Scenario), alpha = 0.25, colour = NA)+
-  geom_hline(yintercept = 0, linetype = "dashed")+ylab("% change in tree growth")+xlab("Tmax (degC)")+facet_wrap(~structure, ncol = 2)+scale_color_manual(values = c("MAP950"='#008837', 'MAP515' = "#7b3294", "mod.mean.MAP" = "grey"), name = "MAP scenario")+scale_fill_manual(values = c("MAP950"='#008837', 'MAP515' = "#7b3294", "mod.mean.MAP" = "grey"), name = "MAP scenario")
+pct.change.plot
 
 
+# put altogether in a single figure
 
-# --------Get future growth if we change temperature given mean precip, DBH, and RWI------------------
+png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes.png")
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "hv", rel_heights = c(0.65,1,1), labels = "AUTO") 
+dev.off()
+
+
+# -Get future growth at each site if we change temperature by 1-8 deg C given mean precip, DBH, and RWI---------
 
 mod.mean.clim <- test.dry.pair %>% filter(ageclass %in% "Modern" & year > 1950) %>% group_by(site) %>% dplyr::summarize(mod.mean.Tmax = mean(JUNTmax, na.rm = TRUE), one = mean(JUNTmax, na.rm = TRUE) + 1,
           two = mean(JUNTmax, na.rm = TRUE) + 2,
