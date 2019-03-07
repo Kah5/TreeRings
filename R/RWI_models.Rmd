@@ -11674,7 +11674,7 @@ ag.ss.pred.950MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], 
 modern.hi.low <- ageclass.ss.only %>% filter(MAP == 945.942 & ageclass %in% "Modern" | MAP == 516.814 & ageclass %in% "Modern")
 modern.hi.low$MAP_scenario <- ifelse(modern.hi.low$MAP >= 900, "950 mm", "515 mm")
 
-ag.ss.pred.MAP.modonly <- ggplot(modern.hi.low, aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+geom_ribbon(data = modern.hi.low, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294"), name = "MAP scenario")+scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294"), name = "MAP scenario")+theme()
+ag.ss.pred.MAP.modonly <- ggplot(modern.hi.low, aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+geom_ribbon(data = modern.hi.low, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme()
 
 
 # read in future climate for the region:
@@ -11999,7 +11999,7 @@ pct.change.low.high.MAP <- pct.change.temp.reg %>% filter(ageclass %in% "Modern"
 pct.change.low.high.MAP$Precipitation <- ifelse(pct.change.low.high.MAP$MAP.Scenario %in% "MAP950", "950 mm",
        ifelse(pct.change.low.high.MAP$MAP.Scenario %in% "MAP515","515 mm", "580 mm (current mean)"))
 
-pct.change.plot <- ggplot(pct.change.low.high.MAP, aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() + geom_ribbon(data = pct.change.low.high.MAP, aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab(expression("% change in growth relative to (26" * degree * "C)"))+facet_wrap(~structure, ncol = 1)+scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw(base_size = 12)+theme(panel.grid = element_blank())
+pct.change.plot <- ggplot(pct.change.low.high.MAP, aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() + geom_ribbon(data = pct.change.low.high.MAP, aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab("% change in growth")+facet_wrap(~structure, ncol = 1)+scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw()+theme(panel.grid = element_blank())
 
 
 pct.change.plot
@@ -12008,8 +12008,10 @@ pct.change.plot
 # put altogether in a single figure
 
 png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes.png")
-plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "hv", rel_heights = c(0.65,1,1), labels = "AUTO") 
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(0.65,1,1), labels = "AUTO") 
 dev.off()
+
+
 
 
 # -Get future growth at each site if we change temperature by 1-8 deg C given mean precip, DBH, and RWI---------

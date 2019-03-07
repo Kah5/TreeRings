@@ -102,21 +102,21 @@ toFahrenheit = function(celsius) {
   f = (9/5) * celsius + 32; 
 }
 
-Tmax.50$`tx-85` <- toFahrenheit(Tmax.50$`tx-85`)
-Tmax.50$`tx-85cv` <- toFahrenheit(Tmax.50$`tx-85cv`)
-Tmax.50$`tx-85GS` <- toFahrenheit(Tmax.50$`tx-85GS`)
-
-Tmax.70$`tx-85` <- toFahrenheit(Tmax.70$`tx-85`)
-Tmax.70$`tx-85cv` <- toFahrenheit(Tmax.70$`tx-85cv`)
-Tmax.70$`tx-85GS` <- toFahrenheit(Tmax.70$`tx-85GS`)
-
-Tmin.50$`tn-85` <- toFahrenheit(Tmin.50$`tn-85`)
-Tmin.50$`tn-85cv` <- toFahrenheit(Tmin.50$`tn-85cv`)
-Tmin.50$`tn-85GS` <- toFahrenheit(Tmin.50$`tn-85GS`)
-
-Tmin.70$`tn-85` <- toFahrenheit(Tmin.70$`tn-85`)
-Tmin.70$`tn-85cv` <- toFahrenheit(Tmin.70$`tn-85cv`)
-Tmin.70$`tn-85GS` <- toFahrenheit(Tmin.70$`tn-85GS`)
+# Tmax.50$`tx-85` <- toFahrenheit(Tmax.50$`tx-85`)
+# Tmax.50$`tx-85cv` <- toFahrenheit(Tmax.50$`tx-85cv`)
+# Tmax.50$`tx-85GS` <- toFahrenheit(Tmax.50$`tx-85GS`)
+# 
+# Tmax.70$`tx-85` <- toFahrenheit(Tmax.70$`tx-85`)
+# Tmax.70$`tx-85cv` <- toFahrenheit(Tmax.70$`tx-85cv`)
+# Tmax.70$`tx-85GS` <- toFahrenheit(Tmax.70$`tx-85GS`)
+# 
+# Tmin.50$`tn-85` <- toFahrenheit(Tmin.50$`tn-85`)
+# Tmin.50$`tn-85cv` <- toFahrenheit(Tmin.50$`tn-85cv`)
+# Tmin.50$`tn-85GS` <- toFahrenheit(Tmin.50$`tn-85GS`)
+# 
+# Tmin.70$`tn-85` <- toFahrenheit(Tmin.70$`tn-85`)
+# Tmin.70$`tn-85cv` <- toFahrenheit(Tmin.70$`tn-85cv`)
+# Tmin.70$`tn-85GS` <- toFahrenheit(Tmin.70$`tn-85GS`)
 
 
 # compile Tmaxes and precips into one data fram with a site column:
@@ -292,8 +292,9 @@ write.csv(he_rcp85, "outputs/heMCM4_rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.nam
 IN_rcp85$model <- "INMCM4"
 mc_rcp85$model <- "MIROC"
 he_rcp85$model <- "HadGEM-ES2"
+rcp85$model <- "CCESM"
 
-rcp85.full <- rbind( IN_rcp85, mc_rcp85, he_rcp85)
+rcp85.full <- rbind( IN_rcp85, mc_rcp85, he_rcp85, rcp85)
 write.csv(rcp85.full, "outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = FALSE)
 
 # plot rcpfull:
@@ -301,10 +302,10 @@ write.csv(rcp85.full, "outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv", row.names = 
 P.50 <- ggplot(rcp85.full, aes( model, Pr_85_50))+geom_boxplot()+geom_point()+ylab("Total Annual Precipitation (mm) \n 2050 - 2069")
 P.70 <- ggplot(rcp85.full, aes( model, Pr_85_70))+geom_boxplot()+geom_point()+ylab("Total Annual Precipitation (mm) \n 2070 - 2099")
 
-t.50 <- ggplot(rcp85.full, aes( model, Tx_85_50GS))+geom_boxplot()+geom_point()+ylab("July Maximum Temperature (DegF)  \n 2050 - 2069")+ylim(84, 95)
-t.70 <- ggplot(rcp85.full, aes( model, Tx_85_70GS))+geom_boxplot()+geom_point()+ylab("July Maximum Temperature (DegF) \n 2070 - 2099")+ylim(84, 95)
+t.50 <- ggplot(rcp85.full, aes( model, Tx_85_50GS))+geom_boxplot()+geom_point()+ylab("July Maximum Temperature (Deg. C)\n 2050 - 2069")+ylim(28.5, 35)
+t.70 <- ggplot(rcp85.full, aes( model, Tx_85_70GS))+geom_boxplot()+geom_point()+ylab("July Maximum Temperature (Deg. C) \n 2070 - 2099")+ylim(28.5, 35)
 
-png(height = 8, width = 9, units = "in", res = 300, "/Users/kah/Documents/TreeRings/outputs/growth_model/future_climate_model_scenarios.png")
+png(height = 8, width = 9.5, units = "in", res = 300, "/Users/kah/Documents/TreeRings/outputs/growth_model/future_climate_model_scenarios.png")
 plot_grid(P.50,  t.50, P.70, t.70, ncol = 2, labels = "AUTO", label_x = 0.1)
 dev.off()
 
@@ -320,7 +321,7 @@ prism.df$Tmean <- rowMeans(prism.df[,c("PRISM_tavg_1","PRISM_tavg_2", "PRISM_tav
 prism.df$Tmax_gs <- rowMeans(prism.df[,c("PRISM_tmax_6","PRISM_tmax_7")])
 
 
-full.current.summary <- prism.df %>% group_by(site) %>% summarise(MAP = mean(MAP, na.rm = TRUE), 
+full.current.summary <- prism.df %>% group_by(site) %>% dplyr::summarise(MAP = mean(MAP, na.rm = TRUE), 
                                                                   Tmax = mean(Tmax_gs, na.rm = TRUE))
 
 rcp85.full.C <- rcp85.full[,c("site", "x", "y", "Tx_85_50GS", "Tx_85_70GS", "Pr_85_50","Pr_85_70", "model")]
@@ -343,11 +344,11 @@ ggplot(merged.full, aes(Pr_85_70_diff, Tmax, color = model))+geom_point()
 P.50.diff <- ggplot()+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")+geom_boxplot(data = merged.full, aes( model, Pr_85_50_diff))+geom_point(data = merged.full, aes( model, Pr_85_50_diff))+ylab("Changes in Total Annual Precipitation (mm) \n future - historical (2050 - 2069)")+ylim(-135, 100)
 P.70.diff <- ggplot()+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")+geom_boxplot(data = merged.full, aes( model, Pr_85_70_diff))+geom_point(data = merged.full, aes( model, Pr_85_70_diff))+ylab("Changes in Total Annual Precipitation (mm) \n future - historical (2070 - 2099)")+ylim(-135, 100)
 
-t.50.diff <- ggplot(merged.full, aes( model, Tx_85_50_GS_diff))+geom_boxplot()+geom_point()+ylab("Changes in July Maximum Temperature (DegC)  \n future - historical (2050 - 2069)")+ylim(0, 8)
-t.70.diff <- ggplot(merged.full, aes( model, Tx_85_70_GS_diff))+geom_boxplot()+geom_point()+ylab("Changes in July Maximum Temperature (DegC) \n future - historical (2070 - 2099)")+ylim(0, 8)
+t.50.diff <- ggplot(merged.full, aes( model, Tx_85_50_GS_diff))+geom_boxplot()+geom_point()+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")+ylab("Changes in July Maximum Temperature (DegC)  \n future - historical (2050 - 2069)")+ylim(0, 8)
+t.70.diff <- ggplot(merged.full, aes( model, Tx_85_70_GS_diff))+geom_boxplot()+geom_point()+geom_hline(yintercept = 0, color = "grey", linetype = "dashed")+ylab("Changes in July Maximum Temperature (DegC) \n future - historical (2070 - 2099)")+ylim(0, 8)
 
 
-png(height = 10, width = 9, units = "in", res = 300, "/Users/kah/Documents/TreeRings/outputs/growth_model/future_climate_model_scenarios_differences.png")
+png(height = 10, width = 9.5, units = "in", res = 300, "/Users/kah/Documents/TreeRings/outputs/growth_model/future_climate_model_scenarios_differences.png")
 plot_grid(P.50.diff,  t.50.diff, P.70.diff, t.70.diff, ncol = 2, labels = "AUTO", label_x = 0.1)
 dev.off()
 
