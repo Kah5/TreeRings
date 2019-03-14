@@ -10863,42 +10863,121 @@ b7.sum$variable <- factor(b7.sum$variable, levels = c(  "Modern-Forest", "Modern
 
 # write out all the dotplots
 int.dot <- ggplot(data.frame(a1.sum), aes(x = mean.val, y = variable, color = structure, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Savanna"='sienna4',
-"Forest"='forestgreen'))+theme(legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Intercept (alpha)")+xlim(-0.3, 0.8) + geom_vline(xintercept = 0, linetype = "dashed")
+"Forest"='forestgreen'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Intercept (alpha)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
-b2.dot <- ggplot(data.frame(b2.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+b2.dot <- ggplot(data.frame(b2.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.15, 0.8)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))+theme(legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Drought Sensitivity (Beta2)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+"Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Drought Sensitivity (Beta2)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
-b3.dot <- ggplot(data.frame(b3.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+b3.dot <- ggplot(data.frame(b3.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.19, 0.71)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))+theme(legend.position = "none", axis.title.y = element_blank())+xlab("Estimated DBH Sensitivity (Beta3)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+"Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated DBH Sensitivity (Beta3)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b4.dot <- ggplot(data.frame(b4.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))+theme(legend.position = "none", axis.title.y = element_blank())+xlab("Estimated lag -1 growth coef. (Beta4)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+"Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated lag -1 growth coef. (Beta4)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b5.dot <- ggplot(data.frame(b5.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))+theme(legend.position = "none", axis.title.y= element_blank())+xlab("Estimated lag -2 growth coef. (Beta5)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+"Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y= element_blank(), panel.grid = element_blank())+xlab("Estimated lag -2 growth coef. (Beta5)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 
 b6.dot <- ggplot(data.frame(b6.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))+theme(legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Max. Temp. sensitivity (Beta6)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+"Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Max. Temp. sensitivity (Beta6)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b7.dot <- ggplot(data.frame(b7.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
 "Modern-Savanna"='#dfc27d',
 "Modern-Forest"='#c7eae5',
-"Past-Forest"='#018571'))+theme(legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+"Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 png(height = 12, width = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_struct.png")
 plot_grid(int.dot , b2.dot, b6.dot, b7.dot , b3.dot, b4.dot, b5.dot, ncol = 1, align = "v")
 dev.off()
+
+
+# -------------------- DOTPLOTS by modern vs. past only ---------------------
+# make dotplots for all the factors in the model--
+# get summaries by struct-cohort class from the melted samples:
+# a does not vary by cohort 
+a1.sum.age <- a1.sum
+
+b2.m$cohort <- ifelse(b2.m$variable %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+b2.sum.age <- b2.m %>% group_by(cohort) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+#b2.sum$variable <- factor(b2.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+b3.m$cohort <- ifelse(b3.m$variable %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+
+b3.sum.age <- b3.m %>% group_by(cohort) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+#b3.sum$variable <- factor(b3.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+b4.m$cohort <- ifelse(b4.m$variable %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+
+b4.sum.age <- b4.m %>% group_by(cohort) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+#b4.sum$variable <- factor(b4.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+b5.m$cohort <- ifelse(b5.m$variable %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+
+b5.sum.age <- b5.m %>% group_by(cohort) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+#b5.sum$variable <- factor(b5.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b6.m$cohort <- ifelse(b6.m$variable %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
+
+b6.sum.age <- b6.m %>% group_by(cohort) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+#b6.sum$variable <- factor(b6.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+
+# write out all the dotplots
+int.dot.age <- ggplot(data.frame(a1.sum.age), aes(x = mean.val, y = variable, color = structure, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme_bw()+theme(panel.grid = element_blank(),legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Intercept (alpha)")+xlim(-0.19, 0.71) + geom_vline(xintercept = 0, linetype = "dashed")
+
+b2.dot.age <- ggplot(data.frame(b2.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw()+theme(panel.grid = element_blank(),legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Drought Sensitivity (Beta2)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+b3.dot.age <- ggplot(data.frame(b3.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw()+theme(panel.grid = element_blank(),legend.position = "none", axis.title.y = element_blank())+xlab("Estimated DBH Sensitivity (Beta3)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+b4.dot.age <- ggplot(data.frame(b4.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw()+theme(panel.grid = element_blank(),legend.position = "none", axis.title.y = element_blank())+xlab("Estimated lag -1 growth coef. (Beta4)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+b5.dot.age <- ggplot(data.frame(b5.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw()+theme(panel.grid = element_blank(),legend.position = "none", axis.title.y= element_blank())+xlab("Estimated lag -1 growth coef. (Beta5)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+
+b6.dot.age <- ggplot(data.frame(b6.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+theme_bw()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme(panel.grid = element_blank(), legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Max. Temp. sensitivity (Beta6)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+b7.dot.age <- ggplot(data.frame(b6.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1, height = 0))+geom_point()+theme_bw()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme(panel.grid = element_blank(), legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+png(height = 12, width = 5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_only.png")
+plot_grid(int.dot.age, b2.dot.age, b6.dot.age,b7.dot.age, b3.dot.age, b4.dot.age, b5.dot.age, ncol = 1, align = "v")
+dev.off()
+
+
+
+png(height = 12, width = 8.5, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_and_cohortXstruct.png")
+plot_grid(int.dot.age+xlim(-0.18, 0.74),int.dot+xlim(-0.18, 0.74),
+         b2.dot.age+xlim(-0.18, 0.74) , b2.dot+xlim(-0.18, 0.74), 
+         b6.dot.age+xlim(-0.18, 0.74), b6.dot+xlim(-0.18, 0.74),
+         b7.dot.age+xlim(-0.18, 0.74), b7.dot+xlim(-0.18, 0.74),
+         b3.dot.age+xlim(-0.18, 0.74), b3.dot+xlim(-0.18, 0.74),
+         b4.dot.age+xlim(-0.18, 0.74),  b4.dot+xlim(-0.18, 0.74),
+         b5.dot.age+xlim(-0.18, 0.74), b5.dot+xlim(-0.18, 0.74), ncol = 2, align = "hv", labels = c("a","h",
+                                                                "b","i",
+                                                                "c","j",
+                                                                "d","k",
+                                                                "e","l",
+                                                                "f","m",
+                                                                "g", "n"), label_x = 0.28, label_y=0.97)
+dev.off()
+
 
 
 # ------------------ Do the site level intercepts correlate with site quality -----------
@@ -10944,14 +11023,11 @@ alpha.nspecies <- ggplot(site.summary, aes(x = nspecies, y = mean.val, color = s
 
 # there seems to be no relationship between alpha and site characteristics
 # but plot the relationships out here:
-png(height = 10, width = 4, units = "in",res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_site_rs/alpha_site_ints_vs_site_quality.png")
+png(height = 10, width = 4, units = "in",res = 200, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/alpha_site_ints_vs_site_quality.png")
 plot_grid(alpha.pr30yr, alpha.tm30yr, alpha.awc, alpha.sand, alpha.nspecies, ncol = 1, align = "v")
 dev.off()
 
 #---------------------- More beta summary plots -----------------------------
-png(height = 6, width = 12, units = "in", res = 300,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/drougt_beta_marginal_distn_bycohort.png")
-plot_grid(b2.dots, b2.mplots+coord_flip()+ xlim(0, 0.15)+ylab("frequency")+theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank()), rel_widths = c(1,0.6))
-dev.off()
 
 # plot slightly differently:
 plot.dat.b2$forestclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Modern-Forest"), "Forest", "Savanna")
@@ -10959,12 +11035,12 @@ plot.dat.b2$forestclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Moder
 plot.dat.b2$ageclass <- ifelse(plot.dat.b2$class %in% c("Past-Forest", "Past-Savanna"), "Past", "Modern")
 plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels= c("Past", "Modern"))
 
-b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(-0.1, 0.25)+theme_black(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
-"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
-
-png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_site_rs/param_marginal_distn_bycohort_struct_rb.png")
-b2.dots.2
-dev.off()
+# b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(-0.1, 0.25)+theme_bw(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
+# "Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
+# 
+# png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_site_rs/param_marginal_distn_bycohort_struct_rb.png")
+# b2.dots.2
+# dev.off()
 
 b3 <- data.frame(beta3.samps)
 colnames(b3) <- c(unique(train.dry.pair$struct.cohort)[order(unique(train.dry.pair[,c("struct.cohort", "struct.cohort.code")])[,2])])
@@ -22945,6 +23021,9 @@ T.probe <- seq(range(full.iso$T.scaled)[1], range(full.iso$T.scaled)[2], by = 1)
 DBH.probe <- seq(range(full.iso$DBH.scaled)[1], range(full.iso$T.scaled)[2], by = 1)
 
 d13probe <- expand.grid(MAP.probe = MAP.probe, T.probe = T.probe, DBH.probe = DBH.probe, struct.cohort.probe = 1:2)
+train.iso$age.code <- ifelse(train.iso$ageclass %in% "Past", 1, 2)
+test.iso$age.code <- ifelse(test.iso$ageclass %in% "Past", 1, 2)
+
 
 d13_map_tmax <- jags.model(textConnection(d13_MAP_tmax_dbh_re), 
                     data = list(d13 = train.iso[!train.iso$site %in% "BON",]$Cor.d13C.suess, n=length(train.iso[!train.iso$site %in% "BON",]$iWUE), struct.cohort = as.numeric(train.iso[!train.iso$site %in% "BON",]$age.code), SF = unique(train.iso[!train.iso$site %in% "BON",]$age.code), MAP_scaled = train.iso[!train.iso$site %in% "BON",]$MAP.scaled, TMAX_scaled = train.iso[!train.iso$site %in% "BON",]$T.scaled, DBH_scaled = train.iso[!train.iso$site %in% "BON",]$DBH.scaled, np = length(test.iso[!test.iso$site %in% "BON",]$site), struct.cohort.p = as.numeric(test.iso[!test.iso$site %in% "BON",]$age.code), MAP_scaled.p = test.iso[!test.iso$site %in% "BON",]$MAP.scaled, TMAX_scaled.p = test.iso[!test.iso$site %in% "BON",]$T.scaled, DBH_scaled.p = test.iso[!test.iso$site %in% "BON",]$DBH.scaled, 
@@ -22961,10 +23040,10 @@ d13_map_tmax.re <- coda.samples(d13_map_tmax,
                      variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "d13.p", "d13.probe"), 
                     n.chains = 3, n.iter = 20000, thin = 15)
 
-summary( d13_map_tmax.re )
+#summary( d13_map_tmax.re )
 #plot(d13_map_tmax.re )
 
-gelman.diag(d13_map_tmax.re )
+#gelman.diag(d13_map_tmax.re )
 #acfplot(d13_map_tmax.re )
 
 #Extract the samples for each parameter for a basic exploration of effects
@@ -22990,7 +23069,7 @@ Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(
                                                  ci.lo = quantile(value,0.025))
 Yp.summary$Observed <- test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test.iso[!test.iso$site %in% "BON",]$Cor.d13C.suess))
+pred.obs <- summary(lm(Yp.summary$Predicted~ Yp.summary$Observed))
 
 # this does a poor job representing d13 values by itself, but explains som of the variation
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=-22, y=-26)
@@ -24250,12 +24329,19 @@ iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax,
 
  samps       <- iWUE_map_tmax.re [[1]]
  saveRDS(samps, "outputs/growth_model/iWUE_MAP_TMAX_dbh/samps.iWUE_nobon.rds")
+ saveRDS(train.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh/train.iso.rds")
+  saveRDS(test.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh/test.iso.rds")
  #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
  #iWUEpred <- samps
  alpha.samps  <- samps[,1:4]
  beta.samps  <- samps[,5:8]
  beta2.samps  <- samps[,9:12]
  beta3.samps  <- samps[,13:16]
+ 
+ # save all paramter estimates:
+ 
+ params <- samps[,1:16]
+  saveRDS(params, "outputs/growth_model/iWUE_MAP_TMAX_dbh/params.rds")
  iWUE.samps  <- samps[,17:(16+length(test.iso[!test.iso$site %in% "BON",]$iWUE))]
  iWUEp.samps  <- samps[,(17+length(test.iso[!test.iso$site %in% "BON",]$iWUE)):(16+length(test.iso[!test.iso$site %in% "BON",]$iWUE)+length(iWUEprobe$MAP.probe))]
  #iWUEp.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$iWUE))]
@@ -24761,6 +24847,8 @@ iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax,
  beta.samps  <- samps[,3:4]
  beta2.samps  <- samps[,5:6]
  beta3.samps  <- samps[,7:8]
+ params <- samps[,1:8]
+ saveRDS(params, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/params.iWUE_nobon_ageclass.rds")
  iWUE.samps  <- samps[,9:(8+length(test.iso[!test.iso$site %in% "BON",]$iWUE))]
  #iWUEp.samps  <- samps[,(17+length(test.iso[!test.iso$site %in% "BON",]$iWUE)):(16+length(test.iso[!test.iso$site %in% "BON",]$iWUE)+length(iWUEprobe$MAP.probe))]
  #iWUEp.samps  <- samps[,5:(4+length(test.iso[!test.iso$site %in% "BON",]$iWUE))]

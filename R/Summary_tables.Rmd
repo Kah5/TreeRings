@@ -329,3 +329,80 @@ kable(beta.full, "latex", align=c("c", "c", "l", "c", "l", "c"), booktabs = T, c
   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
 kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 34, 38) %>% row_spec(33, hline_after = TRUE) %>% footnote(symbol = c("95% CI does not contain zero"), footnote_as_chunk = T)
 ```
+
+## Table 3: Cohort and structure summaries overall & by site:
+
+```{r, results="asis", echo = FALSE}
+full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.csv")
+
+#full.ghcn$ageclass2 <- ifelse(full.ghcn$year >= 1940, "Modern", "Past")
+
+full.ghcn %>% filter(site %in% site.list) %>% group_by(site, ageclass) %>% dplyr::summarise(Tmax = mean(JUNTmax, na.rm = TRUE), 
+                                                     DBH = mean(DBH, na.rm=TRUE),
+                                                     Trees = length(unique(ID)))
+
+
+full.ghcn %>% filter(site %in% site.list) %>% filter(year %in% 1895:1950 & ageclass %in% "Past" | year %in% 1950:2015 & ageclass %in% "Modern") %>% group_by(ageclass) %>% dplyr::summarise(Tmax = mean(JUNTmax, na.rm = TRUE), 
+                                                     DBH = mean(DBH, na.rm=TRUE),
+                                                     DBH.sd = sd(DBH, na.rm=TRUE),
+                                                     Trees = length(unique(ID)))
+
+
+
+full.ghcn %>% filter(site %in% site.list) %>% filter(year %in% 1895:1950 & ageclass %in% "Past" | year %in% 1950:2015 & ageclass %in% "Modern") %>% group_by(site, ageclass) %>% 
+  dplyr::summarise(
+    Trees = length(unique(ID)),
+    Tmax = mean(JUNTmax, na.rm = TRUE),
+    MAP = mean(PCP, nam.rm = TRUE),
+    DBH = mean(DBH, na.rm = TRUE), 
+    RWI = mean(RWI, na.rm = TRUE),
+    )
+
+
+
+
+# get series intercorrelations for each site 
+for(i in 1:length(site.list)){
+  AVO <- full.ghcn %>% filter (site %in% site.list[i]) %>% select(ID, year, RWI) %>% spread(ID,RWI)
+  rownames(AVO) <- AVO$year
+  AVO <- AVO %>% select(-year)
+  summary.AVO <- summary.rwl(AVO)
+  
+  df.corrs <- data.frame(Interseries.correlation = mean(interseries.cor(AVO)[,1]),
+                         AR1 = mean(summary.AVO$ar1))
+  write.csv(df.corrs, paste0("outputs/site_summary/", site.list[i], "_int_ar1.csv"), row.names = FALSE)
+}
+
+
+# get series intercorrelations for each site & cohort group
+
+for(i in 1:length(site.list)){
+  AVO.mod <- full.ghcn %>% filter (site %in% site.list[i] & ageclass %in% "Modern" & year %in% 1950:2015) %>% select(ID, year, RWI) %>% spread(ID, RWI)
+  rownames(AVO.mod) <- AVO$year
+  AVO.mod <- AVO.mod %>% select(-year)
+  summary.AVO.mod <- summary.rwl(AVO.mod)
+  
+  df.corrs.mod <- data.frame(ageclass = "Modern",
+                             
+                             Interseries.correlation = ifelse(ncol(AVO.mod) > 2, mean(interseries.cor(AVO.mod)[,1]), NA ),
+                             AR1 = mean(summary.AVO.mod$ar1))
+  
+  
+  AVO.past <- full.ghcn %>% filter (site %in% site.list[i] & ageclass %in% "Past" & year %in% 1895:1950) %>% select(ID, year, RWI) %>% spread(ID,RWI)
+  rownames(AVO.past) <- AVO$year
+  AVO.past <- AVO.past %>% select(-year)
+  summary.AVO.past <- summary.rwl(AVO.past)
+  
+  df.corrs.past <- data.frame(ageclass = "Past",
+                              Interseries.correlation = ifelse(ncol(AVO.past) > 2, mean(interseries.cor(AVO.past)[,1]),NA ),
+                         AR1 = mean(summary.AVO.past$ar1))
+  df.corrs<- rbind(df.corrs.mod, df.corrs.past)
+  
+  write.csv(df.corrs, paste0("outputs/site_summary/", site.list[i], "_int_ar1_byageclass.csv"), row.names = FALSE)
+}
+
+
+
+# read in all the 
+
+```
