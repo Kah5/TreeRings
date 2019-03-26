@@ -442,9 +442,9 @@ summaries.ageclss <- lapply(full_filenames, read.csv)
 summary.table.site.intercor.age <- do.call(rbind, summaries.ageclss)
 
 age.summary <- merge( Past.mod.clim.summary, summary.table.site.intercor.age, by = c("site", "ageclass"))
-colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Interseries \n Correlation", "AR1")
+colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1")
 
-kable(age.summary, "latex", align=c("l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 3) %>% column_spec(4:9, width = "2cm")%>%
+kable(age.summary, "latex", align=c("l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 2) %>% column_spec(4:9, width = "2cm")%>%
 kable_styling() %>% collapse_rows(1, latex_hline = "major")
 
 ```

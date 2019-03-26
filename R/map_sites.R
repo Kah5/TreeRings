@@ -482,6 +482,31 @@ NEmap.full.us <- ggplotGrob( ggplot()+
 )
 
 
+bbox2 <- data.frame(long = c(-98, -82,  -82, -98, -98),
+                   lat = c(36.5, 36.5, 50, 50, 36.5))
+
+
+US.map <- ggplot()+
+  geom_raster(data = rast.table, aes(x = x, y = y, fill = NE2_50M_SR_W.1)) +scale_fill_gradientn(colours = rev(cbPalette), guide = FALSE)+
+  
+  geom_path(data=state.full, aes(x = long, y = lat, group = group), color = 'grey40')+
+  geom_path(data=lakes.full, aes(x = long, y = lat, group = group), color = 'blue') +
+  geom_polygon(data=lakes.full, aes(x = long, y = lat, group = group), fill = '#ADD8E6') +
+  scale_alpha_discrete(range=c(1,0)) +
+  geom_path(data = bbox2, aes(x = long, y = lat), size = 0.75, color = "black")+
+  #geom_path(data=river.full, aes(x = long, y = lat, group = group), color = 'blue') +
+  #geom_path(data=coast.full, aes(x = long, y = lat, group = group), color = 'blue') + 
+  #coord_equal()+#geom_raster(fill = rast.table$MSR_50M)+
+  #scale_x_continuous(expand=c(0,0)) +
+  #scale_y_continuous(expand=c(0,0)) +
+  xlab('') + ylab('')+ coord_cartesian(xlim = c(-122, -69), ylim=c(26, 50))+theme_bw() +
+  theme(panel.background = element_rect(fill = "transparent",colour = NA),
+        plot.background = element_rect(fill = "transparent",colour = NA))#, 
+        #axis.text = element_blank(), axis.ticks = element_blank())
+
+png(height = 4, width = 8, units ="in", res = 300, "outputs/Full_US_map_region.png")
+US.map
+dev.off()
 
 NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))+
   geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),

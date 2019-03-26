@@ -11072,7 +11072,8 @@ dev.off()
 T.sim <- seq(min(train.dry.pair$T.scaled), max(train.dry.pair$T.scaled), by = 0.1)
 
 ## Calculate conditional effect of X1 across the range of X2
-int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+#int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+int.mcmc <- as.mcmc(samps)
 int.mcmc.mat <- as.matrix(int.mcmc)
 int.mcmc.dat <- data.frame(int.mcmc.mat)
 
@@ -11132,7 +11133,8 @@ p+ facet_wrap(~struct.cohort)
 MAP.sim <- seq(min(train.dry.pair$MAP.scaled), max(train.dry.pair$MAP.scaled), by = 0.1)
 
 ## Calculate conditional effect of X1 across the range of X2
-int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+#int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+
 int.mcmc.mat <- as.matrix(int.mcmc)
 int.mcmc.dat <- data.frame(int.mcmc.mat)
 
@@ -11719,6 +11721,9 @@ ggplot(ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, y =mean
 ggplot(ageclass.summary[ageclass.summary$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
 
 
+ggplot(ageclass.summary[ageclass.summary$Tmax == 26.799,], aes(x = MAP, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$Tmax == 26.799,], aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
 ageclass.only <- full.pred %>% group_by( ageclass, Tmax, MAP) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
@@ -11730,6 +11735,8 @@ ggplot(ageclass.only[ageclass.only$MAP == 516.814,], aes(x = Tmax, y =mean, colo
 
 ggplot(ageclass.only[ageclass.only$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
 
+
+ggplot(ageclass.only[ageclass.only$Tmax == 26.799,], aes(x = MAP, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$Tmax == 26.799,], aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
 
 # now by ageclass and stand structure:
 
@@ -11744,6 +11751,62 @@ ag.ss.pred.500MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 516.814,], 
 
 ag.ss.pred.950MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
 
+
+ag.ss.pred.25.TMAX <- ggplot(ageclass.ss.only[ageclass.ss.only$Tmax == 25.383,], aes(x = MAP, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$Tmax == 25.383,], aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab("Total Annual Precipitation (mm)")+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+facet_wrap(~structure, ncol = 1)
+
+#------------- get pct change for 25.383 TMAX:
+full.pred.df <- data.frame(full.pred)
+full.pred.df$Tmax <- as.numeric(full.pred.df$Tmax)
+full.pred.df$MAP <- as.numeric(full.pred.df$MAP)
+Tmax25 <- full.pred.df %>% filter(Tmax == 25.383) %>% select(MCMC, idval, RWI,site, site.num, ageclass, structure, MAP) 
+
+Tmax25.mod.forest <- Tmax25  %>% filter(ageclass %in% "Modern" & structure %in% "Forest") %>%select(MCMC, idval, RWI,site,MAP)
+Tmax25.past.forest <- Tmax25  %>% filter(ageclass %in% "Past" & structure %in% "Forest")%>%select(MCMC, idval, RWI,site,MAP)
+Tmax25.mod.savanna <- Tmax25  %>% filter(ageclass %in% "Modern" & structure %in% "Savanna")%>%select(MCMC, idval, RWI,site,MAP)
+Tmax25.past.savanna <- Tmax25  %>% filter(ageclass %in% "Past" & structure %in% "Savanna")%>%select(MCMC, idval, RWI,site,MAP)
+
+colnames(Tmax25.mod.forest)[3] <- "Modern_Forest"
+colnames(Tmax25.past.forest)[3] <- "Past_Forest"
+colnames(Tmax25.mod.savanna)[3] <- "Modern_Savanna"
+colnames(Tmax25.past.savanna)[3] <- "Past_Savanna"
+
+test.join.forest <- left_join(Tmax25.mod.forest, Tmax25.past.forest, by = c("MCMC", "site", "MAP"))
+test.join.forest$growth.change <- test.join.forest$Modern_Forest - test.join.forest$Past_Forest 
+test.join.forest$growth.pct.change <- ((test.join.forest$Modern_Forest - test.join.forest$Past_Forest)/ test.join.forest$Past_Forest)*100
+test.join.forest$structure <- "Forest"
+
+test.join.savanna <- left_join(Tmax25.mod.savanna, Tmax25.past.savanna, by = c("MCMC", "site", "MAP"))
+test.join.savanna$growth.change <- test.join.savanna$Modern_Savanna - test.join.savanna$Past_Savanna 
+test.join.savanna$growth.pct.change <- ((test.join.savanna$Modern_Savanna - test.join.savanna$Past_Savanna)/ test.join.savanna$Past_Savanna)*100
+test.join.savanna$structure <- "Savanna"
+
+pct.change.tmax25 <- rbind(test.join.forest[,c("site","structure", "MAP", "growth.change", "growth.pct.change")], test.join.savanna[,c("site","structure", "MAP", "growth.change", "growth.pct.change")])
+
+tmax25.change.summary <- pct.change.tmax25 %>% group_by(structure, MAP) %>% dplyr::summarise(mean.change = mean(growth.change),
+                                                                    Ci.high.change = quantile(growth.change, 0.975), 
+                                                                    Ci.low.change = quantile(growth.change, 0.025), 
+                                                                    mean.pct.change = mean(growth.pct.change),
+                                                                    Ci.high.pct.change = quantile(growth.pct.change, 0.975), 
+                                                                    Ci.low.pct.change = quantile(growth.pct.change, 0.025))
+
+
+
+Tmax.summary.pct.change <- ggplot(tmax25.change.summary, aes(x = MAP, y = mean.pct.change, color = structure))+geom_line()+geom_ribbon(data = tmax25.change.summary, aes(x = MAP, ymin = Ci.low.pct.change, ymax = Ci.high.pct.change, fill = structure), alpha = 0.25, colour = NA)+theme_bw()+theme(panel.grid = element_blank())+ylab("% change in growth \n relative to past cohort")+xlab("Total Annual Precipitation (mm)")+geom_hline(yintercept = 0, color = "darkgrey", linetype = "dashed")+scale_color_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))+scale_fill_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))
+
+
+Tmax.summary.total.change <- ggplot(tmax25.change.summary, aes(x = MAP, y = mean.change, color = structure))+geom_line()+geom_ribbon(data = tmax25.change.summary, aes(x = MAP, ymin = Ci.low.change, ymax = Ci.high.change, fill = structure), alpha = 0.25, colour = NA)+theme_bw()+theme(panel.grid = element_blank())+ylab("Average change in growth \n relative to past cohort (mm)")+xlab("Total Annual Precipitation (mm)")+geom_hline(yintercept = 0, color = "darkgrey", linetype = "dashed")+scale_color_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))+scale_fill_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))
+
+struct.legend <- get_legend(Tmax.summary.total.change)
+
+png(height = 3, width = 7, units = "in" ,res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/Precipitation_difference_pce_diff_TMAX_25_mean_dbh_growth.png")
+plot_grid(Tmax.summary.total.change + theme(legend.position = "none"), Tmax.summary.pct.change+ theme(legend.position = "none"), struct.legend, ncol = 3, rel_widths = c(1,1, 0.3), labels = c("A", "B", ""))
+dev.off()
+
+
+
+png(height = 4, width = 3, units = "in" ,res = 300, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/Precipitation_effect_TMAX_25_mean_dbh_growth.png")
+ag.ss.pred.25.TMAX 
+dev.off()
 
 
 # make a plot of modern only responses for high and low precipitaiton only:
