@@ -11824,10 +11824,15 @@ precip.means <- read.csv("outputs/CCESM_rcp8.5_mean_Pr_TMAX_proj_sites.csv")
 unique.clim <- unique(train.dry.pair[, c("site", "year", "JUNTmax", "ageclass")])
 
 
-Jun.rcps.clim <- June.rcps[,c("year", "value", "fut.class", "rcp")]
+Jun.rcps.clim.full <- June.rcps[,c("year", "value", "fut.class", "rcp", "site")]
+
+# subset by sites analyzed here:
+Jun.rcps.clim <- Jun.rcps.clim.full %>% filter(site %in% unique(unique.clim$site))
+
+
 unique.clim$fut.class <- ifelse(unique.clim$year <= 1950, "1895-1950", "1950-2015")
-unique.clim2 <- unique.clim[,c("year", "JUNTmax", "fut.class", "ageclass")]
-colnames(unique.clim2) <- c("year", "value", "fut.class", "rcp")
+unique.clim2 <- unique.clim[,c("year", "JUNTmax", "fut.class", "ageclass", "site")]
+colnames(unique.clim2) <- c("year", "value", "fut.class", "rcp",  "site")
 
 clim.full <- rbind(unique.clim2, Jun.rcps.clim)
 
@@ -11836,9 +11841,20 @@ reclass <- data.frame(class = c(1.5,2.5, 4,4.5,5,5.5, 8,8.5, 9, 9.5),
                          "2060-2099","2060-2099","2060-2099","2060-2099" ),
           rcp = c("Past", "Modern", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5"))
 
-clim.full2<- merge( reclass,clim.full, by = c("fut.class", "rcp"))
+clim.full2 <- merge( reclass,clim.full, by = c("fut.class", "rcp"))
 
 ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))
+
+
+ggplot(clim.full, aes(value, fill = rcp))+geom_histogram()+facet_wrap(~fut.class)
+
+Future.Tmax.summaries <- clim.full %>% group_by(fut.class, rcp) %>% dplyr::summarise(meanTmax = mean(value, na.rm=TRUE),
+                                                            sd = sd(value, na.rm=TRUE),
+                                                            Tmax.ci.low = quantile(value, 0.025, na.rm=TRUE),
+                                                            Tmax.ci.high = quantile(value, 0.975, na.rm=TRUE))
+
+# save summary table to output in the tables script
+saveRDS(Future.Tmax.summaries, "/Users/kah/Documents/TreeRings/outputs/data/Tmax_future_climate.rds")
 
 boxplot.tmax <- ggplot(clim.full2, aes(x = class, y = value, fill = rcp, group = class))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))+ scale_x_continuous(name = "Time Period", breaks = c(1.5, 2.5, 4.5, 8.5 ), minor_breaks = NULL,labels = sort(unique(clim.full2$fut.class)))+theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank(), axis.title.y  = element_blank()) +scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp2.6" = "#ffffb2", "rcp4.5" = "#984ea3", "rcp6.0" = "#e0f3f8", "rcp8.5" ="#fc8d59" ))+ylim(20,40)
 
@@ -11925,7 +11941,7 @@ degree.scenario <- merge(degree.scenario, site.num.df, by = "site")
 meanMAP.sim <- degree.scenario %>% filter( MAP.Scenario == "mod.mean.MAP")
 meanMAP.sim <- degree.scenario
 
-int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+int.mcmc <- as.mcmc(samps)
 int.mcmc.mat <- as.matrix(int.mcmc)
 int.mcmc.dat <- data.frame(int.mcmc.mat)
 
@@ -12042,8 +12058,8 @@ pct.change.low.ci <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario, 
 
 
 
-cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("site", "incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP") )
-pct.change.temp <- merge(pct.change.temp, cis, by = c("site","incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP")) 
+cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("site", "incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP", "MCMC") )
+pct.change.temp <- merge(pct.change.temp, cis, by = c("site","incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP", "MCMC")) 
 
 pct.change.temp <- merge(pct.change.temp , sites.unique, by = c("site", "struct.cohort.code"))
 

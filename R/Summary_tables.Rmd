@@ -330,7 +330,11 @@ kable(beta.full, "latex", align=c("c", "c", "l", "c", "l", "c"), booktabs = T, c
   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
 kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 34, 38) %>% row_spec(33, hline_after = TRUE) %>% footnote(symbol = c("95% CI does not contain zero"), footnote_as_chunk = T)
 ```
+# plot the percent change in growth due to change in drought sensitivity across drought, assuming constant t, dbh, mean growth in past years
+```{r, results="asis", echo = FALSE}
+# plot 
 
+```
 ## Table 3: Cohort and structure summaries overall & by site:
 
 ```{r, results="asis", echo = FALSE}
@@ -445,6 +449,20 @@ age.summary <- merge( Past.mod.clim.summary, summary.table.site.intercor.age, by
 colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1")
 
 kable(age.summary, "latex", align=c("l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 2) %>% column_spec(4:9, width = "2cm")%>%
+kable_styling() %>% collapse_rows(1, latex_hline = "major")
+
+```
+
+```{r, results="asis", echo = FALSE}
+Tmax.summaries <- readRDS("/Users/kah/Documents/TreeRings/outputs/data/Tmax_future_climate.rds")
+Tmax.summaries$CI.95 <- paste("(",round(Tmax.summaries$Tmax.ci.low,digits = 2), "-", round(Tmax.summaries$Tmax.ci.high, digits = 2), ")")
+
+
+Tmax.summaries.df <- Tmax.summaries %>% select(fut.class, rcp, meanTmax, CI.95)
+colnames(Tmax.summaries.df) <- c("Time Period", "RCP scenario", "Mean June Tmax","95% CI Tmax")
+  
+  
+kable(Tmax.summaries.df , "latex", align=c("l", "l", "c","c"), booktabs = T, caption = "Maximum Summer Temperature Summary", digits = 2) %>% column_spec(1:3, width = "3cm")%>%
 kable_styling() %>% collapse_rows(1, latex_hline = "major")
 
 ```
