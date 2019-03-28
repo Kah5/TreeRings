@@ -103,6 +103,7 @@ ppet.rast.df <- raster::extract(ppet.rast, tr_sites.lat.df[,c("coords.x1", "coor
 
 ppet.rast.df$x <- tr_sites.lat.df$coords.x1
 ppet.rast.df$y <- tr_sites.lat.df$coords.x2
+ppet.rast.df$site <- tr_sites.lat.df$site
 ggplot(ppet.rast.df, aes(x,y, color = X2059_2))+geom_point()
 
 # extract for 4.5:
@@ -116,6 +117,7 @@ ppet.rast.df.4.5 <- raster::extract(ppet.rast.4.5, tr_sites.lat.df[,c("coords.x1
 
 ppet.rast.df.4.5$x <- tr_sites.lat.df$coords.x1
 ppet.rast.df.4.5$y <- tr_sites.lat.df$coords.x2
+ppet.rast.df.4.5$site <- tr_sites.lat.df$site
 ggplot(ppet.rast.df.4.5, aes(x,y, color = X2059_2))+geom_point()
 
 
@@ -130,6 +132,7 @@ ppet.rast.df.6.0 <- raster::extract(ppet.rast.6.0, tr_sites.lat.df[,c("coords.x1
 
 ppet.rast.df.6.0$x <- tr_sites.lat.df$coords.x1
 ppet.rast.df.6.0$y <- tr_sites.lat.df$coords.x2
+ppet.rast.df.6.0$site <- tr_sites.lat.df$site
 ggplot(ppet.rast.df.6.0, aes(x,y, color = X2059_2))+geom_point()
 
 
@@ -144,6 +147,7 @@ ppet.rast.df.8.5 <- raster::extract(ppet.rast.8.5, tr_sites.lat.df[,c("coords.x1
 
 ppet.rast.df.8.5$x <- tr_sites.lat.df$coords.x1
 ppet.rast.df.8.5$y <- tr_sites.lat.df$coords.x2
+ppet.rast.df.8.5$site <- tr_sites.lat.df$site
 ggplot(ppet.rast.df.8.5, aes(x,y, color = X2059_2))+geom_point()
 
 
@@ -154,9 +158,9 @@ temp.extracted <- rbind(ppet.rast.df, ppet.rast.df.4.5, ppet.rast.df.6.0, ppet.r
 
 
 # get full midwest
-pet.long.nona <- pet.long2[!is.na(pet.long2),]
-midwest.region <- unique(pet.long.nona[,c("lat", "lon")])
-region.8.5 <- raster::extract(ppet.rast.8.5, midwest.region[,c("lat", "lon")], df = TRUE)
+# pet.long.nona <- pet.long2[!is.na(pet.long2),]
+# midwest.region <- unique(pet.long.nona[,c("lat", "lon")])
+# region.8.5 <- raster::extract(ppet.rast.8.5, midwest.region[,c("lat", "lon")], df = TRUE)
 
 
 
@@ -166,7 +170,8 @@ temp.June <- temp.extracted[,June_index]
 temp.June$x <- temp.extracted$x
 temp.June$y <- temp.extracted$y
 temp.June$proj <- temp.extracted$proj
-Junes.melt <- melt(temp.June, id.vars = c("x", "y", "proj"))
+temp.June$site <- temp.extracted$site
+Junes.melt <- melt(temp.June, id.vars = c("x", "y", "proj", "site"))
 
 Junes.melt2 <- Junes.melt %>% separate(variable, c("yr","month"), "_", convert = TRUE) 
 Junes.melt3 <- Junes.melt2 %>% separate(yr, c("yr2","year"), "X", convert = TRUE) 
@@ -174,12 +179,12 @@ Junes.melt3 <- Junes.melt2 %>% separate(yr, c("yr2","year"), "X", convert = TRUE
 ggplot(Junes.melt3, aes(year, value, color = proj))+geom_point()
 Junes.melt3$fut.class <- ifelse(Junes.melt3$year <= 2060, "2025-2060", "2060-2099")
 
-ggplot(Junes.melt3, aes(year, value, color = fut.class))+geom_point()+facet_wrap(~proj)
+ggplot(Junes.melt3, aes(year, value, color = site))+geom_point()+facet_wrap(~proj)
 
 Junes.melt3$proj <- as.factor(Junes.melt3$proj)
 
 ggplot(Junes.melt3, aes(x = proj, y = value, fill = fut.class))+geom_boxplot(width = 0.5)#+facet_wrap(~proj)
-Junes.melt3$rcp <- revalue(Junes.melt3$proj, c("1"="rcp2.6", "2"="rcp4.5", "3"= "rcp6.0", "4"="rcp8.5"))
+Junes.melt3$rcp <- plyr::revalue(Junes.melt3$proj, c("1"="rcp2.6", "2"="rcp4.5", "3"= "rcp6.0", "4"="rcp8.5"))
 
 ggplot(Junes.melt3, aes(x = rcp, y = value, fill = fut.class))+geom_boxplot(width = 0.5)#+facet_wrap(~proj)
 
