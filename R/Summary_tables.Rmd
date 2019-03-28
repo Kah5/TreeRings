@@ -466,3 +466,25 @@ kable(Tmax.summaries.df , "latex", align=c("l", "l", "c","c"), booktabs = T, cap
 kable_styling() %>% collapse_rows(1, latex_hline = "major")
 
 ```
+
+# plot summary table fo temperature % growth change reponses
+```{r, results="asis", echo = FALSE}
+pct.change.tmax <- readRDS("/Users/kah/Documents/TreeRings/outputs/data/pct_change_TMAX_precip_scenarios.rds")
+
+pct.change.tmax.df <- pct.change.tmax %>% select(structure, Precipitation, Temperature, pct_change, ci.low, ci.hi) %>% arrange( structure,Temperature, Precipitation)
+
+pct.change.tmax.df$Ci.95 <- paste0("(",round(pct.change.tmax.df$ci.low, 2), " - ", round(pct.change.tmax.df$ci.hi, 2), ")")
+pct.change.tmax.df$mean.val <- round(pct.change.tmax.df$pct_change, 3)
+pct.change.tmax.df$mean.val <- ifelse(pct.change.tmax.df$ci.low < 0 & pct.change.tmax.df$ci.hi < 0, paste(pct.change.tmax.df$mean.val, "*"),
+                                  ifelse(pct.change.tmax.df$ci.low > 0 & pct.change.tmax.df$ci.hi > 0, paste(pct.change.tmax.df$mean.val, "*"), pct.change.tmax.df$mean.val))
+
+pct.change.tmax.df.sub <- pct.change.tmax.df %>% select(structure, Precipitation, Temperature, mean.val, Ci.95) %>% arrange( structure,Temperature, Precipitation)
+
+colnames(pct.change.tmax.df.sub) <- c("Structure", "Total Annual Precipitation", "Summer Maximum Temperature", "% change in growth relative to 26.2 DegC", "95% CI")
+
+# make the table
+kable(pct.change.tmax.df.sub  , "latex", align=c("l", "c", "c","c", "c", "c"), booktabs = T, caption = "Maximum Summer Temperature Summary", digits = 2) %>% column_spec(3:4, width = "3cm")%>%
+kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% footnote(symbol = c("95% CI does not contain zero"), footnote_as_chunk = T)
+
+
+```

@@ -11668,7 +11668,8 @@ prob.vals$RWI_2 <- log(mean(train.dry.pair$RWI_2))
 
 # now lets use the betasamps to predict posterior growth for all these conditions:
 
-int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+#int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+int.mcmc <- as.mcmc(samps)
 int.mcmc.mat <- as.matrix(int.mcmc)
 int.mcmc.dat <- data.frame(int.mcmc.mat)
 
