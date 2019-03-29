@@ -274,7 +274,54 @@ TMAX.dcc.files.full <- paste0("/Users/kah/Documents/TreeRings/outputs/correlatio
 
 TMAX.dccs <- lapply(TMAX.dcc.files.full , FUN = readRDS) 
 
+sitelist <- substring(TMAX.dcc.files, 6, 8)
+
 # get junTMAX datarame
-x <- TMAX.dccs[[1]]
-coeff.df <- data.frame(x$coef)
-coeff.df 
+getJUNTmax<- function(x){
+                #x <- TMAX.dccs[[1]]
+                coeff.df <- data.frame(x$coef)
+                row.names(coeff.df) <- paste0()
+                coeff.df[13,] 
+            
+                
+                
+}
+jun.tmax.dcc <- lapply(TMAX.dccs, getJUNTmax)
+names(jun.tmax.dcc) <- sitelist
+
+
+# add the columns for missing timeperiods if need be here
+cname <- colnames(jun.tmax.dcc[[3]])
+cname <- c(cname, "site")
+
+fncols <- function(data) {
+  add <-cname[!cname%in%names(data)]
+  
+  if(length(add)!=0) data[add] <- NA
+  
+  # now reorder
+  
+  data[,cname]
+  
+}
+
+jun.tmax.dcc.full <- lapply(jun.tmax.dcc, fncols )
+
+juntmax.cors <- do.call(rbind, jun.tmax.dcc.full) 
+juntmax.cors$site <- rownames(juntmax.cors) # site name
+
+# plot basic tile plot of all the site moving correlations
+cors <- juntmax.cors %>% select(coef.1900.1944:coef.1970.2014, site)
+cors.df <- melt(cors)
+cors.df$time.period <- paste(substring(cors.df$variable, 6, 9), "-",substring(cors.df$variable, 11, 14))
+colnames(cors.df) <- c("site", "time", "coef", "time.period")
+
+sigs <- juntmax.cors %>% select(significant.1900.1944:significant.1970.2014, site)
+sigs.df <- melt(sigs)
+sigs.df$time.period <- paste(substring(sigs.df$variable, 13, 16), "-",substring(sigs.df$variable, 18, 21))
+sigs.df$sig <- ifelse(sigs.df$value == FALSE, " ", "*")
+colnames(sigs.df) <- c("site", "time", "TFsig", "time.period", "sig")
+full.df <- merge(sigs.df, cors.df, by = c("site", "time.period"))
+
+ggplot(full.df, aes(time.period, site, fill = coef))+geom_tile()+scale_fill_distiller(palette= "RdBu", direction = 2)+
+  geom_text( aes(label = sig))+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
