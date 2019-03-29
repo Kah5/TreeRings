@@ -13,6 +13,7 @@ library(treeclim)
 library(dplR)
 library(tidyr)
 library(dplyr)
+library(DescTools)
 
 # the crns for each site are listed in outputs/chron
 # list the ones with splines:
@@ -206,36 +207,43 @@ make.moving.cor <- function(x){
   yrs <- as.numeric(unique(row.names(x)))
   AVO.prism <- AVO.prism %>% filter(Year %in% yrs) %>%  spread(key = climate, value = value )
   
+  # find appropriate start year & end years:
+  
+  min.yr <- ifelse(min(as.numeric(rownames(x))) <= 1895, 1895, 
+         RoundTo( min(as.numeric(rownames(x))), 5, ceiling))
   
   # run moving corrlation for all the sites:
-  BAL <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "BAL")]) , dynamic = "moving", win_size = 45, win_offset = 5)
+  BAL <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "BAL")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(BAL, paste0("outputs/correlations/moving_site_cors/dcc_df/BAL_", site.name ,".rds"))
+  
+  #BAL.test <- readRDS(paste0("outputs/correlations/moving_site_cors/dcc_df/BAL_", site.name ,".rds"))
   BAL.plt <- plot(BAL)+ggtitle("Moisture Balance")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
   
 
   
-  pcp <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "pcp")]) , dynamic = "moving", win_size = 45, win_offset = 5)
-  
+  pcp <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "pcp")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(pcp, paste0("outputs/correlations/moving_site_cors/dcc_df/pcp_", site.name ,".rds"))
   pcp.plt <- plot(pcp) + ggtitle("Precip")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
   
-  tavg <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tavg")]) , dynamic = "moving", win_size = 45, win_offset = 5)
-  #tavg.data <- coef(tavg)   
+  tavg <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tavg")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(tavg, paste0("outputs/correlations/moving_site_cors/dcc_df/TAVG_", site.name ,".rds"))  
   tavg.plt <- plot(tavg)+ggtitle("Tavg")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
     
-  tmax <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tmax")]) , dynamic = "moving", win_size = 45, win_offset = 5)
-  
+  tmax <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tmax")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(tmax, paste0("outputs/correlations/moving_site_cors/dcc_df/TMAX_", site.name ,".rds"))
   tmax.plt <- plot(tmax)+ggtitle("Tmax")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
     
     
-  tmin <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tmin")]) , dynamic = "moving", win_size = 45, win_offset = 5)
-  
+  tmin <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tmin")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(tmin, paste0("outputs/correlations/moving_site_cors/dcc_df/TMIN_", site.name ,".rds"))
   tmin.plt <- plot(tmin)+ggtitle("Tmin")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
     
-  vpdmax <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "vpdmax")]) , dynamic = "moving", win_size = 45, win_offset = 5)
-   
+  vpdmax <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "vpdmax")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(vpdmax, paste0("outputs/correlations/moving_site_cors/dcc_df/VPDMAX_", site.name ,".rds"))
   vpdmax.plt <- plot(vpdmax)+ggtitle("VPDmax")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
     
-  vpdmin <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "vpdmin")]) , dynamic = "moving", win_size = 45, win_offset = 5)
-  
+  vpdmin <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "vpdmin")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(vpdmin, paste0("outputs/correlations/moving_site_cors/dcc_df/VPDMIN_", site.name ,".rds"))
   vpdmin.plt <- plot(vpdmin)+ggtitle("VPDmax")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
   
   
@@ -254,7 +262,19 @@ make.moving.cor <- function(x){
   dev.off()
 }
 
-make.moving.cor(data.frame(all.chrons[[5]]))
+make.moving.cor(data.frame(all.chrons[[1]]))
 lapply(all.chrons, FUN = make.moving.cor) # output plots in outputs/correlations/moving_site_cor/
 
 
+# -------------------Goal: Plot JUN Tmax moving corrleations for all sites-----------------------
+
+# list only the TMAX files
+TMAX.dcc.files <- list.files(path = "outputs/correlations/moving_site_cors/dcc_df/", pattern = "TMAX.*\\.rds") 
+TMAX.dcc.files.full <- paste0("/Users/kah/Documents/TreeRings/outputs/correlations/moving_site_cors/dcc_df/", TMAX.dcc.files)
+
+TMAX.dccs <- lapply(TMAX.dcc.files.full , FUN = readRDS) 
+
+# get junTMAX datarame
+x <- TMAX.dccs[[1]]
+coeff.df <- data.frame(x$coef)
+coeff.df 

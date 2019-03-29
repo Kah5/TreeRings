@@ -189,3 +189,6 @@ Junes.melt3$rcp <- plyr::revalue(Junes.melt3$proj, c("1"="rcp2.6", "2"="rcp4.5",
 ggplot(Junes.melt3, aes(x = rcp, y = value, fill = fut.class))+geom_boxplot(width = 0.5)#+facet_wrap(~proj)
 
 write.csv(Junes.melt3, "outputs/June_summer_cmip5_preds_allyears_2025_2099.csv", row.names = FALSE)
+
+
+#-----------------------Summarise CCESM Precipitation projections--------------------

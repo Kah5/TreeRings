@@ -12167,7 +12167,7 @@ png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/lag2_r
 plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(0.65,1,1), labels = "AUTO") 
 dev.off()
 
-
+saveRDS(pct.change.low.high.MAP, "/Users/kah/Documents/TreeRings/outputs/data/pct_change_TMAX_precip_scenarios.rds")
 
 
 # -Get future growth at each site if we change temperature by 1-8 deg C given mean precip, DBH, and RWI---------
