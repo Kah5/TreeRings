@@ -225,6 +225,11 @@ make.moving.cor <- function(x){
   saveRDS(pcp, paste0("outputs/correlations/moving_site_cors/dcc_df/pcp_", site.name ,".rds"))
   pcp.plt <- plot(pcp) + ggtitle("Precip")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
   
+  pcp.sum <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "pcp")]), .sum(1:12, "pcp")+.sum(-9:10, "pcp") , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
+  saveRDS(pcp.sum, paste0("outputs/correlations/moving_site_cors/dcc_df/pcp_sum_", site.name ,".rds"))
+  pcp.sum.plt <- plot(pcp.sum) + ggtitle("Precip")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
+  
+  
   tavg <- dcc(data.frame(x), data.frame(AVO.prism[,c("Year", "month", "tavg")]) , dynamic = "moving", win_size = 45, win_offset = 5, timespan = c(min.yr, 2014))
   saveRDS(tavg, paste0("outputs/correlations/moving_site_cors/dcc_df/TAVG_", site.name ,".rds"))  
   tavg.plt <- plot(tavg)+ggtitle("Tavg")+scale_fill_gradient2(midpoint = 0, limits=c(-0.5,0.5))
@@ -300,7 +305,6 @@ fncols <- function(data) {
   if(length(add)!=0) data[add] <- NA
   
   # now reorder
-  
   data[,cname]
   
 }
@@ -323,5 +327,80 @@ sigs.df$sig <- ifelse(sigs.df$value == FALSE, " ", "*")
 colnames(sigs.df) <- c("site", "time", "TFsig", "time.period", "sig")
 full.df <- merge(sigs.df, cors.df, by = c("site", "time.period"))
 
-ggplot(full.df, aes(time.period, site, fill = coef))+geom_tile()+scale_fill_distiller(palette= "RdBu", direction = 2)+
-  geom_text( aes(label = sig))+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+JunTmax.moving.cors <- ggplot(full.df, aes(time.period, site, fill = coef))+geom_tile()+scale_fill_distiller(palette= "RdBu", direction = 2,limits = c(-0.55, 0.55), name = "Correlation with \n Average June \n Maximum Temperature")+
+  geom_text( aes(label = sig))+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylab("Site")+xlab("Time Period")
+
+JunTmax.moving.cors.ms.sites <- ggplot(full.df[full.df$site %in% c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC"),], aes(time.period, site, fill = coef))+geom_tile()+scale_fill_distiller(palette= "RdBu", direction = 1,limits = c(-0.55, 0.55), name = "Correlation with \n Average June \n Maximum Temperature")+
+  geom_text( aes(label = sig))+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylab("Site")+xlab("Time Period")
+
+
+# -------------------Goal: Total water year moving corrleations for all sites-----------------------
+
+# list only the pcp.sum files
+pcp.sum.dcc.files <- list.files(path = "outputs/correlations/moving_site_cors/dcc_df/", pattern = "pcp.sum.*\\.rds") 
+pcp.sum.dcc.files.full <- paste0("/Users/kah/Documents/TreeRings/outputs/correlations/moving_site_cors/dcc_df/", pcp.sum.dcc.files)
+
+pcp.sum.dccs <- lapply(pcp.sum.dcc.files.full , FUN = readRDS) 
+
+sitelist <- substring(pcp.sum.dcc.files, 9, 11)
+
+# get the datarame with water year correlations
+getwateryr_pcp.sum <- function(x){
+  #x <- pcp.sum.dccs[[1]]
+  coeff.df <- data.frame(x$coef)
+  coeff.df[2,] 
+  
+  
+  
+}
+jun.pcp.sum.dcc <- lapply(pcp.sum.dccs, getwateryr_pcp.sum)
+names(jun.pcp.sum.dcc) <- sitelist
+
+
+# add the columns for missing timeperiods if need be here
+cname <- colnames(jun.pcp.sum.dcc[[3]])
+cname <- c(cname, "site")
+
+fncols <- function(data) {
+  add <-cname[!cname%in%names(data)]
+  
+  if(length(add)!=0) data[add] <- NA
+  
+  # now reorder
+  data[,cname]
+  
+}
+
+jun.pcp.sum.dcc.full <- lapply(jun.pcp.sum.dcc, fncols )
+
+junpcp.sum.cors <- do.call(rbind, jun.pcp.sum.dcc.full) 
+junpcp.sum.cors$site <- rownames(junpcp.sum.cors) # site name
+
+# plot basic tile plot of all the site moving correlations
+cors <- junpcp.sum.cors %>% select(coef.1900.1944:coef.1970.2014, site)
+cors.df <- melt(cors)
+cors.df$time.period <- paste(substring(cors.df$variable, 6, 9), "-",substring(cors.df$variable, 11, 14))
+colnames(cors.df) <- c("site", "time", "coef", "time.period")
+
+sigs <- junpcp.sum.cors %>% select(significant.1900.1944:significant.1970.2014, site)
+sigs.df <- melt(sigs)
+sigs.df$time.period <- paste(substring(sigs.df$variable, 13, 16), "-",substring(sigs.df$variable, 18, 21))
+sigs.df$sig <- ifelse(sigs.df$value == FALSE, " ", "*")
+colnames(sigs.df) <- c("site", "time", "TFsig", "time.period", "sig")
+full.df <- merge(sigs.df, cors.df, by = c("site", "time.period"))
+
+pcp.sum.moving.cors <- ggplot(full.df, aes(time.period, site, fill = coef))+geom_tile()+scale_fill_distiller(palette= "RdBu", direction = 1,limits = c(-0.55, 0.55), name = "Correlation with \n water year \n total precipitation")+
+  geom_text( aes(label = sig))+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylab("Site")+xlab("Time Period")
+
+pcp.sum.moving.cors.ms.sites <- ggplot(full.df[full.df$site %in% c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC"),], aes(time.period, site, fill = coef))+geom_tile()+scale_fill_distiller(palette= "RdBu", direction = 1,limits = c(-0.55, 0.55), name = "Correlation with \n water year \n total precipitation")+
+  geom_text( aes(label = sig))+theme_bw()+theme(axis.text.x = element_text(angle = 45, hjust = 1))+ylab("Site")+xlab("Time Period")
+
+
+png(height = 6, width = 5, res = 300, units = "in", "outputs/correlations/moving_site_cors/summary_all_sites_Tmax_pcp.png")
+plot_grid(pcp.sum.moving.cors, JunTmax.moving.cors, ncol = 1, labels = "AUTO", align = "hv")
+dev.off()
+
+png(height = 6, width = 5, res = 300, units = "in", "outputs/correlations/moving_site_cors/summary_ms_sites_Tmax_pcp.png")
+plot_grid(pcp.sum.moving.cors.ms.sites, JunTmax.moving.cors.ms.sites, ncol = 1, labels = "AUTO", align = "hv")
+dev.off()
+
