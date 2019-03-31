@@ -264,6 +264,8 @@ write.csv(full.ghcn, "outputs/full.ghcn.sites.struct.before.splitting.csv", row.
 # omit NA values for RWI - 1:
 ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1) & !is.na(full.ghcn$RWI_2) & !is.na(full.ghcn$DBH),]
 
+# save ghcn.clean for later use:
+saveRDS(ghcn.clean, "outputs/growth_model/ghcn.clean.full.data.rds")
 
 # split training and testing datasets:
 msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
