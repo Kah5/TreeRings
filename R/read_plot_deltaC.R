@@ -56,6 +56,9 @@ iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-16"),]$Identifier.2 <- "GLL216
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-7"),]$Identifier.2 <- "GLL27" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-12"),]$Identifier.2 <- "GLL212" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-19"),]$Identifier.2 <- "GLL219" 
+iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-17"),]$Identifier.2 <- "GLL217" 
+iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-6"),]$Identifier.2 <- "GLL26" 
+iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-5"),]$Identifier.2 <- "GLL25" 
 
 # rename for MOU:
 iso.data.df[iso.data.df$Identifier.2 %in% c("MOU-1"),]$Identifier.2 <- "MOU1" 
@@ -102,7 +105,7 @@ iso.data.df$year <-  as.numeric(substr(iso.data.df$year, 1, 4)) # just get year 
 iso.data.df$site <- substr(iso.data.df$ID, 1, 3)
 
 # now keep only the useful columns:
-iso.df <- iso.data.df[,c("year", "ID","site","samplenum", "d.13C.12C", "d13C_12C_corr")]
+iso.df <- iso.data.df[,c("year", "ID","site","samplenum", "d.13C.12C", "d13C_12C_corr", "Time.Code")]
 
 
 
@@ -120,7 +123,9 @@ full.df$Cor.d13C.suess <- full.df$d13C_12C_corr - (full.df$d13atm + 6.4)
 full.df[full.df$d13C_12C_corr > -22,] # the 1934 + 1933 may be strange b/c of the high drought in that year--see what the rest of the values say
 #full.df <- full.df[!full.df$d13C_12C_corr > -21.55,]
 
-full.df[full.df$d13C_12C_corr < -28,] # need to check the values of BON9 below -28
+highyrs <- full.df[full.df$Cor.d13C.suess <= -27,] # need to check the values of BON9 below -28
+full.df[full.df$Cor.d13C.suess >= -22,]
+write.csv(highyrs, "outputs/stable_isotopes/years_to_rerun.csv")
 full.df[full.df$ID %in% "BON9",] 
 
 ggplot(full.df, aes(year, Cor.d13C.suess, color = ID))+geom_point()
@@ -133,4 +138,5 @@ ggplot(full.df[!full.df$year == 1979, ], aes(ppm, Cor.d13C.suess, color = ID))+g
 
 # write to a csv
 write.csv(full.df, "outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
+
 

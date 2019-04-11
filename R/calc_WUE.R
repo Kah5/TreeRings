@@ -48,7 +48,7 @@ ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = Cor.d13C.suess, color
 
 # just make plots of all the tree replicates:
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/IWUE_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "grey"))#+theme_black()
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "grey"))#+theme_bw()
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_suess_over_time_by_site_v2.png")
@@ -61,11 +61,11 @@ dev.off()
 
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_suess_vs_ppm_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_ppm_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+theme_black()+ylab(expression(paste(delta^{13}, "C (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C (\u2030)")))
 dev.off()
 
 
@@ -98,6 +98,7 @@ young.yrs.bon <- c(1955, 1959, 1961,  1964, 1976, 1977,1981, 1987, 1988,1989, 19
 young.trees.bon <- c("BON6", "BON12", "BON7", "BON8")
 
 old.yrs.bon <- c(1921, 1929, 1911, 1940, 1900, 1931, 1934, 1922, 1931, 1929, 1914, 1910, 1933, 1934, 1936, 1926)
+old.trees.bon <- c("BON13", "BON9")
 
 young.yrs.gll <- c(1985:1980, 1976:1978, 1972, 1964, 1959:1962, 1953, 1959,
                    2014, 2012, 2011, 2006, 2005, 2001, 1997,1995, 1991, 1993)
@@ -134,15 +135,16 @@ names(ageColors) <- levels(deltas$class)[1:2]
 
 ggplot(na.omit(deltas), aes(x = ppm, y = iWUE, color = ID))+geom_point()+theme_bw()+facet_wrap(~site + class, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+theme_bw()+facet_wrap(~site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
+ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+geom_boxplot()+theme_bw()+facet_wrap(~site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 
 ggplot(na.omit(deltas[!deltas$ID %in% c("BON7", "BON6"),]), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+theme_bw()+facet_wrap(~site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 
-ggplot(na.omit(deltas[!deltas$ID %in% c("BON13", "BON9"),]), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+theme_bw()#+facet_wrap(~site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
-ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_jitter()+geom_boxplot()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_black(base_size = 20)#, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
+ggplot(na.omit(deltas[!deltas$ID %in% c("BON13", "BON9"),]), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+geom_boxplot()+theme_bw()#+facet_wrap(~site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
+ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_jitter()+geom_boxplot()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)#, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 
 deltas$site <- factor(deltas$site, levels = c("GLL", "GLA", "MOU", "BON", "UNI"))
 png(width = 8, height = 4, units = "in", res = 300, "outputs/stable_isotopes/d13C_cor_by_age_class_sites_v2.png")
-ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, fill = class))+geom_boxplot( color = "white")+scale_fill_manual(values = ageColors)+facet_wrap(~site)+theme_black(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
+ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, fill = class))+geom_boxplot( color = "darkgrey")+scale_fill_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
 dev.off()
 
 delts.df <- deltas[!deltas$site %in% "BON",]
@@ -151,23 +153,23 @@ delts.df
 
 
 ggplot(na.omit(deltas[!deltas$site %in% "BON",]), aes(x = class, y = Cor.d13C.suess))+geom_jitter()
-ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = ID))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+facet_wrap(~site)+theme_black(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
+ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, color = ID))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+facet_wrap(~site)+theme_bw(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
 
 
 png(width = 7, height = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_by_age_class_sites_v2.png")
-ggplot(na.omit(deltas[!deltas$site %in% "BON",]), aes(x = class, y = iWUE, fill = class))+geom_boxplot( color = "white")+scale_fill_manual(values = ageColors)+facet_wrap(~site)+theme_black(base_size = 20)+ylab("iWUE")+xlab(" ")
+ggplot(na.omit(deltas), aes(x = class, y = iWUE, fill = class))+geom_boxplot( color = "darkgrey")+scale_fill_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)+ylab("iWUE")+xlab(" ")
 dev.off()
 
-ggplot(na.omit(deltas), aes(x = ppm, y = Cor.d13C.suess, color = class))+geom_point()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_black(base_size = 20)+ylab("d13C corrected")+xlab(" ")
+ggplot(na.omit(deltas), aes(x = ppm, y = Cor.d13C.suess, color = class))+geom_point()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)+ylab("d13C corrected")+xlab(" ")
 
 
 
 png(width = 6, height = 4, units = "in", res = 300, "outputs/stable_isotopes/d13C_cor_by_age_class_sites_v2.png")
-ggplot(na.omit(deltas[deltas$site %in% c("BON", "GLL"),]), aes(x = class, y = Cor.d13C.suess, color = class))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+scale_color_manual(values = ageColors)+theme_black(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
+ggplot(na.omit(deltas[!deltas$site %in% c("BON"),]), aes(x = class, y = Cor.d13C.suess, color = class))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+geom_boxplot()+scale_color_manual(values = ageColors)+theme_bw(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
 dev.off()
 
 png(width = 6, height = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_by_age_class_sites_v2.png")
-ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_black(base_size = 20)+ylab("iWUE")+xlab(" ")
+ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_boxplot(fill = NA, color = "white")+geom_jitter()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)+ylab("iWUE")+xlab(" ")
 dev.off()
 
 
@@ -201,50 +203,50 @@ deltas <- merge(deltas, climates, by = c("year", "site"))
 
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_JJAVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_JulVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_junTmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
 dev.off()
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.BAL, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.BAL, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_vs_JJAVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab("iWUE")+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_cor_vs_JulVPDmax_by_class.png")
-ggplot(deltas[!deltas$site %in% "UNI" & ! is.na(deltas$class), ], aes(x = jja.VPDmax, y = iWUE, color = class))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab("iWUE")+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI" & ! is.na(deltas$class), ], aes(x = jja.VPDmax, y = iWUE, color = class))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/Cor_d13_suess_cor_vs_JulVPDmax_by_class.png")
-ggplot(deltas[!deltas$site %in% "UNI" & ! is.na(deltas$class), ], aes(x = jja.VPDmax, y = Cor.d13C.suess, color = class))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI" & ! is.na(deltas$class), ], aes(x = jja.VPDmax, y = Cor.d13C.suess, color = class))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_cor_vs_JulVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab("iWUE")+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_cor_vs_junTmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab("iWUE")+xlab("Mean JJA VPDmax")
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
 dev.off()
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.BAL, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JJA.p, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.BAL, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JJA.p, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = jja.VPDmax, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_black()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = jja.VPDmax, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 
 # basic linear models for climate and isotope data
 summary(glm(Cor.d13C.suess ~ jja.VPDmax, data = deltas[deltas$site %in% "GLL",]))

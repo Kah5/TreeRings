@@ -11,7 +11,7 @@ source("R/theme_black_fn.R")
 
 
 # read in the detrended chrons:
-crn.full <- read.csv('outputs/Cronology_full_by_yr.csv')
+crn.full <- read.csv('/Users/kah/Documents/TreeRings/outputs/Cronology_full_by_yr.csv')
 crn.m <- melt(crn.full, id.vars = c("Year"))
 summary(crn.full[crn.full$Year %in% 1901:2015,])
 
@@ -37,7 +37,7 @@ loadings$species <- c("QUMA", "QUAL", "QUAL/QUMA", "QUMA","QUMA", "QUMA","QUMA",
                       "QUAL/QUMA", "QURA/QUVE", "QUAL/QUMA", "QUMA", "QUMA", "QURA", "QUMA")
 
 # read the site level map data
-locs <- read.csv("outputs/priority_sites.csv")
+locs <- read.csv("/Users/kah/Documents/TreeRings/outputs/priority_sites.csv")
 #sites <- c("COR", "HIC", "STC", "GLA", "TOW", "ENG", "UNC", "BON", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
 load.loc <- merge(loadings, locs, by = "code")
 
