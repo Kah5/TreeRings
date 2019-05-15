@@ -18,9 +18,9 @@ deltas$bigD <- (deltas$d13atm-deltas$Cor.d13C.suess)/(1+deltas$Cor.d13C.suess/10
 ggplot(deltas, aes(x = year, y = bigD, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen"))
 
 
-ggplot(deltas[!deltas$site %in% c("UNI", "BON"), ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen"))+ylim(-29, -23)
+ggplot(deltas[!deltas$site %in% c("UNI", "BON"), ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "purple"))+ylim(-29, -23)
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "purple"))+ylim(-29, -23)
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "purple", "black"))+ylim(-29, -23)
 #ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
 
 
@@ -31,7 +31,7 @@ colnames(d13.sds) <- c("year", "site", "sd")
 d13.avgs <- merge(d13.avgs, d13.sds, by = c("year", "site"))
 
 # plot with errorbars
-ggplot(d13.avgs[!d13.avgs$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+geom_errorbar(aes(ymin=Cor.d13C.suess - sd, ymax = Cor.d13C.suess + sd), size = 0.2, width = 0.9)+theme_bw()+scale_color_manual(values = c("red", "blue", "forestgreen", "grey"))
+ggplot(d13.avgs[!d13.avgs$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+geom_errorbar(aes(ymin=Cor.d13C.suess - sd, ymax = Cor.d13C.suess + sd), size = 0.2, width = 0.9)+theme_bw()+scale_color_manual(values = c("red", "blue", "forestgreen", "grey", "purple"))
 
 
 
@@ -48,42 +48,42 @@ ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = Cor.d13C.suess, color
 
 # just make plots of all the tree replicates:
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/IWUE_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "grey"))#+theme_bw()
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))#+theme_bw()
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_suess_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_over_time_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))+ylab(expression(paste(delta^{13}, "C (\u2030)")))
 dev.off()
 
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_suess_vs_ppm_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 dev.off()
 
 png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_ppm_by_site_v2.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C (\u2030)")))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))+ylab(expression(paste(delta^{13}, "C (\u2030)")))
 dev.off()
 
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
 
 wue.avgs <- aggregate(iWUE ~ year + site, data=deltas, FUN=mean, na.rm = T) 
 wue.sds <- aggregate(iWUE ~ year + site, data=deltas, FUN=sd, na.rm = T) 
 colnames(wue.sds) <- c("year", "site", "sd")
 wue.avgs <- merge(wue.avgs, wue.sds, by = c("year", "site"))
 
-ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point() +theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))
-ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))
+ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point() +theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
+ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
 
 # plot with errorbars
-ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))
+ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
 
 # plot only the years where we have multiple sample estimates
-ggplot(wue.avgs[!wue.avgs$site %in% "UNI" & ! is.na(wue.avgs$sd), ], aes(x = year, y = iWUE, color = site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))
+ggplot(wue.avgs[!wue.avgs$site %in% "UNI" & ! is.na(wue.avgs$sd), ], aes(x = year, y = iWUE, color = site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
 
 
 ggplot(deltas, aes(x = year, y = iWUE, color = ID))+geom_point()+theme_bw()+facet_wrap(~site)
@@ -110,6 +110,11 @@ young.yrs.mou <- c(1950, 1958, 1964, 1976, 1980 ,1985 ,1988, 1989 ,2001, 2002, 2
 old.yrs.gla <- c(1900, 1901, 1902, 1906, 1907, 1915, 1920, 1923, 1927, 1930, 1938, 1947, 1950)
 young.yrs.gla <- c(1964, 1965 ,1971, 1975, 1979, 1980 ,1981, 1987 ,1989 ,1991, 2001, 2005, 2012)
 
+old.yrs.unc <- c(1897,1904, 1905, 1910, 1911,1915, 1918, 1921, 1923, 1926,1932, 1933, 1936,1937, 
+                 1938, 1942, 1944, 1945)
+young.yrs.unc <- c(1954, 1961, 1964, 1965, 1972, 1976, 1978, 1983, 1985, 1986,
+                   1987, 1988, 1989, 2002, 2006, 2007, 2009, 2014)
+
 # If the data is 
 deltas$class <- NA
 #deltas[deltas$site %in% "BON" & deltas$year %in% old.yrs.bon & !deltas$ID %in% young.trees.bon,]$class <- "Past"
@@ -125,6 +130,10 @@ deltas[deltas$site %in% "MOU" & deltas$year %in% young.yrs.mou,]$class <- "Moder
 
 deltas[deltas$site %in% "GLA" & deltas$year %in% old.yrs.gla,]$class <-  "Past"
 deltas[deltas$site %in% "GLA" & deltas$year %in% young.yrs.gla,]$class <- "Modern"
+
+deltas[deltas$site %in% "UNC" & deltas$year %in% old.yrs.unc,]$class <-  "Past"
+deltas[deltas$site %in% "UNC" & deltas$year %in% young.yrs.unc,]$class <- "Modern"
+
 # plot based on groups:
 
 # get colors that match tree growth plots
@@ -142,7 +151,7 @@ ggplot(na.omit(deltas[!deltas$ID %in% c("BON7", "BON6"),]), aes(x = class, y = C
 ggplot(na.omit(deltas[!deltas$ID %in% c("BON13", "BON9"),]), aes(x = class, y = Cor.d13C.suess, color = class))+geom_jitter()+geom_boxplot()+theme_bw()#+facet_wrap(~site) #, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_jitter()+geom_boxplot()+scale_color_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)#, scales = "free_x")+ylim(90, 200)+xlim(290, 410)
 
-deltas$site <- factor(deltas$site, levels = c("GLL", "GLA", "MOU", "BON", "UNI"))
+deltas$site <- factor(deltas$site, levels = c("GLL", "GLA", "MOU", "BON", "UNI", "UNC"))
 png(width = 8, height = 4, units = "in", res = 300, "outputs/stable_isotopes/d13C_cor_by_age_class_sites_v2.png")
 ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, fill = class))+geom_boxplot( color = "darkgrey")+scale_fill_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
 dev.off()

@@ -55,6 +55,7 @@ iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-20"),]$Identifier.2 <- "GLL220
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-16"),]$Identifier.2 <- "GLL216"
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-7"),]$Identifier.2 <- "GLL27" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-12"),]$Identifier.2 <- "GLL212" 
+iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-13"),]$Identifier.2 <- "GLL213" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-19"),]$Identifier.2 <- "GLL219" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-17"),]$Identifier.2 <- "GLL217" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLL2-6"),]$Identifier.2 <- "GLL26" 
@@ -77,7 +78,7 @@ iso.data.df[iso.data.df$Identifier.2 %in% c("GLA-1700"),]$Identifier.2 <- "GLA17
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLA867"),]$Identifier.2 <- "GLA0867" 
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLA1700"),]$Identifier.2 <- "GLA1700"
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLA-870"),]$Identifier.2 <- "GLA0870"
-iso.data.df[iso.data.df$Identifier.2 %in% c("GLA-872"),]$Identifier.2 <- "GLA0872"
+iso.data.df[iso.data.df$Identifier.2 %in% c("GLA-872", "GLA2-872A", "GLA-872A"),]$Identifier.2 <- "GLA0872"
 iso.data.df[iso.data.df$Identifier.2 %in% c("GLA-1884"),]$Identifier.2 <- "GLA1884"
 
 
@@ -128,6 +129,8 @@ full.df[full.df$Cor.d13C.suess >= -22,]
 write.csv(highyrs, "outputs/stable_isotopes/years_to_rerun.csv")
 full.df[full.df$ID %in% "BON9",] 
 
+
+# initial plots of the data:
 ggplot(full.df, aes(year, Cor.d13C.suess, color = ID))+geom_point()
 
 ggplot(full.df, aes(year, Cor.d13C.suess, color = site))+geom_point()+facet_wrap(~site)
