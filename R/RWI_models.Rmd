@@ -12715,7 +12715,7 @@ saveRDS(dic.full, "outputs/growth_model/model_summary/lag2_reg_cohort_only_re_t_
 
 summary(samp.structure.cohort.re)
 
-traceplot(samp.structure.cohort.re[,"beta2[1]"])
+traceplot(samp.structure.cohort.re[,"beta2[2]"])
 
 # most just around 1
 gelman.diag(samp.structure.cohort.re, multivariate = FALSE)

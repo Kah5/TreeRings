@@ -45,7 +45,7 @@ site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC")
 ```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
 sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
 rownames(sites.modeled) <- NULL
-kable(sites.modeled, "latex", align = "c", booktabs = TRUE,caption = "Site level chronology summaries",digits = 3, linesep = "")
+kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site level chronology summaries",digits = 3, linesep = "")
 ```
 ## Table 2: Model summaries for struct x cohort model for dry years
 ```{r, results="asis", echo = FALSE}

@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date <- ("04_10_19") # enter date of sample run
+date <- ("05_07_19") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -104,12 +104,19 @@ peach <- peach[peach$d13C_12C < -20,]
 
 
 # set up vectors for observed and expected delta 13 C values
-obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards
-exp_13C <- c(rep(-13.68, length(sorghum$d13C_12C)), rep(-25.95, length(peach$d13C_12C)), rep(-26.98, length(protein$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
-
+if(date %in% "04_26_19"){ # standards were too large for this day, so removing one of them:
+  obs_13C <- c(sorghum[1:2,]$d13C_12C, peach[1:2,]$d13C_12C, protein[1:2,]$d13C_12C) # get vector of observed standards
+  exp_13C <- c(rep(-13.68, length(sorghum[1:2,]$d13C_12C)), rep(-25.95, length(peach[1:2,]$d13C_12C)), rep(-26.98, length(protein[1:2,]$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
+  
+}else{
+  obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards
+  exp_13C <- c(rep(-13.68, length(sorghum$d13C_12C)), rep(-25.95, length(peach$d13C_12C)), rep(-26.98, length(protein$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
+}
 # run a linear regression on expected vs. observed values
 modelC <- lm( exp_13C ~ obs_13C )
 summary(modelC)# check p value + Rsquared
+
+
 
 ccoeff <- coefficients(modelC)
 
@@ -118,6 +125,7 @@ data.C$d13C_12C_corr <- ccoeff[[1]] + ccoeff[[2]] * data.C$d.13C.12C
 
 #Quick Summary Plots
 ggplot(data.C, aes(Identifier.1, d13C_12C_corr))+geom_point()
+ggplot(data.C, aes(Identifier.2, d13C_12C_corr))+geom_point()
 
 #Plot of Standards:
 plot(obs_13C[1:9], exp_13C[1:9])
@@ -126,9 +134,9 @@ plot(obs_13C[1:9], exp_13C[1:9])
 
 #save data - save raw, processed, and database prep data into a both individual csvs:
 #setwd("/Users/kah/Documents/TreeRings/data/stable_isotopes/deltaC/")
-
+setwd("/Users/kah/Documents/TreeRings")
   savefilename<-paste0('data/stable_isotopes/deltaC/',date,'_deltaC_')
-  write.csv(std.NC,paste0(savefilename,'stds.csv'), row.names=F)
+  write.csv(std.NC, paste0(savefilename,'stds.csv'), row.names=F)
   write.csv(data.C, paste0(savefilename,'data.csv'),row.names=F)
 
 
