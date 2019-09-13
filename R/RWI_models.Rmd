@@ -16,7 +16,8 @@ library(cowplot)
 
 
 # some initial data checking:
-full.ghcn <- read.csv("outputs/data/rwi_age_dbh_ghcn.csv")
+directory <- "Users/kah/Documents/TreeRings"
+full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
 hist(full.ghcn$RWI)
 
 hist(log(full.ghcn$RWI))
