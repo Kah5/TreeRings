@@ -66,13 +66,13 @@ coordinates(priority) <- ~coords.x1 + coords.x2
 proj4string(priority) <- '+init=epsg:3175'
 priority.lat <- spTransform(priority, CRSobj = CRS("+init=epsg:4326"))
 priority.lat <- data.frame(priority.lat)
-priority$PDSI_time <- c("Not measured", "No Change", "Growth Change", "Not measured", 
-                        "Not measured", "No Change", "Not measured", "Not measured", 
-                        "Growth Change", "Not measured", "Not measured","Growth Change", "Slope Change","Slope Change","No Change",
-                        "Growth Change", "Not measured", "No Change", "Not measured", 
-                        "Not measured", "Not measured", "Not measured", "Not measured",
-                        "UNK", "UNK", "UNK", "UNK", "UNK")
-write.csv(priority, "outputs/priority_sites.csv")
+# priority$PDSI_time <- c("Not measured", "No Change", "Growth Change", "Not measured", 
+#                         "Not measured", "No Change", "Not measured", "Not measured", 
+#                         "Growth Change", "Not measured", "Not measured","Growth Change", "Slope Change","Slope Change","No Change",
+#                         "Growth Change", "Not measured", "No Change", "Not measured", 
+#                         "Not measured", "Not measured", "Not measured", "Not measured",
+#                         "UNK", "UNK", "UNK", "UNK", "UNK")
+write.csv(priority.lat, "outputs/priority_sites.csv")
 
 #--------------- What was the tree density in the PLS data? -------------------------
 # read in the version 1.7-5 data (pls) merged with the upper midwest data:
@@ -80,6 +80,7 @@ write.csv(priority, "outputs/priority_sites.csv")
 dens <- read.csv("/Users/kah/Documents/bimodality/data/PLS_FIA_density_climate_full.csv")
 dens <- dens[names(dens) %in% c("x", "y", "PLSdensity")]
 ggplot(dens, aes(x, y, fill = PLSdensity) ) + geom_raster()
+priority<- data.frame(priority)
 
 # need to convert density data to a raster:
 coordinates(dens)<- ~x+y
@@ -243,7 +244,7 @@ mapdata<-spTransform(states, CRS('+init=epsg:3175'))
 library(raster)
 # use state bounds from gadm website:
 us = readRDS('data/USA_adm1.rds')
-
+x
 
 states <- c("Illinois", "Minnesota", "Wisconsin")
 us <- spTransform(us, CRS('+init=epsg:3175 +proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0 '))
