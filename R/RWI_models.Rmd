@@ -327,9 +327,22 @@ test.dry.pair <- dry.yrs.paired[!msk,]
 
 
 d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth_v2.csv")
+
 d13 <- d13[!is.na(d13$DBH),]
 
-full.iso <- merge(ghcn.clean, d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE")], by = c("site", "ID", "year"), all.x = TRUE)
+d13 %>% group_by( site, ageclass, ID)%>% summarise(n = n(), 
+                                                     iWUE.mean = mean(iWUE, na.rm =TRUE))
+
+d13 %>% group_by(ageclass)%>% summarise(n = n(), 
+                                                     iWUE.mean = mean(iWUE, na.rm =TRUE))
+
+climate.wue <- ghcn.clean %>% dplyr::select(-ageclass)
+
+full.iso <- merge(unique(climate.wue ), d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE", "ageclass")], by = c("site", "ID", "year"), all.y = TRUE)
+
+full.iso %>% group_by(ageclass)%>% summarise(n = n(), 
+                                                     iWUE.mean = mean(iWUE, na.rm =TRUE))
 
 
 full.iso$iWUE.scaled <- as.numeric(scale(full.iso$iWUE))
@@ -340,12 +353,19 @@ library(caTools)
 #full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
 #full.iso <- full.ghcn
 iWUE.med <- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
+full.iso %>% group_by(ageclass) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
+
+full.iso<- full.iso[!is.na(full.iso$DBH),]
+full.iso<- full.iso[!is.na(full.iso$ageclass),]
+
 msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
 
 train.iso <- full.iso[msk,]
 test.iso <- full.iso[!msk,]
 
-
+saveRDS(full.iso, 'data/full_WUE_dataset_v2.rds')
+saveRDS(train.iso, 'data/train_WUE_dataset_v2.rds')
+saveRDS(test.iso, 'data/test_WUE_dataset_v2.rds')
 
 # ------read in estimates of future total precipiation & tmax to project tree growth in the future:
 rcp85 <- read.csv("outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv")

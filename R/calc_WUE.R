@@ -69,15 +69,16 @@ ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = d13C_12C_corr, color 
 dev.off()
 
 
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
+ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple", "yellow"))
+ggplot(deltas, aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple", "yellow"))
 
 wue.avgs <- aggregate(iWUE ~ year + site, data=deltas, FUN=mean, na.rm = T) 
 wue.sds <- aggregate(iWUE ~ year + site, data=deltas, FUN=sd, na.rm = T) 
 colnames(wue.sds) <- c("year", "site", "sd")
 wue.avgs <- merge(wue.avgs, wue.sds, by = c("year", "site"))
 
-ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point() +theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
-ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
+ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point() +theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple", "yellow"))
+ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple", "yellow"))
 
 # plot with errorbars
 ggplot(wue.avgs[!wue.avgs$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+geom_errorbar(aes(ymin=iWUE - sd, ymax = iWUE + sd), size = 0.2, width = 0.9)+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple"))
@@ -325,9 +326,10 @@ d13.growth <- merge(d13, growth, by = c("site", "year", "ID"))
 # highlight the comparison years in each site
 #young.yrs.bon <- c(1955, 1959, 1961,  1964, 1976, 1977,1981, 1987, 1988,1989, 1980, 2006, 2012)
 young.yrs.bon <- c(1955, 1959, 1961,  1964, 1976, 1977,1981, 1987, 1988,1989, 1980, 2012)
-young.trees.bon <- c("BON6", "BON12", "BON7", "BON8")
+young.trees.bon <- c("BON6", "BON12", "BON7")
 
 old.yrs.bon <- c(1921, 1929, 1911, 1940, 1900, 1931, 1934, 1922, 1931, 1929, 1914, 1910, 1933, 1934, 1936, 1926)
+old.trees.bon <- c("BON9", "BON13", "BON8")
 
 young.yrs.gll <- c(1985:1980, 1976:1978, 1972, 1964, 1959:1962, 1953, 1959,
                    2014, 2012, 2011, 2006, 2005, 2001, 1997,1995, 1991, 1993)
@@ -345,8 +347,8 @@ young.yrs.gla <- c(1964, 1965 ,1971, 1975, 1979, 1980 ,1981, 1987 ,1989 ,1991, 2
 d13.growth$class <- NA
 #d13.growth[d13.growth$site %in% "BON" & d13.growth$year %in% old.yrs.bon & !d13.growth$ID %in% young.trees.bon,]$class <- "Past"
 #d13.growth[d13.growth$site %in% "BON" & d13.growth$year %in% young.yrs.bon & d13.growth$ID %in% young.trees.bon,]$class <-  "Modern"
-d13.growth[d13.growth$site %in% "BON" & d13.growth$year %in% old.yrs.bon  & !d13.growth$ID %in% young.trees.bon,]$class <- "Past"
-d13.growth[d13.growth$site %in% "BON" & d13.growth$year %in% young.yrs.bon & d13.growth$ID %in% young.trees.bon,]$class <-  "Modern"
+d13.growth[d13.growth$site %in% "BON" & d13.growth$year <=1950  & !d13.growth$ID %in% young.trees.bon,]$class <- "Past"
+d13.growth[d13.growth$site %in% "BON" & d13.growth$year >=1950 & d13.growth$ID %in% young.trees.bon,]$class <-  "Modern"
 
 
 d13.growth[d13.growth$site %in% "GLL2" & d13.growth$year %in% old.yrs.gll,]$class <-  "Past"
@@ -411,26 +413,26 @@ ggplot(d13.growth, aes( RWI, iWUE, color = class))+geom_point()+stat_smooth(meth
 # for the same RWI, past and modern have different d13C values, though the direction of differences may not be consistant across sites:
 ggplot(d13.growth, aes( RWI, Cor.d13C.suess, color = class))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
 
-# lets plot time series of growth and isotopes together:
-
-ggplot(d13.growth, aes( year, Cor.d13C.suess, color = ID))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
-ggplot(d13.growth, aes( year, iWUE, color = ID))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
-ggplot(d13.growth, aes( year, RWI, color = ID))+geom_point()+geom_line()+facet_wrap(~site)+theme(legend.position = "none")
-
-ggplot(d13.growth, aes( Cor.d13C.suess, RWI, color = ID))+geom_point()+stat_smooth(method = "lm", se = FALSE)
-
-ggplot(d13.growth, aes( year, Cor.d13C.suess, color = SpecCode))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
-ggplot(d13.growth, aes( year, iWUE, color = SpecCode))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
-ggplot(d13.growth, aes( year, RWI, color = SpecCode))+geom_point()+geom_line()+facet_wrap(~site)+theme(legend.position = "none")
-
-ggplot(d13.growth, aes( Cor.d13C.suess, RWI, color = ID))+geom_point()+stat_smooth(method = "lm", se = FALSE)
-
-ggplot(d13.growth, aes( JJA.pdsi,RWI, color = ageclass))+geom_point()+stat_smooth(method = "lm", se = FALSE)+facet_wrap(~site)
-
-
-ggplot(d13.growth, aes( JJA.pdsi, RWI, color = Cor.d13C.suess))+geom_point()+stat_smooth(method = "lm", se = FALSE)+facet_wrap(~site + ageclass)
-
-ggplot(d13.growth, aes( Age, Cor.d13C.suess, color = dbhclass))+geom_point()+stat_smooth(method = "lm", se = FALSE)+facet_wrap(~site + ageclass)
+# # lets plot time series of growth and isotopes together:
+# 
+# ggplot(d13.growth, aes( year, Cor.d13C.suess, color = ID))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
+# ggplot(d13.growth, aes( year, iWUE, color = ID))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
+# ggplot(d13.growth, aes( year, RWI, color = ID))+geom_point()+geom_line()+facet_wrap(~site)+theme(legend.position = "none")
+# 
+# ggplot(d13.growth, aes( Cor.d13C.suess, RWI, color = ID))+geom_point()+stat_smooth(method = "lm", se = FALSE)
+# 
+# ggplot(d13.growth, aes( year, Cor.d13C.suess, color = SpecCode))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
+# ggplot(d13.growth, aes( year, iWUE, color = SpecCode))+geom_point()+facet_wrap(~site)+theme(legend.position = "none")
+# ggplot(d13.growth, aes( year, RWI, color = SpecCode))+geom_point()+geom_line()+facet_wrap(~site)+theme(legend.position = "none")
+# 
+# ggplot(d13.growth, aes( Cor.d13C.suess, RWI, color = ID))+geom_point()+stat_smooth(method = "lm", se = FALSE)
+# 
+# ggplot(d13.growth, aes( JJA.pdsi,RWI, color = ageclass))+geom_point()+stat_smooth(method = "lm", se = FALSE)+facet_wrap(~site)
+# 
+# 
+# ggplot(d13.growth, aes( JJA.pdsi, RWI, color = Cor.d13C.suess))+geom_point()+stat_smooth(method = "lm", se = FALSE)+facet_wrap(~site + ageclass)
+# 
+# ggplot(d13.growth, aes( Age, Cor.d13C.suess, color = dbhclass))+geom_point()+stat_smooth(method = "lm", se = FALSE)+facet_wrap(~site + ageclass)
 
 # get an idea if there is any relationship between variables
 summary(lm(Cor.d13C.suess ~ RWI , data = d13.growth[!d13.growth %in% "BON",]))
@@ -449,5 +451,19 @@ summary(lm(iWUE ~ RWI*site + JJA.pdsi , data = d13.growth))
 summary(lm(Cor.d13C.suess ~ class + site + JJA.pdsi , data = d13.growth))
 summary(lm(iWUE ~ class + site + JJA.pdsi , data = d13.growth))
 
+d13.growth.cor <- d13.growth %>% dplyr::select(-ageclass) # the current "ageclass" includes trees w/years that are not matched to ours
+colnames(d13.growth.cor)[125] <-  "ageclass" # assign class (which as the correct ageclasses) to "ageclass
 
-write.csv(d13.growth, "outputs/stable_isotopes/merged_d13_growth.csv")
+# some are duplicated, so remove duplicates:
+d13.growth.cor <- d13.growth.cor[!duplicated(d13.growth.cor),]
+
+write.csv(d13.growth.cor, "outputs/stable_isotopes/merged_d13_growth_v2.csv")
+d13.growth.cor %>% group_by( site, ageclass, ID)%>% summarise(n = n(), 
+                                                     iWUE.mean = mean(iWUE))
+
+
+
+
+
+d13.growth.cor[!is.na(d13.growth$ageclass),] %>% group_by(site, ageclass)%>% summarise(n = n(), 
+                                                   iWUE.mean = mean(iWUE))
