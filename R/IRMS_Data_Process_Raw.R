@@ -7,7 +7,7 @@
 
 library(dplyr) 
 library(ggplot2) 
-date <- ("05_07_19") # enter date of sample run
+date <- ("08_09_19") # enter date of sample run
 
 
 # -------------------------------Load raw isotope data in csv format---------------------
@@ -38,7 +38,7 @@ if("Time" %in% colnames(data.raw)){
 }
 #get the all samples excluding the blanks
 
-data.refs.samples <- filter(data.raw, !Identifier.2=="blank",!Identifier.2=="trash")%>%select(Identifier.1, Identifier.2, Peak.Nr, d.15N.14N, d.13C.12C, Time.Code)
+data.refs.samples <- filter(data.raw, !Identifier.2=="blank",!Identifier.2=="trash")%>%dplyr::select(Identifier.1, Identifier.2, Peak.Nr, d.15N.14N, d.13C.12C, Time.Code)
 head(data.refs.samples)
 
 # a couple of special cases where the data was formattted differently
@@ -64,8 +64,8 @@ if(filename %in% c("/Users/kah/Documents/TreeRings/data/stable_isotopes/raw_irms
 
 # since I have no N peaks for the samples, but I do in my standards, we need to grab a different peak number depending on whether the Identifier.2 == std or not:
 
-data.N.std <- filter(data.refs.samples, Peak.Nr==4, Identifier.2 == "std") %>%select(-c(5,6)) # grab all N peaks for std
-data.C.std <- filter(data.refs.samples, Peak.Nr==5, Identifier.2 == "std") %>%select(-c(4,6)) # grab all C peaks for sts
+data.N.std <- filter(data.refs.samples, Peak.Nr==4, Identifier.2 == "std") %>% dplyr::select(-c(5,6)) # grab all N peaks for std
+data.C.std <- filter(data.refs.samples, Peak.Nr==5, Identifier.2 == "std") %>% dplyr::select(-c(4,6)) # grab all C peaks for sts
 
 data.C.std  <- data.C.std [data.C.std$d.13C.12C < 0,] # if there are any strnage peaks, get rid of them here
 # if protein is off (as in run on 02/19/18), then get rid of this value:
@@ -109,7 +109,7 @@ if(date %in% "04_26_19"){ # standards were too large for this day, so removing o
   exp_13C <- c(rep(-13.68, length(sorghum[1:2,]$d13C_12C)), rep(-25.95, length(peach[1:2,]$d13C_12C)), rep(-26.98, length(protein[1:2,]$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
   
 }else{
-  obs_13C <- c(sorghum$d13C_12C,peach$d13C_12C,protein$d13C_12C) # get vector of observed standards
+  obs_13C <- c(sorghum$d13C_12C, peach$d13C_12C, protein$d13C_12C) # get vector of observed standards
   exp_13C <- c(rep(-13.68, length(sorghum$d13C_12C)), rep(-25.95, length(peach$d13C_12C)), rep(-26.98, length(protein$d13C_12C))) # since we might have variable # of standards for each run, use "rep"
 }
 # run a linear regression on expected vs. observed values
@@ -129,7 +129,7 @@ ggplot(data.C, aes(Identifier.2, d13C_12C_corr))+geom_point()
 
 #Plot of Standards:
 plot(obs_13C[1:9], exp_13C[1:9])
-
+abline(a = 0, b = 1)
 
 
 #save data - save raw, processed, and database prep data into a both individual csvs:
