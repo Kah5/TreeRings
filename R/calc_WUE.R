@@ -7,7 +7,7 @@ library(ggplot2)
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Read in Isotopde df from read_plot_delatC.R >>>>>>>>>>>>>>>>>>>>>>>
-deltas <- read.csv("outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
+deltas <- read.csv("outputs/stable_isotopes/full_std_suess_corrected_d13C_v2.csv")
 deltas <- deltas[!is.na(deltas$d13C_12C_corr),]
 
 
@@ -43,6 +43,8 @@ deltas$iWUE <- deltas$ppm*(1-(deltas$d13C_12C_corr-deltas$d13atm + a))/(b-a)*0.6
 summary(deltas$iWUE)
 
 ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = Cor.d13C.suess, color = ID))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
+
+ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = iWUE, color = ID))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 
 
 
@@ -157,9 +159,6 @@ png(width = 8, height = 4, units = "in", res = 300, "outputs/stable_isotopes/d13
 ggplot(na.omit(deltas), aes(x = class, y = Cor.d13C.suess, fill = class))+geom_boxplot( color = "darkgrey")+scale_fill_manual(values = ageColors)+facet_wrap(~site)+theme_bw(base_size = 20)+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab(" ")
 dev.off()
 
-delts.df <- deltas[!deltas$site %in% "BON",]
-head(delts.df)
-delts.df
 
 
 ggplot(na.omit(deltas[!deltas$site %in% "BON",]), aes(x = class, y = Cor.d13C.suess))+geom_jitter()
@@ -195,117 +194,10 @@ t.test(na.omit(deltas[deltas$site %in% "GLL" & deltas$year %in% old.yrs.gll,]$iW
 t.test(na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% old.yrs.gla,]$Cor.d13C.suess), na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% young.yrs.gla,]$Cor.d13C.suess))
 
 t.test(na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% old.yrs.gla,]$iWUE), na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% young.yrs.gla,]$iWUE))
+t.test(na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% old.yrs.unc,]$iWUE), na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% young.yrs.unc,]$iWUE))
+t.test(na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% old.yrs.unc,]$Cor.d13C.suess), na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% young.yrs.unc,]$Cor.d13C.suess))
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> How Much does VPD affect delta C 13? >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-# read in the tree ring data and climate from these sites and make correlations:
-
-BON.clim <- read.csv("data/climate/PRISM/BONfull.clim.csv")
-GLL2.clim <- read.csv("data/climate/PRISM/GLL2full.clim.csv")
-
-BON.clim$site <- "BON"
-GLL2.clim$site <- "GLL"
-
-climates <- rbind(BON.clim, GLL2.clim)
-colnames(climates)[2] <- "year"
-deltas <- merge(deltas, climates, by = c("year", "site"))
-
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_JJAVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
-dev.off()
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_JulVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
-dev.off()
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/d13_cor_vs_junTmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
-dev.off()
-
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.BAL, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_vs_JJAVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
-dev.off()
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_cor_vs_JulVPDmax_by_class.png")
-ggplot(deltas[!deltas$site %in% "UNI" & ! is.na(deltas$class), ], aes(x = jja.VPDmax, y = iWUE, color = class))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
-dev.off()
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/Cor_d13_suess_cor_vs_JulVPDmax_by_class.png")
-ggplot(deltas[!deltas$site %in% "UNI" & ! is.na(deltas$class), ], aes(x = jja.VPDmax, y = Cor.d13C.suess, color = class))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))+xlab("Mean JJA VPDmax")
-dev.off()
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_cor_vs_JulVPDmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
-dev.off()
-
-png(height = 4, width = 4, units = "in", res = 300, "outputs/stable_isotopes/iWUE_cor_vs_junTmax_by_site.png")
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab("iWUE")+xlab("Mean JJA VPDmax")
-dev.off()
-
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jja.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.BAL, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = jul.VPDmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JJA.p, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = JUNTmax, y = iWUE, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-
-ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = ppm, y = jja.VPDmax, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue"))+theme_bw()+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-
-# basic linear models for climate and isotope data
-summary(glm(Cor.d13C.suess ~ jja.VPDmax, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(Cor.d13C.suess ~ jul.BAL, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(Cor.d13C.suess ~ ppm, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(Cor.d13C.suess ~ JJA.p, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(Cor.d13C.suess ~ JUNTmax, data = deltas[deltas$site %in% "GLL",]))
-
-summary(glm(Cor.d13C.suess ~ jja.VPDmax, data = deltas[deltas$site %in% "BON",]))
-summary(glm(Cor.d13C.suess ~ jul.BAL, data = deltas[deltas$site %in% "BON",]))
-summary(glm(Cor.d13C.suess ~ ppm, data = deltas[deltas$site %in% "BON",]))
-summary(glm(Cor.d13C.suess ~ JJA.p, data = deltas[deltas$site %in% "BON",]))
-summary(glm(Cor.d13C.suess ~ JUNTmax, data = deltas[deltas$site %in% "BON",]))
-
-summary(gam(jja.VPDmax ~ ppm, data = deltas[deltas$site %in% "GLL",]))
-
-
-# basic linear models for climate and iWUE data:
-summary(glm(iWUE ~ jja.VPDmax, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(iWUE ~ jul.BAL, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(iWUE ~ ppm, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(iWUE ~ JJA.p, data = deltas[deltas$site %in% "GLL",]))
-summary(glm(iWUE ~ JUNTmax, data = deltas[deltas$site %in% "GLL",]))
-
-summary(glm(iWUE ~ jja.VPDmax, data = deltas[deltas$site %in% "BON",]))
-summary(glm(iWUE ~ jul.BAL, data = deltas[deltas$site %in% "BON",]))
-summary(glm(iWUE ~ ppm, data = deltas[deltas$site %in% "BON",]))
-summary(glm(iWUE ~ JJA.p, data = deltas[deltas$site %in% "BON",]))
-summary(glm(iWUE ~ JUNTmax, data = deltas[deltas$site %in% "BON",]))
-
-summary(gam(iWUE ~ ppm + jja.VPDmax, data = deltas[deltas$site %in% "BON",]))
-summary(glm(Cor.d13C.suess ~ ppm + jja.VPDmax, data = deltas[deltas$site %in% "BON",]))
-
-
-
-# make initial plots of the data
-png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_iWUE_time.png")
-ggplot(deltas[deltas$Wood %in% "LW" & deltas$year >= 1990,], aes(x = year, y = iWUE, color = ID))+geom_point()+geom_line(data = deltas[deltas$Wood %in% "LW" & deltas$year >= 1990,], aes(x = year, y = iWUE, color = ID))+theme_bw()
-dev.off()
-
-png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_iWUE_ppm.png")
-ggplot(deltas[deltas$Wood %in% "LW" & deltas$year >= 1990,], aes(x = ppm, y = iWUE,color = ID))+geom_point()+geom_line(data = deltas[deltas$Wood %in% "LW" & deltas$year >= 1990,], aes(x = ppm, y = iWUE,color = ID))+theme_bw()
-dev.off()
-
-png(height = 4, width = 4, units = 'in', res=300, "outputs/stable_isotopes/Bon_delta13C_ppm.png")
-ggplot(deltas[deltas$Wood %in% "LW"& deltas$year >= 1990,], aes(x = ppm, y = Corr.d13C, color = ID))+geom_point()+geom_line(data = deltas[deltas$Wood %in% "LW"& deltas$year >= 1990,], aes(x = ppm, y = Corr.d13C,color = ID))+theme_bw()
-dev.off()
-
-#ggplot(deltas, aes(x = ppm, y = Corr.d13C, color = ID))+geom_point()+geom_line(data= deltas, aes(x = ppm, y = Corr.d13C, color = ID))+theme_bw()
 
 
 # >>>>>>>>>>>>>>>>>>>>>> Is WUE or delta 13C correlated with ID ring growth? <<<<<<<<<<<<<<<<<<<<<<<
@@ -318,6 +210,18 @@ d13$site <- ifelse(d13$site %in% "GLL", "GLL2", as.character(d13$site))
 
 growth <- read.csv("outputs/data/rwi_age_dbh_ghcn.df")
 
+# fix merging issue with UNCcores:
+test.sep <- growth[growth$site %in% "UNC",c("ID", "year")] %>% separate(ID, sep = -3,into = c("Core", "Extra"))
+test.sep$ID <- growth[growth$site %in% "UNC",c("ID")]
+test.sep <- unique(test.sep[,c("ID", "Core")])
+
+UNC.data <- d13[d13$site %in% "UNC",]
+UNC.dataID <- merge(UNC.data, test.sep, by.x = "ID", by.y  = "Core")
+UNC.dataID$ID <- UNC.dataID$ID.y
+UNC.dataID[,colnames(d13.lim)]
+
+d13.lim <- d13[!d13$site %in% "UNC",]
+d13 <- rbind(d13.lim, UNC.dataID[,colnames(d13.lim)])
 
 d13.growth <- merge(d13, growth, by = c("site", "year", "ID"))
 
@@ -335,33 +239,61 @@ young.yrs.gll <- c(1985:1980, 1976:1978, 1972, 1964, 1959:1962, 1953, 1959,
                    2014, 2012, 2011, 2006, 2005, 2001, 1997,1995, 1991, 1993)
 old.yrs.gll <- c(1900, 1910, 1911,1915, 1918, 1919, 1920, 1921, 1922, 1924, 1925,1926,1932, 
                  1933, 1934, 1936, 1940, 1943, 1945)
+old.trees.gll <- c("GLL212")
+young.trees.gll <- c("GLL213", "GLL216", "GLL217", "GLL219", "GLL220")
+
+
 old.yrs.mou<- c(1910, 1916, 1923, 1931, 1932 ,1933, 1937, 1942, 1946 ,1948, 1949)
 young.yrs.mou <- c(1950, 1958, 1964, 1976, 1980 ,1985 ,1988, 1989 ,2001, 2002, 2012)
+old.trees.mou <- c("MOU1", "MOU2", "MOU3")
+young.trees.mou <- c("MOU4", "MOU5", "MOU6")
+
 
 old.yrs.gla <- c(1900, 1901, 1902, 1906, 1907, 1915, 1920, 1923, 1927, 1930, 1938, 1947, 1950)
 young.yrs.gla <- c(1964, 1965 ,1971, 1975, 1979, 1980 ,1981, 1987 ,1989 ,1991, 2001, 2005, 2012)
+old.trees.gla <- c("GLA0870", "GLA0872")
+young.trees.gla <- c("GLA0867", "GLA1179", "GLA1700")
 
 
+old.yrs.unc <- c(1897,1904, 1905, 1910, 1911,1915, 1918, 1921, 1923, 1926,1932, 1933, 1936,1937, 
+                 1938, 1942, 1944, 1945)
+young.yrs.unc <- c(1954, 1961, 1964, 1965, 1972, 1976, 1978, 1983, 1985, 1986,
+                   1987, 1988, 1989, 2002, 2006, 2007, 2009, 2014)
+
+old.trees.unc <- c("UNC9a11", "UNC28111")
+young.trees.unc <- c("UNC22a11", "UNC14a11")
 
 # If the data is 
 d13.growth$class <- NA
 #d13.growth[d13.growth$site %in% "BON" & d13.growth$year %in% old.yrs.bon & !d13.growth$ID %in% young.trees.bon,]$class <- "Past"
 #d13.growth[d13.growth$site %in% "BON" & d13.growth$year %in% young.yrs.bon & d13.growth$ID %in% young.trees.bon,]$class <-  "Modern"
-d13.growth[d13.growth$site %in% "BON" & d13.growth$year <=1950  & !d13.growth$ID %in% young.trees.bon,]$class <- "Past"
+d13.growth[d13.growth$site %in% "BON" & d13.growth$year <=1950  & d13.growth$ID %in% old.trees.bon,]$class <- "Past"
 d13.growth[d13.growth$site %in% "BON" & d13.growth$year >=1950 & d13.growth$ID %in% young.trees.bon,]$class <-  "Modern"
 
+#d13.growth[d13.growth$site %in% "BON" & d13.growth$year <1950 ,]$class <- "Past"
+#d13.growth[d13.growth$site %in% "BON" & d13.growth$year >=1950,]$class <-  "Modern"
 
-d13.growth[d13.growth$site %in% "GLL2" & d13.growth$year %in% old.yrs.gll,]$class <-  "Past"
-d13.growth[d13.growth$site %in% "GLL2" & d13.growth$year %in% young.yrs.gll,]$class <- "Modern"
-d13.growth[d13.growth$site %in% "MOU" & d13.growth$year %in% old.yrs.mou,]$class <-  "Past"
-d13.growth[d13.growth$site %in% "MOU" & d13.growth$year %in% young.yrs.mou,]$class <- "Modern"
 
-d13.growth[d13.growth$site %in% "GLA" & d13.growth$year %in% old.yrs.gla,]$class <-  "Past"
-d13.growth[d13.growth$site %in% "GLA" & d13.growth$year %in% young.yrs.gla,]$class <- "Modern"
+d13.growth[d13.growth$site %in% "GLL2" & d13.growth$year < 1950 & d13.growth$ID %in%  old.trees.gll,]$class <-  "Past"
+d13.growth[d13.growth$site %in% "GLL2" & d13.growth$year >= 1950 & d13.growth$ID %in% young.trees.gll,]$class <- "Modern"
+d13.growth[d13.growth$site %in% "MOU" & d13.growth$year  < 1950 & d13.growth$ID %in% old.trees.mou,]$class <-  "Past"
+d13.growth[d13.growth$site %in% "MOU" & d13.growth$year >= 1950 & d13.growth$ID %in% young.trees.mou,]$class <- "Modern"
+
+d13.growth[d13.growth$site %in% "GLA" & d13.growth$year  < 1950 & d13.growth$ID %in% old.trees.gla,]$class <-  "Past"
+d13.growth[d13.growth$site %in% "GLA" & d13.growth$year >= 1950 & d13.growth$ID %in% young.trees.gla,]$class <- "Modern"
+
+d13.growth[d13.growth$site %in% "UNC" & d13.growth$year  < 1950 &  d13.growth$ID %in% old.trees.unc,]$class <-  "Past"
+d13.growth[d13.growth$site %in% "UNC" & d13.growth$year >= 1950 &  d13.growth$ID %in% young.trees.unc,]$class <- "Modern"
+
+ggplot(d13.growth, aes(class, Cor.d13C.suess))+geom_boxplot()+facet_wrap(~site)
+ggplot(d13.growth, aes(class, iWUE))+geom_boxplot()+facet_wrap(~site)
+
+
+ggplot(d13.growth[d13.growth$site %in% "BON",], aes(year,iWUE, color =class))+geom_point() +facet_wrap(~ID)
 
 
 # >>>>>>>>lets make plots of the relationships between iWUE and RWI overall:<<<<<<<<<<<
-ggplot(d13.growth, aes(Cor.d13C.suess, RWI))+geom_point()+stat_smooth(method = "lm")
+ggplot(d13.growth, aes(year, Cor.d13C.suess, color = site))+geom_point()+stat_smooth(method = "lm")
 ggplot(d13.growth, aes(iWUE, RWI))+geom_point()+stat_smooth(method = "lm")
 
 # overall, stomatal closure occurs with summer drought and iWUE is higher in non-drought conditions
@@ -387,7 +319,12 @@ ggplot(d13.growth[d13.growth$class %in% c("Past", "Modern"),], aes(iWUE, DBH))+g
 ggplot(d13.growth[d13.growth$class %in% c("Past", "Modern"),], aes(Cor.d13C.suess, DBH))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
 ggplot(d13.growth[d13.growth$class %in% c("Past", "Modern"),], aes(Cor.d13C.suess, Age))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
 
-ggplot(d13.growth, aes( JJA.pdsi, Cor.d13C.suess, color = class))+geom_point()+stat_smooth(method = "lm")
+ggplot(d13.growth, aes( year, Cor.d13C.suess, color = class))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
+ggplot(d13.growth[d13.growth$Cor.d13C.suess <=-21,], aes(class, Cor.d13C.suess, color = class))+geom_boxplot()+facet_wrap(~site)
+
+ggplot(d13.growth[d13.growth$Cor.d13C.suess <=-21,], aes(class, iWUE, color = class))+geom_boxplot()+facet_wrap(~site)
+
+
 ggplot(d13.growth, aes( JJA.pdsi, iWUE, color = class))+geom_point()+stat_smooth(method = "lm")
 
 
@@ -411,7 +348,7 @@ ggplot(d13.growth, aes( JUNTmin, iWUE, color = class))+geom_point()+stat_smooth(
 ggplot(d13.growth, aes( RWI, iWUE, color = class))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
 
 # for the same RWI, past and modern have different d13C values, though the direction of differences may not be consistant across sites:
-ggplot(d13.growth, aes( RWI, Cor.d13C.suess, color = class))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
+ggplot(d13.growth, aes( year, Cor.d13C.suess, color = class))+geom_point()+stat_smooth(method = "lm")+facet_wrap(~site)
 
 # # lets plot time series of growth and isotopes together:
 # 
@@ -456,14 +393,17 @@ colnames(d13.growth.cor)[125] <-  "ageclass" # assign class (which as the correc
 
 # some are duplicated, so remove duplicates:
 d13.growth.cor <- d13.growth.cor[!duplicated(d13.growth.cor),]
+d13.growth.cor <- d13.growth.cor[!is.na(d13.growth.cor$Cor.d13C.suess),]
 
-write.csv(d13.growth.cor, "outputs/stable_isotopes/merged_d13_growth_v2.csv")
-d13.growth.cor %>% group_by( site, ageclass, ID)%>% summarise(n = n(), 
-                                                     iWUE.mean = mean(iWUE))
+write.csv(d13.growth.cor, "outputs/stable_isotopes/merged_d13_growth_v3.csv")
+d13.growth.cor %>% group_by( site, year <= 1950, ID)%>% dplyr::summarise(n = n(), 
+                                                     iWUE.mean = mean(iWUE),
+                                                     d13 = mean(Cor.d13C.suess))
 
 
+ggplot(d13.growth.cor[d13.growth.cor$Cor.d13C.suess <= -21,], aes(ageclass, Cor.d13C.suess))+geom_boxplot()+facet_wrap(~site)
 
 
-
-d13.growth.cor[!is.na(d13.growth$ageclass),] %>% group_by(site, ageclass)%>% summarise(n = n(), 
+d13.growth.cor[!is.na(d13.growth$ageclass),] %>% group_by(site, ageclass)%>% dplyr::summarise(n = n(), 
                                                    iWUE.mean = mean(iWUE))
+

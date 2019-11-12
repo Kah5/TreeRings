@@ -318,21 +318,33 @@ saveRDS(test.dry.pair, 'data/test_dry_paired_dataset.rds')
 
 
 d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
-d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth_v2.csv")
+d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth_v3.csv")
 
 d13 <- d13[!is.na(d13$DBH),]
 
-d13 %>% group_by( site, ageclass, ID)%>% summarise(n = n(), 
+ # if there a multiple values, take the mean d13C_12_cCorr
+d13.values <- d13 %>% group_by(site, year, ID, ageclass) %>% dplyr::summarise(Cor.d13C.suess = mean(Cor.d13C.suess), 
+                                               iWUE = mean(iWUE),
+                                               Age = mean(Age),
+                                               RWI= mean(RWI), 
+                                               RWI_1 = mean(RWI_1),
+                                               RWI_2 =mean (RWI_2), 
+                                               PCP = mean (PCP), 
+                                               TMIN = mean (TMIN),
+                                               JUNTmax = mean (JUNTmax),
+                                               DBH = mean (DBH))
+
+d13.summary<- d13.values %>% group_by( site, ageclass, ID)%>% dplyr::summarise(n = n(), 
                                                    iWUE.mean = mean(iWUE, na.rm =TRUE))
 
-d13 %>% group_by(ageclass)%>% summarise(n = n(), 
+d13.values %>% group_by(ageclass)%>% dplyr::summarise(n = n(), 
                                         iWUE.mean = mean(iWUE, na.rm =TRUE))
 
 climate.wue <- ghcn.clean %>% dplyr::select(-ageclass)
 
-full.iso <- merge(unique(climate.wue ), d13[,c("site", "ID", "year","Cor.d13C.suess", "iWUE", "ageclass")], by = c("site", "ID", "year"), all.y = TRUE)
+full.iso <- merge(unique(climate.wue ), d13.values[,c("site", "ID", "year","Cor.d13C.suess", "iWUE", "ageclass")], by = c("site", "ID", "year"), all.y = TRUE)
 
-full.iso %>% group_by(ageclass)%>% summarise(n = n(), 
+full.iso %>% group_by(ageclass)%>% dplyr::summarise(n = n(), 
                                              iWUE.mean = mean(iWUE, na.rm =TRUE))
 
 
@@ -343,8 +355,24 @@ d13index <- !is.na(full.ghcn$Cor.d13C.suess)
 library(caTools)
 #full.iso <- full.ghcn[!is.na(full.ghcn$iWUE) & !full.ghcn$site %in% "BON",]
 #full.iso <- full.ghcn
-iWUE.med <- full.iso %>% group_by(struct.cohort, struct.cohort.code) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
-full.iso %>% group_by(ageclass) %>% summarise(iWUEmean = median(iWUE, na.rm =TRUE))
+iWUE.med <- full.iso%>% group_by(struct.cohort, struct.cohort.code) %>% dplyr::summarise(iWUEmean = median(iWUE, na.rm =TRUE), WUE.lo = quantile(iWUE, 0.025, na.rm=TRUE),WUE.hi = quantile(iWUE, 0.975, na.rm = TRUE))
+full.iso %>% group_by(structure, ageclass) %>% dplyr::summarise(iWUEmean = mean(iWUE, na.rm =TRUE),
+                                                                d13mean = mean (Cor.d13C.suess),
+                                                                n = n())
+
+
+
+full.iso$struct.cohort <- paste0(full.iso$ageclass, "-", full.iso$structure)
+full.iso$struct.cohort.code <- ifelse(full.iso$struct.cohort %in% "Past-Forest", 1,
+                                   ifelse(full.iso$struct.cohort %in% "Modern-Forest", 2, 
+                                          ifelse(full.iso$struct.cohort %in% "Past-Savanna", 3,
+                                                 ifelse(full.iso$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+
+
+full.iso %>% group_by(struct.cohort.code) %>% dplyr::summarise(iWUEmean = mean(iWUE, na.rm =TRUE),
+                                                                d13mean = mean (Cor.d13C.suess),
+                                                                n = n())
+
 
 full.iso<- full.iso[!is.na(full.iso$DBH),]
 full.iso<- full.iso[!is.na(full.iso$ageclass),]
@@ -354,9 +382,9 @@ msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
 train.iso <- full.iso[msk,]
 test.iso <- full.iso[!msk,]
 
-saveRDS(full.iso, 'data/full_WUE_dataset_v2.rds')
-saveRDS(train.iso, 'data/train_WUE_dataset_v2.rds')
-saveRDS(test.iso, 'data/test_WUE_dataset_v2.rds')
+saveRDS(full.iso, 'data/full_WUE_dataset_v3.rds')
+saveRDS(train.iso, 'data/train_WUE_dataset_v3.rds')
+saveRDS(test.iso, 'data/test_WUE_dataset_v3.rds')
 
 # ------read in estimates of future total precipiation & tmax to project tree growth in the future:
 rcp85 <- read.csv("outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv")
@@ -393,3 +421,4 @@ if(! "struct.cohort" %in% colnames(rcp85)){
                                                    ifelse(rcp85$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
   
 }
+

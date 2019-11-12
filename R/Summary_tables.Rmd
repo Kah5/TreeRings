@@ -44,7 +44,10 @@ site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC")
 ## Table 1: Site summaries
 ```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
 sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
+sites.modeled$`Mean Age` <- round(sites.modeled$`Mean Age`, digits = 0)
 rownames(sites.modeled) <- NULL
+sites.modeled$`Site #` <- 1:length(sites.modeled$Site)
+sites.modeled <- sites.modeled[,c("Site #", "Site", "Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")]
 kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site level chronology summaries",digits = 3, linesep = "")
 ```
 ## Table 2: Model summaries for struct x cohort model for dry years
@@ -446,6 +449,7 @@ summaries.ageclss <- lapply(full_filenames, read.csv)
 summary.table.site.intercor.age <- do.call(rbind, summaries.ageclss)
 
 age.summary <- merge( Past.mod.clim.summary, summary.table.site.intercor.age, by = c("site", "ageclass"))
+
 colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1")
 
 kable(age.summary, "latex", align=c("l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 2) %>% column_spec(4:9, width = "2cm")%>%

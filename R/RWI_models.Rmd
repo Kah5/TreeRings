@@ -10415,46 +10415,46 @@ gfunc[i] <- beta1[site[i]] + beta2[struct.cohort[i]]*DI.scaled[i] +   beta3[stru
     mup[i] <- beta1[site.p[i]] + beta2[struct.cohort.p[i]]*DI.scaled.p[i] + beta3[struct.cohort.p[i]]*DBH.scaled.p[i] +beta4[struct.cohort.p[i]]*log_RWI_1.p[i] +beta5[struct.cohort.p[i]]*log_RWI_2.p[i] + beta6[struct.cohort.p[i]]*Temp.scaled.p[i]+ beta7[struct.cohort.p[i]]*Temp.scaled.p[i]*DI.scaled.p[i]
   }
 
-# probe for prediction plots:
-  for(i in 1:nprobe){
-    Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
-    muprobe[i] <- beta1[site.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] + beta3[struct.cohort.probe[i]]*DBH.scaled.probe[i] +beta4[struct.cohort.probe[i]]*log_RWI_1.probe[i] + beta5[struct.cohort.probe[i]]*log_RWI_2.probe[i] + beta6[struct.cohort.probe[i]]*Temp.scaled.probe[i] + beta7[struct.cohort.probe[i]]*Temp.scaled.probe[i]*DI.scaled.probe[i]
-  }
+# # probe for prediction plots:
+#   for(i in 1:nprobe){
+#     Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
+#     muprobe[i] <- beta1[site.probe[i]] + beta2[struct.cohort.probe[i]]*DI.scaled.probe[i] + beta3[struct.cohort.probe[i]]*DBH.scaled.probe[i] +beta4[struct.cohort.probe[i]]*log_RWI_1.probe[i] + beta5[struct.cohort.probe[i]]*log_RWI_2.probe[i] + beta6[struct.cohort.probe[i]]*Temp.scaled.probe[i] + beta7[struct.cohort.probe[i]]*Temp.scaled.probe[i]*DI.scaled.probe[i]
+#   }
+# 
+# # project into the future (assuming no further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut[i]  ~ dnorm(mufut[i],inv.var)
+#     mufut[i] <- beta1[site.fut[i]] + beta2[struct.cohort.fut[i]]*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i] + (beta7[struct.cohort.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# # project into the future (assuming 35% further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut.35[i]  ~ dnorm(mufut2[i],inv.var)
+#     mufut2[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]+ (beta7[struct.cohort.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# 
+# 
+# # project into the future (assuming 50% further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut.50[i]  ~ dnorm(mufut3[i],inv.var)
+#     mufut3[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]+ (beta7[struct.cohort.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# 
+# # project into the future (assuming 8% further change in drought senseiivty & temperature):
+#   for(i in 1:nfut){
+#    Yfut.35.35[i]  ~ dnorm(mufut35[i],inv.var)
+#     mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.08)*Temp.scaled.fut[i]+ (beta7[struct.cohort.fut[i]]*0.92)*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
 
-# project into the future (assuming no further change in drought senseiivty):
-  for(i in 1:nfut){
-   Yfut[i]  ~ dnorm(mufut[i],inv.var)
-    mufut[i] <- beta1[site.fut[i]] + beta2[struct.cohort.fut[i]]*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i] + (beta7[struct.cohort.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
-  }
 
-# project into the future (assuming 35% further change in drought senseiivty):
-  for(i in 1:nfut){
-   Yfut.35[i]  ~ dnorm(mufut2[i],inv.var)
-    mufut2[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]+ (beta7[struct.cohort.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
-  }
-
-
-
-# project into the future (assuming 50% further change in drought senseiivty):
-  for(i in 1:nfut){
-   Yfut.50[i]  ~ dnorm(mufut3[i],inv.var)
-    mufut3[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + beta6[struct.cohort.fut[i]]*Temp.scaled.fut[i]+ (beta7[struct.cohort.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
-  }
-
-
-# project into the future (assuming 8% further change in drought senseiivty & temperature):
-  for(i in 1:nfut){
-   Yfut.35.35[i]  ~ dnorm(mufut35[i],inv.var)
-    mufut35[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.08)*Temp.scaled.fut[i]+ (beta7[struct.cohort.fut[i]]*0.92)*Temp.scaled.fut[i]*DI.scaled.fut[i]
-  }
-
-
-
-# project into the future (assuming 7% further change in drought senseiivty):
-  for(i in 1:nfut){
-   Yfut.50.50[i]  ~ dnorm(mufut50[i],inv.var)
-    mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.15)*Temp.scaled.fut[i]+(beta7[struct.cohort.fut[i]]*0.85)*Temp.scaled.fut[i]*DI.scaled.fut[i]
-  }
+# # project into the future (assuming 7% further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut.50.50[i]  ~ dnorm(mufut50[i],inv.var)
+#     mufut50[i] <- beta1[site.fut[i]] + (beta2[struct.cohort.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[struct.cohort.fut[i]]*DBH.scaled.fut[i] +beta4[struct.cohort.fut[i]]*log_RWI_1.fut[i] +beta5[struct.cohort.fut[i]]*log_RWI_2.fut[i] + (beta6[struct.cohort.fut[i]]*1.15)*Temp.scaled.fut[i]+(beta7[struct.cohort.fut[i]]*0.85)*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
 
 # Assume normal priors for betas, but generate a beta + alpha for each ageclass
 for(s in 1:length(SF)){
@@ -10520,6 +10520,9 @@ saveRDS(train.dry.pair, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_d
 saveRDS(test.dry.pair, "outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
 train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+
+full.dry.pair <- dry.yrs.paired  
+
 # assign site numbers to each site:
 
 site.num.df <- data.frame(site = as.character(unique(train.dry.pair$site)), 
@@ -10529,6 +10532,7 @@ site.num.df <- data.frame(site = as.character(unique(train.dry.pair$site)),
 if(! "site.num" %in% colnames(train.dry.pair)){
     train.dry.pair <- merge(train.dry.pair, site.num.df, by = "site" )
     test.dry.pair <- merge(test.dry.pair, site.num.df, by = "site" )
+    full.dry.pair <- merge(full.dry.pair, site.num.df, by = "site")
 }
 
 # generate probe dataset:
@@ -10614,11 +10618,11 @@ long.fut <- rbind(lfut.high, lfut.avg, lfut.low)
 lag2.model.by_structure_x_cohort_t_pr_int <- jags.model(textConnection(population_model_site_int_structure_x_cohort_re_lag2_temp_MAP_interaction.f), 
                     data = list(Y=log(train.dry.pair$RWI), n=length(train.dry.pair$RWI), DI.scaled = train.dry.pair$MAP.scaled, DBH.scaled = train.dry.pair$DBH.scaled,log_RWI_1 = log(train.dry.pair$RWI_1),log_RWI_2 = log(train.dry.pair$RWI_2), Temp.scaled = train.dry.pair$T.scaled, struct.cohort = as.numeric(train.dry.pair$struct.cohort.code), SF = as.numeric(unique(train.dry.pair$struct.cohort.code)), site = train.dry.pair$site.num, Nsites = length(unique(train.dry.pair$site)),
                                 
-  struct.cohort.p = as.numeric(test.dry.pair$struct.cohort.code), DBH.scaled.p = test.dry.pair$DBH.scaled, DI.scaled.p = test.dry.pair$MAP.scaled, log_RWI_1.p = log(test.dry.pair$RWI_1), log_RWI_2.p = log(test.dry.pair$RWI_2), Temp.scaled.p = test.dry.pair$T.scaled, site.p = test.dry.pair$site.num, np = length(as.numeric(test.dry.pair$struct.cohort.code)), 
+  struct.cohort.p = as.numeric(full.dry.pair$struct.cohort.code), DBH.scaled.p = full.dry.pair$DBH.scaled, DI.scaled.p = full.dry.pair$MAP.scaled, log_RWI_1.p = log(full.dry.pair$RWI_1), log_RWI_2.p = log(full.dry.pair$RWI_2), Temp.scaled.p = full.dry.pair$T.scaled, site.p = full.dry.pair$site.num, np = length(as.numeric(full.dry.pair$struct.cohort.code))
   
-  struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
- 
-  struct.cohort.fut = as.numeric(long.fut$struct.cohort.code), DBH.scaled.fut = long.fut$DBH.scaled, DI.scaled.fut = long.fut$MAP.scaled, log_RWI_1.fut = long.fut$RWI_1, log_RWI_2.fut =long.fut$RWI_2, Temp.scaled.fut = long.fut$T.scaled, site.fut = long.fut$site.num, nfut = length(as.numeric(long.fut$struct.cohort.code))
+  # struct.cohort.probe = as.numeric(short.probe$struct.cohort.code), DBH.scaled.probe = short.probe$DBH.scaled, DI.scaled.probe = short.probe$DI.scaled, log_RWI_1.probe = short.probe$RWI_1, log_RWI_2.probe =short.probe$RWI_2, Temp.scaled.probe = short.probe$T.scaled, site.probe = short.probe$site.num, nprobe = length(as.numeric(short.probe$struct.cohort.code)), 
+  # 
+  # struct.cohort.fut = as.numeric(long.fut$struct.cohort.code), DBH.scaled.fut = long.fut$DBH.scaled, DI.scaled.fut = long.fut$MAP.scaled, log_RWI_1.fut = long.fut$RWI_1, log_RWI_2.fut =long.fut$RWI_2, Temp.scaled.fut = long.fut$T.scaled, site.fut = long.fut$site.num, nfut = length(as.numeric(long.fut$struct.cohort.code))
  
   
   ),
@@ -10632,9 +10636,9 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_i
                     n.chains = 3, n.iter=10000, thin = 15)
 
 
-beta2.diffs <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
-                     variable.names=c("one.two", "two.three", "three.four", "two.four"), 
-                    n.chains = 3, n.iter=10000, thin = 15)
+# beta2.diffs <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+#                      variable.names=c("one.two", "two.three", "three.four", "two.four"), 
+#                     n.chains = 3, n.iter=10000, thin = 15)
 
 Yp <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
                      variable.names=c("Yp"), 
@@ -10687,7 +10691,7 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[2]'], auto.layout = FALSE
  samps <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
  test.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
  train.dry <- readRDS("outputs//growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
-# Yp <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/")
+saveRDS(Yp,"outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps.rds")
 # Y.probe <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
 #Yfut.samps <- samps[, 1:length(fut$RWI_1)]
 #samps <- samps[,(length(fut$RWI_1)+1):length(colnames(samps))]

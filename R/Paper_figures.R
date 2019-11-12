@@ -314,9 +314,12 @@ pred.cohort.summary <- pred.pair %>% group_by(variable) %>% dplyr::summarise(pre
 pred.obs <- summary(lm(pred.cohort.summary$predicted ~ pred.cohort.summary$observed))
 
 # this does a poor job representing iWUE values by itself, but explains som of the variation
-p.o.plot <- ggplot(pred.cohort.summary, aes(observed, predicted))+geom_point(color = "black", size = 0.5)+
+p.o.plot.growth.ageclass <- ggplot(pred.cohort.summary, aes(observed, predicted))+geom_point(color = "black", size = 0.5)+
   geom_errorbar(data = pred.cohort.summary,aes(ymin=Ci.lo, ymax=Ci.hi), color = "grey", alpha = 0.5)+geom_point(data = pred.cohort.summary, aes(observed, predicted), color = "black", size = 0.5)+
-  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)+ylab("Predicted Tree Growth")+xlab("Observed Tree Growth")
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs$r.squared, digits = 3), sep="")),parse=T,x=1.5, y=15)+ylab("Predicted Tree Growth (mm)")+xlab("Observed Tree Growth (mm)")+theme_bw(base_size = 16)+theme(panel.grid = element_blank())+ylim(0, 18)+xlim(0, 9)
+
+
+
 
 png(height = 4, width = 4, units = "in", res = 200, "outputs/growth_model/paper_figures/RWI_pred_vs_obs_cohort_only_model.png")
 p.o.plot
@@ -503,24 +506,47 @@ dev.off()
 cohort.struct.params <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
 train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
-# pred.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/")
-# 
-# pred.cohort.summary <- pred.pair %>% group_by(variable) %>% dplyr::summarise(predicted = mean(exp(value), na.rm =TRUE),
-#                                                                              Ci.lo = quantile(exp(value), 0.025, na.rm = TRUE),
-#                                                                              Ci.hi = quantile(exp(value), 0.975, na.rm =TRUE),
-#                                                                              observed = mean(RWI, na.rm =TRUE))
-# 
-# pred.obs <- summary(lm(pred.cohort.summary$predicted ~ pred.cohort.summary$observed))
+pred.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps.rds")
+pred.cs <- data.frame(pred.pair[[1]])
+head(pred.cs)
+pred.cs.m <- melt(pred.cs)
+
+pred.cohort.summary <- pred.cs.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value), na.rm =TRUE),
+                                                                              ci.lo = quantile(exp(value), 0.025, na.rm = TRUE),
+                                                                              ci.hi = quantile(exp(value), 0.975, na.rm =TRUE))
+pred.cohort.summary$Observed <- test.dry.pair$RWI
+pred.cohort.summary$struct.cohort.code <- test.dry.pair$struct.cohort.code
+pred.cohort.summary$struct.cohort <- test.dry.pair$struct.cohort
+pred.obs.cs <- summary(lm(pred.cohort.summary$Predicted ~ pred.cohort.summary$Observed))
 # 
 # # this does a poor job representing iWUE values by itself, but explains som of the variation
-# p.o.plot <- ggplot(pred.cohort.summary, aes(observed, predicted))+geom_point(color = "black", size = 0.5)+
-#   geom_errorbar(data = pred.cohort.summary,aes(ymin=Ci.lo, ymax=Ci.hi), color = "grey", alpha = 0.5)+geom_point(data = pred.cohort.summary, aes(observed, predicted), color = "black", size = 0.5)+
-#   geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)+ylab("Predicted Tree Growth")+xlab("Observed Tree Growth")
-# 
-# png(height = 4, width = 4, units = "in", res = 200, "outputs/growth_model/paper_figures/RWI_pred_vs_obs_cohort_only_model.png")
-# p.o.plot
-# dev.off()
+p.o.plot.growth.cs <- ggplot(pred.cohort.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+
+  geom_errorbar(data = pred.cohort.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+
+  geom_point(data = pred.cohort.summary, aes(Observed, Predicted), color = "black", size = 0.5)+
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
+  geom_text(data=data.frame(pred.obs.cs$r.squared), aes( label = paste("R^2: ", round(pred.obs.cs$r.squared, digits = 3), sep="")),parse=T,x=0.5, y=7.5)+
+  theme_bw(base_size = 16)+ylab("Predicted Tree Growth (mm)")+xlab("Predicted Tree Growth (mm)")+theme(panel.grid = element_blank())#+ylim(90, 190)+xlim(90, 190)
 
+
+cs.growth.summary<- pred.cohort.summary %>% group_by(struct.cohort) %>% dplyr::summarise(growth = mean (Predicted, na.rm =TRUE),
+                                                              Ci.lo = quantile(Predicted, 0.025, na.rm = TRUE),
+                                                              Ci.hi = quantile(Predicted, 0.975, na.rm =TRUE))
+
+cs.growth.summary$struct.cohort<- factor(cs.growth.summary$struct.cohort, levels = c(   "Past-Savanna", "Past-Forest", "Modern-Savanna","Modern-Forest" ))
+
+predicted.growth.cs <- ggplot(cs.growth.summary, aes(struct.cohort, y = growth, fill = struct.cohort))+geom_bar(stat = "identity")+scale_fill_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5', "Past-Forest"='#018571'))+
+  geom_errorbar(aes(x = struct.cohort, ymin = Ci.lo, ymax = Ci.hi), alpha = 0.8, size = 0.5, width = 0.2)+ylab("Predicted growth (mm)")+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.title = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0, 5)
+
+
+new_full.cs.pred<- left_join(pred.cs.m, pred.cohort.summary[,c("variable", "struct.cohort")], by = "variable")
+
+cs.growth.full.summary<- new_full.cs.pred %>% group_by(struct.cohort) %>% dplyr::summarise(growth = mean (value, na.rm =TRUE),
+                                                                                         Ci.lo = quantile(value, 0.025, na.rm = TRUE),
+                                                                                         Ci.hi = quantile(value, 0.975, na.rm =TRUE))
+
+
+ggplot(cs.growth.full.summary, aes(struct.cohort, y = growth, fill = struct.cohort))+geom_bar(stat = "identity")+#scale_fill_manual(values  = c("Past"='#2166ac', 'Modern' = "#b2182b"))+
+  geom_errorbar(aes(x = struct.cohort, ymin = Ci.lo, ymax = Ci.hi), alpha = 0.8, size = 0.5, width = 0.2)+ylab("Predicted growth")+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.title = element_blank())
 
 
 samps.cs <- as.data.frame(cohort.struct.params)
@@ -907,6 +933,25 @@ params <- samps[,1:8]
 #saveRDS(params, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/params.iWUE_ageclass_v2.rds")
 iWUE.samps  <- samps[,9:(8+length(full.iso$iWUE))]
 
+Yp.samps <- data.frame(iWUE.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                               ci.hi = quantile(value,0.975),
+                                                               ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- full.iso$iWUE
+Yp.summary$ageclass <- full.iso$ageclass
+Yp.summary$struct.cohort <- full.iso$struct.cohort
+
+pred.obs.wue.cohort <- summary(lm(Yp.summary$Predicted~ Yp.summary$Observed))
+
+# this does a poor job representing iWUE values by itself, but explains som of the variation
+p.o.plot.wue.cohort <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+
+  geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+
+  geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
+  geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs.wue.cohort$r.squared, digits = 3), sep="")),parse=T,x=120, y=175)+
+  theme_bw(base_size = 16)+ylab("Predicted WUE")+xlab("Observed WUE")+theme(panel.grid = element_blank())+ylim(90, 190)+xlim(90, 190)
+
 
 # -----------plot marginal distributions of cohort + specific parameters:
 a <- data.frame(alpha.samps)
@@ -1135,6 +1180,46 @@ plot_grid(mean.pred.d13.dot, mean.pred.beta1.d13, mean.pred.beta2.d13, mean.pred
           a.dots.2.wue, b.dots.2.wue, b2.dots.2.wue, b3.dots.2.wue, ncol = 4, align = "v")
 dev.off()
 
+# plot predicted vs observed
+
+samps.d13.samps<- readRDS( "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d13_ageclass_v3.rds")
+samps <- data.frame(samps.d13.samps)
+alpha.samps  <- samps[,1:2]
+beta.samps  <- samps[,3:4]
+beta2.samps  <- samps[,5:6]
+beta3.samps  <- samps[,7:8]
+params <- samps[,1:8]
+#saveRDS(params, "outputs/growth_model/id13_MAP_TMAX_dbh_cohort/params.id13_ageclass_v2.rds")
+#id13.samps  <- samps[,17:(16+length(full.iso$id13))]
+
+
+#saveRDS(params, "outputs/growth_model/id13_MAP_TMAX_dbh_cohort/params.id13_ageclass_v2.rds")
+id13.samps  <- samps[,9:(8+length(full.iso$Cor.d13C.suess))]
+
+Yp.samps <- data.frame(id13.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                               ci.hi = quantile(value,0.975),
+                                                               ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- full.iso$Cor.d13C.suess
+Yp.summary$ageclass <- full.iso$ageclass
+Yp.summary$struct.cohort <- full.iso$struct.cohort
+
+pred.obs.cohort <- summary(lm(Yp.summary$Predicted~ Yp.summary$Observed))
+
+# this does a poor job representing iWUE values by itself, but explains som of the variation
+p.o.plot.d13c.cohort <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+
+  geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+
+  geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
+  geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs.cohort$r.squared, digits = 3), sep="")),parse=T,x=-26, y=-22)+
+  theme_bw(base_size = 16)+ylab(expression(paste("Predicted ",delta^{13}, "C (\u2030)")))+xlab(expression(paste("Observed ",delta^{13}, "C (\u2030)")))+theme(panel.grid = element_blank())+ylim(-27, -21)+xlim(-27, -21)#+ylim(-27, -21)+xlim(-27, -21)
+
+
+# note fairly poor model fit
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/iWUE_MAP_TMAX_dbh/pred_vs_obs_struct_cohort_WUE_v3.png")
+p.o.plot.d13c.cohort
+dev.off()
 
 
 
@@ -1331,24 +1416,35 @@ Yp.summary$Observed <- full.iso$iWUE
 Yp.summary$ageclass <- full.iso$ageclass
 Yp.summary$struct.cohort <- full.iso$struct.cohort
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ full.iso$iWUE))
+pred.obs.wue.struct.cohort <- summary(lm(Yp.summary$Predicted~ Yp.summary$Observed))
 
 # this does a poor job representing iWUE values by itself, but explains som of the variation
-p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=120, y=175)
+p.o.plot.wue.struct.cohort <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+
+  geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+
+  geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
+  geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs.wue.struct.cohort$r.squared, digits = 3), sep="")),parse=T,x=120, y=175)+
+  theme_bw(base_size = 16)+ylab("Predicted WUE")+xlab("Observed WUE")+theme(panel.grid = element_blank())+ylim(90, 190)+xlim(90, 190)
 
 # note fairly poor model fit
 png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/iWUE_MAP_TMAX_dbh/pred_vs_obs_struct_cohort_WUE_v3.png")
-p.o.plot
+p.o.plot.wue.struct.cohort
 dev.off()
 
-Predicted.growth <- Yp.summary %>% group_by(struct.cohort) %>% dplyr::summarise(mean = mean(Predicted, na.rm = TRUE), 
+Predicted.wue <- Yp.summary %>% group_by(struct.cohort) %>% dplyr::summarise(mean = mean(Predicted, na.rm = TRUE), 
                                                           Ci.low = quantile(Predicted,0.025, na.rm = TRUE),
                                                           Ci.high = quantile(Predicted,0.975, na.rm = TRUE), 
                                                           hdi.low = hdi(Predicted, na.rm = TRUE)[1],
                                                           hdi.high = hdi(Predicted,na.rm = TRUE)[2])
 
 #predicted growth for our sites shows that strongest increas in predicted WUE for forests, bute savannas generally have a higher WUE in the past
-ggplot(Predicted.growth , aes(struct.cohort, y = mean))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin = Ci.low, ymax = Ci.high,width = 0.1))
+ggplot(Predicted.wue , aes(struct.cohort, y = mean))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin = Ci.low, ymax = Ci.high,width = 0.1))
+
+Predicted.wue$struct.cohort<- factor(Predicted.wue$struct.cohort, levels = c(   "Past-Savanna", "Past-Forest", "Modern-Savanna","Modern-Forest" ))
+
+predicted.wue.cs <- ggplot(Predicted.wue, aes(struct.cohort, y = mean, fill = struct.cohort))+geom_bar(stat = "identity")+scale_fill_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5', "Past-Forest"='#018571'))+
+  geom_errorbar(aes(x = struct.cohort, ymin = Ci.low, ymax = Ci.high), alpha = 0.8, size = 0.5, width = 0.2)+ylab("Predicted iWUE")+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.title = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 
 # -----------plot marginal distributions of cohort + specific parameters:
@@ -1492,6 +1588,7 @@ dev.off()
 
 
 d13.struct.samps <- readRDS("outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d13_struct.cohort_v3.rds")
+
 #wue.data <- readRDS("outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/")
 
 samps <- data.frame(d13.struct.samps[[1]])
@@ -1501,12 +1598,35 @@ beta2.samps  <- samps[,9:12]
 beta3.samps  <- samps[,13:16]
 params <- samps[,1:16]
 #saveRDS(params, "outputs/growth_model/id13_MAP_TMAX_dbh_cohort/params.id13_ageclass_v2.rds")
-id13.samps  <- samps[,17:(16+length(full.iso$id13))]
+#id13.samps  <- samps[,17:(16+length(full.iso$id13))]
 
 
 #saveRDS(params, "outputs/growth_model/id13_MAP_TMAX_dbh_cohort/params.id13_ageclass_v2.rds")
-id13.samps  <- samps[,17:(16+length(full.iso$Cor.d13C.suess))]
+id13.samps  <- samps[,17:(16+length(test.iso$Cor.d13C.suess))]
 
+Yp.samps <- data.frame(id13.samps) 
+Yp.m <- melt(Yp.samps)
+Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
+                                                               ci.hi = quantile(value,0.975),
+                                                               ci.lo = quantile(value,0.025))
+Yp.summary$Observed <- test.iso$Cor.d13C.suess
+Yp.summary$ageclass <- test.iso$ageclass
+Yp.summary$struct.cohort <- test.iso$struct.cohort
+
+pred.obs.cohort.struct <- summary(lm(Yp.summary$Predicted~ Yp.summary$Observed))
+
+# this does a poor job representing iWUE values by itself, but explains som of the variation
+p.o.plot.d13c.struct.cohort <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+
+  geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+
+  geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
+  geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs.cohort.struct$r.squared, digits = 3), sep="")),parse=T,x=-26, y=-22)+
+  theme_bw(base_size = 16)+ylab(expression(paste("Predicted ",delta^{13}, "C (\u2030)")))+xlab(expression(paste("Observed ",delta^{13}, "C (\u2030)")))+theme(panel.grid = element_blank())+ylim(-27, -21)+xlim(-27, -21)
+#expression(paste("Tmax Effect on" ,delta^{13}, "C (\u2030)"))
+# note fairly poor model fit
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/iWUE_MAP_TMAX_dbh/pred_vs_obs_struct_cohort_WUE_v3.png")
+p.o.plot.d13c.struct.cohort
+dev.off()
 
 
 alpha.diff.forest <- ((alpha.samps[,2]-alpha.samps[,1] )/alpha.samps[,1])*100 # (modern - past)/past * 100 = pct increase
@@ -1692,3 +1812,35 @@ plot_grid(a.dots.2.d13, a.dots.2.wue,
           ncol = 2, align = "hv", labels = "AUTO")
 dev.off()
 
+
+# ----------------------------------------------------------------------------
+# make supplement predicted vs observed plots
+#-----------------------------------------------------------------------------
+
+# pred vs observed d13 C
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/p.o.plots.d13C.combined.png")
+plot_grid(p.o.plot.d13c.cohort, p.o.plot.d13c.struct.cohort, align = "hv", labels = "AUTO")
+dev.off()
+
+
+# pred vs observed iWUE
+
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/p.o.plots.iWUE.combined.png")
+plot_grid(p.o.plot.wue.cohort, p.o.plot.wue.struct.cohort, align = "hv", labels = "AUTO")
+dev.off()
+
+# predicted vs observed growth
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/p.o.plots.growth.combined.png")
+plot_grid(p.o.plot.growth.ageclass, p.o.plot.growth.cs, align = "hv", labels = "AUTO")
+dev.off()
+
+
+
+#----------plot changes in growth an predicted WUE across stand and cohorts:
+cs.legend <- get_legend(predicted.wue.cs)
+
+png(height = 7, width = 5.5, units = "in", res = 300, "outputs/growth_model/paper_figures/predicted_wue_growth_change_cohort_structures.png")
+plot_grid(plot_grid(predicted.wue.cs+theme_bw(base_size = 14)+theme(legend.position = "none", panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1), axis.title.x = element_blank()), 
+                    predicted.growth.cs+theme_bw(base_size = 14)+theme(legend.position = "none", panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1), axis.title.x = element_blank()), ncol = 1, align = "hv", labels = "AUTO"),
+          cs.legend, rel_widths = c(0.5, 0.3))
+dev.off()

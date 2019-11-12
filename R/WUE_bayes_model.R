@@ -13,9 +13,10 @@ ggplot(full.iso, aes(site, iWUE ,color = ageclass))+geom_boxplot()
 
 full.iso%>% group_by(ageclass, structure) %>% dplyr::summarise(n = n(), WUE.mean = mean(iWUE, na.rm=TRUE), d13 = mean(Cor.d13C.suess))
 
-full.iso <- full.iso[full.iso$Cor.d13C.suess < -21.9, ]
-test.iso <- test.iso[test.iso$Cor.d13C.suess < -21.9, ]
-train.iso <- train.iso[train.iso$Cor.d13C.suess < -21.9 , ]
+#full.iso <- full.iso[full.iso$Cor.d13C.suess < -21.9, ]
+#test.iso <- test.iso[test.iso$Cor.d13C.suess < -21.9, ]
+#train.iso <- train.iso[train.iso$Cor.d13C.suess < -21.9 , ]
+
 
 unique(full.iso$site)
 
@@ -137,6 +138,9 @@ if(!"site.code" %in% colnames(full.iso)){
   }
 
 
+saveRDS(full.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/full.iso.rds")
+saveRDS(test.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/test.iso.rds")
+saveRDS(train.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/train.iso.rds")
 
 # first lets run the WUE model where we have random effects for structure-cohort class:
 # note that this model does well explaining the data, and acco
@@ -496,10 +500,10 @@ saveRDS(d13C_map_tmax.re, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d
 alpha.samps  <- d13samps[,1:4]
 
 beta.samps  <- d13samps[,5:8]
-beta2.samps  <- d13samps[,5:6]
-beta3.samps  <- d13samps[,7:8]
+beta2.samps  <- d13samps[,9:12]
+beta3.samps  <- d13samps[,13:16]
 #beta4.samps  <- d13samps[,9:13]
-params <- d13samps[,1:8]
+params <- d13samps[,1:16]
 saveRDS(params, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/params.d13_struct.cohort_v3.rds")
 d13.samps  <- d13samps[,17:(16+length(test.iso$Cor.d13C.suess))]
 
@@ -567,11 +571,11 @@ d13_map_tmax <- jags.model(textConnection(d13_MAP_tmax_dbh_re),
                                        MAP_scaled = train.iso$MAP.scaled, TMAX_scaled = train.iso$T.scaled, 
                                        DBH_scaled = train.iso$DBH.scaled, site = train.iso$site.code,
                                        structure = as.numeric(train.iso$structure),
-                                       np = length(test.iso$site), 
-                                       struct.cohort.p = as.numeric( test.iso$age.code), 
-                                       structure.p = as.numeric(test.iso$structure),
-                                       MAP_scaled.p =  test.iso$MAP.scaled, TMAX_scaled.p =  test.iso$T.scaled, 
-                                       DBH_scaled.p =  test.iso$DBH.scaled, site.p = test.iso$site.code), n.chains = 3, n.adapt = 100) 
+                                       np = length(full.iso$site), 
+                                       struct.cohort.p = as.numeric( full.iso$age.code), 
+                                       structure.p = as.numeric(full.iso$structure),
+                                       MAP_scaled.p =  full.iso$MAP.scaled, TMAX_scaled.p =  full.iso$T.scaled, 
+                                       DBH_scaled.p =  full.iso$DBH.scaled, site.p = full.iso$site.code), n.chains = 3, n.adapt = 100) 
 #nprobe = length(iWUEprobe$MAP.probe),
 #MAP_scaled.probe = iWUEprobe$MAP.probe,
 #TMAX_scaled.probe = iWUEprobe$T.probe, 
@@ -605,7 +609,7 @@ beta3.samps  <- d13samps[,7:8]
 #beta4.samps  <- d13samps[,9:13]
 params <- d13samps[,1:8]
 saveRDS(params, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/params.d13_ageclass_v3.rds")
-d13.samps  <- d13samps[,9:(8+length(test.iso$Cor.d13C.suess))]
+d13.samps  <- d13samps[,9:(8+length(full.iso$Cor.d13C.suess))]
 
 
 hdi( (( alpha.samps[,1]-alpha.samps[,2] )/alpha.samps[,2])*100)
@@ -625,13 +629,13 @@ Yp.m <- melt(Yp.samps)
 Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
                                                                ci.hi = quantile(value,0.975),
                                                                ci.lo = quantile(value,0.025))
-Yp.summary$Observed <- test.iso$Cor.d13C.suess
-Yp.summary$ageclass <- test.iso$ageclass
-Yp.summary$struct.cohort.code <- test.iso$struct.cohort.code
-Yp.summary$struct.cohort <- test.iso$struct.cohort
-Yp.summary$site <- test.iso$site
+Yp.summary$Observed <- full.iso$Cor.d13C.suess
+Yp.summary$ageclass <- full.iso$ageclass
+Yp.summary$struct.cohort.code <- full.iso$struct.cohort.code
+Yp.summary$struct.cohort <- full.iso$struct.cohort
+Yp.summary$site <- full.iso$site
 
-pred.obs <- summary(lm(colMeans(Yp.samps)~ test.iso$Cor.d13C.suess))
+pred.obs <- summary(lm(colMeans(Yp.samps)~ full.iso$Cor.d13C.suess))
 
 # this does a poor job representing iWUE values by itself
 p.o.plot <- ggplot(data = Yp.summary, aes(x = Observed, y= Predicted, color = site))+geom_point( size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
