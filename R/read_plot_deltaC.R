@@ -30,7 +30,7 @@ iso.data.df[iso.data.df$Time.Code %like% "2/19/18",]
 iso.data.df[iso.data.df$Time.Code %like% "2018/02/23",]
 
 #iso.data.df <- iso.data.df[!iso.data.df$Time.Code %like% "2018/02/23" & !is.na(iso.data.df$Time.Code) & ! iso.data.df$Time.Code %like% "2/19/18" ,]
-iso.data.df <- iso.data.df[!iso.data.df$Time.Code %like% "2018/02/23" & !is.na(iso.data.df$Time.Code) ,]
+#iso.data.df <- iso.data.df[!iso.data.df$Time.Code %like% "2018/02/23" & !is.na(iso.data.df$Time.Code) ,]
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Data Cleaning >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -140,6 +140,6 @@ ggplot(full.df, aes(year, Cor.d13C.suess, color = ID))+geom_point()+geom_line()+
 ggplot(full.df[!full.df$year == 1979, ], aes(ppm, Cor.d13C.suess, color = ID))+geom_point()+facet_wrap(~site)
 
 # write to a csv
-write.csv(full.df, "outputs/stable_isotopes/full_std_suess_corrected_d13C.csv")
+write.csv(full.df, "outputs/stable_isotopes/full_std_suess_corrected_d13C_v2.csv")
 
 

@@ -492,3 +492,5 @@ kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% footnote(symbol 
 
 
 ```
+
+
