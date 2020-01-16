@@ -23,6 +23,16 @@ WUEparams <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_M
 samps <- WUEparams[[1]]
 WUE <- samps [,1:8]
 # 1 - Modern, 2 = past
+alpha.diff <- ((WUE[,1]-WUE[,2] )/WUE[,2])*100
+d13.pct.diff <- data.frame(
+  pct.change = mean(alpha.diff),
+  Ci.low = quantile(alpha.diff, 0.025), 
+  Ci.high = quantile(alpha.diff, 0.975), 
+  median = median(alpha.diff))#, 
+  #hdi.low = hdi(alpha.diff)[1], 
+  #3hdi.high = hdi(alpha.diff)[2])
+
+
 
 WUE.m <- melt(WUE)
 WUE.cohort.summary <- WUE.m %>% group_by(Var2) %>% dplyr::summarise(mean = mean(value), 
@@ -107,6 +117,8 @@ WUE <- samps [,1:16]
 #   Past-Savanna                 3
 #   Past-Forest                  1
 #   Modern-Forest                2
+
+
 
 WUE.m <- melt(WUE)
 WUE.cohort.summary <- WUE.m %>% group_by(Var2) %>% dplyr::summarise(mean = mean(value), 

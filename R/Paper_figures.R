@@ -43,8 +43,12 @@ sp::plot(ne_coast, col = 'blue')
 # states:
 ne_state <- ne_download(scale = 110, type = 'states', category = 'cultural')
 
-nat.earth <- stack('data/NE2_50M_SR_W/NE2_50M_SR_W/NE2_50M_SR_W.tif')
+#ne.earth <- ne_download(category = "raster")
+#rst <- ne_download(scale = 50, type = 'NE2_50M_SR_W', category = 'raster', destdir = paste0(getwd(), "/data"))
 
+# this stopped working for some reason:
+nat.earth <- stack('data/NE2_50M_SR_W/NE2_50M_SR_W/NE2_50M_SR_W.tif')
+#nat.earth <- stack("data/")
 
 #  Also from simon goring: create a quick subset function
 quick.subset <- function(x, longlat){
@@ -218,13 +222,13 @@ full.ghcn.priority <- dplyr::left_join(priority.lat, site.means, by = "code")
 climate.space.ci <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax, shape = structure, color = structure))+geom_point(size = 3)+scale_color_manual(values = c("Savanna"='sienna4',
                                                                                                                                                                            "Forest"='forestgreen'))+
   geom_errorbar(aes(x = site.MAP, ymin = site.ci.lo.tmax ,ymax = site.ci.high.tmax), alpha = 0.5)+
-  geom_errorbarh(aes(y = site.tmax, xmin = site.ci.lo.MAP, xmax = site.ci.high.MAP), alpha = 0.5)+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Mean Maximum Temperature (" *
+  geom_errorbarh(aes(y = site.tmax, xmin = site.ci.lo.MAP, xmax = site.ci.high.MAP), alpha = 0.5)+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Maximum Temperature (" *
                                                                                                                                                                          degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
 
 climate.space.sd <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax, shape = structure, color = structure))+geom_point(size = 3)+scale_color_manual(values = c("Savanna"='sienna4',
                                                                                                                                                                            "Forest"='forestgreen'))+
   geom_errorbar(aes(x = site.MAP, ymin = site.tmax -site.sd.tmax ,ymax = site.tmax+site.sd.tmax))+
-  geom_errorbarh(aes(y = site.tmax, xmin = site.MAP-site.sd.MAP, xmax = site.MAP+site.sd.MAP))+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Mean Maximum Temperature (" *
+  geom_errorbarh(aes(y = site.tmax, xmin = site.MAP-site.sd.MAP, xmax = site.MAP+site.sd.MAP))+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Maximum Temperature (" *
                                                                                                                                                                       degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
 
 # plot out the sites along the map
@@ -295,7 +299,26 @@ plot_grid(site.bayes.map.inset.num, climate.space.ci, ncol = 2, align = "hv", la
 dev.off()
 
 
-#-------------------------------------------------------------------------------------------------
+
+# # make the same figure, but with conus forest biomass underlaying the map:
+# 
+# biomass <- raster("data/conus_forest_biomass/conus_forest_biomass_mg_per_ha.img")
+# biomass
+# 
+# # may take a bit:
+# 
+# biomass.small <- raster::crop(biomass, y = c(xmin = -10000, xmax = 2000000, ymin = 1500000, ymax = 3077625))
+# 
+# plot(biomass.small)
+# system.time(biomass.ll <- projectRaster(biomass.small, crs = '+init=epsg:4269'))
+# plot(biomass.ll)
+# 
+# # convert raster to dataframe to plot in ggplot:
+# biomass.table <- data.frame(xyFromCell(biomass.ll, 1:ncell(biomass.ll)),
+#                          getValues(biomass.ll))
+# biomass.table2<- biomass.table[!is.na(biomass.table)]
+# ggplot(biomass.table, aes(x,y, fill = getValues.biomass.ll.))+geom_raster()
+# #-------------------------------------------------------------------------------------------------
 #                                     Figure 3: Dotplots
 #-------------------------------------------------------------------------------------------------
 # pull parameters from the cohort only model and cohortXtime model:
@@ -316,7 +339,8 @@ pred.obs <- summary(lm(pred.cohort.summary$predicted ~ pred.cohort.summary$obser
 # this does a poor job representing iWUE values by itself, but explains som of the variation
 p.o.plot.growth.ageclass <- ggplot(pred.cohort.summary, aes(observed, predicted))+geom_point(color = "black", size = 0.5)+
   geom_errorbar(data = pred.cohort.summary,aes(ymin=Ci.lo, ymax=Ci.hi), color = "grey", alpha = 0.5)+geom_point(data = pred.cohort.summary, aes(observed, predicted), color = "black", size = 0.5)+
-  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs$r.squared, digits = 3), sep="")),parse=T,x=1.5, y=15)+ylab("Predicted Tree Growth (mm)")+xlab("Observed Tree Growth (mm)")+theme_bw(base_size = 16)+theme(panel.grid = element_blank())+ylim(0, 18)+xlim(0, 9)
+  geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", round(pred.obs$r.squared, digits = 3), sep="")),parse=T,x=1.5, y=15)+
+  ylab("Predicted Tree Growth (mm)")+xlab("Observed Tree Growth (mm)")+theme_bw(base_size = 16)+theme(panel.grid = element_blank())+ylim(0, 18)+xlim(0, 9)
 
 
 
@@ -468,27 +492,29 @@ colnames(b7.sum) <- c("cohort", "mean.val", "Ci.low", "Ci.high", "hdi.low", "hdi
 
 # write out all the dotplots with 95% ci
 int.dot.age <- ggplot(data.frame(a1.sum), aes(x = mean.val, y = site.num, color = structure, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Intercept (alpha)")+xlim(-0.3, 0.8) + geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+scale_color_manual(values = c("Savanna"='sienna4', 'Forest' = "forestgreen"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Intercept (", alpha[s], ")")))+xlim(-0.3, 0.8) + geom_vline(xintercept = 0, linetype = "dashed")
 
 b2.dot.age <- ggplot(data.frame(b2.sum), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Drought Sensitivity (Beta2)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Precip. Sensitivity (", beta[1], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b3.dot.age <- ggplot(data.frame(b3.sum), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated DBH Sensitivity (Beta3)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated DBH Sensitivity (", beta[6], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b4.dot.age <- ggplot(data.frame(b4.sum), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated lag -1 growth coef. (Beta4)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated lag-1 growth coef. (", beta[5], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b5.dot.age <- ggplot(data.frame(b5.sum), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y= element_blank(), panel.grid = element_blank())+xlab("Estimated lag -2 growth coef. (Beta5)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y= element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated lag-2 growth coef. (", beta[6], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 
 b6.dot.age <- ggplot(data.frame(b6.sum), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Max. Temp. sensitivity (Beta6)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Max. Temp. sensitivity (", beta[2], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b7.dot.age <- ggplot(data.frame(b7.sum), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+
-  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Temp*Precip sensitivity (", beta[3], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
+mod.past.legend <- get_legend(ggplot(data.frame(b7.sum), aes(x = mean.val, y = cohort, color = cohort))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high,height = 0))+
+  geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.title = element_blank()))
 
 png(height = 13, width = 5, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_only_CI.png")
 cowplot::plot_grid(int.dot.age, 
@@ -524,8 +550,11 @@ p.o.plot.growth.cs <- ggplot(pred.cohort.summary, aes(Observed, Predicted))+geom
   geom_errorbar(data = pred.cohort.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+
   geom_point(data = pred.cohort.summary, aes(Observed, Predicted), color = "black", size = 0.5)+
   geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
-  geom_text(data=data.frame(pred.obs.cs$r.squared), aes( label = paste("R^2: ", round(pred.obs.cs$r.squared, digits = 3), sep="")),parse=T,x=0.5, y=7.5)+
-  theme_bw(base_size = 16)+ylab("Predicted Tree Growth (mm)")+xlab("Predicted Tree Growth (mm)")+theme(panel.grid = element_blank())#+ylim(90, 190)+xlim(90, 190)
+  geom_text(data=data.frame(pred.obs.cs$r.squared), aes( label = paste("R^2: ", round(pred.obs.cs$r.squared, digits = 3), sep="")),parse=T,x=1.5, y=15)+
+  theme_bw(base_size = 16)+ylab("Predicted Tree Growth (mm)")+xlab("Observed Tree Growth (mm)")+theme(panel.grid = element_blank())+ylim(0, 18)+xlim(0, 9)
+
+
+
 
 
 cs.growth.summary<- pred.cohort.summary %>% group_by(struct.cohort) %>% dplyr::summarise(growth = mean (Predicted, na.rm =TRUE),
@@ -662,51 +691,81 @@ b7.sum$variable <- factor(b7.sum$variable, levels = c(  "Modern-Forest", "Modern
 
 # write out all the dotplots
 int.dot <- ggplot(data.frame(a1.sum), aes(x = mean.val, y = site.num, color = structure, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Savanna"='sienna4',
-                                                                                                                                                                                                                                         "Forest"='forestgreen'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Intercept (alpha)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                                         "Forest"='forestgreen'))+theme_bw(base_size = 14)+theme(legend.position = "none", panel.grid = element_blank(), axis.title.y = element_blank())+xlab(expression(paste("Estimated Intercept (", alpha[s], ")"))) +xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b2.dot <- ggplot(data.frame(b2.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.15, 0.8)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
                                                                                                                                                                                                                                        "Modern-Savanna"='#dfc27d',
                                                                                                                                                                                                                                        "Modern-Forest"='#c7eae5',
-                                                                                                                                                                                                                                       "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Drought Sensitivity (Beta2)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                                       "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Precip. Sensitivity (", beta[1], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b3.dot <- ggplot(data.frame(b3.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+xlim(-0.19, 0.71)+scale_color_manual(values = c("Past-Savanna"='#a6611a',
                                                                                                                                                                                                                                         "Modern-Savanna"='#dfc27d',
                                                                                                                                                                                                                                         "Modern-Forest"='#c7eae5',
-                                                                                                                                                                                                                                        "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated DBH Sensitivity (Beta3)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                                        "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated DBH Sensitivity (", beta[6], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b4.dot <- ggplot(data.frame(b4.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
                                                                                                                                                                                                                       "Modern-Savanna"='#dfc27d',
                                                                                                                                                                                                                       "Modern-Forest"='#c7eae5',
-                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated lag -1 growth coef. (Beta4)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated lag -1 growth coef. (", beta[4], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b5.dot <- ggplot(data.frame(b5.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
                                                                                                                                                                                                                       "Modern-Savanna"='#dfc27d',
                                                                                                                                                                                                                       "Modern-Forest"='#c7eae5',
-                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y= element_blank(), panel.grid = element_blank())+xlab("Estimated lag -2 growth coef. (Beta5)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y= element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated lag -2 growth coef. (", beta[5], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 
 b6.dot <- ggplot(data.frame(b6.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
                                                                                                                                                                                                                       "Modern-Savanna"='#dfc27d',
                                                                                                                                                                                                                       "Modern-Forest"='#c7eae5',
-                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Max. Temp. sensitivity (Beta6)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Max. Temp. sensitivity (", beta[2], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
 
 b7.dot <- ggplot(data.frame(b7.sum), aes(x = mean.val, y = variable, color = variable, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1,height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
                                                                                                                                                                                                                       "Modern-Savanna"='#dfc27d',
                                                                                                                                                                                                                       "Modern-Forest"='#c7eae5',
-                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+                                                                                                                                                                                                                      "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab(expression(paste("Estimated Temp*Precip sensitivity (", beta[3], ")")))+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed")
+
+cs.legend <- get_legend(ggplot(data.frame(b7.sum), aes(x = mean.val, y = variable, color = variable))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, height = 0))+geom_point()+scale_color_manual(values = c("Past-Savanna"='#a6611a',
+                                                                                                                                                                                                                      "Modern-Savanna"='#dfc27d',
+                                                                                                                                                                                                                      "Modern-Forest"='#c7eae5',
+                                                                                                                                                                                                               "Past-Forest"='#018571'))+theme_bw(base_size = 14)+theme(legend.title = element_blank(), axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed"))
+
+sav.for.legend <- cowplot::get_legend(ggplot(data.frame(a1.sum), aes(x = mean.val, y = site.num, color = structure))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, height = 0))+geom_point()+xlim(-0.1, 0.25)+scale_color_manual(values = c("Savanna"='sienna4',
+                                                                                                                                                                                                                                         "Forest"='forestgreen'))+theme_bw(base_size = 14)+theme(legend.title = element_blank(), axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Intercept (alpha)")+xlim(-0.3, 0.8)+ geom_vline(xintercept = 0, linetype = "dashed"))
 
 
-png(height = 13, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_cohortXstuct_CI.png")
-cowplot::plot_grid(int.dot.age, int.dot, 
-          b2.dot.age, b2.dot, 
-          b6.dot.age, b6.dot,
-          b7.dot.age, b7.dot, 
-          b3.dot.age, b3.dot, 
-          b4.dot.age, b4.dot,
-          b5.dot.age, b5.dot,
-          ncol = 2, align = "v", labels = "AUTO")
+
+# png(height = 14, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_cohortXstuct_CI_alllegend.png")
+# cowplot::plot_grid(sav.for.legend,
+#                    
+# cowplot::plot_grid(int.dot.age, int.dot, 
+#           b2.dot.age, b2.dot, 
+#           b6.dot.age, b6.dot,
+#           b7.dot.age, b7.dot, 
+#           b3.dot.age, b3.dot, 
+#           b4.dot.age, b4.dot,
+#           b5.dot.age, b5.dot,
+#           mod.past.legend, cs.legend,
+#           ncol = 2, align = "v", labels = "AUTO"), 
+# 
+# 
+# nrow = 2, align = "v", rel_heights = c(0.1, 1))
+# dev.off()
+
+png(height = 14, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_cohortXstuct_CI.png")
+cowplot::plot_grid(sav.for.legend,
+                   
+                   cowplot::plot_grid(int.dot.age, int.dot, 
+                                      b2.dot.age, b2.dot, 
+                                      b6.dot.age, b6.dot,
+                                      b7.dot.age, b7.dot, 
+                                      b4.dot.age, b4.dot,
+                                      b5.dot.age, b5.dot,
+                                      b3.dot.age, b3.dot,
+                                      ncol = 2, align = "v", labels = "AUTO"), 
+                   
+                   
+                   nrow = 2, align = "v", rel_heights = c(0.075, 1))
 dev.off()
-
 #-------------------------------------------------------------------------------------------------
 #                                     Figure 3: 
 #-------------------------------------------------------------------------------------------------
@@ -745,7 +804,7 @@ full.iso <- readRDS("data/full_WUE_dataset_v3.rds")
 full.iso[full.iso$Cor.d13C.suess <= -21 & full.iso$Cor.d13C.suess >= -27.5, ] %>% group_by( site, ageclass) %>% dplyr::summarise(n = n(), WUE.mean = mean(iWUE, na.rm=TRUE))
 full.iso%>% group_by(ageclass, structure) %>% dplyr::summarise(n = n(), WUE.mean = mean(iWUE, na.rm=TRUE), d13 = mean(Cor.d13C.suess))
 
-full.iso <- full.iso[full.iso$Cor.d13C.suess < -21.9, ]
+#full.iso <- full.iso[full.iso$Cor.d13C.suess < -21.9, ]
 Yp.samps <- data.frame(iWUE.samps) 
 
 Yp.m <- melt(Yp.samps)
@@ -1804,7 +1863,7 @@ dev.off()
 
 
 # plot all dotplots for WUE & d13c side by side
-png(height = 13, width = 6.5, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_of_d13_iwue_struct_cohort_params_v3.png")
+png(height = 13, width = 7, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_of_d13_iwue_struct_cohort_params_v3.png")
 plot_grid(a.dots.2.d13, a.dots.2.wue,
           b.dots.2.d13, b.dots.2.wue,
           b2.dots.2.d13, b2.dots.2.wue,

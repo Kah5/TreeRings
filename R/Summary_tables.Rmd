@@ -47,7 +47,8 @@ sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
 sites.modeled$`Mean Age` <- round(sites.modeled$`Mean Age`, digits = 0)
 rownames(sites.modeled) <- NULL
 sites.modeled$`Site #` <- 1:length(sites.modeled$Site)
-sites.modeled <- sites.modeled[,c("Site #", "Site", "Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")]
+sites.modeled$Structure <- c("Forest", "Savanna", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna")
+sites.modeled <- sites.modeled[,c("Site #", "Site", "Structure","Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")]
 kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site level chronology summaries",digits = 3, linesep = "")
 ```
 ## Table 2: Model summaries for struct x cohort model for dry years
@@ -125,7 +126,7 @@ b2.sum <- b2.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
 b2.sum$variable <- factor(b2.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
-b2.sum$param <- "MAP"
+b2.sum$param <- "Precipitation"
 
 b3.sum <- b3.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
                                                    Ci.low = quantile(value, 0.025), 
@@ -149,7 +150,7 @@ b6.sum <- b6.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
 b6.sum$variable <- factor(b6.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
-b6.sum$param <- "June Tmax"
+b6.sum$param <- "June Maximum Temperature"
 
 all.betas <- rbind(a.sum, b3.sum, b4.sum, b5.sum, b2.sum, b6.sum)
 all.betas$Ci.95 <- paste0("(",round(all.betas$Ci.low, 2), " - ", round(all.betas$Ci.high, 2), ")")
@@ -230,7 +231,7 @@ b2.sum.mod2 <- b2.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
 b2.sum.mod2$variable <- factor(b2.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
-b2.sum.mod2$param <- "MAP"
+b2.sum.mod2$param <- "Precipitation"
 
 b3.sum.mod2 <- b3.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
                                                    Ci.low = quantile(value, 0.025), 
@@ -254,13 +255,13 @@ b6.sum.mod2 <- b6.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
 b6.sum.mod2$variable <- factor(b6.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
-b6.sum.mod2$param <- "June Tmax"
+b6.sum.mod2$param <- "June Maximum Temperature"
 
 b7.sum.mod2 <- b7.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
                                                    Ci.low = quantile(value, 0.025), 
                                                    Ci.high = quantile(value, 0.975))
 b7.sum.mod2$variable <- factor(b7.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
-b7.sum.mod2$param <- "June Tmax x MAP"
+b7.sum.mod2$param <- "June Tmax x Precip"
 
 
 all.betas.mod2 <- rbind(a.sum.mod2, b3.sum.mod2, b4.sum.mod2, b5.sum.mod2, b2.sum.mod2, b6.sum.mod2, b7.sum.mod2)
@@ -283,7 +284,7 @@ colnames(all.betas.mod2) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 beta.params <- merge(all.betas, all.betas.mod2, by = c("Parameter", "Cohort"), all.y = TRUE)
 beta.params[is.na(beta.params)] <- " "
 
-beta.params <- beta.params %>% arrange(match(Parameter, c("Intercept","DBH", "Lag-1", "Lag-2", "June Tmax", "MAP", "June Tmax x MAP")), desc(Cohort))
+beta.params <- beta.params %>% arrange(match(Parameter, c("Intercept","DBH", "Lag-1", "Lag-2", "June maximum Temperature", "Precipitation", "June Tmax x Precip")), desc(Cohort))
 
 
 colnames(beta.params) <- c("Parameter", "Cohort", "Estimate", "95% CI", "Estimate", "95% CI")
@@ -449,10 +450,31 @@ summaries.ageclss <- lapply(full_filenames, read.csv)
 summary.table.site.intercor.age <- do.call(rbind, summaries.ageclss)
 
 age.summary <- merge( Past.mod.clim.summary, summary.table.site.intercor.age, by = c("site", "ageclass"))
+age.summary$structure <- c("Forest", "Forest",
+                           "Savanna", "Savanna",
+                           "Forest", "Forest",
+                           "Savanna", "Savanna",
+                           "Forest", "Forest",
+                           "Savanna", "Savanna",
+                           "Savanna", "Savanna",
+                           "Forest", "Forest",
+                           "Savanna","Savanna")
 
-colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1")
+age.summary$site.num <- c(1,1,
+                          2,2,
+                          3,3,
+                          4,4,
+                          5,5,
+                          6,6,
+                          7,7,
+                          8,8,
+                          9,9)
 
-kable(age.summary, "latex", align=c("l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 2) %>% column_spec(4:9, width = "2cm")%>%
+colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1", "Structure", "Site #")
+
+age.summary <- age.summary[,c("Site #","Site", "Structure","Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1")]
+
+kable(age.summary, "latex", align=c("l", "l","l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 2) %>% column_spec(1, width = "0.5cm") %>%  column_spec(6:11, width = "2cm")%>%
 kable_styling() %>% collapse_rows(1, latex_hline = "major")
 
 ```

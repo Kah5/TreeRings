@@ -1,8 +1,8 @@
 # script for running the WUE and d13 models selected (orignially in RWI_models.Rmd)
 
-# saveRDS(full.iso, 'data/full_WUE_dataset_v2.rds')
-# saveRDS(train.iso, 'data/train_WUE_dataset_v2.rds')
-# saveRDS(test.iso, 'data/test_WUE_dataset_v2.rds')
+full.iso <-readRDS( 'data/full_WUE_dataset_v3.rds')
+train.iso <- readRDS('data/train_WUE_dataset_v3.rds')
+test.iso <- readRDS('data/test_WUE_dataset_v3.rds')
 
 full.iso[full.iso$Cor.d13C.suess <= -21 & full.iso$Cor.d13C.suess >= -27.5, ] %>% group_by( site, ageclass) %>% dplyr::summarise(n = n(), WUE.mean = mean(iWUE, na.rm=TRUE), WUE.lo = quantile(iWUE, 0.025, na.rm=TRUE),WUE.hi = quantile(iWUE, 0.975, na.rm = TRUE))
 
@@ -138,9 +138,9 @@ if(!"site.code" %in% colnames(full.iso)){
   }
 
 
-saveRDS(full.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/full.iso.rds")
-saveRDS(test.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/test.iso.rds")
-saveRDS(train.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/train.iso.rds")
+saveRDS(full.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/full.iso_v3.rds")
+saveRDS(test.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/test.iso_v3.rds")
+saveRDS(train.iso, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/train.iso_v3.rds")
 
 # first lets run the WUE model where we have random effects for structure-cohort class:
 # note that this model does well explaining the data, and acco
@@ -166,7 +166,11 @@ update(iWUE_map_tmax, 1000); # Burnin for 1000 samples to start, then go higher 
 
 iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax, 
                                  variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
-                                 n.chains = 3, n.iter = 15000, thin = 15)
+                                 n.chains = 3, n.iter = 20000, thin = 15)
+
+iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax, 
+                                 variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+                                 n.chains = 3, n.iter = 180000, thin = 15)
 
 # kept updating to get to 770995 iterations
 par(mfrow = c(3,4))
@@ -176,7 +180,7 @@ gelman.diag(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]", "beta1[3]","beta1[4]","b
 
 
 # need to fix this to sample
-samps       <- iWUE_map_tmax.re [[1]]
+samps       <- iWUE_map_tmax.re [[3]]
 saveRDS(iWUE_map_tmax.re, "outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.iWUE_struct.cohort.re_v3.rds")
 
 #Yp.samps <- samps[,1:660] # one alpha for each of 16 sites
@@ -197,11 +201,12 @@ iWUE.samps  <- samps[,17:(16+length(full.iso$iWUE))]
 #   Past-Forest                  1
 #   Modern-Forest                2
 
-
+library(HDInterval)
 hdi( (( alpha.samps[,1]-alpha.samps[,2] )/alpha.samps[,2])*100)
 alpha.diff.forest <- ((alpha.samps[,2]-alpha.samps[,1] )/alpha.samps[,1])*100 # (modern - past)/past * 100 = pct increase
 
 wue.pct.diff.forest <- data.frame(
+  structure = "forest",
   pct.change = mean(alpha.diff.forest),
   Ci.low = quantile(alpha.diff.forest, 0.025), 
   Ci.high = quantile(alpha.diff.forest, 0.975), 
@@ -212,6 +217,7 @@ wue.pct.diff.forest <- data.frame(
 alpha.diff.savanna <- ((alpha.samps[,4]-alpha.samps[,3] )/alpha.samps[,3])*100
 
 wue.pct.diff.savanna <- data.frame(
+  structure = "savanna",
   pct.change = mean(alpha.diff.savanna),
   Ci.low = quantile(alpha.diff.savanna, 0.025), 
   Ci.high = quantile(alpha.diff.savanna, 0.975), 
@@ -219,6 +225,9 @@ wue.pct.diff.savanna <- data.frame(
   hdi.low = hdi(alpha.diff.savanna)[1], 
   hdi.high = hdi(alpha.diff.savanna)[2])
 
+# save the alpha differences:
+alpha.pct.diff <- rbind(wue.pct.diff.savanna, wue.pct.diff.forest)
+saveRDS(alpha.pct.diff, "outputs/growth_model/iWUE_MAP_TMAX_dbh/WUE_baseline_struct_cohort_differences_v3.rds")
 
 Yp.samps <- data.frame(iWUE.samps) 
 Yp.m <- melt(Yp.samps)
@@ -245,6 +254,11 @@ Predicted.growth <- Yp.summary %>% group_by(struct.cohort) %>% dplyr::summarise(
                                                           hdi.low = hdi(Predicted, na.rm = TRUE)[1],
                                                           hdi.high = hdi(Predicted,na.rm = TRUE)[2])
 
+saveRDS(Predicted.growth, "outputs/growth_model/iWUE_MAP_TMAX_dbh/WUE_predicted_struct_cohort_v3.rds")
+
+Predicted.growth[Predicted.growth$struct.cohort %in% "Modern-Savanna",c("mean", "Ci.low", "Ci.high")]-Predicted.growth[Predicted.growth$struct.cohort %in% "Past-Savanna",c("mean", "Ci.low", "Ci.high")]
+Predicted.growth[Predicted.growth$struct.cohort %in% "Modern-Forest",c("mean", "Ci.low", "Ci.high")]-Predicted.growth[Predicted.growth$struct.cohort %in% "Past-Forest",c("mean", "Ci.low", "Ci.high")]
+
 #predicted growth for our sites shows that strongest increas in predicted WUE for forests, bute savannas generally have a higher WUE in the past
 ggplot(Predicted.growth , aes(struct.cohort, y = mean))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin = Ci.low, ymax = Ci.high,width = 0.1))
 # ----------------- Plot average predicted difference in iWUE between ageclasses--------------------
@@ -263,6 +277,7 @@ WUE.age <- obs.preds %>% group_by(ageclass) %>% dplyr::summarise(mean = mean(val
                                                           hdi.high = hdi(value,na.rm = TRUE)[2])
 
 
+#saveRDS(WUE.age, "outputs/growth_model/iWUE_MAP_TMAX_dbh/WUE_predicted_diffs_struct_cohort_v3.rds")
 
 #------------------------- ageclass only WUE model run ---------------------------------------
 # Next lets run the WUE model where we have random effects for just age class:
@@ -289,12 +304,16 @@ update(iWUE_map_tmax, 1000); # Burnin for 1000 samples to start, then go higher 
 
 iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax, 
                                  variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
-                                 n.chains = 3, n.iter = 30000, thin = 15)
+                                 n.chains = 3, n.iter = 20000, thin = 15)
+
+#iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax, 
+ #                                variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+  #                               n.chains = 3, n.iter = 10000, thin = 15)
 
 # kept updating to get to 770995 iterations
 par(mfrow = c(3,4))
 traceplot(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]")])
-#traceplot(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]","beta2[1]", "beta2[2]", "beta3[1]", "beta3[2]", "beta4[1]", "beta4[2]")])
+traceplot(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]","beta2[1]", "beta2[2]", "beta3[1]", "beta3[2]", "beta4[1]", "beta4[2]")])
 gelman.diag(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]","beta2[1]", "beta2[2]", "beta3[1]", "beta3[2]", "beta4[1]", "beta4[2]")])
 # gelman.diag values all look good <= 1.01
 
@@ -325,6 +344,8 @@ wue.pct.diff <- data.frame(
   hdi.low = hdi(alpha.diff)[1], 
   hdi.high = hdi(alpha.diff)[2])
 
+saveRDS(wue.pct.diff, "outputs/growth_model/iWUE_MAP_TMAX_dbh/WUE_baseline_cohort_differences_v3.rds")
+
 
 Yp.samps <- data.frame(iWUE.samps) 
 Yp.m <- melt(Yp.samps)
@@ -352,6 +373,9 @@ Predicted.growth <- Yp.summary %>% group_by(ageclass) %>% dplyr::summarise(mean 
                                                                            hdi.low = hdi(Predicted, na.rm = TRUE)[1],
                                                                            hdi.high = hdi(Predicted,na.rm = TRUE)[2])
 
+
+Predicted.growth[Predicted.growth$ageclass %in% "Modern",c("mean", "Ci.low", "Ci.high")]-Predicted.growth[Predicted.growth$ageclass %in% "Past",c("mean", "Ci.low", "Ci.high")]
+saveRDS(Predicted.growth, "outputs/growth_model/iWUE_MAP_TMAX_dbh/WUE_predicted_cohort_v3.rds")
 
 ggplot(Predicted.growth , aes(ageclass, y = mean))+geom_bar(stat = "identity")+geom_errorbar(aes(ymin = Ci.low, ymax = Ci.high, width = 0.1))
 # ----------------- Plot average predicted difference in iWUE between ageclasses--------------------
@@ -485,7 +509,19 @@ update(d13_map_tmax, 1000); # Burnin for 1000 samples to start, then go higher l
 d13C_map_tmax.re <- coda.samples(d13_map_tmax, 
                                  variable.names=c("beta1", "beta2","beta3","beta4","beta5","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
                                  n.chains = 3, n.iter = 20000, thin = 15)
+d13C_map_tmax.re <- coda.samples(d13_map_tmax, 
+                                 variable.names=c("beta1", "beta2","beta3","beta4","beta5","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+                                 n.chains = 3, n.iter = 20000, thin = 15)
 
+d13C_map_tmax.re <- coda.samples(d13_map_tmax, 
+                                 variable.names=c("beta1", "beta2","beta3","beta4","beta5","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+                                 n.chains = 3, n.iter = 20000, thin = 15)
+d13C_map_tmax.re <- coda.samples(d13_map_tmax, 
+                                 variable.names=c("beta1", "beta2","beta3","beta4","beta5","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+                                 n.chains = 3, n.iter = 20000, thin = 15)
+d13C_map_tmax.re <- coda.samples(d13_map_tmax, 
+                                 variable.names=c("beta1", "beta2","beta3","beta4","beta5","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+                                 n.chains = 3, n.iter = 20000, thin = 15)
 
 par(mfrow = c(3,4))
 traceplot(d13C_map_tmax.re[, c("beta1[1]","beta1[2]","beta1[3]","beta1[4]","beta2[1]", "beta2[2]", "beta3[1]", "beta3[2]", "beta4[1]", "beta4[2]")])
@@ -638,7 +674,7 @@ Yp.summary$site <- full.iso$site
 pred.obs <- summary(lm(colMeans(Yp.samps)~ full.iso$Cor.d13C.suess))
 
 # this does a poor job representing iWUE values by itself
-p.o.plot <- ggplot(data = Yp.summary, aes(x = Observed, y= Predicted, color = site))+geom_point( size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
+p.o.plot <- ggplot(data = Yp.summary, aes(x = Observed, y= Predicted))+geom_point( size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+
   geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=-26, y=-22)
 
 # note fairly poor model fit
