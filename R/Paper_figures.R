@@ -1903,3 +1903,25 @@ plot_grid(plot_grid(predicted.wue.cs+theme_bw(base_size = 14)+theme(legend.posit
                     predicted.growth.cs+theme_bw(base_size = 14)+theme(legend.position = "none", panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1), axis.title.x = element_blank()), ncol = 1, align = "hv", labels = "AUTO"),
           cs.legend, rel_widths = c(0.5, 0.3))
 dev.off()
+
+
+
+
+
+#---------------------------------Just plot raw stable istope data used in models------------------
+d13C.samples <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/full.iso_v3.rds")
+
+d13C.samples %>% group_by(site, ageclass, structure) %>% summarise(n.tree =length(unique(ID)),
+                                                                   n.year =length(unique(year)),
+                                                                   WUE = mean(iWUE), 
+                                                                   d13C = mean(Cor.d13C.suess))
+
+
+# lets just make figures of the raw data:
+WUE.column <- ggplot(d13C.samples, aes(year, iWUE))+geom_point(size = 0.5)+facet_wrap(~site, ncol = 1)+theme_bw(base_size = 12)+ylab("Raw iWUE")+xlab("Year")
+
+d13.column <- ggplot(d13C.samples, aes(year, Cor.d13C.suess))+geom_point(size = 0.5)+facet_wrap(~site, ncol = 1)+theme_bw(base_size = 12)+ylab(expression(paste("Raw " ,delta^{13}, "C (\u2030 VPDB)")))+xlab("Year")
+
+png(height= 6, width = 6, units ="in", res = 300, "outputs/growth_model/paper_figures/d13_iWUE_raw_data.png")
+plot_grid(d13.column, WUE.column, ncol = 2, labels = "AUTO")
+dev.off()

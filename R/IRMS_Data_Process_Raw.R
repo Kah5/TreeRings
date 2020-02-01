@@ -131,6 +131,10 @@ ggplot(data.C, aes(Identifier.2, d13C_12C_corr))+geom_point()
 plot(obs_13C[1:9], exp_13C[1:9])
 abline(a = 0, b = 1)
 
+stds.corrected <- ccoeff[[1]] + ccoeff[[2]] *obs_13C[1:9] 
+
+summary(stds.corrected - exp_13C[1:9])
+
 
 #save data - save raw, processed, and database prep data into a both individual csvs:
 #setwd("/Users/kah/Documents/TreeRings/data/stable_isotopes/deltaC/")

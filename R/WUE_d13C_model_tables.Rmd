@@ -17,6 +17,24 @@ library(reshape2)
 
 
 ```{r , results="asis", echo = FALSE}
+d13C.samples <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/full.iso_v3.rds")
+
+
+d13.df <- d13C.samples %>% group_by(site.code, site, ageclass, structure) %>% summarise(n.tree =length(unique(ID)),
+                                                                   n.year =length(unique(year)),
+                                                                   
+                                                                   d13C = round(mean(Cor.d13C.suess), 2),
+                                                                   WUE = round(mean(iWUE), 2))
+
+colnames(d13.df) <- c("Site #", "Site", "Cohort", "Structure", "# Trees", "# Years", "$\\dot{m}_1$",  "Average iWUE")
+  
+kable(d13.df, "latex",align=c("c", "c", "l", "c", "c", "c"), booktabs = T, caption = "Stable Isotope samples", col.names = c("Site Number", "Site", "Cohort", "Structure", "Number of Trees", "Number of Years", "$\\delta^{13}C$",  "Average iWUE"), escape = FALSE) %>%
+kable_styling() %>% collapse_rows(c(1), latex_hline = "major") 
+```
+
+
+
+```{r , results="asis", echo = FALSE}
 # read in the iWUE and d13 cohort model outputs:
 # first iWUE:
 WUEparams <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.iWUE_age.cohort.re_v3.rds")

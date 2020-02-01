@@ -1,6 +1,6 @@
 # This is a script that runs the bootstrapped climate correlations over all sites & all woood types:
 
-
+library(dplR)
 
 # ------------------------------load all the files needed:
 wood <- "WW"
@@ -253,3 +253,7 @@ for(w in 1:length(woods)){
     clim.PRISM.corrs(site, site.code)
   }
 }
+
+
+
+# now make one big figure to Plot all the monthly correlations at each site + total precipitation
