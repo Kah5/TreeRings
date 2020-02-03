@@ -202,20 +202,28 @@ clim.PRISM.corrs <- function(site, site.code){
     
     #merge previous and current together:
     record.MN <- merge(prevs, record.MN, by = "Year")
+    record.MN$wateryear <- rowSums(record.MN[,c("pOct", "pNov", "pDec","Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep")])
+    
+    # reorder so that we can just select columns by number in the bootstrap function
+    # record.MN <- record.MN[,c("Year","pJan", "pFeb", "pMar", "pApr", "pMay", "pJun", "pJul", "pAug", "pSep", "pOct", "pNov", "pDec",
+    #                           "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "wateryear", "CORstd", "samp.depth", "freq")]
+    # 
+    record.MN <- record.MN[,c(1:25, 29, 26:28)]
     
     # function to do the bootstrapping correlations
+    
     boot.cor <- function(d,i=c(1:n), colno ){
-      d2 <- d[i,2:26]
+      d2 <- d[i,2:27]
       
       
-      return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
+      return(cor(d2[,colno], d2[,26], use = "pairwise.complete.obs"))
     }
     
-    pcors <- matrix(0, nrow = 24, ncol = 4)
-    colnos <- 1:24
+    pcors <- matrix(0, nrow = 25, ncol = 4)
+    colnos <- 1:25
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
     
         boot.results <- boot(d = record.MN, colno=mo , boot.cor, R= 500)
         
@@ -276,7 +284,7 @@ clim.PRISM.corrs <- function(site, site.code){
       return(cor(d2[,colno], d2[,25], use = "pairwise.complete.obs"))
     }
     
-    tcors <- matrix(0, nrow = 24, ncol = 4)
+    tcors <- matrix(0, nrow = 25, ncol = 4)
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:

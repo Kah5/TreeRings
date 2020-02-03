@@ -169,6 +169,7 @@ for(w in 1:length(woods)){
 
 source("R/corr_PRISM_data.R")
 woods <- c("WW" ,"EW", "LW")
+wood <- "WW"
 
 for(w in 1:length(woods)){
   wood <- woods[w] # run script over all wood types
@@ -246,6 +247,8 @@ for(w in 1:length(woods)){
   site.codes <- c("TOW", "HIC", "BON", "STC","COR", "UNC","GLA", "ENG", "MOU", "GL1", "GL2", "GL3", "GL4", "PVC")
   
   
+  #Note: STC, ENG missing prism data? error on running in the loop
+  
   
   for(s in 1:length(sites)){
     site <- sites[[s]]
@@ -257,3 +260,25 @@ for(w in 1:length(woods)){
 
 
 # now make one big figure to Plot all the monthly correlations at each site + total precipitation
+
+clim.PRISM.corrs(Coral, "COR")
+clim.PRISM.corrs(site = Townsend, site.code = "TOW")
+# read in all the Precip cors:
+site.code <- "COR"
+
+lapply(site.codes, )
+
+# all precip.plots: 
+
+vpdmaxcors<- read.csv(paste0("data/BootCors/PRISM/",site.code, "-", "WW", "VPDmaxcor.csv"))
+
+precipcors <- read.csv(paste0("data/BootCors/PRISM/", "COR", "-", "LW", "Precipcor.csv"))
+
+function(x){
+  precipcors <- list()
+  paste0("data/BootCors/PRISM/", x, "-", "WW", "Precipcor.csv")
+  
+  lapply(read.csv)
+  precipcors <- read.csv(paste0("data/BootCors/PRISM/", x, "-", "WW", "Precipcor.csv"))
+
+}
