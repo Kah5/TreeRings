@@ -288,7 +288,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
       
       boot.results <- boot(d = temp.MN, colno=mo , boot.cor, R= 500)
       
@@ -350,7 +350,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
       
       boot.results <- boot(d = temp.MN, colno=mo , boot.cor, R= 500)
       
@@ -413,7 +413,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
       
       boot.results <- boot(d = temp.MN, colno=mo , boot.cor, R= 500)
       
@@ -473,7 +473,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
       
       boot.results <- boot(d = BAL.MN, colno=mo , boot.cor, R= 500)
       
@@ -534,7 +534,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
       
       boot.results <- boot(d = vpdmin.MN, colno=mo , boot.cor, R= 500)
       
@@ -594,7 +594,7 @@ clim.PRISM.corrs <- function(site, site.code){
     colnos <- 1:24
     
     # run the bootstrapped correlation function over all the months and calculate CI:
-    for(mo in 2:length(colnos)){
+    for(mo in 1:length(colnos)){
       
       boot.results <- boot(d = vpdmax.MN, colno=mo , boot.cor, R= 500)
       
