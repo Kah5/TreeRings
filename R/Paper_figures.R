@@ -298,7 +298,171 @@ png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_
 plot_grid(site.bayes.map.inset.num, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
 dev.off()
 
+# --------make the same map, but with ecoregions as the backdrop:
+library(sf)
+wwf <- readOGR(dsn = "data/official/wwf_terr_ecos.shp")
+wwf
 
+
+
+
+
+# shp <- read_sf('data/na_cec_eco_l1/NA_CEC_Eco_Level1.shp')
+# ggplot(shp) + geom_sf(aes(colour = NA_L1NAME))
+# read in ecoregion shapefile
+eco <- readOGR(dsn = "data/na_cec_eco_l1/NA_CEC_Eco_Level1.shp", layer = "NA_CEC_Eco_Level1")
+eco
+
+# recieving topology problem errors
+rgeos::gIsValid(eco)
+# set 0 width buffer to clean up these errors
+peco_states <- gBuffer(eco, byid=TRUE, width=0)
+
+rgeos::gIsValid(peco_states)
+
+eco.2<- gSimplify(eco, tol=0.01, topologyPreserve=TRUE)
+
+# Simplify the shapefile with 'ms_simplify', keeping 1%
+eco01_shp <- ms_simplify(peco_states, keep = 0.01, keep_shapes = T)
+us01_dt <- broom::tidy(eco01_shp, region = "id") %>% data.table()
+
+spydf_states<- wwf
+spydf_states <- rgeos::gSimplify(spydf_states, tol = 0.00001)
+
+# this is a well known R / GEOS hack (usually combined with the above) to 
+# deal with "bad" polygons
+spydf_states <- rgeos::gBuffer(spydf_states, byid=TRUE, width=0)
+
+# any bad polys?
+sum(rgeos::gIsValid(spydf_states, byid=TRUE)==FALSE)
+
+## [1] 0
+
+system.time(plot(spydf_states))
+
+plot(eco)
+plot(ne_state)
+
+# Remove Alaska, Hawaii, and Puerto Rico
+ne_state_sub<- ne_state %>% subset(!(gn_name %in% c("Hawaii", "Alaska")))
+plot(ne_state_sub)
+
+ne_state_sub <- rgeos::gSimplify(ne_state_sub, tol = 0.00001)
+
+# this is a well known R / GEOS hack (usually combined with the above) to 
+# deal with "bad" polygons
+ne_state_sub<- rgeos::gBuffer(ne_state_sub, byid=TRUE, width=0)
+
+library(rgeos)
+library(sp)
+clip_shp = function(small_shp, large_shp){
+  # make sure both have the same proj
+  large_shp = spTransform(large_shp, CRSobj = CRS(proj4string(small_shp)))
+  cat("About to get the intersections, will take a while...", "\n")
+  clipped_shp = rgeos::gIntersection(small_shp, large_shp, byid = T, drop_lower_td = T)
+  cat("Intersection done", "\n")
+  x = as.character(row.names(clipped_shp))
+  # these are the data to keep, can be duplicated
+  keep = gsub(pattern = "^[0-9]{1,2} (.*)$", replacement = "\\1", x)
+  large_shp_data = as.data.frame(large_shp@data[keep,])
+  row.names(clipped_shp) = row.names(large_shp_data)
+  clipped_shp = spChFIDs(clipped_shp, row.names(large_shp_data))
+  # combine and make SpatialPolygonsDataFrame back
+  clipped_shp = SpatialPolygonsDataFrame(clipped_shp, large_shp_data)
+  clipped_shp
+}
+
+clipped.eco <- clip_shp(ne_state_sub, wwf)
+
+# the larger the tol is, the less rows the result will have
+thin = function(x, tol = 0.01){
+  id = unique(x$id)[1]
+  x1 = x[, 1:2]
+  names(x1) = c("x", "y")
+  x2 <-shapefiles::dp(x1, tol)
+  data.frame(long = x2$x, lat = x2$y, id = id)
+}
+
+library(ggplot2)
+library(dplyr)
+# convert shapefile to data frame
+shp_df = fortify(clipped.eco, region = "BIOME") # change the region accordingly
+# for each group, thin it
+shp_df_thin = dplyr::select(shp_df, long, lat, id, group) %>%
+  group_by(group) %>%
+  do(thin(., tol = 0.02))
+
+
+biome.names <- unique (clipped.eco@data[c("BIOME", "G200_REGIO")])
+biome.names <- biome.names[!is.na(biome.names$G200_REGIO),]
+
+#shp_df_thin<- merge(shp_df_thin, biome.names, by.x = "id", by.y = "BIOME")
+biome.names.test <- data.frame(
+  id = c(1, 12, 13, 3, 
+            4, 5, 6, 7, 
+            8, 9, 98),
+  BIOME_NAME = c(NA, "Chaparral and Woodlands", "Desert/Aridlands", "Pine-Oak Forests",
+                 "Eastern Forests", "Mixed Forests", NA, "Southeastern forests", 
+                 "Grasslands & Prairies", "Everglades Flooded Grasslands", NA)
+)
+
+shp_df_thin.m <- merge(biome.names.test, shp_df_thin, by = "id")
+
+bbox3 <- data.frame(long = c(-102, -84.25, -84.25, -102, -102),
+                    lat = c(36.5, 36.5, 50.0, 50.0, 36.5))
+
+full.us.wwf.eco <- ggplot() + 
+  geom_polygon(data = na.omit(shp_df_thin.m), aes(x = long, y = lat, group = group,  fill = BIOME_NAME)) +
+  coord_map() +theme_bw()+scale_fill_manual(values = c("Chaparral and Woodlands"= "#a6cee3",
+                                                       "Pine-Oak Forests"="#1f78b4",
+                                                       "Eastern Forests"="#b2df8a",
+                                                       "Mixed Forests"="#33a02c",
+                                                       "Desert/Aridlands"="#fb9a99",
+                                                       "Southeastern forests"="#e31a1c",
+                                                       "Grasslands & Prairies"="#fdbf6f",
+                                                       "Everglades Flooded Grasslands"="#ff7f00"))+theme(panel.grid.major = element_blank(), axis.title = element_blank(), legend.title = element_blank())+
+  geom_path(data = bbox3, aes(x = long, y = lat), size = 0.75, color = "black")+ theme_bw() +
+  theme(axis.title = element_blank(), panel.grid = element_blank(),
+        plot.background = element_rect(fill = "transparent",colour = NA), 
+        axis.text = element_blank(), axis.ticks = element_blank())
+
+
+
+sites.bays.map.num.eco <- full.us.wwf.eco + geom_point(data = numbered.sites, aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
+  scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+
+  geom_text_repel(data = numbered.sites, aes(x = coords.x1, y = coords.x2, label=number),
+                  fontface = 'bold', color = 'black',
+                  box.padding = unit(0.5, "lines"),
+                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
+  theme(legend.title = element_blank(), legend.position= c(0.75, 0.15), # legend.position= "none",legend.position = "bottom", legend.direction = "vertical", 
+        legend.background = element_rect(color = "black", fill = "white", size = 0.1, linetype = "solid"),
+        legend.text=element_text(size=6), legend.spacing = unit(0.1, "lines"), 
+        legend.key.size = unit(0.2, "lines"), axis.title = element_blank())
+legend.map <- get_legend(sites.bays.map.num.eco)
+
+
+site.bayes.map.inset.num.eco <- sites.bays.map.num.eco+guides(color = FALSE, shape = FALSE) +
+  annotation_custom(grob =  ggplotGrob(full.us.wwf.eco+theme(legend.position = "none", axis.text = element_blank(), axis.ticks = element_blank())), xmin = -101.25, xmax = -92.5,
+                                                                   ymin = 36.8, ymax = 41.55)
+
+
+
+# now plot the tree ring sites on this map and make an inset
+
+legend.sf <- get_legend(site.bayes.map.inset.num+theme(legend.position = "bottom"))
+legend.colors <- get_legend(full.us.wwf.eco)
+
+site.bayes.map.inset.num+theme(legend.position = "bottom")
+# create the same maps but with inset of US
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset_eco.png")
+plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+dev.off()
+
+png(height = 4.1, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset_eco.png")
+plot_grid(
+  plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO"),
+plot_grid( legend.sf), ncol = 1, rel_heights = c(1,0.12))
+dev.off()
 
 # # make the same figure, but with conus forest biomass underlaying the map:
 # 
