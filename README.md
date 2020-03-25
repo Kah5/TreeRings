@@ -30,14 +30,14 @@ Contains R code for detrending tree ring widths, and conducting preliminary corr
 ### UNDERC_training folder
 Contains rcode used to train and demonstrate basic climate correlations and stand mapping for tree ring analyses
 
--Basic detrending options in dplr are in **dplR_detrend.R**
--Some code to generate stand maps from plot coordinates is in **UNDERC_plot_maps.R**
--A basic guide to generating tree ring growth - climate correlations/responses is in **Climate_response_UNDERC.R**
+- Basic detrending options in dplr are in **dplR_detrend.R**
+- Some code to generate stand maps from plot coordinates is in **UNDERC_plot_maps.R**
+- A basic guide to generating tree ring growth - climate correlations/responses is in **Climate_response_UNDERC.R**
 
 ### Isotopes folder
-Contains the code used to read in IRMS data, do standard corrections,
+Contains the code used to read in IRMS data, do standard corrections, and calculate WUE from $delta$ 13C values
 
--R code used to read in IRMS raw data and correct for standards **IRMS_Data_Process_Raw.R**
--R code used to identify potential years with similar climate to do sampling on is in **Picking_isotope_years.R**
--R code used to read in all the $delta$ 13 C values, correct for the suess effect and do some  preliminary plotting and cleaning of the data in **read_plot_deltaC.R**
--R code used to calucluate intrinsic water use efficiency from the stable isotpe values is **calc_WUE.R**
+- R code used to read in IRMS raw data and correct for standards **IRMS_Data_Process_Raw.R**
+- R code used to identify potential years with similar climate to do sampling on is in **Picking_isotope_years.R**
+- R code used to read in all the $delta$ 13 C values, correct for the suess effect and do some  preliminary plotting and cleaning of the data in **read_plot_deltaC.R**
+- R code used to calucluate intrinsic water use efficiency from the stable isotpe values is **calc_WUE.R**
