@@ -35,7 +35,7 @@ Contains rcode used to train and demonstrate basic climate correlations and stan
 - A basic guide to generating tree ring growth - climate correlations/responses is in **Climate_response_UNDERC.R**
 
 ### Isotopes folder
-Contains the code used to read in IRMS data, do standard corrections, and calculate WUE from $\delta$ 13C values
+Contains the code used to read in IRMS data, do standard corrections, and calculate WUE from \delta 13C values
 
 - R code used to read in IRMS raw data and correct for standards **IRMS_Data_Process_Raw.R**
 - R code used to identify potential years with similar climate to do sampling on is in **Picking_isotope_years.R**
