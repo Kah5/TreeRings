@@ -1,0 +1,18 @@
+# This Script goes over the basics of detrending using the dplr package
+# clear environment before using:
+rm(list=ls())
+
+#load packages:
+library(dplR)
+library(reshape2)
+library(ggplot2)
+library(plyr)
+
+#use the "read.tucson" function to 
+Bonanza <- read.tucson("./cofecha/BONww.rwl", header = TRUE)
+
+
+#change site --need to run this script for each site. It will output correlation coeffeiencts and save them in csv
+site <- Bonanza # assigns site as the same object as bonanaza rwl file
+site.code <- "BON" # for naming purposes
+

@@ -1,0 +1,518 @@
+---
+title: "summary_tables"
+author: "Kelly Heilman"
+date: "2/27/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, results="asis", results='hide', echo=FALSE, message = FALSE, warnings = FALSE}
+library(xtable, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(reshape2, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(dplR, quietly = TRUE)
+
+# 1. Read in the site level summaries generated during crossdating (these come from my Crossdating Repo & were generated using dplR)
+
+
+# directory that all the csv files are in
+data.dir <- "/Users/kah/Documents/crossdating/data/site_summaries/"
+
+file_names = list.files(data.dir)
+full_filenames <- paste0(data.dir, file_names)
+summaries <- lapply(full_filenames, read.csv)
+
+summary.table <- do.call(rbind, summaries)
+summary.table <- summary.table %>% dplyr::select(site, ntrees, Avg.age, TimeSpan, intercorrelation, AR.mean, eps, rbar.eff)
+
+# new.table <- xtable(summary.table)
+# new.table
+
+colnames(summary.table) <- c("Site", "Trees", "Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")
+#print(xtable(summary.table, align = rep("c", 9)), type="latex", include.rownames = FALSE)
+
+site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC")
+
+```
+## Table 1: Site summaries
+```{r, results="asis", echo=FALSE, message = FALSE, warnings = FALSE}
+sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
+sites.modeled$`Mean Age` <- round(sites.modeled$`Mean Age`, digits = 0)
+rownames(sites.modeled) <- NULL
+sites.modeled$`Site #` <- 1:length(sites.modeled$Site)
+sites.modeled$Structure <- c("Forest", "Savanna", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna")
+sites.modeled <- sites.modeled[,c("Site #", "Site", "Structure","Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")]
+kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site level chronology summaries",digits = 3, linesep = "")
+```
+## Table 2: Model summaries for struct x cohort model for dry years
+```{r, results="asis", echo = FALSE}
+# read in tables from the following models run on dry years:
+
+# Mod1 = full model, site int, structure/cohort params, no interaction
+# Mod2 = full model, site int, structure/cohort params, no interaction
+
+# read in model fit estimates
+summary.sorted <- read.csv("/Users/kah/Documents/TreeRings/outputs/growth_model/data_summary_full.csv")
+
+mod1 <- summary.sorted[summary.sorted$model %in% "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs",]
+mod2 <- summary.sorted[summary.sorted$model %in% "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter",]
+
+
+# --------read in estimates  + 95% CI for Mod1:
+samps <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/samps.rds")
+test.dry <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/test.rds")
+train.dry <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs/train.rds")
+
+
+ Yp.samps <- samps[,1:(length(test.dry$RWI))] 
+
+ alpha.samps  <- samps[,(length(test.dry$RWI)+1):(length(test.dry$RWI)+ 9)]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,(length(test.dry$RWI)+10):(length(test.dry$RWI)+13)]
+ beta3.samps <- samps[,(length(test.dry$RWI)+14):(length(test.dry$RWI)+17)]
+ beta4.samps <- samps[,(length(test.dry$RWI)+18):(length(test.dry$RWI)+ 21)]
+ beta5.samps <- samps[,(length(test.dry$RWI)+ 22):(length(test.dry$RWI)+ 25)]
+ beta6.samps <- samps[,(length(test.dry$RWI)+ 26):(length(test.dry$RWI)+ 29)]
+ sigma.samps <- samps[,(length(test.dry$RWI)+ 36)]
+ sigma_betas <- samps[,(length(test.dry$RWI)+ 30):(length(test.dry$RWI)+ 35)]
+
+a <- data.frame(alpha.samps)
+colnames(a) <- unique(train.dry$site)#[order(unique(train.dry[,c("site", "site.num")])[,2])])
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+ 
+b2 <- data.frame(beta2.samps)
+colnames(b2) <-c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+#colnames(b2) <- c(paste0(c(unique(train.dry$struct.cohort))))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+
+b3 <- data.frame(beta3.samps)
+colnames(b3) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b3$num <- rownames(b3)
+b3.m <- melt(b3, id.vars=c("num"))
+
+b4 <- data.frame(beta4.samps)
+colnames(b4) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b4$num <- rownames(b4)
+b4.m <- melt(b4, id.vars=c("num"))
+
+b5 <- data.frame(beta5.samps)
+colnames(b5) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b5$num <- rownames(b5)
+b5.m <- melt(b5, id.vars=c("num"))
+
+b6 <- data.frame(beta6.samps)
+colnames(b6) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b6$num <- rownames(b6)
+b6.m <- melt(b6, id.vars=c("num"))
+
+
+# get means and ci for each 
+a.sum <- a.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+
+a.sum$param <- "Intercept"
+
+
+b2.sum <- b2.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b2.sum$variable <- factor(b2.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b2.sum$param <- "Precipitation"
+
+b3.sum <- b3.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b3.sum$variable <- factor(b3.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b3.sum$param <- "DBH"
+
+b4.sum <- b4.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b4.sum$variable <- factor(b4.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b4.sum$param <- "Lag-1"
+
+b5.sum <- b5.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b5.sum$variable <- factor(b5.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b5.sum$param <- "Lag-2"
+
+b6.sum <- b6.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b6.sum$variable <- factor(b6.sum$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b6.sum$param <- "June Maximum Temperature"
+
+all.betas <- rbind(a.sum, b3.sum, b4.sum, b5.sum, b2.sum, b6.sum)
+all.betas$Ci.95 <- paste0("(",round(all.betas$Ci.low, 2), " - ", round(all.betas$Ci.high, 2), ")")
+all.betas$mean.val <- round(all.betas$mean.val, 3)
+all.betas$mean.val <- ifelse(all.betas$Ci.low < 0 & all.betas$Ci.high< 0, paste(all.betas$mean.val, "*"), ifelse(all.betas$Ci.low > 0 & all.betas$Ci.high > 0, paste(all.betas$mean.val, "*"), all.betas$mean.val)) # add significance stars if CI does not include 0
+all.betas <- all.betas[,c("param", "variable", "mean.val", "Ci.95")]
+colnames(all.betas) <- c("Parameter", "Cohort", "Estimate", "95% CI")
+
+# print(xtable(all.betas, align = rep("c", 5)), include.rownames = FALSE)
+# 
+# kable(all.betas, "latex", align = "c", booktabs = T) %>%
+# kable_styling() %>% collapse_rows(1, latex_hline = "major")
+
+
+# # --------read in estimates  + 95% CI for Mod:
+ samps.mod2 <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
+ test.dry <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+ train.dry <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+
+
+ alpha.samps.mod2  <- samps.mod2[,1:9]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps.mod2 <- samps.mod2[,10:13]
+ beta3.samps.mod2 <- samps.mod2[,14:17]
+ beta4.samps.mod2 <- samps.mod2[,18:21]
+ beta5.samps.mod2 <- samps.mod2[,22:25]
+ beta6.samps.mod2 <- samps.mod2[,26:29]
+ beta7.samps.mod2 <- samps.mod2[,30:33]
+ mu_beta.samps.mod2 <- samps.mod2[,34:40]
+ sigma.samps.mod2 <- samps.mod2[,36]
+ sigma_betas <- samps.mod2[,30:35]
+      
+ 
+ a <- data.frame(alpha.samps.mod2)
+colnames(a) <- unique(train.dry$site)#[order(unique(train.dry[,c("site", "site.num")])[,2])])
+a$num <- rownames(a)
+a.m <- melt(a, id.vars=c("num"))
+ 
+b2 <- data.frame(beta2.samps.mod2)
+colnames(b2) <-c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+#colnames(b2) <- c(paste0(c(unique(train.dry$struct.cohort))))
+b2$num <- rownames(b2)
+b2.m <- melt(b2, id.vars=c("num"))
+
+b3 <- data.frame(beta3.samps.mod2)
+colnames(b3) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b3$num <- rownames(b3)
+b3.m <- melt(b3, id.vars=c("num"))
+
+b4 <- data.frame(beta4.samps.mod2)
+colnames(b4) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b4$num <- rownames(b4)
+b4.m <- melt(b4, id.vars=c("num"))
+
+b5 <- data.frame(beta5.samps.mod2)
+colnames(b5) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b5$num <- rownames(b5)
+b5.m <- melt(b5, id.vars=c("num"))
+
+b6 <- data.frame(beta6.samps.mod2)
+colnames(b6) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b6$num <- rownames(b6)
+b6.m <- melt(b6, id.vars=c("num"))
+
+b7 <- data.frame(beta7.samps.mod2)
+colnames(b7) <- c(unique(train.dry$struct.cohort)[order(unique(train.dry[,c("struct.cohort", "struct.cohort.code")])[,2])])
+b7$num <- rownames(b7)
+b7.m <- melt(b7, id.vars=c("num"))
+
+
+# get means and ci for each 
+a.sum.mod2 <- a.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+
+a.sum.mod2$param <- "Intercept"
+
+b2.sum.mod2 <- b2.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b2.sum.mod2$variable <- factor(b2.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b2.sum.mod2$param <- "Precipitation"
+
+b3.sum.mod2 <- b3.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b3.sum.mod2$variable <- factor(b3.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b3.sum.mod2$param <- "DBH"
+
+b4.sum.mod2 <- b4.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b4.sum.mod2$variable <- factor(b4.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b4.sum.mod2$param <- "Lag-1"
+
+b5.sum.mod2 <- b5.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b5.sum.mod2$variable <- factor(b5.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b5.sum.mod2$param <- "Lag-2"
+
+b6.sum.mod2 <- b6.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b6.sum.mod2$variable <- factor(b6.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b6.sum.mod2$param <- "June Maximum Temperature"
+
+b7.sum.mod2 <- b7.m %>% group_by(variable) %>% dplyr::summarise(mean.val = mean(value),
+                                                   Ci.low = quantile(value, 0.025), 
+                                                   Ci.high = quantile(value, 0.975))
+b7.sum.mod2$variable <- factor(b7.sum.mod2$variable, levels = c( "Past-Forest", "Past-Savanna", "Modern-Forest", "Modern-Savanna"))
+b7.sum.mod2$param <- "June Tmax x Precip"
+
+
+all.betas.mod2 <- rbind(a.sum.mod2, b3.sum.mod2, b4.sum.mod2, b5.sum.mod2, b2.sum.mod2, b6.sum.mod2, b7.sum.mod2)
+all.betas.mod2$Ci.95 <- paste0("(",round(all.betas.mod2$Ci.low, 2), " - ", round(all.betas.mod2$Ci.high, 2), ")")
+all.betas.mod2$mean.val <- round(all.betas.mod2$mean.val, 3)
+all.betas.mod2$mean.val <- ifelse(all.betas.mod2$Ci.low < 0 & all.betas.mod2$Ci.high< 0, paste(all.betas.mod2$mean.val, "*"),
+                                  ifelse(all.betas.mod2$Ci.low > 0 & all.betas.mod2$Ci.high > 0, paste(all.betas.mod2$mean.val, "*"), all.betas.mod2$mean.val))
+all.betas.mod2 <- all.betas.mod2[,c("param", "variable", "mean.val", "Ci.95")]
+colnames(all.betas.mod2) <- c("Parameter", "Cohort", "Estimate", "95% CI")
+
+# print(xtable(all.betas.mod2, align = rep("c", 5)), include.rownames = FALSE)
+# 
+# kable(all.betas.mod2, "latex", booktabs = T) %>%
+#   
+# kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% kable_styling(latex_options = c("repeat_header"))
+
+
+# combine the two tables:
+
+beta.params <- merge(all.betas, all.betas.mod2, by = c("Parameter", "Cohort"), all.y = TRUE)
+beta.params[is.na(beta.params)] <- " "
+
+beta.params <- beta.params %>% arrange(match(Parameter, c("Intercept","DBH", "Lag-1", "Lag-2", "June maximum Temperature", "Precipitation", "June Tmax x Precip")), desc(Cohort))
+
+
+colnames(beta.params) <- c("Parameter", "Cohort", "Estimate", "95% CI", "Estimate", "95% CI")
+
+# kable(beta.params, "latex", align = "c", booktabs = T) %>%
+#   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
+# kable_styling() %>% collapse_rows(1, latex_hline = "major")
+# 
+# # okay now add the model summaries to the dataframe:
+# kable(beta.params, "latex", align = "c", booktabs = T) %>%
+#   add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
+# kable_styling() %>% collapse_rows(1, latex_hline = "major")
+
+
+model.stats <- rbind(mod1, mod2)
+model.stats$modelname <- c("Model 1", "Model 2")
+model.stats$MSE <- round(model.stats$MSE, 3)
+model.stats$BIAS <- round(model.stats$BIAS, 3)
+model.stats$Rsq <- round(model.stats$Rsq, 3)
+model.stats$penalties <- round(model.stats$penalties, 3)
+model.stats$deviances <- round(model.stats$deviances, 3)
+model.stats$penalized_deviance <- round(model.stats$penalized_deviance, 3)
+
+
+model.stats <- model.stats[, c("modelname","MSE", "BIAS", "Rsq", "penalties", "deviances", "penalized_deviance")]
+model.stats.cols <- t(model.stats)
+colnames(model.stats.cols) <- c("Model 1", "Model 2")
+model.stats.cols<- data.frame(model.stats.cols)
+model.stats.cols$cohort <-  c("modelname", "Mean Sq. Error", "Bias", "R sq", "penalties", "deviances", "penalized deviance")
+model.stats.cols$Parameter <- " "
+model.stats.cols$Ci.95.x <- " "
+model.stats.cols$Ci.95.y <- " "
+
+model.stats.cols <- model.stats.cols %>% filter(!cohort %in% "modelname")
+
+model.statsv <- model.stats.cols[, c("Parameter","cohort", "Model.1","Ci.95.x", "Model.2", "Ci.95.y")]
+colnames(model.statsv) <- colnames(beta.params)
+
+# combine the model parameter estimates & the model summaries
+beta.full <- rbind( beta.params, model.statsv)
+row.names(beta.full) <- NULL
+
+
+# finally print out a pretty table!
+ 
+kable(beta.full, "latex", align=c("c", "c", "l", "c", "l", "c"), booktabs = T, caption = "Parameter Estimates and Model Fit") %>%
+  add_header_above(c(" " = 2, "Model 1" = 2, "Model 2" = 2)) %>%
+kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% group_rows("Model Fit", 34, 38) %>% row_spec(33, hline_after = TRUE) %>% footnote(symbol = c("95% CI does not contain zero"), footnote_as_chunk = T)
+```
+# plot the percent change in growth due to change in drought sensitivity across drought, assuming constant t, dbh, mean growth in past years
+```{r, results="asis", echo = FALSE}
+# plot 
+
+```
+## Table 3: Cohort and structure summaries overall & by site:
+
+```{r, results="asis", echo = FALSE}
+full.ghcn <- read.csv("/Users/kah/Documents/TreeRings/outputs/data/rwi_age_dbh_ghcn.csv")
+
+#full.ghcn$ageclass2 <- ifelse(full.ghcn$year >= 1940, "Modern", "Past")
+
+full.ghcn %>% filter(site %in% site.list) %>% group_by(site, ageclass) %>% dplyr::summarise(Tmax = mean(JUNTmax, na.rm = TRUE), 
+                                                     DBH = mean(DBH, na.rm=TRUE),
+                                                     Trees = length(unique(ID)))
+
+
+full.ghcn %>% filter(site %in% site.list) %>% filter(year %in% 1895:1950 & ageclass %in% "Past" | year %in% 1950:2015 & ageclass %in% "Modern") %>% group_by(ageclass) %>% dplyr::summarise(Tmax = mean(JUNTmax, na.rm = TRUE), 
+                                                     DBH = mean(DBH, na.rm=TRUE),
+                                                     DBH.sd = sd(DBH, na.rm=TRUE),
+                                                     Trees = length(unique(ID)))
+
+
+
+Past.mod.clim.summary <- full.ghcn %>% filter(site %in% site.list) %>% filter(year %in% 1895:1950 & ageclass %in% "Past" | year %in% 1950:2015 & ageclass %in% "Modern") %>% group_by(site, ageclass) %>% 
+  dplyr::summarise(
+    Trees = length(unique(ID)),
+    Tmax = mean(JUNTmax, na.rm = TRUE),
+    MAP = mean(PCP, nam.rm = TRUE),
+    DBH = mean(DBH, na.rm = TRUE), 
+    RWI = mean(RWI, na.rm = TRUE),
+    )
+
+
+
+
+# get series intercorrelations for each site 
+for(i in 1:length(site.list)){
+  AVO <- full.ghcn %>% filter (site %in% site.list[i]) %>% select(ID, year, RWI) %>% spread(ID,RWI)
+  rownames(AVO) <- AVO$year
+  AVO <- AVO %>% select(-year)
+  summary.AVO <- summary.rwl(AVO)
+  
+  df.corrs <- data.frame(site = site.list[i],
+                         Interseries.correlation = mean(interseries.cor(AVO)[,1]),
+                         AR1 = mean(summary.AVO$ar1))
+  write.csv(df.corrs, paste0("/Users/kah/Documents/TreeRings/outputs/site_summary/", site.list[i], "_int_ar1.csv"), row.names = FALSE)
+}
+
+
+# get mean series intercorrelations for each site & cohort group
+
+for(i in 1:length(site.list)){
+  
+  AVO <- full.ghcn %>% filter (site %in% site.list[i]) %>% select(ID, year, RWI) %>% spread(ID,RWI)
+  rownames(AVO) <- AVO$year
+  AVO <- AVO %>% select(-year)
+  summary.AVO <- summary.rwl(AVO)
+  interseries.correlations <- interseries.cor(AVO)
+  interseries.correlations$series <- rownames(interseries.correlations)
+  
+
+  AVO.mod <- full.ghcn %>% filter (site %in% site.list[i] & ageclass %in% "Modern" & year %in% 1950:2015) %>% select(ID, year, RWI) %>% spread(ID, RWI)
+  rownames(AVO.mod) <- AVO$year
+  AVO.mod <- AVO.mod %>% select(-year)
+  summary.AVO.mod <- summary.AVO %>% filter(series %in% colnames(AVO.mod))
+  intercor.mod <- interseries.correlations %>% filter(series %in% colnames(AVO.mod))
+  
+  df.corrs.mod <- data.frame(site = site.list[i],
+                             ageclass = "Modern",
+                             
+                             Interseries.correlation = mean(intercor.mod$res.cor),
+                             AR1 = mean(summary.AVO.mod$ar1))
+  
+  
+  AVO.past <- full.ghcn %>% filter (site %in% site.list[i] & ageclass %in% "Past" & year %in% 1895:1950) %>% select(ID, year, RWI) %>% spread(ID,RWI)
+  rownames(AVO.past) <- AVO$year
+  summary.AVO.past <- summary.AVO %>% filter(series %in% colnames(AVO.past))
+  intercor.past <- interseries.correlations %>% filter(series %in% colnames(AVO.past))
+  
+  df.corrs.past <- data.frame(site = site.list[i],
+                              ageclass = "Past",
+                              Interseries.correlation = mean(intercor.past$res.cor),
+                         AR1 = mean(summary.AVO.past$ar1))
+  df.corrs<- rbind(df.corrs.mod, df.corrs.past)
+  
+  write.csv(df.corrs, paste0("/Users/kah/Documents/TreeRings/outputs/site_summary/", site.list[i], "_int_ar1_byageclass.csv"), row.names = FALSE)
+}
+
+
+
+# read in all the tables & create a summary table for the supplement:
+
+# directory that all the csv files are in
+data.dir <- "/Users/kah/Documents/TreeRings/outputs/site_summary/"
+
+file_names = list.files(data.dir, pattern = "int_ar1.csv$")
+full_filenames <- paste0(data.dir, file_names)
+summaries <- lapply(full_filenames, read.csv)
+
+
+summary.table.site.intercor <- do.call(rbind, summaries)
+
+
+# directory that all the csv files are in
+data.dir <- "/Users/kah/Documents/TreeRings/outputs/site_summary/"
+
+file_names = list.files(data.dir, pattern = "byageclass.csv$")
+full_filenames <- paste0(data.dir, file_names)
+summaries.ageclss <- lapply(full_filenames, read.csv)
+
+
+
+summary.table.site.intercor.age <- do.call(rbind, summaries.ageclss)
+
+age.summary <- merge( Past.mod.clim.summary, summary.table.site.intercor.age, by = c("site", "ageclass"))
+age.summary$structure <- c("Forest", "Forest",
+                           "Savanna", "Savanna",
+                           "Forest", "Forest",
+                           "Savanna", "Savanna",
+                           "Forest", "Forest",
+                           "Savanna", "Savanna",
+                           "Savanna", "Savanna",
+                           "Forest", "Forest",
+                           "Savanna","Savanna")
+
+age.summary$site.num <- c(1,1,
+                          2,2,
+                          3,3,
+                          4,4,
+                          5,5,
+                          6,6,
+                          7,7,
+                          8,8,
+                          9,9)
+
+colnames(age.summary) <- c("Site", "Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1", "Structure", "Site #")
+
+age.summary <- age.summary[,c("Site #","Site", "Structure","Cohort", "Trees", "Average \n June Tmax", "Average Water Year \n  Precipitation (mm)", "Diameter", "Mean Ring Width \n  (mm)", "Average \n Interseries \n Correlation", "AR1")]
+
+kable(age.summary, "latex", align=c("l", "l","l", "l", "l","c","c", "c", "c", "c", "c"), booktabs = T, caption = "Site Summaries and Age Cohort Summaries", digits = 2) %>% column_spec(1, width = "0.5cm") %>%  column_spec(6:11, width = "2cm")%>%
+kable_styling() %>% collapse_rows(1, latex_hline = "major")
+
+```
+
+```{r, results="asis", echo = FALSE}
+Tmax.summaries <- readRDS("/Users/kah/Documents/TreeRings/outputs/data/Tmax_future_climate.rds")
+Tmax.summaries$CI.95 <- paste("(",round(Tmax.summaries$Tmax.ci.low,digits = 2), "-", round(Tmax.summaries$Tmax.ci.high, digits = 2), ")")
+
+
+Tmax.summaries.df <- Tmax.summaries %>% select(fut.class, rcp, meanTmax, CI.95)
+colnames(Tmax.summaries.df) <- c("Time Period", "RCP scenario", "Mean June Tmax","95% CI Tmax")
+  
+  
+kable(Tmax.summaries.df , "latex", align=c("l", "l", "c","c"), booktabs = T, caption = "Maximum Summer Temperature Summary", digits = 2) %>% column_spec(1:3, width = "3cm")%>%
+kable_styling() %>% collapse_rows(1, latex_hline = "major")
+
+```
+
+# plot summary table fo temperature % growth change reponses
+```{r, results="asis", echo = FALSE}
+pct.change.tmax <- readRDS("/Users/kah/Documents/TreeRings/outputs/data/pct_change_TMAX_precip_scenarios.rds")
+
+pct.change.tmax.df <- pct.change.tmax %>% select(structure, Precipitation, Temperature, pct_change, ci.low, ci.hi) %>% arrange( structure,Temperature, Precipitation)
+
+pct.change.tmax.df$Ci.95 <- paste0("(",round(pct.change.tmax.df$ci.low, 2), " - ", round(pct.change.tmax.df$ci.hi, 2), ")")
+pct.change.tmax.df$mean.val <- round(pct.change.tmax.df$pct_change, 3)
+pct.change.tmax.df$mean.val <- ifelse(pct.change.tmax.df$ci.low < 0 & pct.change.tmax.df$ci.hi < 0, paste(pct.change.tmax.df$mean.val, "*"),
+                                  ifelse(pct.change.tmax.df$ci.low > 0 & pct.change.tmax.df$ci.hi > 0, paste(pct.change.tmax.df$mean.val, "*"), pct.change.tmax.df$mean.val))
+
+pct.change.tmax.df.sub <- pct.change.tmax.df %>% select(structure, Precipitation, Temperature, mean.val, Ci.95) %>% arrange( structure,Temperature, Precipitation)
+
+colnames(pct.change.tmax.df.sub) <- c("Structure", "Total Annual Precipitation", "Summer Maximum Temperature", "% change in growth relative to 26.2 DegC", "95% CI")
+
+# make the table
+kable(pct.change.tmax.df.sub  , "latex", align=c("l", "c", "c","c", "c", "c"), booktabs = T, caption = "Maximum Summer Temperature Summary", digits = 2) %>% column_spec(3:4, width = "3cm")%>%
+kable_styling() %>% collapse_rows(1, latex_hline = "major") %>% footnote(symbol = c("95% CI does not contain zero"), footnote_as_chunk = T)
+
+
+```
+
+
