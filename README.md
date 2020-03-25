@@ -39,5 +39,5 @@ Contains the code used to read in IRMS data, do standard corrections, and calcul
 
 - R code used to read in IRMS raw data and correct for standards **IRMS_Data_Process_Raw.R**
 - R code used to identify potential years with similar climate to do sampling on is in **Picking_isotope_years.R**
-- R code used to read in all the $delta$ 13 C values, correct for the suess effect and do some  preliminary plotting and cleaning of the data in **read_plot_deltaC.R**
+- R code used to read in all the &delta;<sup>(13)</sup> C  values, correct for the suess effect and do some  preliminary plotting and cleaning of the data in **read_plot_deltaC.R**
 - R code used to calucluate intrinsic water use efficiency from the stable isotpe values is **calc_WUE.R**
