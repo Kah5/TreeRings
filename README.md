@@ -3,7 +3,7 @@ Tree ring analyses after cofecha crossdating & bayesian models of tree ring grow
 
 This repository holds the code used to quantify the effects of climate, tree size, stand strucutre, and CO2 on tree ring growth across the savanna-forest boundary region in the Uppermidwest US. Specifically, we develop bayesian heiarchical models to understand the joint effects of multiple envirmental factors on tree growth across 9 sites in the upper midwest. 
 
-![Map of sites included in this analysis](site_map_general.png)
+![Map of sites included in this analysis](images/site_map_general.png)
 
 It also houses a variety of general scripts used to process tree ring widths, growth sensitivities to climate, and site level differences in climate sensitivity. 
 
