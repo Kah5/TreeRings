@@ -61,7 +61,7 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   if(site %in% "HIC"){
     detrended.mean <- treeMean(detrended, read.ids(detrended, stc = c(3,4,1)), na.rm=TRUE)
     colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
-    HIC.table <- read.csv("HIC_translation.csv")
+    HIC.table <- read.csv("crns/HIC_translation.csv")
    
     new.cols <- merge(data.frame(RWL= colnames(detrended.mean), order = 1:length(colnames(detrended.mean))), HIC.table, by = "RWL")
     colnames(detrended.mean) <- new.cols[order(new.cols$order),]$ID
@@ -73,7 +73,7 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
       detrended.mean <-  treeMean(detrended, autoread.ids(newseries), na.rm=TRUE)
       
       colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
-      GLA.table <- read.csv("GLA_translation_table.csv")
+      GLA.table <- read.csv("crns/GLA_translation_table.csv")
       
       new.cols <- merge(data.frame(RWL= colnames(detrended.mean), order = 1:length(colnames(detrended.mean))), GLA.table, by = "RWL")
       colnames(detrended.mean) <- new.cols[order(new.cols$order),]$ID
@@ -158,7 +158,7 @@ detrended.list <- list(Hickory.rwi, StCroix.rwi, Bonanza.rwi,Townsend.rwi,Pleasa
                        GLL3.rwi, GLL4.rwi, PVC.rwi, AVO.rwi)#, UNI.bai) # omitting UNI right now
 
 saveRDS(detrended.list,"data/no_detrend_list_site.rds")
-source("R/tree_age_agg.R")
+source("R/manuscript_code/tree_age_agg.R")
 
 # apply the tree_age_agg function on all of the detrended tree ring series
 detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,  type = "RWI_Spline_detrended" )
@@ -711,7 +711,7 @@ write.csv(det.age.clim.ghcn.df.locs, "outputs/data/RWI_age_ghcn.df")
 
 # get tree sizes from field data:
 read_DBH_year <- function( filename, site){
-  
+  sitecode <- site
   if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
     newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
     
@@ -760,7 +760,7 @@ read_DBH_year <- function( filename, site){
                 }else{
                   if(site %in% "GLA"){
                     colnames(gp.treeMean2) <- paste0(site, colnames(gp.treeMean2))
-                    GLA.table <- read.csv("GLA_translation_table.csv")
+                    GLA.table <- read.csv("crns/GLA_translation_table.csv")
                     new.cols <- merge(data.frame(RWL= colnames(gp.treeMean2), order = 1:length(colnames(gp.treeMean2))), GLA.table, by = "RWL")
                     colnames(gp.treeMean2) <- new.cols[order(new.cols$order),]$ID
                     
@@ -1103,109 +1103,114 @@ write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.csv")
 
 
 
-ggplot(det.age.clim.class.ghcn.dbh.df, aes(DBH, RWI, color = site))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~SpecCode)
-
-
-ggplot(det.age.clim.class.ghcn.dbh.df, aes(JUNTmin, log(RWI), color = SpecCode))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site)
-ggplot(det.age.clim.class.ghcn.dbh.df, aes(SP01_7, log(RWI), color = SpecCode))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site, scales = "free_y")
-
-ggplot(det.age.clim.class.ghcn.dbh.df, aes(year, RWI, color = dbhclass))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site, scales = "free_y")
-
-full.ghcn <- merge(det.age.clim.class.ghcn.dbh.df, locs, by.x = "site", by.y = "code")
-full.prism <- merge(det.age.clim.class.prism.dbh.df, locs, by.x = "site", by.y = "code")
-
-ggplot(full.ghcn, aes(JJA.pdsi, log(RWI), color = pr30yr))+geom_point(size = 0.1 )+facet_wrap(~ BA)
-
-png(height = 6, width = 7, units = "in", res = 200,"outputs/testing_BAI_DBH_rel_by_site.png")
-ggplot(full.ghcn, aes(DBH.x, log(RWI), color = site))+geom_point(size = 0.1 )+facet_wrap(~site)+geom_smooth(method = "lm")+geom_smooth(method = "lm", formula = y ~ log(x), color = "red")+geom_smooth(method = "lm", formula = y ~ x + I(x^2), color = "black")+ylab("log(BAI)")#+facet_wrap(~ site)
-dev.off()
-
-
-ggplot(full.ghcn, aes(DBH.x, log(RWI), color = ageclass))+geom_point(size = 0.1 )+facet_wrap(~ageclass)+geom_smooth(method = "lm")+geom_smooth(method = "lm", formula = y ~ log(x), color = "red")+ylab("log(BAI)")#+facet_wrap(~ site)
-
-ggplot(full.ghcn, aes(Age, RWI, color = Description))+geom_point(size = 0.1 )+facet_wrap(~SpecCode)+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
-ggplot(full.ghcn, aes(DBH.x, log(RWI), color = JJA.pdsi))+geom_point(size = 0.01 )+facet_wrap(~site)+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+scale_color_continuous(low = "red", high = "blue")
-
-
-png(height = 6, width = 7, units = "in", res = 200,"outputs/testing_BAI_AGE_rel_by_species.png")
-ggplot(full.ghcn, aes(Age, RWI, color = Description))+geom_point(size = 0.1 )+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
-dev.off()
-
-
-test.m<- merge(full.ghcn, est.dates, by = c("site", "ID"))
-
-png(height= 5, width = 5, units = "in", res = 300, "outputs/three_age_class_bai_yr.png")
-ggplot(test.m[test.m$RWI <= 6200,], aes(Year, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()+theme_bw()+ylab("BAI")
-dev.off()
-
-png(height= 5, width = 5, units = "in", res = 300, "outputs/three_age_class_bai_age.png")
-ggplot(test.m[test.m$RWI <= 6200,], aes(Age, RWI, color = class))+geom_point(size = 0.001)+ stat_smooth()+theme_bw()+ylab("BAI")
-dev.off()
-
-png(height= 5, width = 7, units = "in", res = 300, "outputs/two_age_class_logbai_past_mod.png")
-ggplot(full.ghcn[full.ghcn$RWI <= 6200, ], aes(DBH.x, log(RWI), color = ageclass))+geom_point(size = 0.02)+geom_smooth(method = "lm")+facet_wrap(~fortype)
-dev.off()
-
-png(height= 5, width = 7, units = "in", res = 300, "outputs/two_age_bai_dbh.png")
-ggplot(full.ghcn[full.ghcn$RWI <= 6200, ], aes(DBH.x, RWI, color = ageclass))+geom_point(size = 0.02)+geom_smooth()+facet_wrap(~fortype)+ylab("Log(BAI)")
-dev.off()
-
-ggplot(test.m, aes(Age, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()+facet_wrap(~SpecCode)
-
-ggplot(test.m, aes(DBH.x, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()
-ggplot(test.m, aes(DBH.x, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()+facet_wrap(~site)
-
-
-ggplot(test.m, aes(DBH.x, RWI, color = class))+geom_point(size = 0.1 )+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
-
-ggplot(full.ghcn, aes( log(RWI), SP24_7, color = Description))+geom_point(size = 0.1 )+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
-
+# ggplot(det.age.clim.class.ghcn.dbh.df, aes(DBH, RWI, color = site))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~SpecCode)
+# 
+# 
+# ggplot(det.age.clim.class.ghcn.dbh.df, aes(JUNTmin, log(RWI), color = SpecCode))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site)
+# ggplot(det.age.clim.class.ghcn.dbh.df, aes(SP01_7, log(RWI), color = SpecCode))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site, scales = "free_y")
+# 
+# ggplot(det.age.clim.class.ghcn.dbh.df, aes(year, RWI, color = dbhclass))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site, scales = "free_y")
+# 
+# full.ghcn <- merge(det.age.clim.class.ghcn.dbh.df, locs, by.x = "site", by.y = "code")
+# full.prism <- merge(det.age.clim.class.prism.dbh.df, locs, by.x = "site", by.y = "code")
+# 
+# ggplot(full.ghcn, aes(JJA.pdsi, log(RWI), color = pr30yr))+geom_point(size = 0.1 )+facet_wrap(~ BA)
+# 
+# png(height = 6, width = 7, units = "in", res = 200,"outputs/testing_BAI_DBH_rel_by_site.png")
+# ggplot(full.ghcn, aes(DBH.x, log(RWI), color = site))+geom_point(size = 0.1 )+facet_wrap(~site)+geom_smooth(method = "lm")+geom_smooth(method = "lm", formula = y ~ log(x), color = "red")+geom_smooth(method = "lm", formula = y ~ x + I(x^2), color = "black")+ylab("log(BAI)")#+facet_wrap(~ site)
+# dev.off()
+# 
+# 
+# ggplot(full.ghcn, aes(DBH.x, log(RWI), color = ageclass))+geom_point(size = 0.1 )+facet_wrap(~ageclass)+geom_smooth(method = "lm")+geom_smooth(method = "lm", formula = y ~ log(x), color = "red")+ylab("log(BAI)")#+facet_wrap(~ site)
+# 
+# ggplot(full.ghcn, aes(Age, RWI, color = Description))+geom_point(size = 0.1 )+facet_wrap(~SpecCode)+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
+# ggplot(full.ghcn, aes(DBH.x, log(RWI), color = JJA.pdsi))+geom_point(size = 0.01 )+facet_wrap(~site)+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+scale_color_continuous(low = "red", high = "blue")
+# 
+# 
+# png(height = 6, width = 7, units = "in", res = 200,"outputs/testing_BAI_AGE_rel_by_species.png")
+# ggplot(full.ghcn, aes(Age, RWI, color = Description))+geom_point(size = 0.1 )+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
+# dev.off()
+# 
+# 
+# test.m<- merge(full.ghcn, est.dates, by = c("site", "ID"))
+# 
+# png(height= 5, width = 5, units = "in", res = 300, "outputs/three_age_class_bai_yr.png")
+# ggplot(test.m[test.m$RWI <= 6200,], aes(Year, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()+theme_bw()+ylab("BAI")
+# dev.off()
+# 
+# png(height= 5, width = 5, units = "in", res = 300, "outputs/three_age_class_bai_age.png")
+# ggplot(test.m[test.m$RWI <= 6200,], aes(Age, RWI, color = class))+geom_point(size = 0.001)+ stat_smooth()+theme_bw()+ylab("BAI")
+# dev.off()
+# 
+# png(height= 5, width = 7, units = "in", res = 300, "outputs/two_age_class_logbai_past_mod.png")
+# ggplot(full.ghcn[full.ghcn$RWI <= 6200, ], aes(DBH.x, log(RWI), color = ageclass))+geom_point(size = 0.02)+geom_smooth(method = "lm")+facet_wrap(~fortype)
+# dev.off()
+# 
+# png(height= 5, width = 7, units = "in", res = 300, "outputs/two_age_bai_dbh.png")
+# ggplot(full.ghcn[full.ghcn$RWI <= 6200, ], aes(DBH.x, RWI, color = ageclass))+geom_point(size = 0.02)+geom_smooth()+facet_wrap(~fortype)+ylab("Log(BAI)")
+# dev.off()
+# 
+# ggplot(test.m, aes(Age, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()+facet_wrap(~SpecCode)
+# 
+# ggplot(test.m, aes(DBH.x, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()
+# ggplot(test.m, aes(DBH.x, RWI, color = class))+geom_point(size = 0.01)+ stat_smooth()+facet_wrap(~site)
+# 
+# 
+# ggplot(test.m, aes(DBH.x, RWI, color = class))+geom_point(size = 0.1 )+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
+# 
+# ggplot(full.ghcn, aes( log(RWI), SP24_7, color = Description))+geom_point(size = 0.1 )+stat_smooth(method = "lm", formula = y ~ x + I(x^2))+facet_wrap(~SpecCode)
+# 
 
 write.csv(full.ghcn, "outputs/full.ghcn.csv", row.names = FALSE)
 
 # merge with full climate dataset:
-ghcn.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], ghcn.df, by.x = c("year", "site"), by.y = c("Year", "site"))
-prism.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+# ghcn.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], ghcn.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+# prism.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+full.ghcn.red <- full.ghcn[,c("ID", "year", "site", "DBH.y","dbhclass",  "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")]
+colnames( full.ghcn.red )[4] <- "DBH"
+ghcn.rwi <- merge( full.ghcn.red , ghcn.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+prism.rwi <- merge( full.ghcn.red , prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
+
 
 write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi.csv", row.names = FALSE)
 write.csv(prism.rwi, "outputs/full_prism_all_months_rwi.csv", row.names = FALSE)
 
 
-#-------------------------More Exploratory data analysis---------------------
-
-
-RWI <- full.ghcn$RWI
-Age <- full.ghcn$Age
-nlsout <- nlrob(na.omit(RWI) ~ A * (1 - exp(-k * na.omit(Age)))^p, data = 
-                  data.frame(na.omit(Age), na.omit(RWI)), start = list(A = 83, k = 0.03, p = 4), 
-                trace = TRUE)
-
-
-summary(lm(log(RWI) ~ JJA.pdsi + JUNTmin + SpecCode + DBH.x, data = full.ghcn))
-
-summary(lm(log(RWI) ~ SP24_7 + SpecCode + DBH.x, data = full.ghcn))
-
-summary(lm(log(RWI) ~ SP24_7 , data = full.ghcn[full.ghcn$SpecCode %in% "QUMA",]))
-summary(lm(log(RWI) ~ SP24_7, data = full.ghcn[full.ghcn$SpecCode %in% "QUAL",]))
-summary(lm(log(RWI) ~ SP24_7 , data = full.ghcn[full.ghcn$SpecCode %in% "QUVE",]))
-# read in BAI stats to look at eps
-
-stat.files <- paste0("outputs/Stats/", list.files("outputs/Stats/", pattern="^mean.rwi.*"))
-rbar.stats <- lapply(stat.files, read.csv)
-rbar.stats.df <- do.call(rbind, rbar.stats)
-
-sites <-unique(full.ghcn$site)
-corr.coeff <- data.frame(site = sites,
-                         coeff = NA)
-for(i in 1:length(sites)){
-corr.coeff[i,]$coeff <- cor(log(full.ghcn[full.ghcn$site %in% sites[i], ]$RWI), full.ghcn[full.ghcn$site %in% sites[i],]$SP24_7, use = "pairwise.complete.obs")
-}
-corr.coeff
-
-
-
-# >>>>>>>>>>>>>>>>>>>> look at growth responses in droughts lower than -1.5 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# how do these responses vary based on drought timing?
-# how do they vary based on species
-# how do they vary based on whether it is high temperature or high precip droughts?
-
+# #-------------------------More Exploratory data analysis---------------------
+# 
+# 
+# RWI <- full.ghcn$RWI
+# Age <- full.ghcn$Age
+# nlsout <- nlrob(na.omit(RWI) ~ A * (1 - exp(-k * na.omit(Age)))^p, data = 
+#                   data.frame(na.omit(Age), na.omit(RWI)), start = list(A = 83, k = 0.03, p = 4), 
+#                 trace = TRUE)
+# 
+# 
+# summary(lm(log(RWI) ~ JJA.pdsi + JUNTmin + SpecCode + DBH.x, data = full.ghcn))
+# 
+# summary(lm(log(RWI) ~ SP24_7 + SpecCode + DBH.x, data = full.ghcn))
+# 
+# summary(lm(log(RWI) ~ SP24_7 , data = full.ghcn[full.ghcn$SpecCode %in% "QUMA",]))
+# summary(lm(log(RWI) ~ SP24_7, data = full.ghcn[full.ghcn$SpecCode %in% "QUAL",]))
+# summary(lm(log(RWI) ~ SP24_7 , data = full.ghcn[full.ghcn$SpecCode %in% "QUVE",]))
+# # read in BAI stats to look at eps
+# 
+# stat.files <- paste0("outputs/Stats/", list.files("outputs/Stats/", pattern="^mean.rwi.*"))
+# rbar.stats <- lapply(stat.files, read.csv)
+# rbar.stats.df <- do.call(rbind, rbar.stats)
+# 
+# sites <-unique(full.ghcn$site)
+# corr.coeff <- data.frame(site = sites,
+#                          coeff = NA)
+# for(i in 1:length(sites)){
+# corr.coeff[i,]$coeff <- cor(log(full.ghcn[full.ghcn$site %in% sites[i], ]$RWI), full.ghcn[full.ghcn$site %in% sites[i],]$SP24_7, use = "pairwise.complete.obs")
+# }
+# corr.coeff
+# 
+# 
+# 
+# # >>>>>>>>>>>>>>>>>>>> look at growth responses in droughts lower than -1.5 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# # how do these responses vary based on drought timing?
+# # how do they vary based on species
+# # how do they vary based on whether it is high temperature or high precip droughts?
+# 
