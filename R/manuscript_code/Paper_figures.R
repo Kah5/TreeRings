@@ -1,3 +1,9 @@
+# script to produce the figures for the manuscript:
+# Author: Kelly A. Heilman
+# Last Checked: March 25, 2020
+# note: Need to run clean_separate_data.R, RWI_bayes_model.R, and WUE_bayes_model.R before running this script
+
+
 # script for making figures for the tree ring MS:
 library(rjags)
 library(ggplot2)
@@ -2091,3 +2097,4 @@ d13.column <- ggplot(d13C.samples, aes(year, Cor.d13C.suess))+geom_point(size = 
 png(height= 6, width = 6, units ="in", res = 300, "outputs/growth_model/paper_figures/d13_iWUE_raw_data.png")
 plot_grid(d13.column, WUE.column, ncol = 2, labels = "AUTO")
 dev.off()
+
