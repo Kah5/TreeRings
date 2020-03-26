@@ -14,9 +14,11 @@ library(cowplot)
 
 
 # some initial data checking:
-directory <- "Users/kah/Documents/TreeRings2"
-full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.v2.csv"))
+directory <- "Users/kah/Documents/TreeRings"
+full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
 
+
+unique(full.ghcn[full.ghcn$site %in% "BON",]$ID)
 
 hist(full.ghcn$RWI)
 
@@ -26,7 +28,6 @@ summary(full.ghcn)
 
 # get all records that have all RWI and don't have negative diams or NA diams
 full.ghcn <- full.ghcn[!is.na(full.ghcn$RWI) & full.ghcn$DBH > 0 & !is.na(full.ghcn$DBH),]
-
 
 
 #DI <- as.vector( full.ghcn$JJA.pdsi )

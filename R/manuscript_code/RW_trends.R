@@ -123,10 +123,22 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   mean.rwi.stat$site <- site
   write.csv(mean.rwi.stat, paste0("outputs/Stats/mean.rwi.stats.", site,".csv"))
   
+  
+  
   # plot spag plots:
   png(paste0("outputs/spagplots/", site, "_", rwiorbai,"_mean_", method,"_detrended.png"))
   plot(detrended.mean, "spag")
   dev.off()
+  
+ 
+  foo <- interseries.cor(detrended.mean, method = "pearson")
+  
+  
+  if( length(rownames(foo[foo$res.cor <= 0.25,]))>0 ){
+    rownames(foo[foo$res.cor >= 0.25,])
+      detrended.mean <- detrended.mean[,rownames(foo[foo$res.cor >= 0.25,])]
+  }
+
   
   detrended.mean$year <- rownames(detrended.mean)
   detrended.mean$site<- site
@@ -184,7 +196,7 @@ age.classes  %>% group_by(site) %>% dplyr::summarise(pre1800_n=sum(pre1800, na.r
 # get establishment dates
 est.dates <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% dplyr::summarise(est = min(year))
 est.dates$class <- ifelse(est.dates$est <= 1890, "old/mature", ifelse(est.dates$est <=1940, "mid", "young"))
-write.csv(age.classes, "data/n_trees_ageclass_by_site_rwi_v2.csv")
+write.csv(age.classes, "data/n_trees_ageclass_by_site_rwi_v3.csv")
 
 ###################################
 # add climate data to the age trends
@@ -532,8 +544,8 @@ ghcn.df <- do.call(rbind, ghcn)
 prism.df <- do.call(rbind, prism)
 
 # save for later use
-write.csv(ghcn.df, "outputs/full_ghcn_all_months.csv", row.names = FALSE)
-write.csv(prism.df, "outputs/full_prism_all_months.csv", row.names = FALSE)
+write.csv(ghcn.df, "outputs/full_ghcn_all_months_v3.csv", row.names = FALSE)
+write.csv(prism.df, "outputs/full_prism_all_months_v3.csv", row.names = FALSE)
 
 
 
@@ -646,7 +658,7 @@ locs <- merge(locs, speciesdf, by = "code")
 # # extract temp
 # locs$tm30yr <- raster::extract(prismt.alb, locs[,c("coords.x1","coords.x2")])
 
-workingdir <- "/Users/kah/Documents/TreeRings2"
+workingdir <- "/Users/kah/Documents/TreeRings"
 
 # now merge locs data with the drought recovery data:
 drought.df.1988.site <- merge(drought.df.1988.age, locs, by.x = "site", by.y = "code")
@@ -714,8 +726,8 @@ ggplot(drought.df.1934.5, aes(site, Resilience))+geom_boxplot()+theme_bw()+geom_
 det.age.clim.prism.df.locs <- merge(det.age.clim.prism.df, locs, by.x = "site", by.y = "code")
 det.age.clim.ghcn.df.locs <- merge(det.age.clim.ghcn.df, locs, by.x = "site", by.y = "code")
 
-write.csv(det.age.clim.prism.df.locs, "outputs/data/RWI_age_prism.df")
-write.csv(det.age.clim.ghcn.df.locs, "outputs/data/RWI_age_ghcn.df")
+write.csv(det.age.clim.prism.df.locs, "outputs/data/RWI_age_prism_v3.df")
+write.csv(det.age.clim.ghcn.df.locs, "outputs/data/RWI_age_ghcn_v3.df")
 
 #-------------------------------------------------------------------------------
 # get tree sizes from field data:
