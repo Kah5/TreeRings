@@ -14,7 +14,7 @@ library(data.table)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Read in Data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # read all files ending in "deltaC_data.csv" from the deltaC folder:
-setwd("/Users/kah/Documents/TreeRings/data/stable_isotopes/deltaC/")
+setwd("data/stable_isotopes/deltaC/")
 
 corrected.isotope.files <- list.files(pattern = "data.csv$") # get all the data files
 iso.data <- lapply(corrected.isotope.files, FUN = read.csv) 

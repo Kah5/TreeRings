@@ -6,7 +6,7 @@ library(ggplot2)
 # then assume that delta hasnot changed since 2011--to get the code running
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Read in Isotopde df from read_plot_delatC.R >>>>>>>>>>>>>>>>>>>>>>>
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Read in Isotopde df from read_plot_deltaC.R >>>>>>>>>>>>>>>>>>>>>>>
 deltas <- read.csv("outputs/stable_isotopes/full_std_suess_corrected_d13C_v2.csv")
 deltas <- deltas[!is.na(deltas$d13C_12C_corr),]
 
@@ -16,12 +16,8 @@ deltas$bigD <- (deltas$d13atm-deltas$Cor.d13C.suess)/(1+deltas$Cor.d13C.suess/10
 
 # make some preliminary plots of the data:
 ggplot(deltas, aes(x = year, y = bigD, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen"))
-
-
 ggplot(deltas[!deltas$site %in% c("UNI", "BON"), ], aes(x = year, y = d13C_12C_corr, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "purple"))+ylim(-29, -23)
-
 ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+stat_smooth(method = "gam" )+scale_color_manual(values = c("red", "blue", "forestgreen", "purple", "black"))+ylim(-29, -23)
-#ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = Cor.d13C.suess, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue"))
 
 
 # get the means and sd of each year for each site
@@ -43,7 +39,6 @@ deltas$iWUE <- deltas$ppm*(1-(deltas$d13C_12C_corr-deltas$d13atm + a))/(b-a)*0.6
 summary(deltas$iWUE)
 
 ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = Cor.d13C.suess, color = ID))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
-
 ggplot(deltas[deltas$site %in% "BON", ], aes(x = year, y = iWUE, color = ID))+geom_point()+theme_bw()+stat_smooth(method = "gam" )#+scale_color_manual(values = c("red", "blue", "forestgreen", "orange"))+ylab(expression(paste(delta^{13}, "C corrected (\u2030)")))
 
 
@@ -74,6 +69,7 @@ dev.off()
 ggplot(deltas[!deltas$site %in% "UNI", ], aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple", "yellow"))
 ggplot(deltas, aes(x = year, y = iWUE, color = site))+geom_point()+theme_bw()+geom_line(alpha = 0.5)+scale_color_manual(values = c("red", "blue", "forestgreen", "orange", "purple", "yellow"))
 
+# get averages and sds
 wue.avgs <- aggregate(iWUE ~ year + site, data=deltas, FUN=mean, na.rm = T) 
 wue.sds <- aggregate(iWUE ~ year + site, data=deltas, FUN=sd, na.rm = T) 
 colnames(wue.sds) <- c("year", "site", "sd")
@@ -95,13 +91,15 @@ ggplot(deltas, aes(x = year, y = iWUE, color = ID))+geom_point()+theme_bw()+face
 write.csv(deltas, "outputs/stable_isotopes/deltas_13C_WUE_data.csv", row.names = FALSE)
 
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>> Comparing the paired years of interest <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# highlight the comparison years in each site
+
+
+# getting the comparison years in each site
 #young.yrs.bon <- c(1955, 1959, 1961,  1964, 1976, 1977,1981, 1987, 1988,1989, 1980, 2006, 2012)
 young.yrs.bon <- c(1955, 1959, 1961,  1964, 1976, 1977,1981, 1987, 1988,1989, 1980, 2012)
 young.trees.bon <- c("BON6", "BON12", "BON7", "BON8")
 
 old.yrs.bon <- c(1921, 1929, 1911, 1940, 1900, 1931, 1934, 1922, 1931, 1929, 1914, 1910, 1933, 1934, 1936, 1926)
-old.trees.bon <- c("BON13", "BON9")
+old.trees.bon <- c("BON13", "BON9") # we have this because we analysed additional d13C data from additional years of BON
 
 young.yrs.gll <- c(1985:1980, 1976:1978, 1972, 1964, 1959:1962, 1953, 1959,
                    2014, 2012, 2011, 2006, 2005, 2001, 1997,1995, 1991, 1993)
@@ -118,7 +116,7 @@ old.yrs.unc <- c(1897,1904, 1905, 1910, 1911,1915, 1918, 1921, 1923, 1926,1932, 
 young.yrs.unc <- c(1954, 1961, 1964, 1965, 1972, 1976, 1978, 1983, 1985, 1986,
                    1987, 1988, 1989, 2002, 2006, 2007, 2009, 2014)
 
-# If the data is 
+# Now assign class of each of the isotopes based on the above lists
 deltas$class <- NA
 #deltas[deltas$site %in% "BON" & deltas$year %in% old.yrs.bon & !deltas$ID %in% young.trees.bon,]$class <- "Past"
 #deltas[deltas$site %in% "BON" & deltas$year %in% young.yrs.bon & deltas$ID %in% young.trees.bon,]$class <-  "Modern"
@@ -182,21 +180,6 @@ ggplot(na.omit(deltas), aes(x = class, y = iWUE, color = class))+geom_boxplot(fi
 dev.off()
 
 
-t.test(na.omit(deltas[deltas$site %in% "BON" & deltas$year %in% old.yrs.bon,]$Cor.d13C.suess), na.omit(deltas[deltas$site %in% "BON" & deltas$year %in% young.yrs.bon,]$Cor.d13C.suess))
-
-t.test(na.omit(deltas[deltas$site %in% "BON" & deltas$year %in% old.yrs.bon,]$iWUE), na.omit(deltas[deltas$site %in% "BON" & deltas$year %in% young.yrs.bon,]$iWUE))
-
-t.test(na.omit(deltas[deltas$site %in% "GLL" & deltas$year %in% old.yrs.gll,]$Cor.d13C.suess), na.omit(deltas[deltas$site %in% "GLL" & deltas$year %in% young.yrs.gll,]$Cor.d13C.suess))
-
-t.test(na.omit(deltas[deltas$site %in% "GLL" & deltas$year %in% old.yrs.gll,]$iWUE), na.omit(deltas[deltas$site %in% "GLL" & deltas$year %in% young.yrs.gll,]$iWUE))
-
-
-t.test(na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% old.yrs.gla,]$Cor.d13C.suess), na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% young.yrs.gla,]$Cor.d13C.suess))
-
-t.test(na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% old.yrs.gla,]$iWUE), na.omit(deltas[deltas$site %in% "GLA" & deltas$year %in% young.yrs.gla,]$iWUE))
-t.test(na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% old.yrs.unc,]$iWUE), na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% young.yrs.unc,]$iWUE))
-t.test(na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% old.yrs.unc,]$Cor.d13C.suess), na.omit(deltas[deltas$site %in% "UNC" & deltas$year %in% young.yrs.unc,]$Cor.d13C.suess))
-
 
 
 
@@ -208,7 +191,7 @@ d13$site <- ifelse(d13$site %in% "GLL", "GLL2", as.character(d13$site))
 # hardcoding this for now, but need to come up with a conversion table for this:
 
 
-growth <- read.csv("outputs/data/rwi_age_dbh_ghcn.df")
+growth <- read.csv("outputs/data/rwi_age_dbh_ghcn.v2.csv")
 
 # fix merging issue with UNCcores:
 test.sep <- growth[growth$site %in% "UNC",c("ID", "year")] %>% separate(ID, sep = -3,into = c("Core", "Extra"))

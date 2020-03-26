@@ -42,8 +42,8 @@ SpecCode <- full.ghcn$SpecCode
 rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi_v2.csv") #note only very minor differences between version 1 and version 2. These differences are in STC and PLE, which dont get used in the final model
 rwi.prism <- read.csv("outputs/full_prism_all_months_rwi_v2.csv")
 
-rwi.ghcn1 <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
-identical(rwi.ghcn,rwi.ghcn1) 
+# rwi.ghcn1 <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
+# identical(rwi.ghcn,rwi.ghcn1) 
 
 # calculate JJA VPD for each year
 rwi.prism$jja.VPDmax <- rowMeans(rwi.prism[,c("Month_vpdmax_6", "Month_vpdmax_7", "Month_vpdmax_8")])
@@ -329,7 +329,7 @@ d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth_v3.csv")
 
 d13 <- d13[!is.na(d13$DBH),]
 
- # if there a multiple values, take the mean d13C_12_cCorr
+ # if there a multiple values, take the mean d13C_12_Corr
 d13.values <- d13 %>% group_by(site, year, ID, ageclass) %>% dplyr::summarise(Cor.d13C.suess = mean(Cor.d13C.suess), 
                                                iWUE = mean(iWUE),
                                                Age = mean(Age),
