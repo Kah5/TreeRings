@@ -1,3 +1,9 @@
+# script to produce the figures for the manuscript:
+# Author: Kelly A. Heilman
+# Last Checked: March 25, 2020
+# note: Need to run clean_separate_data.R, RWI_bayes_model.R, and WUE_bayes_model.R before running this script
+
+
 # script for making figures for the tree ring MS:
 library(rjags)
 library(ggplot2)
@@ -167,16 +173,16 @@ US.map <- ggplot()+
         plot.background = element_rect(fill = "transparent",colour = NA))#, 
 #axis.text = element_blank(), axis.ticks = element_blank())
 
-png(height = 4, width = 8, units ="in", res = 300, "outputs/Full_US_map_region.png")
-US.map
-dev.off()
+# png(height = 4, width = 8, units ="in", res = 300, "outputs/Full_US_map_region.png")
+# US.map
+# dev.off()
 
-NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))+
-  geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),
-                  fontface = 'bold', color = 'black',
-                  box.padding = unit(0.5, "lines"),
-                  point.padding = unit(0.5, "lines"))
-
+# NEmap + geom_text(data = priority.lat, aes(x = coords.x1, y = coords.x2, label = code))+
+#   geom_text_repel(data = priority.lat, aes(x = coords.x1, y = coords.x2,label=code),
+#                   fontface = 'bold', color = 'black',
+#                   box.padding = unit(0.5, "lines"),
+#                   point.padding = unit(0.5, "lines"))
+# 
 
 
 # plot with the sites that have:
@@ -186,12 +192,12 @@ site.bays <- data.frame(code = c("MOU", "BON", "ENG", "GLA", "UNC", "GL1", "GL2"
 
 
 # map out one the google earth pretty map:
-NEmap + geom_point(data = priority.lat[priority.lat$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,shape=Description, color = Description))+ 
-  geom_text_repel(data = priority.lat[priority.lat$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
-                  fontface = 'bold', color = 'black',
-                  box.padding = unit(0.5, "lines"),
-                  point.padding = unit(0.5, "lines"))
-
+# NEmap + geom_point(data = priority.lat[priority.lat$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,shape=Description, color = Description))+ 
+#   geom_text_repel(data = priority.lat[priority.lat$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
+#                   fontface = 'bold', color = 'black',
+#                   box.padding = unit(0.5, "lines"),
+#                   point.padding = unit(0.5, "lines"))
+# 
 
 
 # merge the sites with climate data pulled for tree ring analysis:
@@ -241,19 +247,19 @@ full.ghcn.priority[full.ghcn.priority$code %in% "GL3",]$coords.x2.jitter <- full
 
 full.ghcn.priority$coords.x2
 
-sites.bays.map <- NEmap + geom_point(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
-  scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+
-  geom_text_repel(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
-                  fontface = 'bold', color = 'black',
-                  box.padding = unit(0.5, "lines"),
-                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
-  theme(legend.title = element_blank(), legend.position= c(0.8, 0.15),  
-        legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
-        legend.text=element_text(size=12))
+# sites.bays.map <- NEmap + geom_point(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
+#   scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+
+#   geom_text_repel(data = full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code,], aes(x = coords.x1, y = coords.x2,label=code),
+#                   fontface = 'bold', color = 'black',
+#                   box.padding = unit(0.5, "lines"),
+#                   point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
+#   theme(legend.title = element_blank(), legend.position= c(0.8, 0.15),  
+#         legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
+#         legend.text=element_text(size=12))
 
 # now add an inset map within our regional map:
-site.bayes.map.inset <- sites.bays.map + annotation_custom(grob = NEmap.full.us, xmin = -102, xmax = -92.5,
-                                                           ymin = 36.5, ymax = 41.5)
+# site.bayes.map.inset <- sites.bays.map + annotation_custom(grob = NEmap.full.us, xmin = -102, xmax = -92.5,
+#                                                            ymin = 36.5, ymax = 41.5)
 
 
 # make the same map but with numbers instead of site names:
@@ -261,42 +267,42 @@ numbered.sites <- full.ghcn.priority[full.ghcn.priority$code %in% site.bays$code
 numbered.sites <- numbered.sites[order(numbered.sites$code),]
 numbered.sites$number <- as.character(1:length(numbered.sites$code))
 
-sites.bays.map.num <- NEmap + geom_point(data = numbered.sites, aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
-  scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+
-  geom_text_repel(data = numbered.sites, aes(x = coords.x1, y = coords.x2, label=number),
-                  fontface = 'bold', color = 'black',
-                  box.padding = unit(0.5, "lines"),
-                  point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
-  theme(legend.title = element_blank(), legend.position= c(0.8, 0.15),  
-        legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
-        legend.text=element_text(size=12))
+# sites.bays.map.num <- NEmap + geom_point(data = numbered.sites, aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
+#   scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+
+#   geom_text_repel(data = numbered.sites, aes(x = coords.x1, y = coords.x2, label=number),
+#                   fontface = 'bold', color = 'black',
+#                   box.padding = unit(0.5, "lines"),
+#                   point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
+#   theme(legend.title = element_blank(), legend.position= c(0.8, 0.15),
+#         legend.background = element_rect(color = "black", fill = "white", size = 1, linetype = "solid"),
+#         legend.text=element_text(size=12))
+#
+# # now add an inset map within our regional map:
+# site.bayes.map.inset.num <- sites.bays.map.num + annotation_custom(grob = NEmap.full.us, xmin = -102, xmax = -92.5,
+#                                                            ymin = 36.5, ymax = 41.5)
+#
 
-# now add an inset map within our regional map:
-site.bayes.map.inset.num <- sites.bays.map.num + annotation_custom(grob = NEmap.full.us, xmin = -102, xmax = -92.5,
-                                                           ymin = 36.5, ymax = 41.5)
-
-
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space.png")
-plot_grid(sites.bays.map, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
-dev.off()
-
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_sd.png")
-plot_grid(sites.bays.map, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
-dev.off()
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space.png")
+# plot_grid(sites.bays.map, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+# dev.off()
+#
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_sd.png")
+# plot_grid(sites.bays.map, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
+# dev.off()
 
 # create the same maps but with inset of US
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset.png")
-plot_grid(site.bayes.map.inset, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
-dev.off()
-
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_sd_inset.png")
-plot_grid(site.bayes.map.inset, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
-dev.off()
-
-# map with sites as numbers instead of site names
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset.png")
-plot_grid(site.bayes.map.inset.num, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
-dev.off()
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset.png")
+# plot_grid(site.bayes.map.inset, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+# dev.off()
+#
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_sd_inset.png")
+# plot_grid(site.bayes.map.inset, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
+# dev.off()
+#
+# # map with sites as numbers instead of site names
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset.png")
+# plot_grid(site.bayes.map.inset.num, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+# dev.off()
 
 # --------make the same map, but with ecoregions as the backdrop:
 library(sf)
@@ -310,21 +316,21 @@ wwf
 # shp <- read_sf('data/na_cec_eco_l1/NA_CEC_Eco_Level1.shp')
 # ggplot(shp) + geom_sf(aes(colour = NA_L1NAME))
 # read in ecoregion shapefile
-eco <- readOGR(dsn = "data/na_cec_eco_l1/NA_CEC_Eco_Level1.shp", layer = "NA_CEC_Eco_Level1")
-eco
+#eco <- readOGR(dsn = "data/na_cec_eco_l1/NA_CEC_Eco_Level1.shp", layer = "NA_CEC_Eco_Level1")
+#eco
 
 # recieving topology problem errors
-rgeos::gIsValid(eco)
+#rgeos::gIsValid(eco)
 # set 0 width buffer to clean up these errors
-peco_states <- gBuffer(eco, byid=TRUE, width=0)
+#peco_states <- gBuffer(eco, byid=TRUE, width=0)
 
-rgeos::gIsValid(peco_states)
+#rgeos::gIsValid(peco_states)
 
-eco.2<- gSimplify(eco, tol=0.01, topologyPreserve=TRUE)
+#eco.2<- gSimplify(eco, tol=0.01, topologyPreserve=TRUE)
 
 # Simplify the shapefile with 'ms_simplify', keeping 1%
-eco01_shp <- ms_simplify(peco_states, keep = 0.01, keep_shapes = T)
-us01_dt <- broom::tidy(eco01_shp, region = "id") %>% data.table()
+# eco01_shp <- ms_simplify(peco_states, keep = 0.01, keep_shapes = T)
+# us01_dt <- broom::tidy(eco01_shp, region = "id") %>% data.table()
 
 spydf_states<- wwf
 spydf_states <- rgeos::gSimplify(spydf_states, tol = 0.00001)
@@ -340,8 +346,8 @@ sum(rgeos::gIsValid(spydf_states, byid=TRUE)==FALSE)
 
 system.time(plot(spydf_states))
 
-plot(eco)
-plot(ne_state)
+#plot(eco)
+#plot(ne_state)
 
 # Remove Alaska, Hawaii, and Puerto Rico
 ne_state_sub<- ne_state %>% subset(!(gn_name %in% c("Hawaii", "Alaska")))
@@ -448,11 +454,13 @@ site.bayes.map.inset.num.eco <- sites.bays.map.num.eco+guides(color = FALSE, sha
 
 
 # now plot the tree ring sites on this map and make an inset
+pts.map <- ggplot()+ geom_point(data = numbered.sites, aes(x = coords.x1.jitter, y = coords.x2.jitter, shape=structure, color =structure), size = 2)+
+  scale_color_manual(values = c("Savanna"='sienna4', "Forest"='forestgreen'))+theme_bw()
 
-legend.sf <- get_legend(site.bayes.map.inset.num+theme(legend.position = "bottom"))
+legend.sf <- get_legend(pts.map + theme(legend.position = "bottom", legend.title = element_blank()))
 legend.colors <- get_legend(full.us.wwf.eco)
 
-site.bayes.map.inset.num+theme(legend.position = "bottom")
+
 # create the same maps but with inset of US
 png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset_eco.png")
 plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
@@ -489,8 +497,8 @@ dev.off()
 # cohort only model: lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter
 
 cohort.params <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
-train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/train.rds")
-test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+#train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+#test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/test.rds")
 pred.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_YP.rds")
 
 pred.cohort.summary <- pred.pair %>% group_by(variable) %>% dplyr::summarise(predicted = mean(exp(value), na.rm =TRUE),
@@ -694,8 +702,8 @@ dev.off()
 # -------------------------read in cohort X structure model samples:
 
 cohort.struct.params <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
-train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
-test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+#train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+#test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
 pred.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps.rds")
 pred.cs <- data.frame(pred.pair[[1]])
 head(pred.cs)
@@ -704,9 +712,9 @@ pred.cs.m <- melt(pred.cs)
 pred.cohort.summary <- pred.cs.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(exp(value), na.rm =TRUE),
                                                                               ci.lo = quantile(exp(value), 0.025, na.rm = TRUE),
                                                                               ci.hi = quantile(exp(value), 0.975, na.rm =TRUE))
-pred.cohort.summary$Observed <- test.dry.pair$RWI
-pred.cohort.summary$struct.cohort.code <- test.dry.pair$struct.cohort.code
-pred.cohort.summary$struct.cohort <- test.dry.pair$struct.cohort
+pred.cohort.summary$Observed <- full.dry.pair$RWI
+pred.cohort.summary$struct.cohort.code <- full.dry.pair$struct.cohort.code
+pred.cohort.summary$struct.cohort <- full.dry.pair$struct.cohort
 pred.obs.cs <- summary(lm(pred.cohort.summary$Predicted ~ pred.cohort.summary$Observed))
 # 
 # # this does a poor job representing iWUE values by itself, but explains som of the variation
@@ -2089,3 +2097,4 @@ d13.column <- ggplot(d13C.samples, aes(year, Cor.d13C.suess))+geom_point(size = 
 png(height= 6, width = 6, units ="in", res = 300, "outputs/growth_model/paper_figures/d13_iWUE_raw_data.png")
 plot_grid(d13.column, WUE.column, ncol = 2, labels = "AUTO")
 dev.off()
+

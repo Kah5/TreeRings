@@ -1,4 +1,7 @@
 # script for running the WUE and d13 models selected (orignially in RWI_models.Rmd)
+# Author: Kelly A. Heilman
+# Last Updated: March 25, 2020
+# note: Need to run clean_separate_data.R before running this script, this loads required packages and required datasets
 
 full.iso <-readRDS( 'data/full_WUE_dataset_v3.rds')
 train.iso <- readRDS('data/train_WUE_dataset_v3.rds')
@@ -171,10 +174,15 @@ iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax,
 iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax, 
                                  variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
                                  n.chains = 3, n.iter = 180000, thin = 15)
+iWUE_map_tmax.re <- coda.samples(iWUE_map_tmax, 
+                                 variable.names=c("beta1", "beta2","beta3","beta4","mu_beta1","mu_beta2","mu_beta3","mu_beta4", "iWUE.p"), 
+                                 n.chains = 3, n.iter = 180000, thin = 15)
 
 # kept updating to get to 770995 iterations
 par(mfrow = c(3,4))
 traceplot(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]", "beta1[3]","beta1[4]","beta2[1]", "beta2[2]", "beta3[1]", "beta3[2]", "beta4[1]", "beta4[2]")])
+
+# get gelmen-rubin stats
 gelman.diag(iWUE_map_tmax.re[, c("beta1[1]","beta1[2]", "beta1[3]","beta1[4]","beta2[1]", "beta2[2]", "beta3[1]", "beta3[2]", "beta4[1]", "beta4[2]")])
 # gelman.diag values all look good <= 1.02
 
