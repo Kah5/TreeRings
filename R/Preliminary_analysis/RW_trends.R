@@ -1,3 +1,9 @@
+# script to read in all the rwl files (with the headers cleaned & fixed), and merge with climate data
+# Author: Kelly A. Heilman
+# Last Updated: March 25, 2020
+# note: Need to run clean_separate_data.R before running this script, this loads required packages and required datasets
+
+
 library(dplR)
 library(ggplot2)
 library(plyr)
