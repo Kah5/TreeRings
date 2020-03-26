@@ -1177,7 +1177,7 @@ write.csv(full.ghcn, "outputs/full.ghcn.csv", row.names = FALSE)
 # merge with full climate dataset:
 # ghcn.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], ghcn.df, by.x = c("year", "site"), by.y = c("Year", "site"))
 # prism.rwi <- merge( full.ghcn[,c("ID", "year", "site", "DBH", "dbhclass", "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")], prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
-full.ghcn.red <- full.ghcn[,c("ID", "year", "site", "DBH.y","dbhclass",  "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")]
+full.ghcn.red <- full.ghcn[,c("ID", "year", "site", "DBH.x","dbhclass",  "ageclass", "SpecCode", "RWI", "RWI_1", "RWI_2", "RWI_3")]
 colnames( full.ghcn.red )[4] <- "DBH"
 ghcn.rwi <- merge( full.ghcn.red , ghcn.df, by.x = c("year", "site"), by.y = c("Year", "site"))
 prism.rwi <- merge( full.ghcn.red , prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))

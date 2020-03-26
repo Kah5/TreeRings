@@ -15,7 +15,9 @@ library(cowplot)
 
 # some initial data checking:
 directory <- "Users/kah/Documents/TreeRings2"
-full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
+full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.v2.csv"))
+
+
 hist(full.ghcn$RWI)
 
 hist(log(full.ghcn$RWI))
@@ -37,9 +39,11 @@ site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 
 # read in the prism data and the ghcn data
-rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
-rwi.prism <- read.csv("outputs/full_prism_all_months_rwi.csv")
+rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi_v2.csv") #note only very minor differences between version 1 and version 2. These differences are in STC and PLE, which dont get used in the final model
+rwi.prism <- read.csv("outputs/full_prism_all_months_rwi_v2.csv")
 
+rwi.ghcn1 <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
+identical(rwi.ghcn,rwi.ghcn1) 
 
 # calculate JJA VPD for each year
 rwi.prism$jja.VPDmax <- rowMeans(rwi.prism[,c("Month_vpdmax_6", "Month_vpdmax_7", "Month_vpdmax_8")])
