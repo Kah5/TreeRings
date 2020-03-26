@@ -1,4 +1,7 @@
-# clean up and generate testing and training data for the RWI, WUE and d13 models:
+# code to clean up and generate testing and training data for the RWI, WUE and d13 models:
+# run after running RW_trends
+# Author: Kelly A. Heilman
+# Last Checked: March 25th, 2020
 
 library(rjags)
 library(ggplot2)
