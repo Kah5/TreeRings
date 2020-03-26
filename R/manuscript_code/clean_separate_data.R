@@ -11,7 +11,7 @@ library(cowplot)
 
 
 # some initial data checking:
-directory <- "Users/kah/Documents/TreeRings"
+directory <- "Users/kah/Documents/TreeRings2"
 full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
 hist(full.ghcn$RWI)
 
@@ -33,7 +33,7 @@ full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRU
 site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 
-
+# read in the prism data and the ghcn data
 rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
 rwi.prism <- read.csv("outputs/full_prism_all_months_rwi.csv")
 
@@ -306,7 +306,7 @@ msk <- sample.split( dry.yrs.paired, SplitRatio = 3/4, group = NULL )
 train.dry.pair <- dry.yrs.paired[msk,]
 test.dry.pair <- dry.yrs.paired[!msk,]
 
-
+# save the split testing and training data for use later on:
 saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset.rds')
 saveRDS(train.dry.pair, 'data/train_dry_paired_dataset.rds')
 saveRDS(test.dry.pair, 'data/test_dry_paired_dataset.rds')
@@ -317,7 +317,7 @@ saveRDS(test.dry.pair, 'data/test_dry_paired_dataset.rds')
 # read in the d13 data:
 
 
-d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
+#d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
 d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth_v3.csv")
 
 d13 <- d13[!is.na(d13$DBH),]
