@@ -14,8 +14,7 @@ Contains R code to run jags bayesian models of tree ring growth  and bayesian mo
 
 #### Code used to run bayesian models and generate figures in the manuscript
 - Cleaning of rwl names, back-calculating tree diameter, and some prelimnary analysis occurs in **clean_rwl_names.R**
-- Aggregation of tree ring rwls into a single dataframe, with associated cliamte data
-- Tree age estimates are is conducted in **tree_age_agg.R**
+- Aggregation of tree ring rwls into a single dataframe, with associated climate data, and tree age estimates are is conducted in **RW_trends.R** (calls code from **tree_age_agg.R**)
 - Separation of data into testing and training datasets conducted in **clean_separate_data.R**
 - All bayesian models (including the selected model) explored in this analysis are detailed in **RWI_models.Rmd** 
 - Selected tree ring growth model is run in **RWI_bayes_model.R**
@@ -40,4 +39,4 @@ Contains the code used to read in IRMS data, do standard corrections, and calcul
 - R code used to read in IRMS raw data and correct for standards **IRMS_Data_Process_Raw.R**
 - R code used to identify potential years with similar climate to do sampling on is in **Picking_isotope_years.R**
 - R code used to read in all the &delta;<sup>13</sup>C  values, correct for the suess effect and do some  preliminary plotting and cleaning of the data in **read_plot_deltaC.R**
-- R code used to calucluate intrinsic water use efficiency from the stable isotpe values is **calc_WUE.R**
+- R code used to calucluate intrinsic water use efficiency from the stable isotope values is **calc_WUE.R**
