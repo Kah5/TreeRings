@@ -16,7 +16,7 @@ library(SPEI)
 library(boot)
 library(dplyr)
 # lets look atrelationship to climate with age:
-setwd("/Users/kah/Documents/TreeRings")
+setwd("/Users/kah/Documents/TreeRings2")
 
 #####################################
 #read in rwl & add site + year codes#
@@ -167,6 +167,7 @@ saveRDS(detrended.list,"data/no_detrend_list_site.rds")
 source("R/manuscript_code/tree_age_agg.R")
 
 # apply the tree_age_agg function on all of the detrended tree ring series
+# note: writes to a folder data/tree_growth_age
 detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,  type = "RWI_Spline_detrended" )
 
 # use do.calll to make these a dataframe
@@ -183,7 +184,7 @@ age.classes  %>% group_by(site) %>% dplyr::summarise(pre1800_n=sum(pre1800, na.r
 # get establishment dates
 est.dates <- detrended.age.df %>% group_by(site, ID)  %>% drop_na() %>% dplyr::summarise(est = min(year))
 est.dates$class <- ifelse(est.dates$est <= 1890, "old/mature", ifelse(est.dates$est <=1940, "mid", "young"))
-write.csv(age.classes, "data/site_stats/n_trees_ageclass_by_site_rwi_v2.csv")
+write.csv(age.classes, "data/n_trees_ageclass_by_site_rwi_v2.csv")
 
 ###################################
 # add climate data to the age trends
@@ -197,27 +198,27 @@ get.clim <- function(site.df, climatedata){
   
   if(climatedata == "GHCN"){
     if(site.code %in% c("BON", "GLL1", "GLL2", "GLL3", "GLL4")){
-      MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+      MNcd.clim <- read.csv("data/climate_files/West_central_MN_nclimdiv.csv")
     } else{ if(site.code %in% c("HIC", "COR","GLA", "PVC" )){
-      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+      MNcd.clim <- read.csv("data/climate_files/NE_illinois_climdiv.csv")
     }  else{ if(site.code == "W-R" ){
-      MNcd.clim <- read.csv("data/West_central_MN_nclimdiv.csv")
+      MNcd.clim <- read.csv("data/climate_files/West_central_MN_nclimdiv.csv")
     } else{ if(site.code == 'SAW'){
-      MNcd.clim <- read.csv("data/NE_illinois_climdiv.csv")
+      MNcd.clim <- read.csv("data/climate_files/NE_illinois_climdiv.csv")
     }else{ if(site.code == "STC"){
-      MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+      MNcd.clim <- read.csv("data/climate_files/East_Central_MN_CDODiv5039587215503.csv")
     }else{ if(site.code == "ENG"){
-      MNcd.clim <- read.csv("data/Central_MN_CDO.csv")
+      MNcd.clim <- read.csv("data/climate_files/Central_MN_CDO.csv")
     }else{ if(site.code == "TOW"){
-      MNcd.clim <- read.csv("data/South_central_MN_CDO.csv")
+      MNcd.clim <- read.csv("data/climate_files/South_central_MN_CDO.csv")
     }else{ if(site.code == "MOU"){
-      MNcd.clim <- read.csv("data/South_East_MN_CDO.csv")
+      MNcd.clim <- read.csv("data/climate_files/South_East_MN_CDO.csv")
     }else{ if(site.code %in% c("UNC", "AVO")){
-      MNcd.clim <- read.csv("data/East_Central_MN_CDODiv5039587215503.csv")
+      MNcd.clim <- read.csv("data/climate_files/East_Central_MN_CDODiv5039587215503.csv")
     }else { if(site.code == 'PLE'){
-      MNcd.clim <- read.csv('data/south_central_WI_climdiv.csv')
+      MNcd.clim <- read.csv('data/climate_files/south_central_WI_climdiv.csv')
     }else { if(site.code == 'YRF'){
-      MNcd.clim <- read.csv('IA_nclim_div_northeast.csv')
+      MNcd.clim <- read.csv('data/climate_files/IA_nclim_div_northeast.csv')
     }else{
       cat("missing climate data")}
     }
@@ -329,7 +330,7 @@ get.clim <- function(site.df, climatedata){
     three <- merge(two, TAVGs, by = "Year")
     ghcns <- merge(three, PDSIs, by = "Year")
     ghcns$site <- site.code
-    write.csv(ghcns, paste0("/Users/kah/Documents/TreeRings/climate/",site.code, "_", climatedata, "full_mo.csv"), row.names=FALSE)
+    write.csv(ghcns, paste0("climate/",site.code, "_", climatedata, "full_mo.csv"), row.names=FALSE)
     
     annuals <- data.frame(year = annual.p$Year, 
                           PCP = annual.p$PCP,
@@ -477,7 +478,7 @@ get.clim <- function(site.df, climatedata){
     six <- merge(five, PET, by = "Year")
     prisms <- merge(six, BAL, by = "Year")
     prisms$site <- site.code
-    write.csv(prisms, paste0("/Users/kah/Documents/TreeRings/climate/",site.code, "_", climatedata, "full_mo.csv"), row.names=FALSE)
+    write.csv(prisms, paste0("climate/",site.code, "_", climatedata, "full_mo.csv"), row.names=FALSE)
     
     
     
@@ -519,17 +520,18 @@ det.age.clim.ghcn.df <- do.call(rbind, det.age.clim.ghcn)
 
 #------------------------------ get the [full] climate datasets and collate: --------------------
 
-# list filenames
+# list filenames from the individual climate files that we just created  (now in the climate/ folder)
 prisms <- paste0("climate/", list.files("climate", pattern = "PRISMfull"))
 ghcns <- paste0("climate/", list.files("climate", pattern = "GHCNfull"))
 
-
+# read all the prism and ghcn climate data & bind in a dataframe
 prism <- lapply( prisms, read.csv )
 ghcn <- lapply( ghcns, read.csv )
 
 ghcn.df <- do.call(rbind, ghcn)
 prism.df <- do.call(rbind, prism)
 
+# save for later use
 write.csv(ghcn.df, "outputs/full_ghcn_all_months.csv", row.names = FALSE)
 write.csv(prism.df, "outputs/full_prism_all_months.csv", row.names = FALSE)
 
@@ -627,24 +629,24 @@ speciesdf<- data.frame(code = c("BON", "COR", "GLA", "GLL1", "GLL2", "GLL3", "GL
 
 locs <- merge(locs, speciesdf, by = "code")
 
-workingdir <- "/Users/kah/Documents/bimodality/data/"
+# workingdir <- "/Users/kah/Documents/bimodality/data/"
 
 # read in and average prism data (this is modern 30year normals)
-prism <- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
-prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
+# prism <- raster(paste0(workingdir,"PRISM_ppt_30yr_normal_4kmM2_all_bil/PRISM_ppt_30yr_normal_4kmM2_annual_bil.bil"))
+# prism.alb <- projectRaster(prism, crs='+init=epsg:3175')
+# 
+# locs$pr30yr <- raster::extract(prism.alb, locs[,c("coords.x1","coords.x2")])
+# 
+# workingdir <- "/Users/kah/Documents/bimodality/data/"
+# 
+# # read in and average prism temperature data (this is modern 30year normals)
+# prism.t <- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
+# prismt.alb <- projectRaster(prism.t, crs='+init=epsg:3175')
+# 
+# # extract temp
+# locs$tm30yr <- raster::extract(prismt.alb, locs[,c("coords.x1","coords.x2")])
 
-locs$pr30yr <- raster::extract(prism.alb, locs[,c("coords.x1","coords.x2")])
-
-workingdir <- "/Users/kah/Documents/bimodality/data/"
-
-# read in and average prism temperature data (this is modern 30year normals)
-prism.t <- raster(paste0(workingdir,'PRISM_tmean_30yr_normal_4kmM2_annual_bil/PRISM_tmean_30yr_normal_4kmM2_annual_bil.bil'))
-prismt.alb <- projectRaster(prism.t, crs='+init=epsg:3175')
-
-# extract temp
-locs$tm30yr <- raster::extract(prismt.alb, locs[,c("coords.x1","coords.x2")])
-
-workingdir <- "/Users/kah/Documents/TreeRings"
+workingdir <- "/Users/kah/Documents/TreeRings2"
 
 # now merge locs data with the drought recovery data:
 drought.df.1988.site <- merge(drought.df.1988.age, locs, by.x = "site", by.y = "code")
@@ -705,18 +707,21 @@ ggplot(drought.df.1934.5, aes(site, Resistance))+geom_boxplot()+theme_bw()+geom_
 ggplot(drought.df.1934.5, aes(site, Recovery))+geom_boxplot()+theme_bw()+geom_hline(yintercept = 1)+ylim(0,2)
 ggplot(drought.df.1934.5, aes(site, Resilience))+geom_boxplot()+theme_bw()+geom_hline(yintercept = 1)+ylim(0,2)
 
-
+#-------------------------------------------------------------------------------
 # add the location data to the BAI data and save as csv:
+#-------------------------------------------------------------------------------
+
 det.age.clim.prism.df.locs <- merge(det.age.clim.prism.df, locs, by.x = "site", by.y = "code")
 det.age.clim.ghcn.df.locs <- merge(det.age.clim.ghcn.df, locs, by.x = "site", by.y = "code")
 
 write.csv(det.age.clim.prism.df.locs, "outputs/data/RWI_age_prism.df")
 write.csv(det.age.clim.ghcn.df.locs, "outputs/data/RWI_age_ghcn.df")
 
-
-
+#-------------------------------------------------------------------------------
 # get tree sizes from field data:
+#-------------------------------------------------------------------------------
 read_DBH_year <- function( filename, site){
+  
   sitecode <- site
   if(site %in% c("HIC", "AVO", "UNI", "GLL1", "GLL2", "GLL3", "GLL4")){
     newseries <- read.csv(paste0("cleanrwl/",site,"ww.csv"))
@@ -777,7 +782,7 @@ read_DBH_year <- function( filename, site){
     
     newseries <- gp.treeMean2
     
-    site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
+    site.data <- read.csv(paste0("data/site_maps/all_metadata/", site, "_full_xy.csv"))
     if(site %in% "AVO"){
       diams <- site.data[complete.cases(site.data[c("full_tellervo", "DBH", "SpecCode")]), ]
       diams.agg <- aggregate(diams[,c("full_tellervo", "DBH")], list(diams$full_tellervo), mean, na.rm = TRUE)
@@ -912,7 +917,7 @@ read_DBH_year <- function( filename, site){
   }else{ 
     
     # if sites only have one core per tree:
-    site.data <- read.csv(paste0("/Users/kah/Documents/TreeRings/data/site_maps/all_metadata/", site, "_full_xy.csv"))
+    site.data <- read.csv(paste0("data/site_maps/all_metadata/", site, "_full_xy.csv"))
     
     diams <- site.data[c("full_tellervo", "DBH")]
     diams$DBH <- (diams$DBH) 
@@ -942,7 +947,7 @@ read_DBH_year <- function( filename, site){
     # if the data is messed up, send up some error warnings!
     if (!is.data.frame(rwl)) 
       stop("'rwl' must be a data.frame")
-    if (!is.null(diam)) {
+    if (!is.null(diam )) {
       if (ncol(rwl) != nrow(diams)) 
         stop("dimension problem: ", "'ncol(rwl)' != 'nrow(diam)'")
       if (!all(diams[, 1] %in% names(rwl))) 
@@ -1104,8 +1109,8 @@ det.age.clim.class.prism.dbh.df <- merge(det.age.clim.prism.dbh.df, spec[,c("ID"
 
 ggplot(det.age.clim.class.ghcn.dbh.df, aes(year, RWI, color = ageclass))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site)
 
-write.csv(det.age.clim.class.ghcn.dbh.df, "outputs/data/rwi_age_dbh_ghcn.csv")
-write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.csv")
+write.csv(det.age.clim.class.ghcn.dbh.df, "outputs/data/rwi_age_dbh_ghcn.v2.csv")
+write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.v2.csv")
 
 
 
@@ -1117,8 +1122,8 @@ write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.csv")
 # 
 # ggplot(det.age.clim.class.ghcn.dbh.df, aes(year, RWI, color = dbhclass))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site, scales = "free_y")
 # 
-# full.ghcn <- merge(det.age.clim.class.ghcn.dbh.df, locs, by.x = "site", by.y = "code")
-# full.prism <- merge(det.age.clim.class.prism.dbh.df, locs, by.x = "site", by.y = "code")
+full.ghcn <- merge(det.age.clim.class.ghcn.dbh.df, locs, by.x = "site", by.y = "code")
+full.prism <- merge(det.age.clim.class.prism.dbh.df, locs, by.x = "site", by.y = "code")
 # 
 # ggplot(full.ghcn, aes(JJA.pdsi, log(RWI), color = pr30yr))+geom_point(size = 0.1 )+facet_wrap(~ BA)
 # 
@@ -1178,45 +1183,6 @@ ghcn.rwi <- merge( full.ghcn.red , ghcn.df, by.x = c("year", "site"), by.y = c("
 prism.rwi <- merge( full.ghcn.red , prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
 
 
-write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi.csv", row.names = FALSE)
-write.csv(prism.rwi, "outputs/full_prism_all_months_rwi.csv", row.names = FALSE)
+write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi_v2.csv", row.names = FALSE)
+write.csv(prism.rwi, "outputs/full_prism_all_months_rwi_v2.csv", row.names = FALSE)
 
-
-# #-------------------------More Exploratory data analysis---------------------
-# 
-# 
-# RWI <- full.ghcn$RWI
-# Age <- full.ghcn$Age
-# nlsout <- nlrob(na.omit(RWI) ~ A * (1 - exp(-k * na.omit(Age)))^p, data = 
-#                   data.frame(na.omit(Age), na.omit(RWI)), start = list(A = 83, k = 0.03, p = 4), 
-#                 trace = TRUE)
-# 
-# 
-# summary(lm(log(RWI) ~ JJA.pdsi + JUNTmin + SpecCode + DBH.x, data = full.ghcn))
-# 
-# summary(lm(log(RWI) ~ SP24_7 + SpecCode + DBH.x, data = full.ghcn))
-# 
-# summary(lm(log(RWI) ~ SP24_7 , data = full.ghcn[full.ghcn$SpecCode %in% "QUMA",]))
-# summary(lm(log(RWI) ~ SP24_7, data = full.ghcn[full.ghcn$SpecCode %in% "QUAL",]))
-# summary(lm(log(RWI) ~ SP24_7 , data = full.ghcn[full.ghcn$SpecCode %in% "QUVE",]))
-# # read in BAI stats to look at eps
-# 
-# stat.files <- paste0("outputs/Stats/", list.files("outputs/Stats/", pattern="^mean.rwi.*"))
-# rbar.stats <- lapply(stat.files, read.csv)
-# rbar.stats.df <- do.call(rbind, rbar.stats)
-# 
-# sites <-unique(full.ghcn$site)
-# corr.coeff <- data.frame(site = sites,
-#                          coeff = NA)
-# for(i in 1:length(sites)){
-# corr.coeff[i,]$coeff <- cor(log(full.ghcn[full.ghcn$site %in% sites[i], ]$RWI), full.ghcn[full.ghcn$site %in% sites[i],]$SP24_7, use = "pairwise.complete.obs")
-# }
-# corr.coeff
-# 
-# 
-# 
-# # >>>>>>>>>>>>>>>>>>>> look at growth responses in droughts lower than -1.5 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-# # how do these responses vary based on drought timing?
-# # how do they vary based on species
-# # how do they vary based on whether it is high temperature or high precip droughts?
-# 
