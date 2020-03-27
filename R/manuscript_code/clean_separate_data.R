@@ -17,8 +17,6 @@ library(cowplot)
 directory <- "Users/kah/Documents/TreeRings"
 full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.v3.csv"))
 
-full.ghcn.old <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
-
 
 hist(full.ghcn$RWI)
 
@@ -41,7 +39,7 @@ SpecCode <- full.ghcn$SpecCode
 
 # read in the prism data and the ghcn data
 rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi_v2.csv") #note only very minor differences between version 1 and version 2. These differences are in STC and PLE, which dont get used in the final model
-rwi.prism <- read.csv("outputs/full_prism_all_months_rwi_v2.csv")
+rwi.prism <- read.csv("outputs/full_prism_all_months_rwi_v3.csv")
 
 # rwi.ghcn1 <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
 # identical(rwi.ghcn,rwi.ghcn1) 
