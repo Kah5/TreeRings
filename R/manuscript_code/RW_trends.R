@@ -134,9 +134,9 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
   foo <- interseries.cor(detrended.mean, method = "pearson")
   
   
-  if( length(rownames(foo[foo$res.cor <= 0.25,]))>0 ){
-    rownames(foo[foo$res.cor >= 0.25,])
-      detrended.mean <- detrended.mean[,rownames(foo[foo$res.cor >= 0.25,])]
+  if( length(rownames(foo[foo$res.cor <= 0.2,]))>0 ){
+    rownames(foo[foo$res.cor >= 0.2,])
+      detrended.mean <- detrended.mean[,rownames(foo[foo$res.cor >= 0.2,])]
   }
 
   
@@ -955,6 +955,7 @@ read_DBH_year <- function( filename, site){
     rwl <- newseries*0.1 # convert measuremnts to CM:
     
     # below code is adapted from dplR function bai.out to just estimate tree diameter at this point:
+    diam <- diams[ order(match(diams$ID, colnames(rwl))), ] # reorder diameter vector to match trees
     
     # if the data is messed up, send up some error warnings!
     if (!is.data.frame(rwl)) 
@@ -1121,8 +1122,8 @@ det.age.clim.class.prism.dbh.df <- merge(det.age.clim.prism.dbh.df, spec[,c("ID"
 
 ggplot(det.age.clim.class.ghcn.dbh.df, aes(year, RWI, color = ageclass))+geom_point(size = 0.2)+stat_smooth()+facet_wrap(~site)
 
-write.csv(det.age.clim.class.ghcn.dbh.df, "outputs/data/rwi_age_dbh_ghcn.v2.csv")
-write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.v2.csv")
+write.csv(det.age.clim.class.ghcn.dbh.df, "outputs/data/rwi_age_dbh_ghcn.v3.csv")
+write.csv(det.age.clim.class.prism.dbh.df, "outputs/data/rwi_age_dbh_prism.v3.csv")
 
 
 
@@ -1195,6 +1196,6 @@ ghcn.rwi <- merge( full.ghcn.red , ghcn.df, by.x = c("year", "site"), by.y = c("
 prism.rwi <- merge( full.ghcn.red , prism.df, by.x = c("year", "site"), by.y = c("Year", "site"))
 
 
-write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi_v2.csv", row.names = FALSE)
-write.csv(prism.rwi, "outputs/full_prism_all_months_rwi_v2.csv", row.names = FALSE)
+write.csv(ghcn.rwi, "outputs/full_ghcn_all_months_rwi_v3.csv", row.names = FALSE)
+write.csv(prism.rwi, "outputs/full_prism_all_months_rwi_v3.csv", row.names = FALSE)
 

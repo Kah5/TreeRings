@@ -15,10 +15,10 @@ library(cowplot)
 
 # some initial data checking:
 directory <- "Users/kah/Documents/TreeRings"
-full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
+full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.v3.csv"))
 
+full.ghcn.old <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.csv"))
 
-unique(full.ghcn[full.ghcn$site %in% "BON",]$ID)
 
 hist(full.ghcn$RWI)
 
