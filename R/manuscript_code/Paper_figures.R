@@ -205,7 +205,7 @@ full.ghcn.sites <- read.csv("outputs/full.ghcn.sites.struct.before.splitting.csv
 
 full.ghcn.sites <- merge(full.ghcn.sites, site.bays, by = "site")
 
-full.ghcn.unique <- unique(full.ghcn.sites[, c("site", "JUNTmax", "MAP.prism", "prism_Month_tmax_6", "prism_tmax_jja", "jja.VPDmax","year")])
+full.ghcn.unique <- unique(full.ghcn.sites[, c("site", "JUNTmax", "MAP.prism", "prism_PRISM_tmax_6", "prism_tmax_jja", "jja.VPDmax","year")])
 
 site.means <- full.ghcn.sites %>% group_by(site, code, structure ) %>% dplyr::summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
                                                                                         site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
@@ -215,7 +215,7 @@ site.means <- full.ghcn.sites %>% group_by(site, code, structure ) %>% dplyr::su
                                                                                         site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
                                                                                         site.ci.lo.MAP = quantile(MAP.prism, 0.025, na.rm = TRUE),
                                                                                         site.ci.high.MAP = quantile(MAP.prism, 0.975, na.rm = TRUE),
-                                                                                        site.tmax.prism = mean(prism_Month_tmax_6), 
+                                                                                        site.tmax.prism = mean(prism_PRISM_tmax_6), 
                                                                                         site.tmax.prism.jja = mean(prism_tmax_jja), 
                                                                                         site.VPDmax = mean(jja.VPDmax))
 
@@ -282,25 +282,25 @@ numbered.sites$number <- as.character(1:length(numbered.sites$code))
 #                                                            ymin = 36.5, ymax = 41.5)
 #
 
-# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space.png")
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space.png")
 # plot_grid(sites.bays.map, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
 # dev.off()
 #
-# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_sd.png")
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space_sd.png")
 # plot_grid(sites.bays.map, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
 # dev.off()
 
 # create the same maps but with inset of US
-# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset.png")
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space_inset.png")
 # plot_grid(site.bayes.map.inset, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
 # dev.off()
 #
-# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_sd_inset.png")
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space_sd_inset.png")
 # plot_grid(site.bayes.map.inset, climate.space.sd, ncol = 2, align = "hv", labels = "AUTO")
 # dev.off()
 #
 # # map with sites as numbers instead of site names
-# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset.png")
+# png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space_inset.png")
 # plot_grid(site.bayes.map.inset.num, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
 # dev.off()
 
@@ -462,11 +462,11 @@ legend.colors <- get_legend(full.us.wwf.eco)
 
 
 # create the same maps but with inset of US
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset_eco.png")
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space_inset_eco.png")
 plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
 dev.off()
 
-png(height = 4.1, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/site_map_and_climate_space_inset_eco.png")
+png(height = 4.1, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/site_map_and_climate_space_inset_eco.png")
 plot_grid(
   plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO"),
 plot_grid( legend.sf), ncol = 1, rel_heights = c(1,0.12))
@@ -496,7 +496,7 @@ dev.off()
 # pull parameters from the cohort only model and cohortXtime model:
 # cohort only model: lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter
 
-cohort.params <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
+cohort.params <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps_v3.rds")
 #train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 #test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/test.rds")
 pred.pair <- readRDS("outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_YP.rds")
@@ -517,7 +517,7 @@ p.o.plot.growth.ageclass <- ggplot(pred.cohort.summary, aes(observed, predicted)
 
 
 
-png(height = 4, width = 4, units = "in", res = 200, "outputs/growth_model/paper_figures/RWI_pred_vs_obs_cohort_only_model.png")
+png(height = 4, width = 4, units = "in", res = 200, "outputs/growth_model/paper_figures_v3/RWI_pred_vs_obs_cohort_only_model.png")
 p.o.plot
 dev.off()
 
@@ -688,7 +688,7 @@ b7.dot.age <- ggplot(data.frame(b7.sum), aes(x = mean.val, y = cohort, color = c
 mod.past.legend <- get_legend(ggplot(data.frame(b7.sum), aes(x = mean.val, y = cohort, color = cohort))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high,height = 0))+
   geom_point()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 14)+theme(legend.title = element_blank()))
 
-png(height = 13, width = 5, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_only_CI.png")
+png(height = 13, width = 5, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/full_dot_plot_cohort_only_CI.png")
 cowplot::plot_grid(int.dot.age, 
           b2.dot.age, 
           b6.dot.age, 
@@ -701,10 +701,10 @@ dev.off()
 
 # -------------------------read in cohort X structure model samples:
 
-cohort.struct.params <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
+cohort.struct.params <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v3.rds")
 #train.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 #test.dry.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
-pred.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps.rds")
+pred.pair <- readRDS("outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps_v3.rds")
 pred.cs <- data.frame(pred.pair[[1]])
 head(pred.cs)
 pred.cs.m <- melt(pred.cs)
@@ -736,7 +736,7 @@ cs.growth.summary<- pred.cohort.summary %>% group_by(struct.cohort) %>% dplyr::s
 cs.growth.summary$struct.cohort<- factor(cs.growth.summary$struct.cohort, levels = c(   "Past-Savanna", "Past-Forest", "Modern-Savanna","Modern-Forest" ))
 
 predicted.growth.cs <- ggplot(cs.growth.summary, aes(struct.cohort, y = growth, fill = struct.cohort))+geom_bar(stat = "identity")+scale_fill_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#c7eae5', "Past-Forest"='#018571'))+
-  geom_errorbar(aes(x = struct.cohort, ymin = Ci.lo, ymax = Ci.hi), alpha = 0.8, size = 0.5, width = 0.2)+ylab("Predicted growth (mm)")+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.title = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0, 5)
+  geom_errorbar(aes(x = struct.cohort, ymin = Ci.lo, ymax = Ci.hi), alpha = 0.8, size = 0.5, width = 0.2)+ylab("Predicted growth (mm)")+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.title = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+ylim(0, 5.7)
 
 
 new_full.cs.pred<- left_join(pred.cs.m, pred.cohort.summary[,c("variable", "struct.cohort")], by = "variable")
@@ -906,7 +906,7 @@ sav.for.legend <- cowplot::get_legend(ggplot(data.frame(a1.sum), aes(x = mean.va
 
 
 
-# png(height = 14, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_cohortXstuct_CI_alllegend.png")
+# png(height = 14, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/full_dot_plot_cohort_cohortXstuct_CI_alllegend.png")
 # cowplot::plot_grid(sav.for.legend,
 #                    
 # cowplot::plot_grid(int.dot.age, int.dot, 
@@ -923,7 +923,7 @@ sav.for.legend <- cowplot::get_legend(ggplot(data.frame(a1.sum), aes(x = mean.va
 # nrow = 2, align = "v", rel_heights = c(0.1, 1))
 # dev.off()
 
-png(height = 14, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/full_dot_plot_cohort_cohortXstuct_CI.png")
+png(height = 14, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/full_dot_plot_cohort_cohortXstuct_CI.png")
 cowplot::plot_grid(sav.for.legend,
                    
                    cowplot::plot_grid(int.dot.age, int.dot, 
@@ -1117,7 +1117,7 @@ beta.diffs.plot.mod.past <- ggplot(beta_diffsm, aes(params, mean, fill = signifi
 
 
 
-png(height = 6, width = 12, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_of_differences_cohort_v2.png")
+png(height = 6, width = 12, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/summary_of_differences_cohort_v2.png")
 plot_grid(
   plot_grid(pred.WUE+theme(legend.position = "none"), mean.pred.growth, ncol = 1, align = "hv", labels = c("", "B")),
   beta.diffs.plot.mod.past, ncol = 2, labels = c("A", "C"), rel_widths = c(0.75, 1))
@@ -1137,12 +1137,12 @@ lag1.bar <- ggplot(Lag2.beta.diff, aes(change, pct.change))+geom_bar(stat = "ide
 
 mean.pred.growth <- ggplot(growth.cohort, aes(ageclass,Predicted, fill = ageclass))+geom_bar(stat = "identity")+geom_errorbar(data = growth.cohort,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.8, size = 0.5, width = 0.2)+ylim(0, 6) + ylab("Mean predicted tree growth (mm)")+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.position = "none")
 
-png(height = 4, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_differences_by_cohort.png")
+png(height = 4, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/summary_differences_by_cohort.png")
 plot_grid(wue.diff.bar, drought.bar, lag1.bar,mean.pred.growth, ncol = 4, align = 'h', rel_widths = c(0.5,0.5,0.5, 1))
 dev.off()
 
 
-png(height = 4, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_differences_by_cohort.png")
+png(height = 4, width = 10, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/summary_differences_by_cohort.png")
 plot_grid(wue.diff.bar, drought.bar, lag1.bar,mean.pred.growth, ncol = 4, align = 'h', rel_widths = c(0.5,0.5,0.5, 1))
 dev.off()
 
@@ -1401,12 +1401,12 @@ mean.pred.beta3.d13 <- ggplot(beta3d13.cohort, aes(ageclass, Predicted, fill = a
 
 
 # plot out d13 model responses:
-png(height = 3, width = 12, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_of_d13_mod.png")
+png(height = 3, width = 12, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/summary_of_d13_mod.png")
 plot_grid(mean.pred.d13.dot, mean.pred.beta1.d13, mean.pred.beta2.d13, mean.pred.beta3.d13, ncol = 4)
 dev.off()
 
 # plot overall
-png(height = 6, width = 12, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_of_d13_iwue_mod_v3.png")
+png(height = 6, width = 12, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/summary_of_d13_iwue_mod_v3.png")
 plot_grid(mean.pred.d13.dot, mean.pred.beta1.d13, mean.pred.beta2.d13, mean.pred.beta3.d13,
           a.dots.2.wue, b.dots.2.wue, b2.dots.2.wue, b3.dots.2.wue, ncol = 4, align = "v")
 dev.off()
@@ -1587,7 +1587,7 @@ b3.dots.2.d13
 dev.off()
 
 # generate one large figure for D13c and iWUE:
-png(width = 7, height = 14, units = "in", res = 300, "outputs/growth_model/paper_figures/parameter_distributions_iWUE_d13_v3.png")
+png(width = 7, height = 14, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/parameter_distributions_iWUE_d13_v3.png")
 
 plot_grid(a.dots.2.wue, a.dots.2.d13,
           b.dots.2.wue, b.dots.2.d13,
@@ -2035,7 +2035,7 @@ dev.off()
 
 
 # plot all dotplots for WUE & d13c side by side
-png(height = 13, width = 7, units = "in", res = 300, "outputs/growth_model/paper_figures/summary_of_d13_iwue_struct_cohort_params_v3.png")
+png(height = 13, width = 7, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/summary_of_d13_iwue_struct_cohort_params_v3.png")
 plot_grid(a.dots.2.d13, a.dots.2.wue,
           b.dots.2.d13, b.dots.2.wue,
           b2.dots.2.d13, b2.dots.2.wue,
@@ -2049,19 +2049,19 @@ dev.off()
 #-----------------------------------------------------------------------------
 
 # pred vs observed d13 C
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/p.o.plots.d13C.combined.png")
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/p.o.plots.d13C.combined.png")
 plot_grid(p.o.plot.d13c.cohort, p.o.plot.d13c.struct.cohort, align = "hv", labels = "AUTO")
 dev.off()
 
 
 # pred vs observed iWUE
 
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/p.o.plots.iWUE.combined.png")
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/p.o.plots.iWUE.combined.png")
 plot_grid(p.o.plot.wue.cohort, p.o.plot.wue.struct.cohort, align = "hv", labels = "AUTO")
 dev.off()
 
 # predicted vs observed growth
-png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures/p.o.plots.growth.combined.png")
+png(height = 4, width = 8, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/p.o.plots.growth.combined.png")
 plot_grid(p.o.plot.growth.ageclass, p.o.plot.growth.cs, align = "hv", labels = "AUTO")
 dev.off()
 
@@ -2070,7 +2070,7 @@ dev.off()
 #----------plot changes in growth an predicted WUE across stand and cohorts:
 cs.legend <- get_legend(predicted.wue.cs)
 
-png(height = 7, width = 5.5, units = "in", res = 300, "outputs/growth_model/paper_figures/predicted_wue_growth_change_cohort_structures.png")
+png(height = 7, width = 5.5, units = "in", res = 300, "outputs/growth_model/paper_figures_v3/predicted_wue_growth_change_cohort_structures.png")
 plot_grid(plot_grid(predicted.wue.cs+theme_bw(base_size = 14)+theme(legend.position = "none", panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1), axis.title.x = element_blank()), 
                     predicted.growth.cs+theme_bw(base_size = 14)+theme(legend.position = "none", panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1), axis.title.x = element_blank()), ncol = 1, align = "hv", labels = "AUTO"),
           cs.legend, rel_widths = c(0.5, 0.3))
@@ -2094,7 +2094,7 @@ WUE.column <- ggplot(d13C.samples, aes(year, iWUE))+geom_point(size = 0.5)+facet
 
 d13.column <- ggplot(d13C.samples, aes(year, Cor.d13C.suess))+geom_point(size = 0.5)+facet_wrap(~site, ncol = 1)+theme_bw(base_size = 12)+ylab(expression(paste("Raw " ,delta^{13}, "C (\u2030 VPDB)")))+xlab("Year")
 
-png(height= 6, width = 6, units ="in", res = 300, "outputs/growth_model/paper_figures/d13_iWUE_raw_data.png")
+png(height= 6, width = 6, units ="in", res = 300, "outputs/growth_model/paper_figures_v3/d13_iWUE_raw_data.png")
 plot_grid(d13.column, WUE.column, ncol = 2, labels = "AUTO")
 dev.off()
 

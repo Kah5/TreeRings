@@ -14,7 +14,7 @@ library(cowplot)
 
 
 # some initial data checking:
-directory <- "Users/kah/Documents/TreeRings"
+directory <- "Users/kah/Documents/TreeRings2"
 full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.v3.csv"))
 
 
@@ -38,21 +38,21 @@ site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 
 # read in the prism data and the ghcn data
-rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi_v2.csv") #note only very minor differences between version 1 and version 2. These differences are in STC and PLE, which dont get used in the final model
+rwi.ghcn <- read.csv("outputs/full_ghcn_all_months_rwi_v3.csv") #note only very minor differences between version 1 and version 2. These differences are in STC and PLE, which dont get used in the final model
 rwi.prism <- read.csv("outputs/full_prism_all_months_rwi_v3.csv")
 
 # rwi.ghcn1 <- read.csv("outputs/full_ghcn_all_months_rwi.csv")
 # identical(rwi.ghcn,rwi.ghcn1) 
 
 # calculate JJA VPD for each year
-rwi.prism$jja.VPDmax <- rowMeans(rwi.prism[,c("Month_vpdmax_6", "Month_vpdmax_7", "Month_vpdmax_8")])
-rwi.prism$jja.VPDmin <- rowMeans(rwi.prism[,c("Month_vpdmin_6", "Month_vpdmin_7", "Month_vpdmin_8")])
+rwi.prism$jja.VPDmax <- rowMeans(rwi.prism[,c("PRISM_vpdmax_6", "PRISM_vpdmax_7", "PRISM_vpdmax_8")])
+rwi.prism$jja.VPDmin <- rowMeans(rwi.prism[,c("PRISM_vpdmin_6", "PRISM_vpdmin_7", "PRISM_vpdmin_8")])
 
 # calculate JJA BAL for each year
-rwi.prism$jja.BAL <- rowMeans(rwi.prism[,c("Month_BAL_6", "Month_BAL_7", "Month_BAL_8")])
+rwi.prism$jja.BAL <- rowMeans(rwi.prism[,c("PRISM_BAL_6", "PRISM_BAL_7", "PRISM_BAL_8")])
 
 # calculate total precip for each year
-rwi.ghcn$MAP.prism <- rowSums(rwi.prism[,c("Month_pcp_1","Month_pcp_2", "Month_pcp_3","Month_pcp_4","Month_pcp_5","Month_pcp_6", "Month_pcp_7", "Month_pcp_8", "Month_pcp_9", "Month_pcp_10", "Month_pcp_11", "Month_pcp_12")])
+rwi.ghcn$MAP.prism <- rowSums(rwi.prism[,c("PRISM_pcp_1","PRISM_pcp_2", "PRISM_pcp_3","PRISM_pcp_4","PRISM_pcp_5","PRISM_pcp_6", "PRISM_pcp_7", "PRISM_pcp_8", "PRISM_pcp_9", "PRISM_pcp_10", "PRISM_pcp_11", "PRISM_pcp_12")])
 
 
 # get moving window of past 5, 10, 15 years of climate
@@ -189,14 +189,14 @@ SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
 
 
 # alternative scaling-> center on site level means:
-full.ghcn$prism_tmax_jja <- rowMeans(full.ghcn[, c("prism_Month_tmax_6", "prism_Month_tmax_7", "prism_Month_tmax_8")])
-full.ghcn.unique <- unique(full.ghcn[, c("site", "JUNTmax", "MAP.prism", "prism_Month_tmax_6", "prism_tmax_jja", "jja.VPDmax")])
+full.ghcn$prism_tmax_jja <- rowMeans(full.ghcn[, c("prism_PRISM_tmax_6", "prism_PRISM_tmax_7", "prism_PRISM_tmax_8")])
+full.ghcn.unique <- unique(full.ghcn[, c("site", "JUNTmax", "MAP.prism", "prism_PRISM_tmax_6", "prism_tmax_jja", "jja.VPDmax")])
 site.means <- full.ghcn.unique %>% group_by(site) %>% summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
                                                                 site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
                                                                 site.MAP = mean(MAP.prism, na.rm = TRUE), 
                                                                 site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
                                                                 site.DBH = mean(DBH, na.rm=TRUE), 
-                                                                site.tmax.prism = mean(prism_Month_tmax_6), 
+                                                                site.tmax.prism = mean(prism_PRISM_tmax_6), 
                                                                 site.tmax.prism.jja = mean(prism_tmax_jja), 
                                                                 site.VPDmax = mean(jja.VPDmax))
 
@@ -206,7 +206,7 @@ full.ghcn <- left_join(full.ghcn, site.means, by = "site")
 # scale data by site means for climate variables 
 full.ghcn$T.scaled2 <- (full.ghcn$JUNTmax - full.ghcn$site.tmax)/full.ghcn$site.sd.tmax
 full.ghcn$MAP.scaled2 <- (full.ghcn$MAP.prism - full.ghcn$site.MAP)/full.ghcn$site.sd.MAP
-full.ghcn$T.prism.scaled2 <- (full.ghcn$prism_Month_tmax_6 - full.ghcn$site.tmax.prism)/full.ghcn$site.tmax.prism
+full.ghcn$T.prism.scaled2 <- (full.ghcn$prism_PRISM_tmax_6 - full.ghcn$site.tmax.prism)/full.ghcn$site.tmax.prism
 full.ghcn$T.prism.JJA.scaled2 <- (full.ghcn$prism_tmax_jja - full.ghcn$site.tmax.prism.jja)/full.ghcn$site.tmax.prism.jja
 full.ghcn$jja.VPDmax.scaled2 <- (full.ghcn$jja.VPDmax - full.ghcn$site.VPDmax)/full.ghcn$site.VPDmax
 
@@ -257,7 +257,7 @@ write.csv(full.ghcn, "outputs/full.ghcn.sites.struct.before.splitting.csv", row.
 ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1) & !is.na(full.ghcn$RWI_2) & !is.na(full.ghcn$DBH),]
 
 # save ghcn.clean for later use:
-saveRDS(ghcn.clean, "outputs/growth_model/ghcn.clean.full.data.rds")
+saveRDS(ghcn.clean, "outputs/growth_model/ghcn.clean.full.data_v3.rds")
 
 # split training and testing datasets:
 msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
@@ -313,9 +313,9 @@ train.dry.pair <- dry.yrs.paired[msk,]
 test.dry.pair <- dry.yrs.paired[!msk,]
 
 # save the split testing and training data for use later on:
-saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset.rds')
-saveRDS(train.dry.pair, 'data/train_dry_paired_dataset.rds')
-saveRDS(test.dry.pair, 'data/test_dry_paired_dataset.rds')
+saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset_v3.rds')
+saveRDS(train.dry.pair, 'data/train_dry_paired_dataset_v3.rds')
+saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v3.rds')
 
 
 

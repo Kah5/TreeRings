@@ -80,16 +80,19 @@ read_detrend_year <- function( filename, method , rwiorbai, site){
       
       colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
       GLA.table <- read.csv("crns/GLA_translation_table.csv")
+      GLA.table <- GLA.table[!GLA.table$RWL %in% "GLA99",]
       
       new.cols <- merge(data.frame(RWL= colnames(detrended.mean), order = 1:length(colnames(detrended.mean))), GLA.table, by = "RWL")
       colnames(detrended.mean) <- new.cols[order(new.cols$order),]$ID
       detrended.mean<- detrended.mean[,1:15]
+      
       detrended.mean <- treeMean(detrended.mean, autoread.ids(detrended.mean), na.rm=TRUE)
       colnames(detrended.mean) <- paste0(site,colnames(detrended.mean))
       new.cols2 <- merge(data.frame(RWL= colnames(detrended.mean), order = 1:length(colnames(detrended.mean))), GLA.table, by = "RWL")
       colnames(detrended.mean) <- new.cols2[order(new.cols2$order),]$ID
-      
-    }else{
+      detrended.mean <- detrended.mean[,1:12]
+    
+      }else{
     if(site %in% "GLL4"){
       detrended.mean <- treeMean(detrended, read.ids(detrended, stc = c(4,7,1)), na.rm=TRUE)
       colnames(detrended.mean) <- paste0(site, colnames(detrended.mean))
@@ -658,7 +661,7 @@ locs <- merge(locs, speciesdf, by = "code")
 # # extract temp
 # locs$tm30yr <- raster::extract(prismt.alb, locs[,c("coords.x1","coords.x2")])
 
-workingdir <- "/Users/kah/Documents/TreeRings"
+workingdir <- "/Users/kah/Documents/TreeRings2"
 
 # now merge locs data with the drought recovery data:
 drought.df.1988.site <- merge(drought.df.1988.age, locs, by.x = "site", by.y = "code")
