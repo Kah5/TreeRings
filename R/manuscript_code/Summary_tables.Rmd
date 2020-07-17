@@ -38,7 +38,7 @@ summary.table <- summary.table %>% dplyr::select(site, ntrees, Avg.age, TimeSpan
 colnames(summary.table) <- c("Site", "Trees", "Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")
 #print(xtable(summary.table, align = rep("c", 9)), type="latex", include.rownames = FALSE)
 
-site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC")
+site.list <- c("AVO", "BON", "ENG", "GLA", "GLL1", "GLL2", "GLL3", "MOU", "UNC", "PVC", "COR")
 
 ```
 ## Table 1: Site summaries
@@ -47,7 +47,7 @@ sites.modeled <- summary.table[summary.table$Site %in% site.list, ]
 sites.modeled$`Mean Age` <- round(sites.modeled$`Mean Age`, digits = 0)
 rownames(sites.modeled) <- NULL
 sites.modeled$`Site #` <- 1:length(sites.modeled$Site)
-sites.modeled$Structure <- c("Forest", "Savanna", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna")
+sites.modeled$Structure <- c("Forest", "Savanna", "Forest", "Forest", "Savanna", "Forest", "Savanna", "Savanna", "Forest", "Savanna", "Savanna")
 sites.modeled <- sites.modeled[,c("Site #", "Site", "Structure","Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")]
 kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site level chronology summaries",digits = 3, linesep = "")
 ```
@@ -59,11 +59,11 @@ kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site leve
 # Mod2 = full model, site int, structure/cohort params, no interaction
 
 # read in model fit estimates
-mod1 <- read.csv("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_summary_v3.csv")
+mod1 <- read.csv("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_summary_v4.csv")
 mod2 <- read.csv("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_summary.csv")
 
-mod1.dev <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_DIC_v3.rds")
-mod2.dev <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_DIC_v3.rds")
+mod1.dev <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_DIC_v4.rds")
+mod2.dev <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/model_summary/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_DIC_v4.rds")
 
 mod1$deviances <- sum(mod1.dev$deviance)
 mod1$penalties <- sum(mod1.dev$penalty)
@@ -81,21 +81,21 @@ mod2$penalized_deviance <- mod2$penalties + mod2$deviances
 
 
 # --------read in estimates  + 95% CI for Mod1:
-samps <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v3.rds")
-test.dry <- readRDS("/Users/kah/Documents/TreeRings2/data/test_dry_paired_dataset_v3.rds")
-train.dry <- readRDS("/Users/kah/Documents/TreeRings2/data/train_dry_paired_dataset_v3.rds")
+samps <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v4.rds")
+test.dry <- readRDS("/Users/kah/Documents/TreeRings2/data/test_dry_paired_dataset_v4.rds")
+train.dry <- readRDS("/Users/kah/Documents/TreeRings2/data/train_dry_paired_dataset_v4.rds")
 
 
  #Yp.samps <- samps[,1:(length(test.dry$RWI))] 
 
- alpha.samps  <- samps[,1:9]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps <- samps[,10:13]
- beta3.samps <- samps[,14:17]
- beta4.samps <- samps[,18:21]
- beta5.samps <- samps[,22:25]
- beta6.samps <- samps[,26:29]
- sigma.samps <- samps[,36]
- sigma_betas <- samps[,30:35]
+ alpha.samps  <- samps[,1:11]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps <- samps[,12:15]
+ beta3.samps <- samps[,16:19]
+ beta4.samps <- samps[,20:23]
+ beta5.samps <- samps[,24:27]
+ beta6.samps <- samps[,28:31]
+ sigma.samps <- samps[,38]
+ sigma_betas <- samps[,32:37]
 
 a <- data.frame(alpha.samps)
 colnames(a) <- unique(train.dry$site)#[order(unique(train.dry[,c("site", "site.num")])[,2])])
@@ -181,22 +181,23 @@ colnames(all.betas) <- c("Parameter", "Cohort", "Estimate", "95% CI")
 
 
 # # --------read in estimates  + 95% CI for Mod:
- samps.mod2 <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v3.rds")
+ samps.mod2 <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v4.rds")
  #test.dry <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
  #train.dry <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 
 
- alpha.samps.mod2  <- samps.mod2[,1:9]# one alpha for each of 4 cohort-strcuture groups
- beta2.samps.mod2 <- samps.mod2[,10:13]
- beta3.samps.mod2 <- samps.mod2[,14:17]
- beta4.samps.mod2 <- samps.mod2[,18:21]
- beta5.samps.mod2 <- samps.mod2[,22:25]
- beta6.samps.mod2 <- samps.mod2[,26:29]
- beta7.samps.mod2 <- samps.mod2[,30:33]
- mu_beta.samps.mod2 <- samps.mod2[,34:40]
- sigma.samps.mod2 <- samps.mod2[,36]
- sigma_betas <- samps.mod2[,30:35]
+ alpha.samps.mod2  <- samps.mod2[,1:11]# one alpha for each of 4 cohort-strcuture groups
+ beta2.samps.mod2 <- samps.mod2[,12:15]
+ beta3.samps.mod2 <- samps.mod2[,16:19]
+ beta4.samps.mod2 <- samps.mod2[,20:23]
+ beta5.samps.mod2 <- samps.mod2[,24:27]
+ beta6.samps.mod2 <- samps.mod2[,28:31]
+ beta7.samps.mod2 <- samps.mod2[,32:35]
+ mu_beta.samps.mod2 <- samps.mod2[,36:42]
+ sigma.samps.mod2 <- samps.mod2[,43]
+ sigma_betas <- samps.mod2[,32:37]
       
+ 
  
  a <- data.frame(alpha.samps.mod2)
 colnames(a) <- unique(train.dry$site)#[order(unique(train.dry[,c("site", "site.num")])[,2])])
@@ -387,10 +388,10 @@ Past.mod.clim.summary <- full.ghcn %>% filter(site %in% site.list) %>% filter(ye
 
 # get series intercorrelations for each site 
 for(i in 1:length(site.list)){
-  AVO <- full.ghcn %>% filter (site %in% site.list[i]) %>% select(ID, year, RWI) %>% spread(ID,RWI)
+  AVO <- full.ghcn %>% filter (site %in% site.list[i]) %>% dplyr::select(ID, year, RWI) %>% spread(ID,RWI)
   rownames(AVO) <- AVO$year
-  AVO <- AVO %>% select(-year)
-  summary.AVO <- summary.rwl(AVO)
+  AVO <- AVO %>% dplyr::select(-year)
+  summary.AVO <- dplR::summary.rwl(AVO)
   
   df.corrs <- data.frame(site = site.list[i],
                          Interseries.correlation = mean(interseries.cor(AVO)[,1]),
@@ -467,17 +468,19 @@ summary.table.site.intercor.age <- do.call(rbind, summaries.ageclss)
 age.summary <- merge( Past.mod.clim.summary, summary.table.site.intercor.age, by = c("site", "ageclass"))
 age.summary$structure <- c("Forest", "Forest",
                            "Savanna", "Savanna",
+                           
                            "Forest", "Forest",
                            "Savanna", "Savanna",
                            "Forest", "Forest",
                            "Savanna", "Savanna",
                            "Savanna", "Savanna",
                            "Forest", "Forest",
-                           "Savanna","Savanna")
+                           "Savanna",
+                           "Savanna")
 
 age.summary$site.num <- c(1,1,
                           2,2,
-                          3,3,
+                          3,3
                           4,4,
                           5,5,
                           6,6,
