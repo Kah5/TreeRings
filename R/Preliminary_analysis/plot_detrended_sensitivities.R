@@ -30,6 +30,15 @@ ggplot(all.subset, aes(MAP.scaled, RWI, color = ageclass))+geom_point(size = 0.1
   stat_smooth(method = "lm")+facet_wrap(~site, scales = "free_y")+theme_bw()+scale_color_manual(values = c("red", "blue"))+ylab("Detrended Ring Width Index")+xlab("Scaled Total Annual Precipitation")
 dev.off()
 
+# histogram of tree ages:
+ggplot(clean.full.spline, aes(Age, fill = ageclass), alpha = 0.5)+geom_histogram(position = "dodge")
+clean.full.spline$est.date<- clean.full.spline$year - clean.full.spline$Age
+
+ggplot(all.subset, aes(est.date, fill = ageclass), alpha = 0.5)+geom_histogram(position = "dodge")
+
+clean.full.spline %>% group_by(ageclass) %>% summarise(min.age = min(est.date), 
+                                                      max.age = max(est.date), 
+                                                      mean.age = mean(est.date))
 
 ggplot(clean.full.spline, aes(MAP.scaled, RWI, color = ageclass))+
   stat_smooth(method = "lm")+facet_wrap(~site)

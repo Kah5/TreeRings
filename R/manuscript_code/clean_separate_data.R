@@ -191,7 +191,7 @@ SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
 # alternative scaling-> center on site level means:
 full.ghcn$prism_tmax_jja <- rowMeans(full.ghcn[, c("prism_PRISM_tmax_6", "prism_PRISM_tmax_7", "prism_PRISM_tmax_8")])
 full.ghcn.unique <- unique(full.ghcn[, c("site", "JUNTmax", "MAP.prism", "prism_PRISM_tmax_6", "prism_tmax_jja", "jja.VPDmax")])
-site.means <- full.ghcn.unique %>% group_by(site) %>% summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
+site.means <- full.ghcn.unique %>% group_by(site) %>% dplyr::summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
                                                                 site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
                                                                 site.MAP = mean(MAP.prism, na.rm = TRUE), 
                                                                 site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
@@ -271,11 +271,16 @@ mod.post <- ghcn.clean[ghcn.clean$ageclass %in% "Modern" & ghcn.clean$Year >= 19
 past.pre <- ghcn.clean[ghcn.clean$ageclass %in% "Past" & ghcn.clean$Year < 1950,]
 
 sub.ghcn<- rbind(mod.post, past.pre)
-
+sub.ghcn<- sub.ghcn[!sub.ghcn$site %in% c("GLL4", "HIC", "PLE",  "STC", "TOW", "COR", "PVC"),]
 msk <- caTools::sample.split( sub.ghcn, SplitRatio = 3/4, group = NULL )
 
 train <- sub.ghcn[msk,]
 test <- sub.ghcn[!msk,]
+
+# save the split testing and training data for use later on:
+saveRDS(sub.ghcn, 'data/full_dataset_v4.rds')
+saveRDS(train, 'data/train_dataset_v4.rds')
+saveRDS(test, 'data/test_dataset_v4.rds')
 
 # get dry and wet years and separate by ageclass:
 dry <- quantile(ghcn.clean$JJA.pdsi, 0.25) # value of the driest years
@@ -304,18 +309,21 @@ msk <- sample.split( dry.yrs, SplitRatio = 3/4, group = NULL )
 train.dry <- dry.yrs[msk,]
 test.dry <- dry.yrs[!msk,]
 
+
+
+
 # now get dry years for sites where we have both ageclasses
 
-dry.yrs.paired <- dry.yrs[!dry.yrs$site %in% c("COR","GLL4", "HIC", "PLE", "PVC", "STC", "TOW"),]
+dry.yrs.paired <- dry.yrs[!dry.yrs$site %in% c("GLL4", "HIC", "PLE",  "STC", "TOW"),]
 msk <- sample.split( dry.yrs.paired, SplitRatio = 3/4, group = NULL )
 
 train.dry.pair <- dry.yrs.paired[msk,]
 test.dry.pair <- dry.yrs.paired[!msk,]
 
 # save the split testing and training data for use later on:
-saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset_v3.rds')
-saveRDS(train.dry.pair, 'data/train_dry_paired_dataset_v3.rds')
-saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v3.rds')
+saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset_v4.rds')
+saveRDS(train.dry.pair, 'data/train_dry_paired_dataset_v4.rds')
+saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v4.rds')
 
 
 
@@ -326,6 +334,9 @@ saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v3.rds')
 #d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth.csv")
 d13 <- read.csv("outputs/stable_isotopes/merged_d13_growth_v3.csv")
 
+d13.small <- d13[,c("site", "year", "ID", "d.13C.12C", "d13C_12C_corr", "d13atm", "ppm", "Cor.d13C.suess", "iWUE", "RWI", "DBH", "SpecCode", "ageclass")]
+
+write.csv(d13.small,"outputs/stable_isotopes/d13C_iWUE_clean.csv")
 d13 <- d13[!is.na(d13$DBH),]
 
  # if there a multiple values, take the mean d13C_12_Corr

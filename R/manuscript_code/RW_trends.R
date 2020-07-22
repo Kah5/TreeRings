@@ -181,6 +181,10 @@ detrended.list <- list(Hickory.rwi, StCroix.rwi, Bonanza.rwi,Townsend.rwi,Pleasa
 saveRDS(detrended.list,"data/no_detrend_list_site.rds")
 source("R/manuscript_code/tree_age_agg.R")
 
+
+
+
+
 # apply the tree_age_agg function on all of the detrended tree ring series
 # note: writes to a folder data/tree_growth_age
 detrended.age <- lapply(detrended.list, FUN = tree_age_agg,   age1950 = 10,  type = "RWI_Spline_detrended" )
