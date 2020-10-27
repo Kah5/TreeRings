@@ -46,7 +46,7 @@ library(ncdf4.helpers)
 library(PCICt)
 library(tidyr)
 library(dplyr)
-
+library(ggplot2)
 
 # set the working dir (where the prism data folder is)
 workingdir <- "/Users/kah/Documents/TreeRings2/"
@@ -145,11 +145,11 @@ extract.tmax.june <- function(proj, tas,  tr_sites.lat.df , nmonths ){
     # do the same for the extracted.pts.t
     
     
-    colnames(extracted.pts.tave)[1:75] <- c(paste0("tave_", 2025:2099, "_", c(rep(6, 74)) )) #, "tavet_2099_1") # note may need to change this to make more customizable
+    colnames(extracted.pts.tave)[1:75] <- c(paste0("tmax_", 2025:2099, "_", c(rep(6, 74)) )) #, "tavet_2099_1") # note may need to change this to make more customizable
     extracted.pts.tave.m <- melt(extracted.pts.tave, id.vars = c("lat", "lon"))
     extracted.pts.tave.m$value <- ifelse(extracted.pts.tave.m$value >= 1e+20, NA, extracted.pts.tave.m$value)
     ext.tave.sep <- extracted.pts.tave.m %>% tidyr::separate(variable, sep = "_", into = c("climate", "year", "month"))
-    colnames(ext.tave.sep)[6] <- "Tave"
+    colnames(ext.tave.sep)[6] <- "tmax"
     
     
     
@@ -220,6 +220,43 @@ system.time(
   }
 )
 
+#-------------------------------------------------------------------------
+# summarize future climates
+#-------------------------------------------------------------------------
+# lets read all of the future june tmax timeseries back in and compile into one dataset
+
+tmax.rds.files <- list.files(path = "data/future_climate_tas_all/rdsfiles", "june_tmax_summary_proj")
+full.tmax.rds.files <- paste0(getwd(), "/data/future_climate_tas_all/rdsfiles/", tmax.rds.files)
+
+# get the proj numbers from the filenames
+spl <- strsplit(tmax.rds.files, split = "june_tmax_summary_proj_")
+list.of.projs <- lapply(spl, function(x){a <- x[2] 
+substring(a, first = 1, last = nchar(a)-7)})
+
+proj.vec <- do.call(rbind, list.of.projs) # we will use this below
+
+# read in all the future climate files into a list
+list.fut.climate <- list()
+list.fut.climate <- lapply(1:length(full.tmax.rds.files), function(x){a <- readRDS(full.tmax.rds.files[x])
+a$proj <- proj.vec[x]
+a})
+# arbind to get a dataframe
+df.fut.climate <- do.call(rbind, list.fut.climate)
+df.fut.climate$climate <- "tmax" # mislabeled tmax as tave, this is fixed above.
+colnames(df.fut.climate)[6] <- "Tmax"
+# now link the proj number to the climate model, model run, and ensemble:
+colnames(all.proj.names) <- c("modelrun", "rcp", "proj")
+all.proj.names$proj <- as.character(all.proj.names$proj)
+future.tmax <- left_join( df.fut.climate,all.proj.names, by = "proj")
+
+
+# make a simple box plot:
+future.tmax$year <- as.numeric(future.tmax$year)
+ggplot(future.tmax, aes(x = year, y = Tmax, color = rcp))+geom_point()+stat_smooth()+ylab()
+future.tmax$period <- ifelse(future.tmax$year <= 2059, "2025 - 2059", "2060 - 2099")
+ggplot(future.tmax, aes(x = Tmax, y = period, fill = rcp))+geom_boxplot()
+
+saveRDS(future.tmax,"data/future_climate_tas_all/future_june_tmax_all_rcp_models_v1.rds")
 
 #-------------------------------------------------------------------------
 # Read in the netcdf for total precipitation
