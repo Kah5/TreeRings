@@ -51,7 +51,7 @@ all.proj.names$rcp <- all.rcps
 future.tmax <- readRDS("/Users/kah/Documents/TreeRings2/data/future_climate_tas_all/future_june_tmax_all_rcp_models_v1.rds")
 projs.used <- unique(future.tmax$proj)
 
-future.projs <- all.proj.names %>% filter(proj.allnum %in% projs.used) %>% select(model, rcp)
+future.projs <- all.proj.names %>% filter(proj.allnum %in% projs.used) %>% dplyr::select(model, rcp)
 future.projs$value <- "x"
 fut.table<- future.projs %>% spread(rcp, value= value)
 fut.table$rcp26<- ifelse(is.na(fut.table$rcp26), " ", "x")

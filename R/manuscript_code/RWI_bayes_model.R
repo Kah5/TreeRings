@@ -149,7 +149,7 @@ sigma     <- 1/sqrt(inv.var)
 #readRDS(test.dry.pair, "outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/test.rds")
 train.dry.pair <- readRDS("data/full_dry_paired_dataset_v3.rds")
 test.dry.pair <- readRDS("data/train_dry_paired_dataset_v3.rds")
-full.dry.pair <- readRDS("data/test_dry_paired_dataset_v3.rds")
+full.dry.pair <- readRDS("data/full_dry_paired_dataset_v3.rds")
 
 # assign site numbers to each site:
 

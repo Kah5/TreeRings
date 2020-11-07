@@ -172,11 +172,11 @@ all.proj.names$proj.allnum <- 1:length(all.proj.names$V1)
 
 # every 4th model is rcp 2.6
 
-rcp.2.6.index <- all.proj.names %>% filter(rcp %in% "rcp26") %>% select(proj.allnum)
+rcp.2.6.index <- all.proj.names %>% filter(rcp %in% "rcp26") %>% dplyr::select(proj.allnum)
 
-rcp.8.5.index <- all.proj.names %>% filter(rcp %in% "rcp85") %>% select(proj.allnum)
-rcp.4.5.index <-  all.proj.names %>% filter(rcp %in% "rcp45") %>% select(proj.allnum)
-rcp.6.0.index <-  all.proj.names %>% filter(rcp %in% "rcp60") %>% select(proj.allnum)
+rcp.8.5.index <- all.proj.names %>% filter(rcp %in% "rcp85") %>% dplyr::select(proj.allnum)
+rcp.4.5.index <-  all.proj.names %>% filter(rcp %in% "rcp45") %>% dplyr::select(proj.allnum)
+rcp.6.0.index <-  all.proj.names %>% filter(rcp %in% "rcp60") %>% dplyr::select(proj.allnum)
 
 
 # then apply this funcation across all 195 projections downloaded in the netcdf
@@ -256,7 +256,15 @@ ggplot(future.tmax, aes(x = year, y = Tmax, color = rcp))+geom_point()+stat_smoo
 future.tmax$period <- ifelse(future.tmax$year <= 2059, "2025 - 2059", "2060 - 2099")
 ggplot(future.tmax, aes(x = Tmax, y = period, fill = rcp))+geom_boxplot()
 
-saveRDS(future.tmax,"data/future_climate_tas_all/future_june_tmax_all_rcp_models_v1.rds")
+
+head(future.tmax)
+head(tr_sites.lat.df)
+tr.sites <- tr_sites.lat.df %>% dplyr::select(coords.x1, coords.x2, code)
+
+colnames(tr.sites) <- c("lon", "lat", "site")
+
+future.tmax.sites <- merge(tr.sites, future.tmax, by = c("lon", "lat"))
+saveRDS(future.tmax.sites,"data/future_climate_tas_all/future_june_tmax_all_rcp_models_v1.rds")
 
 #-------------------------------------------------------------------------
 # Read in the netcdf for total precipitation

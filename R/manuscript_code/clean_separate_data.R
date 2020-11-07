@@ -321,9 +321,9 @@ train.dry.pair <- dry.yrs.paired[msk,]
 test.dry.pair <- dry.yrs.paired[!msk,]
 
 # save the split testing and training data for use later on:
-saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset_v4.rds')
-saveRDS(train.dry.pair, 'data/train_dry_paired_dataset_v4.rds')
-saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v4.rds')
+saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset_v5.rds')
+saveRDS(train.dry.pair, 'data/train_dry_paired_dataset_v5.rds')
+saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v5.rds')
 
 
 
@@ -399,9 +399,9 @@ msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
 train.iso <- full.iso[msk,]
 test.iso <- full.iso[!msk,]
 
-saveRDS(full.iso, 'data/full_WUE_dataset_v3.rds')
-saveRDS(train.iso, 'data/train_WUE_dataset_v3.rds')
-saveRDS(test.iso, 'data/test_WUE_dataset_v3.rds')
+saveRDS(full.iso, 'data/full_WUE_dataset_v4.rds')
+saveRDS(train.iso, 'data/train_WUE_dataset_v4.rds')
+saveRDS(test.iso, 'data/test_WUE_dataset_v4.rds')
 
 # ------read in estimates of future total precipiation & tmax to project tree growth in the future:
 rcp85 <- read.csv("outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv")
