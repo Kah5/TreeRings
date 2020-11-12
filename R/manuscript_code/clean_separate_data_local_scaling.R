@@ -18,10 +18,6 @@ directory <- "Users/kah/Documents/TreeRings2"
 full.ghcn <- read.csv(paste0("outputs/data/rwi_age_dbh_ghcn.v3.csv"))
 
 
-unique(full.ghcn[,c("site", "ID", "SpecCode")]) %>% group_by(SpecCode) %>% summarise(n())
-
-
-
 hist(full.ghcn$RWI)
 
 hist(log(full.ghcn$RWI))
@@ -61,7 +57,7 @@ rwi.ghcn$MAP.prism <- rowSums(rwi.prism[,c("PRISM_pcp_1","PRISM_pcp_2", "PRISM_p
 
 # get moving window of past 5, 10, 15 years of climate
 
-prism.df <- read.csv( "outputs/full_prism_all_months.csv")
+prism.df <- read.csv( "/Users/kah/Documents/TreeRings/outputs/full_prism_all_months_rwi.csv")
 
 # create function to get the water year
 wtr_yr <- function(df, start_month=9) {
@@ -158,79 +154,7 @@ site <- full.ghcn$site
 SpecCode <- full.ghcn$SpecCode
 plot <- unique(full.ghcn$site)
 
-# convert Tmax to Celcius
-#full.ghcn$JUNTmax <- 5/9 * (full.ghcn$JUNTmax - 32)
-
-
-# standardise predictor variables to have mean 0 and sd = 1
-DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
-DBH.scaled = scale(full.ghcn$DBH, center= TRUE, scale=TRUE)
-full.ghcn$T.scaled = as.vector(scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE))
-full.ghcn$DI.scaled = as.vector(scale(full.ghcn$JJA.pdsi, center = TRUE, scale = TRUE))
-full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
-full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
-full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
-full.ghcn$SP1.scaled = as.vector(scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE))
-
-full.ghcn$MAP.5.scaled = as.vector(scale(full.ghcn$MAP.5, center = TRUE, scale = TRUE))
-full.ghcn$MAP.15.scaled = as.vector(scale(full.ghcn$MAP.15, center = TRUE, scale = TRUE))
-full.ghcn$MAP.10.scaled = as.vector(scale(full.ghcn$MAP.10, center = TRUE, scale = TRUE))
-
-
-full.ghcn$jja.VPDmax.scaled <- as.vector(scale(full.ghcn$jja.VPDmax, center = TRUE, scale = TRUE))
-full.ghcn$jja.BAL.scaled <- as.vector(scale(full.ghcn$jja.BAL, center = TRUE, scale = TRUE))
-full.ghcn$MAP.scaled = as.vector(scale(full.ghcn$MAP.prism, center = TRUE, scale = TRUE))
-
-MAP.scaled <- scale(full.ghcn$MAP.prism, center = TRUE, scale = TRUE)
-T.scaled <- scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE)
-MAP.5.scaled <- scale(full.ghcn$MAP.5, center = TRUE, scale = TRUE)
-MAP.15.scaled <- scale(full.ghcn$MAP.15, center = TRUE, scale = TRUE)
-MAP.10.scaled<-  scale(full.ghcn$MAP.10, center = TRUE, scale = TRUE)
-
-SP1.scaled <- scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE)
-SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
-
-
-
-# alternative scaling-> center on site level means:
-full.ghcn$prism_tmax_jja <- rowMeans(full.ghcn[, c("prism_PRISM_tmax_6", "prism_PRISM_tmax_7", "prism_PRISM_tmax_8")])
-full.ghcn.unique <- unique(full.ghcn[, c("site", "JUNTmax", "MAP.prism", "prism_PRISM_tmax_6", "prism_tmax_jja", "jja.VPDmax")])
-site.means <- full.ghcn.unique %>% group_by(site) %>% dplyr::summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
-                                                                site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
-                                                                site.MAP = mean(MAP.prism, na.rm = TRUE), 
-                                                                site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
-                                                                site.DBH = mean(DBH, na.rm=TRUE), 
-                                                                site.tmax.prism = mean(prism_PRISM_tmax_6), 
-                                                                site.tmax.prism.jja = mean(prism_tmax_jja), 
-                                                                site.VPDmax = mean(jja.VPDmax))
-
-
-full.ghcn <- left_join(full.ghcn, site.means, by = "site")
-
-# scale data by site means for climate variables 
-full.ghcn$T.scaled2 <- (full.ghcn$JUNTmax - full.ghcn$site.tmax)/full.ghcn$site.sd.tmax
-full.ghcn$MAP.scaled2 <- (full.ghcn$MAP.prism - full.ghcn$site.MAP)/full.ghcn$site.sd.MAP
-full.ghcn$T.prism.scaled2 <- (full.ghcn$prism_PRISM_tmax_6 - full.ghcn$site.tmax.prism)/full.ghcn$site.tmax.prism
-full.ghcn$T.prism.JJA.scaled2 <- (full.ghcn$prism_tmax_jja - full.ghcn$site.tmax.prism.jja)/full.ghcn$site.tmax.prism.jja
-full.ghcn$jja.VPDmax.scaled2 <- (full.ghcn$jja.VPDmax - full.ghcn$site.VPDmax)/full.ghcn$site.VPDmax
-
-
-ggplot(full.ghcn, aes(Year, jja.VPDmax.scaled, color = site))+geom_point()+stat_smooth(method = "lm")
-ggplot(full.ghcn, aes(Year, JUNTmin, color = site))+geom_point()+stat_smooth(method = "lm")
-ggplot(full.ghcn, aes(Year, MAP.scaled, color = site))+geom_point()+stat_smooth(method = "lm")
-
-
-ggplot(full.ghcn, aes(T.scaled, log(RWI), color = ID))+stat_smooth(method = "lm", se = FALSE)+theme(legend.position = "none")
-ggplot(full.ghcn, aes(T.prism.JJA.scaled, log(RWI), color = ageclass))+geom_point()+stat_smooth(method = "lm")
-ggplot(full.ghcn, aes(T.prism.scaled, log(RWI), color = ageclass))+geom_point()+stat_smooth(method = "lm")
-
-
-
-#full.ghcn$MAP.scaled <- (full.ghcn$MAP.prism - full.ghcn$site.MAP)/full.ghcn$site.MAP
-
-#full.ghcn$DBH.scaled <- (full.ghcn$DBH - full.ghcn$site.DBH)/full.ghcn$site.DBH
-
-# need to define site level structures, if not already defined:
+# add structure and cohort columns
 
 if(! "structure" %in% colnames(full.ghcn)){
   
@@ -254,14 +178,107 @@ if(! "struct.cohort" %in% colnames(full.ghcn)){
 }
 
 
-write.csv(full.ghcn, "outputs/full.ghcn.sites.struct.before.splitting.csv", row.names = FALSE)
+
+#--------------------------------------------------------------------------------------------
+# Per reviewer suggestions do the environmental variable scaling at the ageclass cohort level
+#--------------------------------------------------------------------------------------------
+scale_function <- function(myVar){(myVar - mean(myVar)) / sd(myVar)}
+unscale_function <- function(zVar, myVar){(zVar * sd(myVar)) + mean(myVar)}
+
+
+cohort_struct_scaled <- full.ghcn %>% group_by(struct.cohort) %>%
+  mutate_at(scale_function, .vars = vars(T.scaled = JUNTmax, DI.scaled = JJA.pdsi, 
+                                DBH.scaled = DBH, MAP.scaled = MAP.prism))%>%
+  mutate_at(mean, .vars = vars(meanT = JUNTmax, Mean.DI= JJA.pdsi, 
+                               mean.DBH = DBH, mean.MAP = MAP.prism))%>%
+mutate_at(sd, .vars = vars(sd.T = JUNTmax, sd.DI= JJA.pdsi, 
+                            sd.DBH = DBH, sd.MAP = MAP.prism))
+
+full.ghcn <- cohort_struct_scaled
+T.scaled <- full.ghcn$T.scaled
+MAP.scaled <- full.ghcn$MAP.scaled
+DBH.scaled <- full.ghcn$DBH.scaled
+full.ghcn$T.scaled <- as.numeric(full.ghcn$T.scaled)
+full.ghcn$DBH.scaled <- as.numeric(full.ghcn$DBH.scaled)
+
+
+
+# # standardise predictor variables to have mean 0 and sd = 1
+# DI.scaled = scale(full.ghcn$JJA.pdsi, center= TRUE, scale=TRUE)
+# DBH.scaled = scale(full.ghcn$DBH, center= TRUE, scale=TRUE)
+# full.ghcn$T.scaled = as.vector(scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE))
+# full.ghcn$DI.scaled = as.vector(scale(full.ghcn$JJA.pdsi, center = TRUE, scale = TRUE))
+# full.ghcn$DBH.scaled = as.vector(scale(full.ghcn$DBH, center = TRUE, scale = TRUE))
+# full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
+# full.ghcn$SP6.scaled = as.vector(scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE))
+# full.ghcn$SP1.scaled = as.vector(scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE))
+# 
+# full.ghcn$MAP.5.scaled = as.vector(scale(full.ghcn$MAP.5, center = TRUE, scale = TRUE))
+# full.ghcn$MAP.15.scaled = as.vector(scale(full.ghcn$MAP.15, center = TRUE, scale = TRUE))
+# full.ghcn$MAP.10.scaled = as.vector(scale(full.ghcn$MAP.10, center = TRUE, scale = TRUE))
+# 
+# 
+# full.ghcn$jja.VPDmax.scaled <- as.vector(scale(full.ghcn$jja.VPDmax, center = TRUE, scale = TRUE))
+# full.ghcn$jja.BAL.scaled <- as.vector(scale(full.ghcn$jja.BAL, center = TRUE, scale = TRUE))
+# full.ghcn$MAP.scaled = as.vector(scale(full.ghcn$MAP.prism, center = TRUE, scale = TRUE))
+# 
+# MAP.scaled <- scale(full.ghcn$MAP.prism, center = TRUE, scale = TRUE)
+# T.scaled <- scale(full.ghcn$JUNTmax, center= TRUE, scale=TRUE)
+# MAP.5.scaled <- scale(full.ghcn$MAP.5, center = TRUE, scale = TRUE)
+# MAP.15.scaled <- scale(full.ghcn$MAP.15, center = TRUE, scale = TRUE)
+# MAP.10.scaled<-  scale(full.ghcn$MAP.10, center = TRUE, scale = TRUE)
+# 
+# SP1.scaled <- scale(full.ghcn$SP01_6, center = TRUE, scale = TRUE)
+# SP6.scaled <- scale(full.ghcn$SP06_6, center = TRUE, scale = TRUE)
+# 
+# 
+# 
+# # alternative scaling-> center on site level means:
+# full.ghcn$prism_tmax_jja <- rowMeans(full.ghcn[, c("prism_PRISM_tmax_6", "prism_PRISM_tmax_7", "prism_PRISM_tmax_8")])
+# full.ghcn.unique <- unique(full.ghcn[, c("site", "JUNTmax", "MAP.prism", "prism_PRISM_tmax_6", "prism_tmax_jja", "jja.VPDmax")])
+# site.means <- full.ghcn.unique %>% group_by(site) %>% dplyr::summarise(site.tmax = mean(JUNTmax, na.rm = TRUE),
+#                                                                        site.sd.tmax = sd(JUNTmax, na.rm = TRUE),
+#                                                                        site.MAP = mean(MAP.prism, na.rm = TRUE), 
+#                                                                        site.sd.MAP = sd (MAP.prism, na.rm = TRUE),
+#                                                                        site.DBH = mean(DBH, na.rm=TRUE), 
+#                                                                        site.tmax.prism = mean(prism_PRISM_tmax_6), 
+#                                                                        site.tmax.prism.jja = mean(prism_tmax_jja), 
+#                                                                        site.VPDmax = mean(jja.VPDmax))
+# 
+# 
+# full.ghcn <- left_join(full.ghcn, site.means, by = "site")
+# 
+# # scale data by site means for climate variables 
+# full.ghcn$T.scaled2 <- (full.ghcn$JUNTmax - full.ghcn$site.tmax)/full.ghcn$site.sd.tmax
+# full.ghcn$MAP.scaled2 <- (full.ghcn$MAP.prism - full.ghcn$site.MAP)/full.ghcn$site.sd.MAP
+# full.ghcn$T.prism.scaled2 <- (full.ghcn$prism_PRISM_tmax_6 - full.ghcn$site.tmax.prism)/full.ghcn$site.tmax.prism
+# full.ghcn$T.prism.JJA.scaled2 <- (full.ghcn$prism_tmax_jja - full.ghcn$site.tmax.prism.jja)/full.ghcn$site.tmax.prism.jja
+# full.ghcn$jja.VPDmax.scaled2 <- (full.ghcn$jja.VPDmax - full.ghcn$site.VPDmax)/full.ghcn$site.VPDmax
+# 
+# 
+# ggplot(full.ghcn, aes(Year, jja.VPDmax.scaled, color = site))+geom_point()+stat_smooth(method = "lm")
+# ggplot(full.ghcn, aes(Year, JUNTmin, color = site))+geom_point()+stat_smooth(method = "lm")
+# ggplot(full.ghcn, aes(Year, MAP.scaled, color = site))+geom_point()+stat_smooth(method = "lm")
+# 
+
+ggplot(full.ghcn, aes(T.scaled, log(RWI), color = ID))+stat_smooth(method = "lm", se = FALSE)+theme(legend.position = "none")
+
+
+#full.ghcn$MAP.scaled <- (full.ghcn$MAP.prism - full.ghcn$site.MAP)/full.ghcn$site.MAP
+
+#full.ghcn$DBH.scaled <- (full.ghcn$DBH - full.ghcn$site.DBH)/full.ghcn$site.DBH
+
+# need to define site level structures, if not already defined:
+
+
+write.csv(full.ghcn, "outputs/full.ghcn.sites.struct.before.splitting_cohort.struct.scaled.csv", row.names = FALSE)
 
 
 # omit NA values for RWI - 1:
 ghcn.clean <- full.ghcn[!is.na(full.ghcn$RWI_1) & !is.na(full.ghcn$RWI_2) & !is.na(full.ghcn$DBH),]
 
 # save ghcn.clean for later use:
-saveRDS(ghcn.clean, "outputs/growth_model/ghcn.clean.full.data_v3.rds")
+saveRDS(ghcn.clean, "outputs/growth_model/ghcn.clean.full.data_struct_cohort_scaled_v3.rds")
 
 # split training and testing datasets:
 msk <- caTools::sample.split( ghcn.clean, SplitRatio = 3/4, group = NULL )
@@ -275,16 +292,16 @@ mod.post <- ghcn.clean[ghcn.clean$ageclass %in% "Modern" & ghcn.clean$Year >= 19
 past.pre <- ghcn.clean[ghcn.clean$ageclass %in% "Past" & ghcn.clean$Year < 1950,]
 
 sub.ghcn<- rbind(mod.post, past.pre)
-sub.ghcn<- sub.ghcn[!sub.ghcn$site %in% c("GLL4", "HIC", "PLE",  "STC", "TOW", "COR", "PVC"),]
+sub.ghcn<- data.frame(sub.ghcn[!sub.ghcn$site %in% c("GLL4", "HIC", "PLE",  "STC", "TOW", "COR", "PVC"),])
 msk <- caTools::sample.split( sub.ghcn, SplitRatio = 3/4, group = NULL )
 
 train <- sub.ghcn[msk,]
 test <- sub.ghcn[!msk,]
 
 # save the split testing and training data for use later on:
-saveRDS(sub.ghcn, 'data/full_dataset_v4.rds')
-saveRDS(train, 'data/train_dataset_v4.rds')
-saveRDS(test, 'data/test_dataset_v4.rds')
+saveRDS(sub.ghcn, 'data/full_dataset_struct_cohort_scaled_v4.rds')
+saveRDS(train, 'data/train_dataset_struct_cohort_scaled_v4.rds')
+saveRDS(test, 'data/test_dataset_struct_cohort_scaled_v4.rds')
 
 # get dry and wet years and separate by ageclass:
 dry <- quantile(ghcn.clean$JJA.pdsi, 0.25) # value of the driest years
@@ -306,7 +323,8 @@ post.wet$class <- "post-1950"
 post.wet$climclass <- "Wet_0.25"
 
 # combine the pre and post dry data sets:
-dry.yrs <- rbind(post.dry, pre.dry)
+dry.yrs <- data.frame(rbind(post.dry, pre.dry))
+dry.yrs<- data.frame(dry.yrs[!dry.yrs$site %in% c("GLL4", "HIC", "PLE",  "STC", "TOW", "COR", "PVC"),])
 
 msk <- sample.split( dry.yrs, SplitRatio = 3/4, group = NULL )
 
@@ -325,9 +343,9 @@ train.dry.pair <- dry.yrs.paired[msk,]
 test.dry.pair <- dry.yrs.paired[!msk,]
 
 # save the split testing and training data for use later on:
-saveRDS(dry.yrs.paired, 'data/full_dry_paired_dataset_v5.rds')
-saveRDS(train.dry.pair, 'data/train_dry_paired_dataset_v5.rds')
-saveRDS(test.dry.pair, 'data/test_dry_paired_dataset_v5.rds')
+saveRDS(dry.yrs.paired, 'data/full_dry_paired_struct_cohort_scaled_dataset_v5.rds')
+saveRDS(train.dry.pair, 'data/train_dry_paired_struct_cohort_scaled_dataset_v5.rds')
+saveRDS(test.dry.pair, 'data/test_dry_paired_struct_cohort_scaled_dataset_v5.rds')
 
 
 
@@ -343,30 +361,30 @@ d13.small <- d13[,c("site", "year", "ID", "d.13C.12C", "d13C_12C_corr", "d13atm"
 write.csv(d13.small,"outputs/stable_isotopes/d13C_iWUE_clean.csv")
 d13 <- d13[!is.na(d13$DBH),]
 
- # if there a multiple values, take the mean d13C_12_Corr
+# if there a multiple values, take the mean d13C_12_Corr
 d13.values <- d13 %>% group_by(site, year, ID, ageclass) %>% dplyr::summarise(Cor.d13C.suess = mean(Cor.d13C.suess), 
-                                               iWUE = mean(iWUE),
-                                               Age = mean(Age),
-                                               RWI= mean(RWI), 
-                                               RWI_1 = mean(RWI_1),
-                                               RWI_2 =mean (RWI_2), 
-                                               PCP = mean (PCP), 
-                                               TMIN = mean (TMIN),
-                                               JUNTmax = mean (JUNTmax),
-                                               DBH = mean (DBH))
+                                                                              iWUE = mean(iWUE),
+                                                                              Age = mean(Age),
+                                                                              RWI= mean(RWI), 
+                                                                              RWI_1 = mean(RWI_1),
+                                                                              RWI_2 =mean (RWI_2), 
+                                                                              PCP = mean (PCP), 
+                                                                              TMIN = mean (TMIN),
+                                                                              JUNTmax = mean (JUNTmax),
+                                                                              DBH = mean (DBH))
 
 d13.summary<- d13.values %>% group_by( site, ageclass, ID)%>% dplyr::summarise(n = n(), 
-                                                   iWUE.mean = mean(iWUE, na.rm =TRUE))
+                                                                               iWUE.mean = mean(iWUE, na.rm =TRUE))
 
 d13.values %>% group_by(ageclass)%>% dplyr::summarise(n = n(), 
-                                        iWUE.mean = mean(iWUE, na.rm =TRUE))
+                                                      iWUE.mean = mean(iWUE, na.rm =TRUE))
 
 climate.wue <- ghcn.clean %>% dplyr::select(-ageclass)
 
 full.iso <- merge(unique(climate.wue ), d13.values[,c("site", "ID", "year","Cor.d13C.suess", "iWUE", "ageclass")], by = c("site", "ID", "year"), all.y = TRUE)
 
 full.iso %>% group_by(ageclass)%>% dplyr::summarise(n = n(), 
-                                             iWUE.mean = mean(iWUE, na.rm =TRUE))
+                                                    iWUE.mean = mean(iWUE, na.rm =TRUE))
 
 
 full.iso$iWUE.scaled <- as.numeric(scale(full.iso$iWUE))
@@ -385,14 +403,14 @@ full.iso %>% group_by(structure, ageclass) %>% dplyr::summarise(iWUEmean = mean(
 
 full.iso$struct.cohort <- paste0(full.iso$ageclass, "-", full.iso$structure)
 full.iso$struct.cohort.code <- ifelse(full.iso$struct.cohort %in% "Past-Forest", 1,
-                                   ifelse(full.iso$struct.cohort %in% "Modern-Forest", 2, 
-                                          ifelse(full.iso$struct.cohort %in% "Past-Savanna", 3,
-                                                 ifelse(full.iso$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
+                                      ifelse(full.iso$struct.cohort %in% "Modern-Forest", 2, 
+                                             ifelse(full.iso$struct.cohort %in% "Past-Savanna", 3,
+                                                    ifelse(full.iso$struct.cohort %in% "Modern-Savanna", 4,"NA" ))))
 
 
 full.iso %>% group_by(struct.cohort.code) %>% dplyr::summarise(iWUEmean = mean(iWUE, na.rm =TRUE),
-                                                                d13mean = mean (Cor.d13C.suess),
-                                                                n = n())
+                                                               d13mean = mean (Cor.d13C.suess),
+                                                               n = n())
 
 
 full.iso<- full.iso[!is.na(full.iso$DBH),]
@@ -403,9 +421,9 @@ msk <- sample.split( full.iso, SplitRatio = 3/4, group = NULL )
 train.iso <- full.iso[msk,]
 test.iso <- full.iso[!msk,]
 
-saveRDS(full.iso, 'data/full_WUE_dataset_v4.rds')
-saveRDS(train.iso, 'data/train_WUE_dataset_v4.rds')
-saveRDS(test.iso, 'data/test_WUE_dataset_v4.rds')
+saveRDS(full.iso, 'data/full_WUE_struct_cohort_scaled_dataset_v4.rds')
+saveRDS(train.iso, 'data/train_WUE_struct_cohort_scaled_dataset_v4.rds')
+saveRDS(test.iso, 'data/test_WUE_struct_cohort_scaled_dataset_v4.rds')
 
 # ------read in estimates of future total precipiation & tmax to project tree growth in the future:
 rcp85 <- read.csv("outputs/rcp8.5_mean_Pr_TMAX_proj_sites.csv")
