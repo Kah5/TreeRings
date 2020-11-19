@@ -51,6 +51,9 @@ sites.modeled$Structure <- c("Forest", "Savanna", "Forest", "Forest", "Savanna",
 sites.modeled <- sites.modeled[,c("Site #", "Site", "Structure","Mean Age", "Time span", "Intercorrelation", "AR", "EPS", "Rbar")]
 kable(sites.modeled, "latex", align = "c", booktabs = TRUE, caption = "Site level chronology summaries",digits = 3, linesep = "")
 ```
+
+
+
 ## Table 2: Model summaries for struct x cohort model for dry years
 ```{r, results="asis", echo = FALSE}
 # read in tables from the following models run on dry years:

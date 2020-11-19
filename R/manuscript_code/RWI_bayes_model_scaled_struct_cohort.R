@@ -362,15 +362,15 @@ samps <- readRDS("outputs//growth_model/cohort_struct_scaled_lag2_reg_cohort_onl
 
 Yp.samps <- Yp
 #Yprobe.samps <- Y.probe
-alpha.samps  <- samps[,1:11]# one alpha for each of 4 cohort-strcuture groups
-beta2.samps <- samps[,12:13]
-beta3.samps <- samps[,14:15]
-beta4.samps <- samps[,16:17]
-beta5.samps <- samps[,18:19]
-beta6.samps <- samps[,20:21]
-beta7.samps <- samps[,22:23]
-mu_beta.samps <- samps[,24:30]
-sigma.samps <- samps[,31]
+alpha.samps  <- samps[,1:9]# one alpha for each of 4 cohort-strcuture groups
+beta2.samps <- samps[,10:11]
+beta3.samps <- samps[,12:13]
+beta4.samps <- samps[,14:15]
+beta5.samps <- samps[,16:17]
+beta6.samps <- samps[,18:19]
+beta7.samps <- samps[,20:21]
+mu_beta.samps <- samps[,22:28]
+sigma.samps <- samps[,29]
 #sigma_betas <- samps[,28:34]
 
 
@@ -443,8 +443,8 @@ beta_diffs.pct <- data.frame(diff_beta2 = (beta2.samps[,1]-beta2.samps[,2]),
 
 colnames(beta_diffs) <- c("MAP", "DBH", "lag_1", "lag_2", "Tmax","MAPxTmax")
 library(HDInterval)
-beta_diffsm <- beta_diffs %>% gather(beta, difference) %>% group_by(beta) %>% 
-  summarise(mean = mean(difference), 
+beta_diffsm <- beta_diffs %>% gather(beta, difference) %>% dplyr::group_by(beta) %>% 
+  dplyr::summarise(mean = mean(difference), 
             hdi.low = hdi(difference)[1],
             hdi.high = hdi(difference)[2]) 
 
