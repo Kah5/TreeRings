@@ -1706,6 +1706,8 @@ predicted.wue.cs <- ggplot(Predicted.wue, aes(struct.cohort, y = mean, fill = st
   geom_errorbar(aes(x = struct.cohort, ymin = Ci.low, ymax = Ci.high), alpha = 0.8, size = 0.5, width = 0.2)+ylab("Predicted iWUE")+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.title = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))
 
 
+Predicted.wue[Predicted.wue$struct.cohort %in% "Modern-Forest",]$mean -Predicted.wue[Predicted.wue$struct.cohort %in% "Past-Forest",]$mean 
+Predicted.wue[Predicted.wue$struct.cohort %in% "Modern-Savanna",]$mean -Predicted.wue[Predicted.wue$struct.cohort %in% "Past-Savanna",]$mean 
 
 # -----------plot marginal distributions of cohort + specific parameters:
 unique(full.iso[, c("struct.cohort", "struct.cohort.code")])
@@ -1784,7 +1786,7 @@ plot.dat.b$class <- factor(plot.dat.b$class, levels = c(paste0(c("Past-Forest", 
 
 b.dots.2.wue <- ggplot(plot.dat.b, aes(x = b.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
   geom_point(alpha = 0.5)+theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
-  xlab("Precipitation \n effect on iWUE")+geom_vline(xintercept = 0, linetype = "dashed")+xlim(-1,7)
+  xlab("Precipitation \n effect on iWUE")+geom_vline(xintercept = 0, linetype = "dashed")+xlim(-4.1,9.7)
 
 png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_MAP_TMAX_dbh/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes_Precip_impact_scaled_struct_cohort.png")
 b.dots.2.wue
@@ -1862,16 +1864,16 @@ params <- samps[,1:16]
 
 
 #saveRDS(params, "outputs/growth_model/id13_MAP_TMAX_dbh_cohort/params.id13_ageclass_v2.rds")
-id13.samps  <- samps[,17:(16+length(test.iso$Cor.d13C.suess))]
+id13.samps  <- samps[,17:(16+length(full.iso$Cor.d13C.suess))]
 
 Yp.samps <- data.frame(id13.samps) 
 Yp.m <- melt(Yp.samps)
 Yp.summary <- Yp.m %>% group_by(variable) %>% dplyr::summarise(Predicted = mean(value),
                                                                ci.hi = quantile(value,0.975),
                                                                ci.lo = quantile(value,0.025))
-Yp.summary$Observed <- test.iso$Cor.d13C.suess
-Yp.summary$ageclass <- test.iso$ageclass
-Yp.summary$struct.cohort <- test.iso$struct.cohort
+Yp.summary$Observed <- full.iso$Cor.d13C.suess
+Yp.summary$ageclass <- full.iso$ageclass
+Yp.summary$struct.cohort <- full.iso$struct.cohort
 
 pred.obs.cohort.struct <- summary(lm(Yp.summary$Predicted~ Yp.summary$Observed))
 

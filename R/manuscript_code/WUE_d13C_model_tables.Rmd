@@ -37,9 +37,9 @@ kable_styling() %>% collapse_rows(c(1), latex_hline = "major")
 ```{r , results="asis", echo = FALSE}
 # read in the iWUE and d13 cohort model outputs:
 # first iWUE:
-WUEparams <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.iWUE_age.cohort.re_v3.rds")
+  WUEparams <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.iWUE_age.cohort.re_struct_cohort_scaled_dataset_v4.rds")
 samps <- WUEparams[[1]]
-WUE <- samps [,1:8]
+WUE <- data.frame(samps [,1:8])
 # 1 - Modern, 2 = past
 alpha.diff <- ((WUE[,1]-WUE[,2] )/WUE[,2])*100
 d13.pct.diff <- data.frame(
@@ -52,7 +52,8 @@ d13.pct.diff <- data.frame(
 
 
 
-WUE.m <- melt(WUE)
+WUE.m <- reshape2::melt(WUE)
+colnames(WUE.m)[1] <- "Var2"
 WUE.cohort.summary <- WUE.m %>% group_by(Var2) %>% dplyr::summarise(mean = mean(value), 
                                        ci.lo = quantile(value, 0.025), 
                                        ci.hi = quantile(value, 0.975))
@@ -81,12 +82,13 @@ WUE.cohort <- WUE.cohort[,c("param", "class", "mean", "Ci.95")]
 
 
 # now d13C
-d13Cparams <- readRDS( "/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d13_ageclass_v3.rds")
+d13Cparams <- readRDS( "/Users/kah/Documents/TreeRings2/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d13_ageclass_struct_cohort_scaled_dataset_v4.rds")
 #samps <- d13Cparams[[1]]
 d13C <- d13Cparams [,1:8]
 # 1 - Modern, 2 = past
 
-d13C.m <- melt(d13C)
+d13C.m <- melt(data.frame(d13C))
+colnames(d13C.m)[1] <- "Var2"
 d13C.cohort.summary <- d13C.m %>% group_by(Var2) %>% dplyr::summarise(mean = mean(value), 
                                        Ci.low = quantile(value, 0.025), 
                                        Ci.high = quantile(value, 0.975))
@@ -128,7 +130,7 @@ kable_styling() %>% collapse_rows(1, latex_hline = "major") %>%  footnote(symbol
 ```{r , results="asis", echo = FALSE}
 # read in the iWUE and d13 cohort model outputs:
 # first iWUE:
-WUEparams <- readRDS("/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.iWUE_struct.cohort.re_v3.rds")
+WUEparams <- readRDS("/Users/kah/Documents/TreeRings2/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.iWUE_struct.cohort.re_struct_cohort_scaled_dataset_v4.rds")
 samps <- WUEparams[[1]]
 WUE <- samps [,1:16]
 #   Modern-Savanna               4
@@ -175,12 +177,13 @@ WUE.cohort <- WUE.cohort[,c("param", "class", "mean", "Ci.95")]
 
 
 # now d13C
-d13Cparams <- readRDS( "/Users/kah/Documents/TreeRings/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d13_struct.cohort_v3.rds")
+d13Cparams <- readRDS( "/Users/kah/Documents/TreeRings2/outputs/growth_model/iWUE_MAP_TMAX_dbh_cohort/samps.d13_struct.cohort_struct_cohort_scaled_dataset_v4.rds")
 samps <- d13Cparams[[1]]
 d13C <- samps[,1:16]
 
 
-d13C.m <- melt(d13C)
+d13C.m <- melt(data.frame(d13C))
+colnames(d13C.m)[1] <- "Var2"
 d13C.cohort.summary <- d13C.m %>% group_by(Var2) %>% dplyr::summarise(mean = mean(value), 
                                        Ci.low = quantile(value, 0.025), 
                                        Ci.high = quantile(value, 0.975))
