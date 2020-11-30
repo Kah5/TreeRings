@@ -27,10 +27,60 @@ Y[i]   ~ dnorm(gfunc[i], inv.var) # where Yi is already log transformed
 # site level random intercept (beta1)
 # ageclass-structure random slopes for climate (DI.scaled, Temp.scaled + interaction), tree size (DBH.scaled), and log transformed previous years of growth. 
 
-gfunc[i] <- beta1[site[i]] + beta2[age[i]]*DI.scaled[i] +   beta3[age[i]]*DBH.scaled[i]+beta4[age[i]]*log_RWI_1[i]+beta5[age[i]]*log_RWI_2[i]  + beta6[age[i]]*Temp.scaled[i] + beta7[age[i]]*Temp.scaled[i]*DI.scaled[i] 
+gfunc[i] <- beta1[site[i]] + beta2[age[i]]*DI.scaled[i] +   beta3[age[i]]*DBH.scaled[i]+beta4[age[i]]*log_RWI_1[i]+beta5[age[i]]*log_RWI_2[i]  + beta6[age[i]]*Temp.scaled[i] + beta7[age[i]]*Temp.scaled[i]*DI.scaled[i] # inclued beta 7 as interaction term 
    
 
 }
+
+## -------------Posterior predictions---------------------------
+
+# Prediction from known data (for testing predictions with held out training data)
+  for(i in 1:np){
+    Yp[i]  ~ dnorm(mup[i],inv.var)
+    mup[i] <- beta1[site.p[i]] + beta2[age.p[i]]*DI.scaled.p[i] + beta3[age.p[i]]*DBH.scaled.p[i] +beta4[age.p[i]]*log_RWI_1.p[i] +beta5[age.p[i]]*log_RWI_2.p[i] + beta6[age.p[i]]*Temp.scaled.p[i]+ beta7[age.p[i]]*Temp.scaled.p[i]*DI.scaled.p[i]
+  }
+
+# # probe for prediction plots:
+#   for(i in 1:nprobe){
+#     Yprobe[i]  ~ dnorm(muprobe[i],inv.var)
+#     muprobe[i] <- beta1[site.probe[i]] + beta2[age.probe[i]]*DI.scaled.probe[i] + beta3[age.probe[i]]*DBH.scaled.probe[i] +beta4[age.probe[i]]*log_RWI_1.probe[i] + beta5[age.probe[i]]*log_RWI_2.probe[i] + beta6[age.probe[i]]*Temp.scaled.probe[i] + beta7[age.probe[i]]*Temp.scaled.probe[i]*DI.scaled.probe[i]
+#   }
+# 
+# # project into the future (assuming no further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut[i]  ~ dnorm(mufut[i],inv.var)
+#     mufut[i] <- beta1[site.fut[i]] + beta2[age.fut[i]]*DI.scaled.fut[i] + beta3[age.fut[i]]*DBH.scaled.fut[i] +beta4[age.fut[i]]*log_RWI_1.fut[i] +beta5[age.fut[i]]*log_RWI_2.fut[i] + beta6[age.fut[i]]*Temp.scaled.fut[i] + (beta7[age.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# # project into the future (assuming 35% further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut.35[i]  ~ dnorm(mufut2[i],inv.var)
+#     mufut2[i] <- beta1[site.fut[i]] + (beta2[age.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[age.fut[i]]*DBH.scaled.fut[i] +beta4[age.fut[i]]*log_RWI_1.fut[i] +beta5[age.fut[i]]*log_RWI_2.fut[i] + beta6[age.fut[i]]*Temp.scaled.fut[i]+ (beta7[age.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# 
+# 
+# # project into the future (assuming 50% further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut.50[i]  ~ dnorm(mufut3[i],inv.var)
+#     mufut3[i] <- beta1[site.fut[i]] + (beta2[age.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[age.fut[i]]*DBH.scaled.fut[i] +beta4[age.fut[i]]*log_RWI_1.fut[i] +beta5[age.fut[i]]*log_RWI_2.fut[i] + beta6[age.fut[i]]*Temp.scaled.fut[i]+ (beta7[age.fut[i]])*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# 
+# # project into the future (assuming 8% further change in drought senseiivty & temperature):
+#   for(i in 1:nfut){
+#    Yfut.35.35[i]  ~ dnorm(mufut35[i],inv.var)
+#     mufut35[i] <- beta1[site.fut[i]] + (beta2[age.fut[i]]*0.92)*DI.scaled.fut[i] + beta3[age.fut[i]]*DBH.scaled.fut[i] +beta4[age.fut[i]]*log_RWI_1.fut[i] +beta5[age.fut[i]]*log_RWI_2.fut[i] + (beta6[age.fut[i]]*1.08)*Temp.scaled.fut[i]+ (beta7[age.fut[i]]*0.92)*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+# 
+# 
+# 
+# # project into the future (assuming 7% further change in drought senseiivty):
+#   for(i in 1:nfut){
+#    Yfut.50.50[i]  ~ dnorm(mufut50[i],inv.var)
+#     mufut50[i] <- beta1[site.fut[i]] + (beta2[age.fut[i]]*0.85)*DI.scaled.fut[i] + beta3[age.fut[i]]*DBH.scaled.fut[i] +beta4[age.fut[i]]*log_RWI_1.fut[i] +beta5[age.fut[i]]*log_RWI_2.fut[i] + (beta6[age.fut[i]]*1.15)*Temp.scaled.fut[i]+(beta7[age.fut[i]]*0.85)*Temp.scaled.fut[i]*DI.scaled.fut[i]
+#   }
+
 
 ## -------------Priors--------------------
 # Assume normal, uninformative priors for betas, but generate a beta + alpha for each ageclass
@@ -81,9 +131,17 @@ sigma_beta7 <- 1/sqrt(inv_beta7)
 
 # Non-informative Prior for the inverse additive population variances
 
-
+#alpha_ref ~ dnorm(0,0.1)
 inv.var   ~ dgamma(0.001, 0.001)
 sigma     <- 1/sqrt(inv.var)
+
+
+
+# calculate differences between parameters:
+# one.two <- beta2[1] - beta2[2]
+# two.three<- beta2[2] - beta2[3]
+# three.four<- beta2[3] - beta2[4]
+# two.four <- beta2[2] - beta2[4]
 
 
 }"
@@ -91,9 +149,9 @@ sigma     <- 1/sqrt(inv.var)
 # save these for use later:
 #readRDS(train.dry.pair, "outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/train.rds")
 #readRDS(test.dry.pair, "outputs/growth_model/lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/test.rds")
-train.dry.pair <- readRDS("data/train_dry_paired_struct_cohort_scaled_dataset_v5.rds")
-test.dry.pair <- readRDS("data/test_dry_paired_struct_cohort_scaled_dataset_v5.rds")
-full.dry.pair <- readRDS("data/full_dry_paired_struct_cohort_scaled_dataset_v5.rds")
+train.dry.pair <- readRDS("data/train_dry_paired_site_cohort_scaled_dataset_v5.rds")
+test.dry.pair <- readRDS("data/test_dry_paired_site_cohort_scaled_dataset_v5.rds")
+full.dry.pair <- readRDS("data/full_dry_paired_site_cohort_scaled_dataset_v5.rds")
 
 # assign site numbers to each site:
 
@@ -259,6 +317,21 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_i
 samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
                                          variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
                                          n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
 
 # jointly track all variables, including Y
 # samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
@@ -275,13 +348,13 @@ Yp <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int,
                    variable.names=c("Yp"), 
                    n.chains = 3, n.iter=10000, thin = 15)
 
-saveRDS(Yp, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/Ypred_full_dataset_v5.rds")
-Yp <- readRDS("outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/Ypred_full_dataset_v5.rds")
+saveRDS(Yp, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/Ypred_full_dataset_v5.rds")
+Yp <- readRDS("outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/Ypred_full_dataset_v5.rds")
 
 
 
 dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr_int, n.chains = 3, n.iter=10000,thin = 15)
-saveRDS(dic.full, "outputs/growth_model/model_summary/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_DIC_v5.rds")
+saveRDS(dic.full, "outputs/growth_model/model_summary/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_DIC_v5.rds")
 
 summary(samp.structure.cohort.re)
 
@@ -299,20 +372,20 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[2]'], auto.layout = FALSE
 #Extract the samples for each parameter for a basic exploration of effects
 
 samps   <- samp.structure.cohort.re[[1]]
-saveRDS(samps, "outputs//growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
-samps <- readRDS("outputs//growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
+saveRDS(samps, "outputs//growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
+samps <- readRDS("outputs//growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
 
 Yp.samps <- Yp
 #Yprobe.samps <- Y.probe
-alpha.samps  <- samps[,1:9]# one alpha for each of 4 cohort-strcuture groups
-beta2.samps <- samps[,10:11]
-beta3.samps <- samps[,12:13]
-beta4.samps <- samps[,14:15]
-beta5.samps <- samps[,16:17]
-beta6.samps <- samps[,18:19]
-beta7.samps <- samps[,20:21]
-mu_beta.samps <- samps[,22:28]
-sigma.samps <- samps[,29]
+alpha.samps  <- samps[,1:11]# one alpha for each of 4 cohort-strcuture groups
+beta2.samps <- samps[,12:13]
+beta3.samps <- samps[,14:15]
+beta4.samps <- samps[,16:17]
+beta5.samps <- samps[,18:19]
+beta6.samps <- samps[,20:21]
+beta7.samps <- samps[,22:23]
+mu_beta.samps <- samps[,24:30]
+sigma.samps <- samps[,31]
 #sigma_betas <- samps[,28:34]
 
 
@@ -337,7 +410,7 @@ pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ full.dry.pair$RWI))
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)+theme_bw(base_size = 15)
 
 # note best model fit so far
-png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/pred_vs_obs_full_dataset_v5.png")
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/pred_vs_obs_full_dataset_v5.png")
 p.o.plot
 dev.off()
 
@@ -357,13 +430,13 @@ Yp.summary.cohort  <- Yp.full %>% group_by(ageclass) %>% dplyr::summarise(Predic
 Yp.summary.cohort$ageclass <- factor(Yp.summary.cohort$ageclass, levels = c("Past", "Modern"))
 mean.pred.growth <- ggplot(Yp.summary.cohort, aes(ageclass,Predicted, fill = ageclass))+geom_bar(stat = "identity")+geom_errorbar(data = Yp.summary.cohort,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.8, size = 0.5, width = 0.2)+ylim(0, 6) + ylab("Mean predicted tree growth (mm)")+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 16)+theme(panel.grid = element_blank(), axis.title.x = element_blank(), legend.position = "none")
 
-png(height = 4, width = 4.5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_barplot_v5.png")
+png(height = 4, width = 4.5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_barplot_v5.png")
 mean.pred.growth
 dev.off()
 
 
-saveRDS(Yp.full, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_YP_v5.rds")
-saveRDS(Yp.summary.cohort, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_YP_summary_v5.rds")
+saveRDS(Yp.full, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_YP_v5.rds")
+saveRDS(Yp.summary.cohort, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/predicted_growth_YP_summary_v5.rds")
 
 
 # -------make overall summary of the differences in parameters between groups:
@@ -385,22 +458,22 @@ beta_diffs.pct <- data.frame(diff_beta2 = (beta2.samps[,1]-beta2.samps[,2]),
 
 colnames(beta_diffs) <- c("MAP", "DBH", "lag_1", "lag_2", "Tmax","MAPxTmax")
 library(HDInterval)
-beta_diffsm <- beta_diffs %>% gather(beta, difference) %>% dplyr::group_by(beta) %>% 
-  dplyr::summarise(mean = mean(difference), 
+beta_diffsm <- beta_diffs %>% gather(beta, difference) %>% group_by(beta) %>% 
+  summarise(mean = mean(difference), 
             hdi.low = hdi(difference)[1],
             hdi.high = hdi(difference)[2]) 
 
 
 beta.diffs.plot.mod.past <- ggplot(beta_diffsm, aes(beta, mean))+geom_bar(stat = "identity")+geom_errorbar(data = beta_diffsm,aes(ymin=hdi.low, ymax=hdi.high), color = "grey", alpha = 0.8, size = 0.5, width = 0.2)+ylab("Difference in beta parameter (Modern - Past)")+xlab("beta parameters")+theme_bw(base_size = 16)+theme(panel.grid = element_blank())
 
-png(height = 4, width = 4.5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/beta_differences_hdi.png")
+png(height = 4, width = 4.5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/beta_differences_hdi.png")
 beta.diffs.plot.mod.past
 dev.off()
 
 # save for later plot:
-saveRDS(beta_diffsm, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/beta_differences_cohorts_v5.rds")
+saveRDS(beta_diffsm, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/beta_differences_cohorts_v5.rds")
 
-saveRDS(beta_diffs, "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/beta_diffs_cohorts_v5.rds")
+saveRDS(beta_diffs, "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/beta_diffs_cohorts_v5.rds")
 
 # calculate MSE & BIAS:
 
@@ -415,15 +488,15 @@ model.summary <- data.frame(model = "lag2_reg_cohort_only_re_t_pr_dry_yrs_site_r
                             BIAS = BIAS1, 
                             Rsq = pred.obs$r.squared)
 
-write.csv(model.summary, paste0("outputs/growth_model/model_summary/cohort_struct_scaled_", model.summary$model, "_summary_v5.csv"), row.names = FALSE)
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/cohort_site_scaled_", model.summary$model, "_summary_v5.csv"), row.names = FALSE)
 
 
 # summarise the datasource to make model comparisons for best fit models
-data.summary <- data.frame(model = "lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter", 
+data.summary <- data.frame(model = "lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter_site_age_scaled", 
                            train = "cohort.omit.dry.years", 
                            DI.scaled = "MAP")
 
-write.csv(data.summary, paste0("outputs/growth_model/model_summary/cohort_struct_scaled_", data.summary$model, "_data_v5.csv"), row.names = FALSE)
+write.csv(data.summary, paste0("outputs/growth_model/model_summary/cohort_site_scaled_", data.summary$model, "_data_v5.csv"), row.names = FALSE)
 
 
 
@@ -677,6 +750,34 @@ samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_i
                                          variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7", "Yprobe"), 
                                          n.chains = 3, n.iter=10000, thin = 15)
 
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7", "Yprobe"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7", "Yprobe"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7", "Yprobe"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
+
+samp.structure.cohort.re <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
+                                         variable.names=c("beta1", "beta2","beta3","beta4","beta5","beta6","beta7","sigma", "mu_beta1", "mu_beta2","mu_beta3", "mu_beta4","mu_beta5", "mu_beta6", "mu_beta7", "Yprobe"), 
+                                         n.chains = 3, n.iter=10000, thin = 15)
 
 # beta2.diffs <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int, 
 #                      variable.names=c("one.two", "two.three", "three.four", "two.four"), 
@@ -713,7 +814,7 @@ Y.fut.50.50 <- coda.samples(lag2.model.by_structure_x_cohort_t_pr_int,
 
 
 dic.full <- dic.samples(lag2.model.by_structure_x_cohort_t_pr_int, n.chains = 3, n.iter=10000,thin = 15)
-saveRDS(dic.full, "outputs/growth_model/model_summary/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_DIC_v5.rds")
+saveRDS(dic.full, "outputs/growth_model/model_summary/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_DIC_v5.rds")
 
 summary(samp.structure.cohort.re)
 
@@ -729,12 +830,12 @@ autocorr.plot(samp.structure.cohort.re [[1]][ , 'beta2[2]'], auto.layout = FALSE
 #Extract the samples for each parameter for a basic exploration of effects
 
 samps   <- samp.structure.cohort.re[[1]]
-saveRDS(samps, "outputs//growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
-samps <- readRDS("outputs//growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
-#test.dry <- readRDS("outputs//growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
-#train.dry <- readRDS("outputs//growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
-saveRDS(Yp,"outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps_v5.rds")
-# Y.probe <- readRDS("outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
+saveRDS(samps, "outputs//growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
+#samps <- readRDS("outputs//growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps.rds")
+#test.dry <- readRDS("outputs//growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/test.rds")
+#train.dry <- readRDS("outputs//growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/train.rds")
+saveRDS(Yp,"outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/YP.samps_v5.rds")
+# Y.probe <- readRDS("outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
 #Yfut.samps <- samps[, 1:length(fut$RWI_1)]
 #samps <- samps[,(length(fut$RWI_1)+1):length(colnames(samps))]
 Yp.samps <- Yp
@@ -771,7 +872,7 @@ pred.obs <- summary(lm(colMeans(exp(Yp.samps)) ~ test.dry.pair2$RWI))
 p.o.plot <- ggplot(Yp.summary, aes(Observed, Predicted))+geom_point(color = "black", size = 0.5)+geom_errorbar(data = Yp.summary,aes(ymin=ci.lo, ymax=ci.hi), color = "grey", alpha = 0.5)+geom_point(data = Yp.summary, aes(Observed, Predicted), color = "black", size = 0.5)+geom_abline(aes(slope = 1, intercept = 0), color = "red", linetype = "dashed")+ylim(0, 8)+xlim(0,8)+geom_text(data=data.frame(pred.obs$r.squared), aes( label = paste("R^2: ", pred.obs$r.squared, sep="")),parse=T,x=1, y=7)+theme_bw(base_size = 15)
 
 # note best model fit so far
-png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/pred_vs_obs_v5.png")
+png(width = 6, height = 5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/pred_vs_obs_v5.png")
 p.o.plot
 dev.off()
 
@@ -806,7 +907,7 @@ model.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_si
                             BIAS = BIAS1, 
                             Rsq = pred.obs$r.squared)
 
-write.csv(model.summary, paste0("outputs/growth_model/model_summary/cohort_struct_scaled_", model.summary$model, "_summary.csv"), row.names = FALSE)
+write.csv(model.summary, paste0("outputs/growth_model/model_summary/cohort_site_scaled_", model.summary$model, "_summary.csv"), row.names = FALSE)
 
 
 # summarise the datasource to make model comparisons for best fit models
@@ -814,7 +915,7 @@ data.summary <- data.frame(model = "lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_sit
                            train = "cohort.omit.dry.years", 
                            DI.scaled = "MAP")
 
-write.csv(data.summary, paste0("outputs/growth_model/model_summary/cohort_struct_scaled_", data.summary$model, "_data_v5.csv"), row.names = FALSE)
+write.csv(data.summary, paste0("outputs/growth_model/model_summary/cohort_site_scaled_", data.summary$model, "_data_v5.csv"), row.names = FALSE)
 
 
 
@@ -877,7 +978,7 @@ b7.mplots <- ggplot(b7.m, aes(value, fill = variable))+geom_density(alpha = 0.5)
 
 
 
-png(height = 10, width = 12, units = "in", res = 300,"outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/drougt_beta_marginal_distn_bycohort_v5.png")
+png(height = 10, width = 12, units = "in", res = 300,"outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/drougt_beta_marginal_distn_bycohort_v5.png")
 cowplot::plot_grid(alpha.mplots, b2.mplots, b3.mplots, b4.mplots, b5.mplots, b6.mplots, b7.mplots)
 dev.off()
 
@@ -965,7 +1066,7 @@ b7.dot <- ggplot(data.frame(b7.sum), aes(x = mean.val, y = variable, color = var
                                                                                                                                                                                                                       "Modern-Forest"='#c7eae5',
                                                                                                                                                                                                                       "Past-Forest"='#018571'))+theme_bw()+theme(legend.position = "none", axis.title.y = element_blank(), panel.grid = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
-png(height = 12, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_struct_v5.png")
+png(height = 12, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_site_v5.png")
 plot_grid(int.dot , b2.dot, b6.dot, b7.dot , b3.dot, b4.dot, b5.dot, ncol = 1, align = "v")
 dev.off()
 
@@ -1025,13 +1126,13 @@ b6.dot.age <- ggplot(data.frame(b6.sum.age), aes(x = mean.val, y = cohort, color
 
 b7.dot.age <- ggplot(data.frame(b6.sum.age), aes(x = mean.val, y = cohort, color = cohort, size = 2))+geom_errorbarh( aes(xmin = Ci.low, xmax = Ci.high, size = 1, height = 0))+geom_point()+theme_bw()+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme(panel.grid = element_blank(), legend.position = "none", axis.title.y = element_blank())+xlab("Estimated Temp*Precip sensitivity (Beta7)")+xlim(-0.19, 0.71)+ geom_vline(xintercept = 0, linetype = "dashed")
 
-png(height = 12, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_only_v5.png")
+png(height = 12, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_only_v5.png")
 plot_grid(int.dot.age, b2.dot.age, b6.dot.age,b7.dot.age, b3.dot.age, b4.dot.age, b5.dot.age, ncol = 1, align = "v")
 dev.off()
 
 
 
-png(height = 12, width = 8.5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_and_cohortXstruct_v5.png")
+png(height = 12, width = 8.5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_dot_plot_cohort_and_cohortXstruct_v5.png")
 plot_grid(int.dot.age+xlim(-0.18, 0.74),int.dot+xlim(-0.18, 0.74),
           b2.dot.age+xlim(-0.18, 0.74) , b2.dot+xlim(-0.18, 0.74), 
           b6.dot.age+xlim(-0.18, 0.74), b6.dot+xlim(-0.18, 0.74),
@@ -1092,7 +1193,7 @@ alpha.nspecies <- ggplot(site.summary, aes(x = nspecies, y = mean.val, color = s
 
 # there seems to be no relationship between alpha and site characteristics
 # but plot the relationships out here:
-png(height = 10, width = 4, units = "in",res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/alpha_site_ints_vs_site_quality.png")
+png(height = 10, width = 4, units = "in",res = 200, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/alpha_site_ints_vs_site_quality.png")
 plot_grid(alpha.pr30yr, alpha.tm30yr, alpha.awc, alpha.sand, alpha.nspecies, ncol = 1, align = "v")
 dev.off()
 
@@ -1107,7 +1208,7 @@ plot.dat.b2$ageclass <- factor(plot.dat.b2$ageclass, levels= c("Past", "Modern")
 # b2.dots.2 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = ageclass, color = ageclass, size = 2))+geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point()+xlim(-0.1, 0.25)+theme_bw(base_size = 18)+facet_wrap(~forestclass)+scale_color_manual(values = c("Past"='blue',
 # "Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank())+xlab("Estimated Drought Sensitivity")
 # 
-# png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_site_rs/param_marginal_distn_bycohort_struct_rb.png")
+# png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter_site_rs/param_marginal_distn_bycohort_site_rb.png")
 # b2.dots.2
 # dev.off()
 
@@ -1130,7 +1231,7 @@ b5.m <- melt(b5, id.vars=c("num"))
 b5.mplots <- ggplot(b5.m, aes(value, fill = variable))+geom_density(alpha = 0.5)+theme_bw()+xlab("lag - 1 effect")
 
 library(cowplot)
-png(width = 5, height = 10, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/param_marginal_distn_bycohort_struct_1.png")
+png(width = 5, height = 10, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/param_marginal_distn_bycohort_site_1.png")
 plot_grid(alpha.mplots, b2.mplots, b3.mplots,b4.mplots, b5.mplots,ncol = 1)
 dev.off()
 
@@ -1178,28 +1279,13 @@ bayes.c.eff.lower4 <- apply(int.4, 2, function(x) quantile(x, probs = c(0.025)))
 bayes.c.eff.upper4 <- apply(int.4, 2, function(x) quantile(x, probs = c(0.975)))
 
 # summarise all the data -> this is ugly but it does the job
+library(DMwR)
 
+plot.dat1 <- data.frame(T.sim, Tmax = as.numeric(unscale(vals = T.sim, norm.data = T.scaled)), mean = bayes.c.eff.mean1, Ci.low = bayes.c.eff.lower1, Ci.high = bayes.c.eff.upper1, struct.cohort = 1)
 
-
-# need to unscale the data based on the different structure-cohort scales
-
-scale_function <- function(myVar){(myVar - mean(myVar)) / sd(myVar)}
-unscale_function <- function(zVar, myVar){(zVar * sd(myVar)) + mean(myVar)}
-
-unique(train.dry.pair[, c("struct.cohort", "struct.cohort.code")])
-
-one<- train.dry.pair %>% filter(struct.cohort.code %in% "1") %>% dplyr::select(JUNTmax)
-two<- train.dry.pair %>% filter(struct.cohort.code %in% "2") %>% dplyr::select(JUNTmax)
-three<- train.dry.pair %>% filter(struct.cohort.code %in% "3") %>% dplyr::select(JUNTmax)
-four<- train.dry.pair %>% filter(struct.cohort.code %in% "4") %>% dplyr::select(JUNTmax)
-
-
-
-plot.dat1 <- data.frame(T.sim, Tmax = unscale_function(zVar = T.sim, myVar = one$JUNTmax), mean = bayes.c.eff.mean1, Ci.low = bayes.c.eff.lower1, Ci.high = bayes.c.eff.upper1, struct.cohort = 1)
-
-plot.dat2 <- data.frame(T.sim,Tmax =  unscale_function(zVar = T.sim, myVar = two$JUNTmax), mean = bayes.c.eff.mean2, Ci.low = bayes.c.eff.lower2, Ci.high = bayes.c.eff.upper2,struct.cohort = 2)
-plot.dat3<- data.frame(T.sim, Tmax =  unscale_function(zVar = T.sim, myVar = three$JUNTmax),mean = bayes.c.eff.mean3, Ci.low = bayes.c.eff.lower3, Ci.high = bayes.c.eff.upper3, struct.cohort=3)
-plot.dat4 <- data.frame(T.sim, Tmax =  unscale_function(zVar = T.sim, myVar = four$JUNTmax),mean = bayes.c.eff.mean4, Ci.low = bayes.c.eff.lower4, Ci.high = bayes.c.eff.upper4, struct.cohort = 4) 
+plot.dat2 <- data.frame(T.sim,Tmax = as.numeric(unscale(vals = T.sim, norm.data = T.scaled)), mean = bayes.c.eff.mean2, Ci.low = bayes.c.eff.lower2, Ci.high = bayes.c.eff.upper2,struct.cohort = 2)
+plot.dat3<- data.frame(T.sim, Tmax = as.numeric(unscale(vals = T.sim, norm.data = T.scaled)),mean = bayes.c.eff.mean3, Ci.low = bayes.c.eff.lower3, Ci.high = bayes.c.eff.upper3, struct.cohort=3)
+plot.dat4 <- data.frame(T.sim, Tmax = as.numeric(unscale(vals = T.sim, norm.data = T.scaled)),mean = bayes.c.eff.mean4, Ci.low = bayes.c.eff.lower4, Ci.high = bayes.c.eff.upper4, struct.cohort = 4) 
 
 plot.dat <- rbind(plot.dat1, plot.dat2, plot.dat3, plot.dat4)
 plot.dat$struct.cohort <- as.factor(plot.dat$struct.cohort)
@@ -1256,22 +1342,15 @@ bayes.c.eff.upper4 <- apply(int.4, 2, function(x) quantile(x, probs = c(0.975)))
 
 
 # summarise all the data -> this is ugly but it does the job
-one<- train.dry.pair %>% filter(struct.cohort.code %in% "1") %>% dplyr::select(MAP.prism)
-two<- train.dry.pair %>% filter(struct.cohort.code %in% "2") %>% dplyr::select(MAP.prism)
-three<- train.dry.pair %>% filter(struct.cohort.code %in% "3") %>% dplyr::select(MAP.prism)
-four<- train.dry.pair %>% filter(struct.cohort.code %in% "4") %>% dplyr::select(MAP.prism)
+library(DMwR)
 
+plot.dat1 <- data.frame(MAP.sim,MAP = as.numeric(unscale(vals = MAP.sim, norm.data = MAP.scaled)) , mean = bayes.c.eff.mean1, Ci.low = bayes.c.eff.lower1, Ci.high = bayes.c.eff.upper1, cohort = "Past-Forest", structure = "Forest")
 
+plot.dat2 <- data.frame(MAP.sim, MAP = as.numeric(unscale(vals = MAP.sim, norm.data = MAP.scaled)), mean = bayes.c.eff.mean2, Ci.low = bayes.c.eff.lower2, Ci.high = bayes.c.eff.upper2, cohort = "Modern-Forest", structure = "Forest")
 
+plot.dat3 <- data.frame(MAP.sim, MAP = as.numeric(unscale(vals = MAP.sim, norm.data = MAP.scaled)) , mean = bayes.c.eff.mean3, Ci.low = bayes.c.eff.lower3, Ci.high = bayes.c.eff.upper3, cohort = "Past-Savanna", structure = "Savanna")
 
-
-plot.dat1 <- data.frame(MAP.sim,MAP =unscale_function(zVar = MAP.sim, myVar = one$MAP.prism) , mean = bayes.c.eff.mean1, Ci.low = bayes.c.eff.lower1, Ci.high = bayes.c.eff.upper1, cohort = "Past-Forest", structure = "Forest")
-
-plot.dat2 <- data.frame(MAP.sim, MAP = unscale_function(zVar = MAP.sim, myVar = two$MAP.prism), mean = bayes.c.eff.mean2, Ci.low = bayes.c.eff.lower2, Ci.high = bayes.c.eff.upper2, cohort = "Modern-Forest", structure = "Forest")
-
-plot.dat3 <- data.frame(MAP.sim, MAP = unscale_function(zVar = MAP.sim, myVar = three$MAP.prism) , mean = bayes.c.eff.mean3, Ci.low = bayes.c.eff.lower3, Ci.high = bayes.c.eff.upper3, cohort = "Past-Savanna", structure = "Savanna")
-
-plot.dat4 <- data.frame(MAP.sim, MAP = unscale_function(zVar = MAP.sim, myVar = four$MAP.prism), mean = bayes.c.eff.mean4, Ci.low = bayes.c.eff.lower4, Ci.high = bayes.c.eff.upper4, cohort = "Modern-Savanna", structure = "Savanna")
+plot.dat4 <- data.frame(MAP.sim, MAP = as.numeric(unscale(vals = MAP.sim, norm.data = MAP.scaled)), mean = bayes.c.eff.mean4, Ci.low = bayes.c.eff.lower4, Ci.high = bayes.c.eff.upper4, cohort = "Modern-Savanna", structure = "Savanna")
 
 
 plot.dat.MAP <- rbind(plot.dat1, plot.dat2, plot.dat3, plot.dat4)
@@ -1288,7 +1367,7 @@ MAP.conditional <- ggplot(plot.dat.MAP, aes(x = MAP, y = mean, color = cohort)) 
 
 MAP.conditional
 
-png(height = 4, width = 6,  units = "in", res = 300,  "outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/interaction_plot_Tmax_cond_on_MAP_v5.png")
+png(height = 4, width = 6,  units = "in", res = 300,  "outputs/growth_model/cohort_site_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/interaction_plot_Tmax_cond_on_MAP_v5.png")
 MAP.conditional
 dev.off()
 
@@ -1315,8 +1394,8 @@ probtest.dry.pair <- dplyr::inner_join(probe.m, full.p, by=c("num"))
 
 prob <- probtest.dry.pair
 # save here:
-saveRDS(prob, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
-prob <- readRDS("outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
+saveRDS(prob, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
+prob <- readRDS("outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/full_yprobe_preds.rds")
 
 
 
@@ -1385,15 +1464,15 @@ Drought.resp.DBH.temp.highpyr <- ggplot(preds_ci_10_high, aes(MAP, meanY, color 
 
 
 # output the above plots to PNG:
-png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_low_prevyr_high_temp_low_high_DBH.png")
+png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_low_prevyr_high_temp_low_high_DBH.png")
 Drought.resp.DBH.temp.lowpyr 
 dev.off()
 
-png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_avg_prevyr_high_temp_low_high_DBH.png")
+png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_avg_prevyr_high_temp_low_high_DBH.png")
 Drought.resp.DBH.temp.avgpyr 
 dev.off()
 
-png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_high_prevyr_high_temp_low_high_DBH.png")
+png(height = 10, width = 8, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_high_prevyr_high_temp_low_high_DBH.png")
 Drought.resp.DBH.temp.highpyr 
 dev.off()
 
@@ -1412,15 +1491,15 @@ Drought.resp.DBH.temp.highpyr.age <- ggplot(preds_ci_10_high_age, aes(MAP, meanY
 
 
 # output the above plots to PNG:
-png(height = 6, width = 10, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_low_prevyr_high_temp_low_high_DBH_ageclass.png")
+png(height = 6, width = 10, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_low_prevyr_high_temp_low_high_DBH_ageclass.png")
 Drought.resp.DBH.temp.lowpyr.age 
 dev.off()
 
-png(height = 6, width = 10, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_avg_prevyr_high_temp_low_high_DBH_ageclass.png")
+png(height = 6, width = 10, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_avg_prevyr_high_temp_low_high_DBH_ageclass.png")
 Drought.resp.DBH.temp.avgpyr.age+theme_bw(base_size = 14)
 dev.off()
 
-png(height = 6, width = 10, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_high_prevyr_high_temp_low_high_DBH_ageclass.png")
+png(height = 6, width = 10, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/MAP_response_high_prevyr_high_temp_low_high_DBH_ageclass.png")
 Drought.resp.DBH.temp.highpyr.age 
 dev.off()
 
@@ -1469,7 +1548,7 @@ Y_RWI_2_marg <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2,meanY, color = ageclass
 
 legend <- get_legend(Y_MAP_marg)
 
-png(height = 10, width = 4, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/marginal_post_predictive_effects_ageclass.png")
+png(height = 10, width = 4, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/marginal_post_predictive_effects_ageclass.png")
 plts <- plot_grid(Y_MAP_marg+theme(legend.position = "none"), Y_Tmax_marg+theme(legend.position = "none"), Y_DBH_marg+theme(legend.position = "none"), Y_RWI_1_marg+theme(legend.position = "none"), Y_RWI_2_marg+theme(legend.position = "none"), align = "v", ncol = 1)
 plot_grid(plts, legend, ncol = 2, rel_widths = c(1, 0.35))
 dev.off()
@@ -1537,7 +1616,7 @@ Y_RWI_2_marg_c <- ggplot(preds_ci_mod_past_RWI2, aes(RWI_2, meanY, color = cohor
                                                                                                                                                                                                                                                                                                                           "Modern-Forest"='#c7eae5',
                                                                                                                                                                                                                                                                                                                           "Past-Forest"='#018571'))+ ylab("Tree growth")+ylim(0, 10)+xlab("log(Prev (-2) year's growth)")
 
-png(height = 10, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/marginal_post_predictive_effects_ageclassXStruct.png")
+png(height = 10, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/marginal_post_predictive_effects_ageclassXStruct.png")
 legend <- get_legend(Y_MAP_marg_c)
 plts <- plot_grid(Y_MAP_marg_c+theme(legend.position = "none"), Y_Tmax_marg_c+theme(legend.position = "none"), Y_DBH_marg_c+theme(legend.position = "none"), Y_RWI_1_marg_c+theme(legend.position = "none"), Y_RWI_2_marg_c+theme(legend.position = "none"), align = "v", ncol = 1)
 plot_grid(plts, legend, ncol = 2, rel_widths = c(1, 0.45))
@@ -1578,7 +1657,7 @@ Y_RWI_2_marg_site <- ggplot(preds_ci_mod_past_RWI2_site, aes(RWI_2,meanY, color 
 
 legend <- get_legend(Y_MAP_marg_site)
 
-png(height = 25, width = 6, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/marginal_post_predictive_effects_ageclass_by_site.png")
+png(height = 25, width = 6, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/marginal_post_predictive_effects_ageclass_by_site.png")
 plts <- plot_grid(Y_MAP_marg_site+theme(legend.position = "none"), Y_Tmax_marg_site+theme(legend.position = "none"), Y_DBH_marg_site+theme(legend.position = "none"), Y_RWI_1_marg_site+theme(legend.position = "none"), Y_RWI_2_marg_site+theme(legend.position = "none"), align = "v", ncol = 1)
 plot_grid(plts, legend, ncol = 2, rel_widths = c(1, 0.35))
 dev.off()
@@ -1695,7 +1774,7 @@ scenario_names <- c(
 by.scenario <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill = as.character(year)))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000,]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+facet_grid(~ model + scenario)+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c("blue", "red"))+theme(legend.title = element_blank())
 
 
-png(height = 4, width = 12, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_scenarios_26cm_avg_growth.png")
+png(height = 4, width = 12, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_scenarios_26cm_avg_growth.png")
 by.scenario+theme(legend.position = "none")
 dev.off()
 
@@ -1703,7 +1782,7 @@ dev.off()
 by.period <- ggplot(small.proj[!small.proj$year == 2000 , ], aes(year, RWI, fill =factor( scenario, labels = c("constant", "taper P 35%", "taper P & T 35%", "no taper P 50%", "no taper P & T 50%"))))+geom_boxplot(position = "dodge2")+geom_hline(yintercept = mean(small.proj[small.proj$year ==2000 & small.proj$scenario %in% "constant",]$RWI, na.rm=TRUE), color = "black", linetype = "dashed")+ylab("Predicted tree growth (mm)")+xlab("Time period")+scale_fill_manual(values = c('#fee090','#91bfdb','#fc8d59','#4575b4','#d73027'
 ))+theme(legend.title = element_blank())
 
-png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_time_scenarios_26cm_avg_growth.png")
+png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_time_scenarios_26cm_avg_growth.png")
 by.period
 dev.off()
 
@@ -1712,7 +1791,7 @@ by.model <- ggplot(small.proj[!small.proj$year == 2000, ], aes(year, RWI, fill =
 
 
 
-png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_model_26cm_avg_growth.png")
+png(height = 5, width = 6, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_model_26cm_avg_growth.png")
 by.model
 dev.off()
 
@@ -1733,7 +1812,7 @@ by.model.2050 <- ggplot(small.proj[!small.proj$year == 2000 , ], aes(year, RWI, 
 ))+theme(legend.title = element_blank())+facet_grid(~model)
 
 
-png(height = 5, width = 9, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_model_2050_26cm_avg_growth.png")
+png(height = 5, width = 9, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/fut_growth_by_model_2050_26cm_avg_growth.png")
 by.model.2050
 dev.off()
 
@@ -1745,14 +1824,12 @@ ggplot(small.proj[!small.proj$year == 2000 & !small.proj$year %in% "2070-2099", 
 # ------------------------ Plot posterior response to climate ------------------------------------
 # get together a dataframe to probe with:
 
-scale_function <- function(myVar){(myVar - mean(myVar)) / sd(myVar)}
-unscale_function <- function(zVar, myVar){(zVar * sd(myVar)) + mean(myVar)}
 
 
 Tmax.range <- round(seq(range(train.dry.pair$T.scaled)[1], range(train.dry.pair$T.scaled)[2], by = 0.1), 10)
 
 # get the scaled varible for 515 mm and 975 mm
-avgs.to.unscale <- full.ghcn %>% group_by(ageclass, structure)%>% dplyr::summarise(meanT= mean(meanT), 
+avgs.to.unscale <- full.ghcn %>% group_by(ageclass, structure)%>% summarise(meanT= mean(meanT), 
                                                                             sdT = mean(sd.T), 
                                                                             meanMAP = mean(mean.MAP),
                                                                             sd.MAP = mean(sd.MAP))
@@ -1760,8 +1837,6 @@ avgs.to.unscale <- full.ghcn %>% group_by(ageclass, structure)%>% dplyr::summari
 
 avgs.to.unscale$scaled.515 <- (515 - avgs.to.unscale$meanMAP) /avgs.to.unscale$sd.MAP
 avgs.to.unscale$scaled.975 <- (975 - avgs.to.unscale$meanMAP) /avgs.to.unscale$sd.MAP
-avgs.to.unscale$scaled.25.5 <- (25.5 - avgs.to.unscale$meanT) /avgs.to.unscale$sdT
-
 
 MAP.range <- round(seq(range(train.dry.pair$MAP.scaled)[1], range(train.dry.pair$MAP.scaled)[2], by = 0.1), 10)
 
@@ -1791,7 +1866,7 @@ get.predicted.ys <- function(x){
   # simulate the effect of beta 1 conditional on Tmax
   for(i in 1:length(x$T.scaled)){
     # for struct.cohort == 1
-    int.1[,i] <- #int.mcmc.dat[,paste0("beta1.", x[i,"site.num"], ".")]+
+    int.1[,i] <- int.mcmc.dat[,paste0("beta1.", x[i,"site.num"], ".")]+
       int.mcmc.dat[,paste0("beta2.", x[i,"struct.cohort.code"], ".")]*x[i,]$MAP.scaled+    
       int.mcmc.dat[,paste0("beta3.", x[i,"struct.cohort.code"], ".")]*x[i,"DBH.scaled"] + 
       int.mcmc.dat[,paste0("beta4.", x[i,"struct.cohort.code"], ".")]*x[i,"RWI_1"]  + 
@@ -1815,17 +1890,11 @@ get.predicted.ys <- function(x){
 # forests <- 
 combs <- unique(train.dry.pair[, c("structure","struct.cohort.code", "site", "site.num", "ageclass")])
 combs
-avgs.to.unscale$scaled.25.5 <- (25.5 - avgs.to.unscale$meanT) /avgs.to.unscale$sdT
-
-avgs.to.unscale$scaled.25.5
-avgs.to.unscale$struct.cohort.code <- c(2, 4,1, 3)
-unique(train.dry.pair[,c("struct.cohort", "struct.cohort.code")])
-# get 515 and 975 in each of the struct-cohort scales
 # for each cohord and structure type get the prob.vals predicted for the 4 sites:
-prob.vals.forest.1 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 1,]$scaled.25.5, MAP.scaled = MAP.range, 
+prob.vals.forest.1 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.26, 1.64), 
                                     site.num = c(1, 3, 5, 8), struct.cohort.code = c(1))
 prob.vals.forest.1$id <- 1:length(prob.vals.forest.1$T.scaled)
-prob.vals.forest.2 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 2,]$scaled.25.5, MAP.scaled = MAP.range, 
+prob.vals.forest.2 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.44, 1.67), 
                                   site.num = c(1, 3, 5, 8), struct.cohort.code = c(2))
 prob.vals.forest.2$id <- 1:length(prob.vals.forest.2$T.scaled)
 
@@ -1841,11 +1910,11 @@ prob.vals.f2$RWI_1 <- log(mean(train.dry.pair$RWI_1))
 prob.vals.f2$RWI_2 <- log(mean(train.dry.pair$RWI_2))
 
 
-prob.vals.savanna.3 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 3,]$scaled.25.5, MAP.scaled = MAP.range, 
+prob.vals.savanna.3 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.64, 1.03), 
                                 site.num = c(2, 4, 6, 7), struct.cohort.code = c(3))
 prob.vals.savanna.3$id <- 1:length(prob.vals.savanna.3$T.scaled)
 
-prob.vals.savanna.4 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 4,]$scaled.25.5, MAP.scaled = MAP.range, 
+prob.vals.savanna.4 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.36, 1.60), 
                                    site.num = c(2, 4, 6, 7), struct.cohort.code = c(4))
 prob.vals.savanna.4$id <- 1:length(prob.vals.savanna.4$T.scaled)
 
@@ -1868,7 +1937,7 @@ ypred.for2 <- get.predicted.ys(x= prob.vals.f2)
 
 # columns are the different degree-site scenario combinations
 full.pred <- rbind(ypred.for1, ypred.for2,ypred.sav3, ypred.sav4)
-avgs.to.unscale <- full.ghcn %>% dplyr::group_by(ageclass, structure)%>% dplyr::summarise(meanT= mean(meanT), 
+avgs.to.unscale <- full.ghcn %>% group_by(ageclass, structure)%>% summarise(meanT= mean(meanT), 
                                                          sdT = mean(sd.T), 
                                                          meanMAP = mean(mean.MAP),
                                                          sd.MAP = mean(sd.MAP))
@@ -1882,7 +1951,7 @@ full.pred.2 <- left_join(full.pred, avgs.to.unscale, by = c("ageclass", "structu
 full.pred.2$Tmax <- (full.pred.2$T.scaled * full.pred.2$sdT) + full.pred.2$meanT
 full.pred.2$MAP<- (full.pred.2$MAP.scaled * full.pred.2$sd.MAP) + full.pred.2$meanMAP
 full.pred <- full.pred.2
-site.summary <- full.pred %>% dplyr::group_by(site.num, Tmax, MAP.scaled, struct.cohort.code) %>% dplyr::summarise(mean = mean(exp(RWI)), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+site.summary <- full.pred %>% group_by(site.num, Tmax, MAP.scaled, struct.cohort.code) %>% dplyr::summarise(mean = mean(exp(RWI)), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
 
@@ -1890,7 +1959,7 @@ site.summary <- full.pred %>% dplyr::group_by(site.num, Tmax, MAP.scaled, struct
 ageclass.summary <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by(site, ageclass, Tmax, MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
-#ggplot(ageclass.summary[ageclass.summary$MAP.scaled == -1.58,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+ggplot(ageclass.summary[ageclass.summary$MAP == 259.116,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
 
 
 #ggplot(ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
@@ -1916,7 +1985,7 @@ ggplot(ageclass.only[ageclass.only$Tmax == 26.799,], aes(x = MAP, y =mean, color
 ageclass.ss.only <- full.pred %>% filter(!site %in% c("COR", "PVC")) %>% group_by(structure, ageclass, Tmax, MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
-ag.ss.pred.200MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP.scaled == -2.63052977,], aes(x = Tmax, y =mean, color = ageclass))+geom_point(size = 0.5)+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP.scaled == -2.63052977,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
+ag.ss.pred.200MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 259.116,], aes(x = Tmax, y =mean, color = ageclass))+geom_point(size = 0.5)+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
 
 
 ag.ss.pred.500MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 514.927,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))
@@ -1927,200 +1996,31 @@ ag.ss.pred.950MAP <- ggplot(ageclass.ss.only[ageclass.ss.only$MAP == 941.279,], 
 
 ag.ss.pred.25.TMAX <- ggplot(ageclass.ss.only[ageclass.ss.only$Tmax == 25.541,], aes(x = MAP, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.ss.only[ageclass.ss.only$Tmax == 25.383,], aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab("Total Annual Precipitation (mm)")+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b")) +scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+facet_wrap(~structure, ncol = 1)
 
-#------------- get total and pct change for TMAX = 25 across all ppt for the figure 5 plot----------------------
-full.pred.df.a <- data.frame(full.pred)
-full.pred.df.a$Tmax <- as.numeric(round(as.numeric(full.pred.df.a$Tmax), digits = 4))
-
-
-full.pred.df.a %>% filter(Tmax <= 26 & Tmax >=25  )
-
-full.pred.df.a$MAP <- round(as.numeric(full.pred.df.a$MAP), 0)
-
-#full.pred.df.a$MAP <- ifelse(full.pred.df.a$MAP == 976, 975, 
- #                          ifelse(full.pred.df.a$MAP == 514, 515, full.pred.df.a$MAP))
-
-twentyfives <- full.pred.df.a %>% filter(!site %in% c("COR", "PVC")) %>% dplyr::group_by(ageclass, structure) %>% dplyr::filter(Tmax >=25 & Tmax <=26)
-unique(twentyfives$Tmax)
-tf.by.cohort <- twentyfives %>% group_by(ageclass, structure) %>% dplyr::summarise(n()) 
-twenty.fives.of.int <- unique(twentyfives[, c("ageclass", "structure", "Tmax")])
-tf<- full.pred.df.a %>% filter(Tmax > 25 & Tmax < 25.5)
-
-Tmax25 <- full.pred.df.a %>% filter(!site %in% c("COR", "PVC"))%>% filter(Tmax == c(25.1216, 25.1317, 25.0872, 25.0053) ) %>% dplyr::select(MCMC, idval, id,RWI,site, site.num, ageclass, structure, MAP, MAP.scaled, Tmax) 
-tf.by.cohort <- Tmax25 %>% group_by(ageclass, structure) %>% dplyr::summarise(n()) 
-
-Tmax25.mod.forest <- full.pred.df.a  %>% filter(ageclass %in% "Modern" & structure %in% "Forest") %>% dplyr::select(MCMC,id, idval, RWI,site,MAP, MAP.scaled, Tmax)
-Tmax25.past.forest <-full.pred.df.a  %>% filter(ageclass %in% "Past" & structure %in% "Forest")%>% dplyr::select(MCMC, id, idval, RWI,site,MAP, MAP.scaled, Tmax)
-Tmax25.mod.savanna <- full.pred.df.a %>% filter(ageclass %in% "Modern" & structure %in% "Savanna")%>% dplyr::select(MCMC, id, idval, RWI,site,MAP, MAP.scaled)
-Tmax25.past.savanna <- full.pred.df.a  %>%  filter(ageclass %in% "Past" & structure %in% "Savanna")%>% dplyr::select(MCMC, id,idval, RWI,site,MAP, MAP.scaled)
-
-colnames(Tmax25.mod.forest)[4] <- "Modern_Forest"
-colnames(Tmax25.past.forest)[4] <- "Past_Forest"
-colnames(Tmax25.mod.savanna)[4] <- "Modern_Savanna"
-colnames(Tmax25.past.savanna)[4] <- "Past_Savanna"
-
-colnames(Tmax25.mod.forest)[7] <- "MAP_scaled_Modern_Forest"
-colnames(Tmax25.past.forest)[7] <- "MAP_scaled_Past_Forest"
-colnames(Tmax25.mod.savanna)[7] <- "MAP_scaled_Modern_Savanna"
-colnames(Tmax25.past.savanna)[7] <- "MAP_scaled_Past_Savanna"
-
-test.join.forest <- left_join(Tmax25.mod.forest, Tmax25.past.forest, by = c("idval",  "site", "MAP"))
-test.join.forest$growth.change <- test.join.forest$Modern_Forest - test.join.forest$Past_Forest 
-test.join.forest$growth.pct.change <- ((test.join.forest$Modern_Forest - test.join.forest$Past_Forest)/ test.join.forest$Past_Forest)*100
-test.join.forest$structure <- "Forest"
-
-test.join.savanna <- left_join(Tmax25.mod.savanna, Tmax25.past.savanna, by = c("id", "site", "MAP"))
-test.join.savanna$growth.change <- test.join.savanna$Modern_Savanna - test.join.savanna$Past_Savanna 
-test.join.savanna$growth.pct.change <- ((test.join.savanna$Modern_Savanna - test.join.savanna$Past_Savanna)/ test.join.savanna$Past_Savanna)*100
-test.join.savanna$structure <- "Savanna"
-
-# ypred.for1$MAP <- ifelse(ypred.for1$MAP.scaled <= 0,  515, 
-#                           ifelse(ypred.for1$MAP.scaled > 0, 975, NA))
-# 
-# ypred.for2$MAP <- ifelse(ypred.for2$MAP.scaled <= 0,  515, 
-#                          ifelse(ypred.for2$MAP.scaled > 0, 975, NA))
-# 
-# 
-# ypred.sav3$MAP <- ifelse(ypred.sav3$MAP.scaled <= 0,  515, 
-#                          ifelse(ypred.sav3$MAP.scaled > 0, 975, NA))
-# 
-# ypred.sav4$MAP <- ifelse(ypred.sav4$MAP.scaled <= 0,  515, 
-#                          ifelse(ypred.sav4$MAP.scaled > 0, 975, NA))
-ypred.for1$Tmax <- 25.5
-ypred.for2$Tmax <- 25.5
-ypred.sav3$Tmax <- 25.5
-ypred.sav4$Tmax <- 25.5
-
-test.join.forest <- left_join( ypred.for2,ypred.for1, by = c("id", "MCMC", "Tmax", "MAP.scaled", "site", "site.num", "structure"))
-test.join.forest$growth.change <- test.join.forest$RWI.x - test.join.forest$RWI.y # Modern - past
-test.join.forest$growth.pct.change <- ((test.join.forest$RWI.x - test.join.forest$RWI.y)/ test.join.forest$RWI.y)*100
-
-test.join.savanna <- left_join( ypred.sav3,ypred.sav4, by = c("id", "MCMC", "Tmax", "MAP.scaled", "site", "site.num", "structure"))
-test.join.savanna$growth.change <- test.join.savanna$RWI.y- test.join.savanna$RWI.x  # Modern - past 
-test.join.savanna$growth.pct.change <- ((test.join.savanna$RWI.y- test.join.savanna$RWI.x)/ test.join.savanna$RWI.y)*100
-
-
-# generate summaries before joining all together:
-tmax25forest.change.summary <- test.join.forest %>% group_by(structure, MAP.scaled, site.num) %>% dplyr::summarise(mean.change = mean(growth.change, na.rm=TRUE),
-                                                                                                  Ci.high.change = quantile(growth.change, 0.975,na.rm=TRUE), 
-                                                                                                  Ci.low.change = quantile(growth.change, 0.025,na.rm=TRUE), 
-                                                                                                  mean.pct.change = mean(growth.pct.change, na.rm=TRUE),
-                                                                                                  Ci.high.pct.change = quantile(growth.pct.change,0.975, na.rm=TRUE), 
-                                                                                                  Ci.low.pct.change = quantile(growth.pct.change, 0.025, na.rm=TRUE))
-
-
-tmax25savanna.change.summary <- test.join.savanna %>% group_by(structure, MAP.scaled, site.num) %>% dplyr::summarise(mean.change = mean(growth.change, na.rm=TRUE),
-                                                                                                    Ci.high.change = quantile(growth.change, 0.975, na.rm=TRUE),
-                                                                                                    Ci.low.change = quantile(growth.change, 0.025, na.rm=TRUE), 
-                                                                                                    mean.pct.change = mean(growth.pct.change, na.rm=TRUE),
-                                                                                                    Ci.high.pct.change = quantile(growth.pct.change, 0.975, na.rm=TRUE), 
-                                                                                                    Ci.low.pct.change = quantile(growth.pct.change, 0.025, na.rm=TRUE))
-
-
-
-#pct.change.tmax25 <- rbind(test.join.forest[,c("site","structure", "MAP", "growth.change", "growth.pct.change")], test.join.savanna[,c("site","structure", "MAP", "growth.change", "growth.pct.change")])
-
-tmax25.change.summary <- rbind(tmax25savanna.change.summary, tmax25forest.change.summary)
-
-# convert MAP.scaled to MAP for each structure type:
-
-
-Tmax.summary.pct.change <- ggplot(tmax25.change.summary, aes(x = MAP.scaled, y = mean.pct.change, color = structure))+geom_line()+geom_ribbon(data = tmax25.change.summary, aes(x = MAP.scaled, ymin = Ci.low.pct.change, ymax = Ci.high.pct.change, fill = structure), alpha = 0.25, colour = NA)+theme_bw()+theme(panel.grid = element_blank())+ylab("% change in growth \n relative to past cohort")+xlab("Scaled Total Annual Precipitation")+geom_hline(yintercept = 0, color = "darkgrey", linetype = "dashed")+scale_color_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))+scale_fill_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))#+facet_wrap(~site.num)
-
-
-Tmax.summary.total.change <- ggplot(tmax25.change.summary, aes(x = MAP.scaled, y = mean.change, color = structure))+geom_line()+geom_ribbon(data = tmax25.change.summary, aes(x = MAP.scaled, ymin = Ci.low.change, ymax = Ci.high.change, fill = structure), alpha = 0.25, colour = NA)+theme_bw()+theme(panel.grid = element_blank())+ylab("Average change in growth \n relative to past cohort (mm)")+xlab("Scaled Total Annual Precipitation")+geom_hline(yintercept = 0, color = "darkgrey", linetype = "dashed")+scale_color_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))+scale_fill_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))#+facet_wrap(~site.num)
-
-struct.legend <- get_legend(Tmax.summary.total.change)
-
-png(height = 3, width = 7, units = "in" ,res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/Precipitation_difference_pce_diff_TMAX_25_mean_dbh_growth.png")
-plot_grid(Tmax.summary.total.change + theme(legend.position = "none"), Tmax.summary.pct.change+ theme(legend.position = "none"), struct.legend, ncol = 3, rel_widths = c(1,1, 0.3), labels = c("A", "B", ""))
-dev.off()
-
-
-
-png(height = 4, width = 3, units = "in" ,res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/Precipitation_effect_TMAX_25_mean_dbh_growth_v5.png")
-ag.ss.pred.25.TMAX 
-dev.off()
-
-#------------- get pct change for 25.541 TMAX for the figure 5 plot----------------------
-# get 515 and 975 in each of the struct-cohort scales
-# for each cohord and structure type get the prob.vals predicted for the 4 sites:
-prob.vals.forest.1 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.55 , 2.01), 
-                                  site.num = c(1, 3, 5, 8), struct.cohort.code = c(1))
-prob.vals.forest.1$id <- 1:length(prob.vals.forest.1$T.scaled)
-prob.vals.forest.2 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.58, 1.82), 
-                                  site.num = c(1, 3, 5, 8), struct.cohort.code = c(2))
-prob.vals.forest.2$id <- 1:length(prob.vals.forest.2$T.scaled)
-
-
-prob.vals.f1 <- merge(prob.vals.forest.1, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
-prob.vals.f1$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
-prob.vals.f1$RWI_1 <- log(mean(train.dry.pair$RWI_1))
-prob.vals.f1$RWI_2 <- log(mean(train.dry.pair$RWI_2))
-
-prob.vals.f2 <- merge(prob.vals.forest.2, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
-prob.vals.f2$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
-prob.vals.f2$RWI_1 <- log(mean(train.dry.pair$RWI_1))
-prob.vals.f2$RWI_2 <- log(mean(train.dry.pair$RWI_2))
-
-
-prob.vals.savanna.3 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-2.11, 1.32), 
-                                   site.num = c(2, 4, 6, 7), struct.cohort.code = c(3))
-prob.vals.savanna.3$id <- 1:length(prob.vals.savanna.3$T.scaled)
-
-prob.vals.savanna.4 <- expand.grid(T.scaled = Tmax.range, MAP.scaled = c(-1.49, 1.75), 
-                                   site.num = c(2, 4, 6, 7), struct.cohort.code = c(4))
-prob.vals.savanna.4$id <- 1:length(prob.vals.savanna.4$T.scaled)
-
-prob.vals.s3 <- merge(prob.vals.savanna.3, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
-prob.vals.s3$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
-prob.vals.s3$RWI_1 <- log(mean(train.dry.pair$RWI_1))
-prob.vals.s3$RWI_2 <- log(mean(train.dry.pair$RWI_2))
-
-prob.vals.s4 <- merge(prob.vals.savanna.4, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
-prob.vals.s4$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
-prob.vals.s4$RWI_1 <- log(mean(train.dry.pair$RWI_1))
-prob.vals.s4$RWI_2 <- log(mean(train.dry.pair$RWI_2))
-
-
-ypred.sav3 <- get.predicted.ys(prob.vals.s3)
-ypred.sav4 <- get.predicted.ys(prob.vals.s4)
-ypred.for1 <- get.predicted.ys(x= prob.vals.f1)
-ypred.for2 <- get.predicted.ys(x= prob.vals.f2)
-
-
-# columns are the different degree-site scenario combinations
-full.pred <- rbind(ypred.for1, ypred.for2,ypred.sav3, ypred.sav4)
-avgs.to.unscale <- full.ghcn %>% dplyr::group_by(ageclass, structure)%>% dplyr::summarise(meanT= mean(meanT), 
-                                                                                          sdT = mean(sd.T), 
-                                                                                          meanMAP = mean(mean.MAP),
-                                                                                          sd.MAP = mean(sd.MAP))
-
-full.pred.2 <- left_join(full.pred, avgs.to.unscale, by = c("ageclass", "structure"))
-
+#------------- get pct change for 25.541 TMAX:
 full.pred.df <- data.frame(full.pred)
-full.pred.df$Tmax <- as.numeric(round(as.numeric(full.pred.df$Tmax), digits = 4))
+full.pred.df$Tmax <- as.numeric(round(full.pred.df$Tmax, digits = 4))
 
 
 full.pred.df %>% filter(Tmax <= 26 & Tmax >=25  )
 
-full.pred.df$MAP <- round(as.numeric(full.pred.df$MAP), 0)
+full.pred.df$MAP <- round(as.numeric(full.pred.df$MAP), 0, )
 
 full.pred.df$MAP <- ifelse(full.pred.df$MAP == 976, 975, 
                            ifelse(full.pred.df$MAP == 514, 515, full.pred.df$MAP))
 
-twentyfives <- full.pred.df %>% filter(!site %in% c("COR", "PVC")) %>% dplyr::group_by(ageclass, structure) %>% dplyr::filter(Tmax >=25 & Tmax <=26)
+twentyfives <- full.pred.df %>% filter(!site %in% c("COR", "PVC")) %>% group_by(ageclass, structure) %>% filter(Tmax >=25 & Tmax <=26 & MAP == 975 | MAP == 515)
 unique(twentyfives$Tmax)
-tf.by.cohort <- twentyfives %>% group_by(ageclass, structure) %>% dplyr::summarise(n()) 
-twenty.fives.of.int <- unique(twentyfives[, c("ageclass", "structure", "Tmax")])
-tf<- full.pred.df %>% filter(Tmax > 25 & Tmax < 25.5)
+tf.by.cohort <- twentyfives %>% group_by(ageclass, structure) %>% summarise(n(
+)) 
 
-Tmax25 <- full.pred.df %>% filter(!site %in% c("COR", "PVC"))%>% filter(Tmax == c(25.1216, 25.1317, 25.0872, 25.0053) ) %>% dplyr::select(MCMC, idval, id,RWI,site, site.num, ageclass, structure, MAP, MAP.scaled, Tmax) 
-tf.by.cohort <- Tmax25 %>% group_by(ageclass, structure) %>% dplyr::summarise(n()) 
+Tmax25 <- full.pred.df %>% filter(!site %in% c("COR", "PVC"))%>% filter(Tmax == c(25.0254, 25.1488, 25.0919, 25.1910) ) %>% dplyr::select(MCMC, idval, id,RWI,site, site.num, ageclass, structure, MAP, MAP.scaled, Tmax) 
+tf.by.cohort <- Tmax25 %>% group_by(ageclass, structure) %>% summarise(n(
+)) 
 
-Tmax25.mod.forest <- Tmax25 %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Modern" & structure %in% "Forest") %>% dplyr::select(MCMC,id, idval, RWI,site,MAP, MAP.scaled, Tmax)
-Tmax25.past.forest <- Tmax25  %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Past" & structure %in% "Forest")%>% dplyr::select(MCMC, id, idval, RWI,site,MAP, MAP.scaled, Tmax)
-Tmax25.mod.savanna <- Tmax25 %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Modern" & structure %in% "Savanna")%>% dplyr::select(MCMC, id, idval, RWI,site,MAP, MAP.scaled)
-Tmax25.past.savanna <- Tmax25  %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Past" & structure %in% "Savanna")%>% dplyr::select(MCMC, id,idval, RWI,site,MAP, MAP.scaled)
+Tmax25.mod.forest <- Tmax25 %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Modern" & structure %in% "Forest") %>%dplyr::select(MCMC,id, idval, RWI,site,MAP, MAP.scaled)
+Tmax25.past.forest <- Tmax25  %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Past" & structure %in% "Forest")%>%dplyr::select(MCMC, id, idval, RWI,site,MAP, MAP.scaled)
+Tmax25.mod.savanna <- Tmax25 %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Modern" & structure %in% "Savanna")%>%dplyr::select(MCMC, id, idval, RWI,site,MAP, MAP.scaled)
+Tmax25.past.savanna <- Tmax25  %>% filter( MAP == c(975, 515))  %>% filter(ageclass %in% "Past" & structure %in% "Savanna")%>%dplyr::select(MCMC, id,idval, RWI,site,MAP, MAP.scaled)
 
 colnames(Tmax25.mod.forest)[4] <- "Modern_Forest"
 colnames(Tmax25.past.forest)[4] <- "Past_Forest"
@@ -2132,7 +2032,7 @@ colnames(Tmax25.past.forest)[7] <- "MAP_scaled_Past_Forest"
 colnames(Tmax25.mod.savanna)[7] <- "MAP_scaled_Modern_Savanna"
 colnames(Tmax25.past.savanna)[7] <- "MAP_scaled_Past_Savanna"
 
-test.join.forest <- left_join(Tmax25.mod.forest, Tmax25.past.forest, by = c("idval",  "site", "MAP"))
+test.join.forest <- left_join(Tmax25.mod.forest, Tmax25.past.forest, by = c("id",  "site", "MAP"))
 test.join.forest$growth.change <- test.join.forest$Modern_Forest - test.join.forest$Past_Forest 
 test.join.forest$growth.pct.change <- ((test.join.forest$Modern_Forest - test.join.forest$Past_Forest)/ test.join.forest$Past_Forest)*100
 test.join.forest$structure <- "Forest"
@@ -2143,7 +2043,7 @@ test.join.savanna$growth.pct.change <- ((test.join.savanna$Modern_Savanna - test
 test.join.savanna$structure <- "Savanna"
 
 ypred.for1$MAP <- ifelse(ypred.for1$MAP.scaled <= 0,  515, 
-                         ifelse(ypred.for1$MAP.scaled > 0, 975, NA))
+                          ifelse(ypred.for1$MAP.scaled > 0, 975, NA))
 
 ypred.for2$MAP <- ifelse(ypred.for2$MAP.scaled <= 0,  515, 
                          ifelse(ypred.for2$MAP.scaled > 0, 975, NA))
@@ -2165,21 +2065,44 @@ test.join.savanna$growth.pct.change <- ((test.join.savanna$RWI.x - test.join.sav
 
 
 # generate summaries before joining all together:
-tmax25forest.change.summary <- test.join.forest %>% group_by(structure, MAP, site.num) %>% dplyr::summarise(mean.change = mean(growth.change, na.rm=TRUE),
-                                                                                                            Ci.high.change = quantile(growth.change, 0.975,na.rm=TRUE), 
-                                                                                                            Ci.low.change = quantile(growth.change, 0.025,na.rm=TRUE), 
-                                                                                                            mean.pct.change = mean(growth.pct.change, na.rm=TRUE),
-                                                                                                            Ci.high.pct.change = quantile(growth.pct.change,0.975, na.rm=TRUE), 
-                                                                                                            Ci.low.pct.change = quantile(growth.pct.change, 0.025, na.rm=TRUE))
+tmax25forest.change.summary <- test.join.forest %>% group_by(structure, MAP) %>% dplyr::summarise(mean.change = mean(growth.change, na.rm=TRUE),
+                                                                                                  Ci.high.change = quantile(growth.change, 0.975,na.rm=TRUE), 
+                                                                                                  Ci.low.change = quantile(growth.change, 0.025,na.rm=TRUE), 
+                                                                                                  mean.pct.change = mean(growth.pct.change, na.rm=TRUE),
+                                                                                                  Ci.high.pct.change = quantile(growth.pct.change,0.975, na.rm=TRUE), 
+                                                                                                  Ci.low.pct.change = quantile(growth.pct.change, 0.025, na.rm=TRUE))
 
 
-tmax25savanna.change.summary <- test.join.savanna %>% group_by(structure, MAP, site.num) %>% dplyr::summarise(mean.change = mean(growth.change, na.rm=TRUE),
-                                                                                                              Ci.high.change = quantile(growth.change, 0.975, na.rm=TRUE),
-                                                                                                              Ci.low.change = quantile(growth.change, 0.025, na.rm=TRUE), 
-                                                                                                              mean.pct.change = mean(growth.pct.change, na.rm=TRUE),
-                                                                                                              Ci.high.pct.change = quantile(growth.pct.change, 0.975, na.rm=TRUE), 
-                                                                                                              Ci.low.pct.change = quantile(growth.pct.change, 0.025, na.rm=TRUE))
+tmax25savanna.change.summary <- test.join.savanna %>% group_by(structure, MAP) %>% dplyr::summarise(mean.change = mean(growth.change, na.rm=TRUE),
+                                                                                                    Ci.high.change = quantile(growth.change, 0.975, na.rm=TRUE),
+                                                                                                    Ci.low.change = quantile(growth.change, 0.025, na.rm=TRUE), 
+                                                                                                    mean.pct.change = mean(growth.pct.change, na.rm=TRUE),
+                                                                                                    Ci.high.pct.change = quantile(growth.pct.change, 0.975, na.rm=TRUE), 
+                                                                                                    Ci.low.pct.change = quantile(growth.pct.change, 0.025, na.rm=TRUE))
 
+
+
+#pct.change.tmax25 <- rbind(test.join.forest[,c("site","structure", "MAP", "growth.change", "growth.pct.change")], test.join.savanna[,c("site","structure", "MAP", "growth.change", "growth.pct.change")])
+
+tmax25.change.summary <- rbind(tmax25savanna.change.summary, tmax25forest.change.summary)
+
+
+Tmax.summary.pct.change <- ggplot(tmax25.change.summary, aes(x = MAP, y = mean.pct.change, color = structure))+geom_line()+geom_ribbon(data = tmax25.change.summary, aes(x = MAP, ymin = Ci.low.pct.change, ymax = Ci.high.pct.change, fill = structure), alpha = 0.25, colour = NA)+theme_bw()+theme(panel.grid = element_blank())+ylab("% change in growth \n relative to past cohort")+xlab("Total Annual Precipitation (mm)")+geom_hline(yintercept = 0, color = "darkgrey", linetype = "dashed")+scale_color_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))+scale_fill_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))
+
+
+Tmax.summary.total.change <- ggplot(tmax25.change.summary, aes(x = MAP, y = mean.change, color = structure))+geom_line()+geom_ribbon(data = tmax25.change.summary, aes(x = MAP, ymin = Ci.low.change, ymax = Ci.high.change, fill = structure), alpha = 0.25, colour = NA)+theme_bw()+theme(panel.grid = element_blank())+ylab("Average change in growth \n relative to past cohort (mm)")+xlab("Total Annual Precipitation (mm)")+geom_hline(yintercept = 0, color = "darkgrey", linetype = "dashed")+scale_color_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))+scale_fill_manual(values = c("Savanna"='#a6611a',"Forest"='#018571'))
+
+struct.legend <- get_legend(Tmax.summary.total.change)
+
+png(height = 3, width = 7, units = "in" ,res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/Precipitation_difference_pce_diff_TMAX_25_mean_dbh_growth.png")
+plot_grid(Tmax.summary.total.change + theme(legend.position = "none"), Tmax.summary.pct.change+ theme(legend.position = "none"), struct.legend, ncol = 3, rel_widths = c(1,1, 0.3), labels = c("A", "B", ""))
+dev.off()
+
+
+
+png(height = 4, width = 3, units = "in" ,res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/Precipitation_effect_TMAX_25_mean_dbh_growth_v5.png")
+ag.ss.pred.25.TMAX 
+dev.off()
 
 
 # make a plot of modern only responses for high and low precipitaiton only:
@@ -2243,13 +2166,13 @@ boxplot.tmax <- ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp))+geo
   theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank(), axis.title.y  = element_blank()) +
   scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp26" = "#ffffb2", "rcp45" = "#984ea3", "rcp60" = "#e0f3f8", "rcp85" ="#fc8d59" ))+ylim(20,40)
 
-png(height = 8, width = 4, units = "in", res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_marginal_fut_climate_boxes_v5.png")
+png(height = 8, width = 4, units = "in", res = 200, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_marginal_fut_climate_boxes_v5.png")
 plot_grid(ag.ss.pred.500MAP, ag.ss.pred.950MAP, boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,1,0.75), labels = "AUTO")
 dev.off()
 
 
 
-png(height = 6, width = 5, units = "in", res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
+png(height = 6, width = 5, units = "in", res = 200, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
 plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly,ncol=1, align = "hv", rel_heights = c(1,0.75), labels = "AUTO") 
 dev.off()
 
@@ -2553,7 +2476,7 @@ pct.change.plot
 
 # put altogether in a single figure
 
-png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
+png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
 plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(1,1,1), labels = "AUTO") 
 dev.off()
 
@@ -2757,7 +2680,7 @@ minus100 <- ggplot(pct.change.temp[pct.change.temp$MAP.Scenario %in% "MAPminus10
 
 minus0 <- ggplot(pct.change.temp[pct.change.temp$MAP.Scenario %in% "mod.mean.MAP",], aes(deltaT, pct_change, color = ageclass))+geom_line() + geom_ribbon(data = pct.change.temp[pct.change.temp$MAP.Scenario %in% "mod.mean.MAP",], aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site, ncol = 9)+geom_hline(yintercept = 0, linetype = "dashed")+ylab("0mm ANNUAL PRECIPITATION \n % change in growth")+xlab("increase in Tmax (degC)")
 
-png(height = 12, width = 12, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/future_change_ingrowth.png")
+png(height = 12, width = 12, units = "in", res = 300, "outputs/growth_model/cohort_site_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/future_change_ingrowth.png")
 plot_grid( plus100, minus0, minus100, nrow = 3, align = "hv", labels = "AUTO")
 dev.off()
 
