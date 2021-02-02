@@ -2212,9 +2212,26 @@ Jun.rcps.clim$period  <- ifelse(Jun.rcps.clim$year < 2050, "2025-2049",
 
 colnames(Jun.rcps.clim) <- c("year", "value", "fut.class", "rcp", "site")
 
+
+summaries <- Jun.rcps.clim %>% group_by(rcp, fut.class)%>% dplyr::summarise(tmax.mean = mean(value), 
+                                                        tmax.sd = sd(value), 
+                                                        min = min(value),
+                                                        max = max(value))
+
+# summaries <- Jun.rcps.clim %>% group_by(rcp, fut.class, site)%>% dplyr::summarise(tmax.mean = mean(value), 
+#                                                                             tmax.sd = sd(value), 
+#                                                                             min = min(value),
+#                                                                             max = max(value))
+
+
 unique.clim$fut.class <- ifelse(unique.clim$year <= 1950, "1895-1950", "1950-2015")
 unique.clim2 <- unique.clim[,c("year", "JUNTmax", "fut.class", "ageclass", "site")]
 colnames(unique.clim2) <- c("year", "value", "fut.class", "rcp",  "site")
+
+
+summaries.past <- unique.clim2 %>% group_by(rcp, fut.class)%>% dplyr::summarise(tmax.mean = mean(value), 
+                                                                            tmax.sd = sd(value))
+
 
 clim.full <- rbind(unique.clim2, Jun.rcps.clim)
 
