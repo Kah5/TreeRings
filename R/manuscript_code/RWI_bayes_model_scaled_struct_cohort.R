@@ -1752,7 +1752,10 @@ unscale_function <- function(zVar, myVar){(zVar * sd(myVar)) + mean(myVar)}
 Tmax.range <- round(seq(range(train.dry.pair$T.scaled)[1], range(train.dry.pair$T.scaled)[2], by = 0.1), 10)
 
 # get the scaled varible for 515 mm and 975 mm
-avgs.to.unscale <- full.ghcn %>% group_by(ageclass, structure)%>% dplyr::summarise(meanT= mean(meanT), 
+full.ghcn<- read.csv("outputs/full.ghcn.sites.struct.before.splitting.csv")
+#full.ghcn <- read.csv("outputs/full_ghcn.")
+full.ghcn <- train.dry.pair
+avgs.to.unscale <- full.ghcn %>% dplyr::group_by(ageclass, structure)%>% dplyr::summarise(meanT= mean(meanT), 
                                                                             sdT = mean(sd.T), 
                                                                             meanMAP = mean(mean.MAP),
                                                                             sd.MAP = mean(sd.MAP))
@@ -1774,7 +1777,7 @@ prob.vals$RWI_1 <- log(mean(train.dry.pair$RWI_1))
 prob.vals$RWI_2 <- log(mean(train.dry.pair$RWI_2))
 
 
-prob.vals %>% filter(struct.cohort.code)
+#prob.vals %>% ungroup()%>% filter(struct.cohort.code)
 # now lets use the betasamps to predict posterior growth for all these conditions:
 
 #int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
@@ -2204,6 +2207,9 @@ Jun.rcps.clim.full <- June.rcps[,c("year", "Tmax", "period", "rcp", "site")]
 
 # subset by sites analyzed here:
 Jun.rcps.clim <- Jun.rcps.clim.full %>% filter(site %in% unique(unique.clim$site))
+Jun.rcps.clim$period  <- ifelse(Jun.rcps.clim$year < 2050, "2025-2049",
+                                ifelse(Jun.rcps.clim$year >=2050 & Jun.rcps.clim$year < 2075, "2050-2074", "2075-2099" ))
+
 colnames(Jun.rcps.clim) <- c("year", "value", "fut.class", "rcp", "site")
 
 unique.clim$fut.class <- ifelse(unique.clim$year <= 1950, "1895-1950", "1950-2015")
@@ -2213,14 +2219,16 @@ colnames(unique.clim2) <- c("year", "value", "fut.class", "rcp",  "site")
 clim.full <- rbind(unique.clim2, Jun.rcps.clim)
 
 
-reclass <- data.frame(class = c(1.5,2.5, 4,4.5,5,5.5, 8,8.5, 9, 9.5), 
-                      fut.class = c("1895-1950", "1950-2015", "2025-2060","2025-2060","2025-2060","2025-2060",
-                                    "2060-2099","2060-2099","2060-2099","2060-2099" ),
-                      rcp = c("Past", "Modern", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5"))
+reclass <- data.frame(class = c(1.5,2.5, 4,4.5,5,5.5, 8,8.5, 9, 9.5,  12, 12.5, 13, 13.5), 
+                      fut.class = c("1895-1950", "1950-2015", 
+                                    "2025-2049","2025-2049","2025-2049","2025-2049",
+                                    "2050-2074","2050-2074","2050-2074","2050-2074",
+                                    "2075-2099","2075-2099","2075-2099","2075-2099" ),
+                      rcp = c("Past", "Modern", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5"))
 
 clim.full2 <- merge( reclass,clim.full, by = c("fut.class", "rcp"))
 
-ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))
+ggplot(clim.full2, aes(x = fut.class, y = value, fill = rcp))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))
 
 
 ggplot(clim.full, aes(value, fill = rcp))+geom_histogram()+facet_wrap(~fut.class)
@@ -2236,12 +2244,18 @@ Future.Tmax.summaries.byfut.class <- clim.full %>% group_by(fut.class) %>% dplyr
                                                                                             Tmax.ci.high = quantile(value, 0.975, na.rm=TRUE))
 
 # save summary table to output in the tables script
-saveRDS(Future.Tmax.summaries, "/Users/kah/Documents/TreeRings/outputs/data/Tmax_future_climate.rds")
-
-boxplot.tmax <- ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+
-  xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))+ scale_y_continuous(name = "Time Period", breaks = c(1.5, 2.5, 4.5, 8.5 ), minor_breaks = NULL,labels = sort(unique(clim.full$fut.class)))+
+saveRDS(Future.Tmax.summaries, "/Users/kah/Documents/TreeRings/outputs/data/Tmax_future_climate_v2.rds")
+clim.full$rcp.2 <- ifelse(clim.full$rcp %in% "rcp26", "rcp 2.6",
+                          ifelse(clim.full$rcp %in% "rcp45", "rcp 4.5",
+                                 ifelse(clim.full$rcp %in% "rcp60","rcp 6.0",
+                                        ifelse(clim.full$rcp %in% "rcp85", "rcp 8.5",
+                                               ifelse(clim.full$rcp %in% "Modern", "Modern", "Past")))))
+                                       
+                                
+boxplot.tmax <- ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp.2))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+
+  xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))+ scale_y_continuous(name = "Time Period", breaks = c(1.5, 2.5, 4.5, 8.5, 12.5 ), minor_breaks = NULL,labels = sort(unique(clim.full$fut.class)))+
   theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank(), axis.title.y  = element_blank()) +
-  scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp26" = "#ffffb2", "rcp45" = "#984ea3", "rcp60" = "#e0f3f8", "rcp85" ="#fc8d59" ))+ylim(20,40)
+  scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp 2.6" = "#ffffb2", "rcp 4.5" = "#984ea3", "rcp 6.0" = "#e0f3f8", "rcp 8.5" ="#fc8d59" ))+ylim(20,40)
 
 png(height = 8, width = 4, units = "in", res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_marginal_fut_climate_boxes_v5.png")
 plot_grid(ag.ss.pred.500MAP, ag.ss.pred.950MAP, boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,1,0.75), labels = "AUTO")
@@ -2249,11 +2263,13 @@ dev.off()
 
 
 
-png(height = 6, width = 5, units = "in", res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
-plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly,ncol=1, align = "hv", rel_heights = c(1,0.75), labels = "AUTO") 
+png(height = 6, width = 5, units = "in", res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes_25_yrs_v5.png")
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, ncol=1, align = "hv", rel_heights = c(0.75,1), labels = "AUTO") 
 dev.off()
 
-
+png(height = 6, width = 5, units = "in", res = 200, "outputs/paper_figures_v3/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes_25_yrs_v5.png")
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, ncol=1, align = "hv", rel_heights = c(1,1), labels = "AUTO") 
+dev.off()
 # ---------make the same plots, but with % change in tree growth given MAP and Tmax:
 # Make plots of average percent change in grwoth from regional average growth due to tempearut:
 # 1. get range of modern Tmax:
@@ -2306,9 +2322,6 @@ test.MAP.scenarios <- merge(site.scenarios, MAP.scenarios, by = c("MAP.Scenario"
 all.scen <- merge(test.MAP.scenarios, temp.scenarios, by = "Temp.Scenario", all = TRUE)
 
 # get the scaled values for MAP and TMAX to run through parameters
-all.scen$MAP.scaled <- as.numeric(scale(all.scen$MAP, attr(MAP.scaled, "scaled:center"), attr(MAP.scaled, "scaled:scale")))
-
-all.scen$T.scaled <- as.numeric(scale(all.scen$Tmax, attr(T.scaled, "scaled:center"), attr(T.scaled, "scaled:scale")))
 
 # expand grid to add structure + cohort class - add 1 diameter, add 1 lag, add 2 lag, then add probe to the model....will need to re-run model
 extras <- expand.grid(RWI_1 = 0.103, 
@@ -2321,6 +2334,26 @@ extras <- merge(extras, sites.unique[, c("site", "struct.cohort.code")], by = "s
 
 degree.scenario <- merge(all.scen, extras, by = "site", all = TRUE)
 degree.scenario <- merge(degree.scenario, site.num.df, by = "site")
+
+#-----------------Scale the values ------------------------------
+full.ghcn <- train.dry.pair
+avgs.to.unscale <- full.ghcn %>% dplyr::group_by(ageclass, structure, struct.cohort.code)%>% dplyr::summarise(meanT= mean(meanT), 
+                                                                                          sdT = mean(sd.T), 
+                                                                                          meanMAP = mean(mean.MAP),
+                                                                                          sd.MAP = mean(sd.MAP))
+avgs.to.unscale$scaled.515 <- (515 - avgs.to.unscale$meanMAP) /avgs.to.unscale$sd.MAP
+avgs.to.unscale$scaled.975 <- (975 - avgs.to.unscale$meanMAP) /avgs.to.unscale$sd.MAP
+avgs.to.unscale$scaled.25.5 <- (25.5 - avgs.to.unscale$meanT) /avgs.to.unscale$sdT
+
+
+degree.scenario2 <- merge(degree.scenario, avgs.to.unscale, by= c("struct.cohort.code"))
+
+degree.scenario2$MAP.scaled <- (degree.scenario2$MAP - degree.scenario2$meanMAP)/degree.scenario2$sd.MAP
+
+degree.scenario2$T.scaled <- (degree.scenario2$Tmax - degree.scenario2$meanT)/degree.scenario2$sdT
+
+
+degree.scenario <- degree.scenario2
 
 # -------------use estimates of betas to generate estimates for predicted growth:
 meanMAP.sim <- degree.scenario %>% filter( MAP.Scenario == "mod.mean.MAP")
@@ -2443,8 +2476,8 @@ pct.change.low.ci <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario, 
 
 
 
-cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("site", "incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP", "MCMC") )
-pct.change.temp <- merge(pct.change.temp, cis, by = c("site","incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP", "MCMC")) 
+cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("site", "incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP") )
+pct.change.temp <- merge(pct.change.temp, cis, by = c("site","incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP")) 
 
 pct.change.temp <- merge(pct.change.temp , sites.unique, by = c("site", "struct.cohort.code"))
 
@@ -2557,7 +2590,13 @@ png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/cohort
 plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(1,1,1), labels = "AUTO") 
 dev.off()
 
-saveRDS(pct.change.low.high.MAP, "/Users/kah/Documents/TreeRings/outputs/data/pct_change_TMAX_precip_scenarios_v5.rds")
+png(height = 8.5, width = 5, units = "in", res = 300, "outputs/paper_figures_v3/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(1,1,1), labels = "AUTO") 
+dev.off()
+
+
+
+saveRDS(pct.change.low.high.MAP, "/Users/kah/Documents/TreeRings/outputs/data/pct_change_TMAX_precip_scenarios_25yr_fut_v5.rds")
 
 
 # -Get future growth at each site if we change temperature by 1-8 deg C given mean precip, DBH, and RWI---------
@@ -2584,10 +2623,6 @@ temp.scenarios <- mod.mean.clim %>% dplyr::select(site, mod.mean.Tmax:eight) %>%
 #next merge by site but keep all
 all.scen <- merge(MAP.scenarios, temp.scenarios, by = "site", all = TRUE)
 
-# get the scaled values for MAP and TMAX:
-all.scen$MAP.scaled <- as.numeric(scale(all.scen$MAP, attr(MAP.scaled, "scaled:center"), attr(MAP.scaled, "scaled:scale")))
-
-all.scen$T.scaled <- as.numeric(scale(all.scen$Tmax, attr(T.scaled, "scaled:center"), attr(T.scaled, "scaled:scale")))
 
 # expand grid to add structure + cohort class - add 1 diameter, add 1 lag, add 2 lag, then add probe to the model....will need to re-run model
 
@@ -2601,6 +2636,12 @@ extras <- merge(extras, sites.unique[, c("site", "struct.cohort.code")], by = "s
 
 degree.scenario <- merge(all.scen, extras, by = "site", all = TRUE)
 degree.scenario <- merge(degree.scenario, site.num.df, by = "site")
+
+# get the scaled values for MAP and TMAX:
+all.scen$MAP.scaled <- as.numeric(scale(all.scen$MAP, attr(MAP.scaled, "scaled:center"), attr(MAP.scaled, "scaled:scale")))
+
+all.scen$T.scaled <- as.numeric(scale(all.scen$Tmax, attr(T.scaled, "scaled:center"), attr(T.scaled, "scaled:scale")))
+
 
 # use estimates of betas to generate estimates for predicted growth:
 meanMAP.sim <- degree.scenario %>% filter( MAP.Scenario == "mod.mean.MAP")
