@@ -229,7 +229,7 @@ climate.space.ci <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax,
                                                                                                                                                                            "Forest"='forestgreen'))+
   geom_errorbar(aes(x = site.MAP, ymin = site.ci.lo.tmax ,ymax = site.ci.high.tmax), alpha = 0.5)+
   geom_errorbarh(aes(y = site.tmax, xmin = site.ci.lo.MAP, xmax = site.ci.high.MAP), alpha = 0.5)+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Maximum Temperature (" *
-                                                                                                                                                                         degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = "none")
+                                                                                                                                                                         degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = c(0.8, 0.15), legend.title = element_blank())
 
 climate.space.sd <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax, shape = structure, color = structure))+geom_point(size = 3)+scale_color_manual(values = c("Savanna"='sienna4',
                                                                                                                                                                            "Forest"='forestgreen'))+
@@ -440,16 +440,17 @@ sites.bays.map.num.eco <- full.us.wwf.eco + geom_point(data = numbered.sites, ae
                   fontface = 'bold', color = 'black',
                   box.padding = unit(0.5, "lines"),
                   point.padding = unit(0.5, "lines")) + coord_cartesian(xlim = c(-100, -85), ylim=c(38, 49)) +theme_bw()+
-  theme(legend.title = element_blank(), legend.position= c(0.75, 0.15), # legend.position= "none",legend.position = "bottom", legend.direction = "vertical", 
+  theme(legend.title = element_blank(), legend.position= c(0.284, 0.155), # legend.position= "none",legend.position = "bottom", legend.direction = "vertical", 
         legend.background = element_rect(color = "black", fill = "white", size = 0.1, linetype = "solid"),
-        legend.text=element_text(size=6), legend.spacing = unit(0.1, "lines"), 
+        legend.text=element_text(size=8), legend.spacing = unit(0.1, "lines"), 
         legend.key.size = unit(0.2, "lines"), axis.title = element_blank())
 legend.map <- get_legend(sites.bays.map.num.eco)
 
 
 site.bayes.map.inset.num.eco <- sites.bays.map.num.eco+guides(color = FALSE, shape = FALSE) +
-  annotation_custom(grob =  ggplotGrob(full.us.wwf.eco+theme(legend.position = "none", axis.text = element_blank(), axis.ticks = element_blank())), xmin = -101.25, xmax = -92.5,
-                    ymin = 36.8, ymax = 41.55)
+  annotation_custom(grob =  ggplotGrob(full.us.wwf.eco+theme(legend.position = "none", axis.text = element_blank(), axis.ticks = element_blank())), 
+                    xmin = -92, xmax = -83.9,
+                    ymin = 36, ymax = 41.5)
 
 
 
@@ -462,13 +463,13 @@ legend.colors <- get_legend(full.us.wwf.eco)
 
 
 # create the same maps but with inset of US
-png(height = 4, width = 8, units = "in", res = 300, "outputs/cpaper_figures_struct_cohort_scaling/site_map_and_climate_space_inset_eco.png")
-plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO")
+png(height = 4, width = 8, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/site_map_and_climate_space_inset_eco.png")
+plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = c("a)", "b)"), label_fontface = "plain", label_x = 0.15, label_y = 0.95)
 dev.off()
 
-png(height = 4.1, width = 8, units = "in", res = 300, "outputs/cpaper_figures_struct_cohort_scaling/site_map_and_climate_space_inset_eco.png")
+png(height = 4.1, width = 8, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/site_map_and_climate_space_inset_eco2.png")
 plot_grid(
-  plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = "AUTO"),
+  plot_grid(site.bayes.map.inset.num.eco, climate.space.ci, ncol = 2, align = "hv", labels = c("a)", "b)"),label_fontface = "plain",label_x = 0.15, label_y = 0.95),
   plot_grid( legend.sf), ncol = 1, rel_heights = c(1,0.12))
 dev.off()
 
