@@ -229,8 +229,14 @@ climate.space.ci <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax,
                                                                                                                                                                            "Forest"='forestgreen'))+
   geom_errorbar(aes(x = site.MAP, ymin = site.ci.lo.tmax ,ymax = site.ci.high.tmax), alpha = 0.5)+
   geom_errorbarh(aes(y = site.tmax, xmin = site.ci.lo.MAP, xmax = site.ci.high.MAP), alpha = 0.5)+xlim(400, 1200)+ylim(20,31)+theme_bw(base_size = 12)+ylab(expression("June Maximum Temperature (" *
-                                                                                                                                                                         degree * "C)"))+xlab("Total Annual Precipitation (mm)")+theme(panel.grid = element_blank(), legend.position = c(0.8, 0.15), legend.title = element_blank())
+                                                                                                                                                                         degree * "C)"))+xlab("Total Annual Precipitation (mm)")+
+  theme(panel.grid = element_blank(), legend.position = c(0.8, 0.15), legend.title = element_blank(), plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(), axis.line = element_line(color = 'black'))
 
+  #draws x and y axis line
+  theme(axis.line = element_line(color = 'black'))
 climate.space.sd <- ggplot(na.omit(full.ghcn.priority), aes(site.MAP, site.tmax, shape = structure, color = structure))+geom_point(size = 3)+scale_color_manual(values = c("Savanna"='sienna4',
                                                                                                                                                                            "Forest"='forestgreen'))+
   geom_errorbar(aes(x = site.MAP, ymin = site.tmax -site.sd.tmax ,ymax = site.tmax+site.sd.tmax))+
@@ -952,20 +958,37 @@ sav.for.legend <- cowplot::get_legend(ggplot(data.frame(a1.sum), aes(x = mean.va
 # nrow = 2, align = "v", rel_heights = c(0.1, 1))
 # dev.off()
 
-png(height = 14, width = 10, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/full_dot_plot_cohort_cohortXstuct_CI.png")
-cowplot::plot_grid(sav.for.legend,
+
+# code to remove top and right axes perr journal requirements
+
+notoprightpanels <- theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank(), axis.line = element_line(color = 'black'))
+
+png(height = 14, width = 10, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/full_dot_plot_cohort_cohortXstuct_CI_formated.png")
+
                    
-                   cowplot::plot_grid(int.dot.age, int.dot, 
-                                      b2.dot.age, b2.dot, 
-                                      b6.dot.age, b6.dot,
-                                      b7.dot.age, b7.dot, 
-                                      b4.dot.age, b4.dot,
-                                      b5.dot.age, b5.dot,
-                                      b3.dot.age, b3.dot,
-                                      ncol = 2, align = "v", labels = "AUTO"), 
-                   
-                   
-                   nrow = 2, align = "v", rel_heights = c(0.075, 1))
+                   cowplot::plot_grid(int.dot.age + theme(legend.position = c(0.75, 0.35), legend.title = element_blank()) + guides(size = FALSE) + notoprightpanels  , 
+                                      int.dot+ theme(legend.position = c(0.75, 0.35), legend.title = element_blank()) + guides(size = FALSE)+notoprightpanels  , 
+                                      b2.dot.age + notoprightpanels, 
+                                      b2.dot+ notoprightpanels, 
+                                      b6.dot.age + notoprightpanels, 
+                                      b6.dot + notoprightpanels, 
+                                      b7.dot.age+ notoprightpanels, 
+                                      b7.dot+ notoprightpanels,  
+                                      b4.dot.age+ notoprightpanels, 
+                                      b4.dot+ notoprightpanels, 
+                                      b5.dot.age+ notoprightpanels,  
+                                      b5.dot+ notoprightpanels, 
+                                      b3.dot.age+ notoprightpanels,  b3.dot+ notoprightpanels, 
+                                      ncol = 2, align = "hv", labels = c("a)", "b)", 
+                                                                        "c)", "d)",
+                                                                        "e)", "f)",
+                                                                        "g)", "h)",
+                                                                        "i)", "j)",
+                                                                        "k)", "l)",
+                                                                        "m)", "n)"), label_x = 0.28, label_y = 0.9)
 dev.off()
 #-------------------------------------------------------------------------------------------------
 #                                     Figure 3: 
