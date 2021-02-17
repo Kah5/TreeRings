@@ -1885,12 +1885,12 @@ full.pred.2 <- left_join(full.pred, avgs.to.unscale, by = c("ageclass", "structu
 full.pred.2$Tmax <- (full.pred.2$T.scaled * full.pred.2$sdT) + full.pred.2$meanT
 full.pred.2$MAP<- (full.pred.2$MAP.scaled * full.pred.2$sd.MAP) + full.pred.2$meanMAP
 full.pred <- full.pred.2
-site.summary <- full.pred %>% dplyr::group_by(site.num, Tmax, MAP.scaled, struct.cohort.code) %>% dplyr::summarise(mean = mean(exp(RWI)), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+site.summary <- full.pred %>% dplyr::group_by(site.num, Tmax, MAP,MAP.scaled, struct.cohort.code) %>% dplyr::summarise(mean = mean(exp(RWI)), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
 
 
-ageclass.summary <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by(site, ageclass, Tmax, MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+ageclass.summary <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by(site, ageclass, Tmax, MAP,MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
 #ggplot(ageclass.summary[ageclass.summary$MAP.scaled == -1.58,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
@@ -1900,19 +1900,9 @@ ageclass.summary <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by
 
 
 
-ageclass.only <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by( ageclass, Tmax, MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+ageclass.only <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by( ageclass, Tmax, MAP,MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
 
 
-#ggplot(ageclass.only[ageclass.only$MAP == 259.338,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
-
-
-#ggplot(ageclass.only[ageclass.only$MAP == 516.814,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
-
-
-ggplot(ageclass.only[ageclass.only$MAP == 945.942,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$MAP == 945.942,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
-
-
-ggplot(ageclass.only[ageclass.only$Tmax == 26.799,], aes(x = MAP, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.only[ageclass.only$Tmax == 26.799,], aes(x = MAP, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)
 
 # now by ageclass and stand structure:
 
@@ -2191,6 +2181,14 @@ modern.hi.low$MAP_scenario <- ifelse(modern.hi.low$MAP.scaled >= 0, "975 mm", "5
 
 ag.ss.pred.MAP.modonly <- ggplot(modern.hi.low, aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+geom_ribbon(data = modern.hi.low, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme()
 
+ag.ss.pred.MAP.modonly.savanna <- ggplot(modern.hi.low %>% filter(structure %in% "Savanna"), aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+
+  geom_ribbon(data = modern.hi.low %>% filter(structure %in% "Savanna"), aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+#+facet_wrap(~structure, ncol = 1)+theme_bw()+
+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme_bw()+notoprightpanels+theme(legend.position = c(0.7, 0.5))
+
+ag.ss.pred.MAP.modonly.forest <- ggplot(modern.hi.low %>% filter(structure %in% "Forest"), aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+
+  geom_ribbon(data = modern.hi.low %>% filter(structure %in% "Forest"), aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+#+facet_wrap(~structure, ncol = 1)+theme_bw()+
+  theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme_bw()+notoprightpanels+theme(legend.position = c(0.7, 0.5))
+
 
 # read in future climate for the region:
 #June.rcps <- read.csv("/Users/kah/Documents/TreeRings/outputs/June_summer_cmip5_preds_allyears_2025_2099.csv")
@@ -2271,8 +2269,8 @@ clim.full$rcp.2 <- ifelse(clim.full$rcp %in% "rcp26", "rcp 2.6",
                                 
 boxplot.tmax <- ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp.2))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+
   xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))+ scale_y_continuous(name = "Time Period", breaks = c(1.5, 2.5, 4.5, 8.5, 12.5 ), minor_breaks = NULL,labels = sort(unique(clim.full$fut.class)))+
-  theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank(), axis.title.y  = element_blank()) +
-  scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp 2.6" = "#ffffb2", "rcp 4.5" = "#984ea3", "rcp 6.0" = "#e0f3f8", "rcp 8.5" ="#fc8d59" ))+ylim(20,40)
+  theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank()) +
+  scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp 2.6" = "#ffffb2", "rcp 4.5" = "#984ea3", "rcp 6.0" = "#e0f3f8", "rcp 8.5" ="#fc8d59" ))+ylim(20,40)+ylab("Time Period")
 
 png(height = 8, width = 4, units = "in", res = 200, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_Tmax_marginal_fut_climate_boxes_v5.png")
 plot_grid(ag.ss.pred.500MAP, ag.ss.pred.950MAP, boxplot.tmax, ncol=1, align = "hv", rel_heights = c(1,1,0.75), labels = "AUTO")
@@ -2285,7 +2283,7 @@ plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, ncol=1, align = "hv", rel_heigh
 dev.off()
 
 png(height = 6, width = 5, units = "in", res = 200, "outputs/paper_figures_v3/predicted_treegrowth_Tmax_modern_only_marginal_fut_climate_boxes_25_yrs_v5.png")
-plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, ncol=1, align = "hv", rel_heights = c(1,1), labels = "AUTO") 
+plot_grid( boxplot.tmax + notoprightpanels, ag.ss.pred.MAP.modonly, ncol=1, align = "hv", rel_heights = c(1,1), labels = "AUTO") 
 dev.off()
 # ---------make the same plots, but with % change in tree growth given MAP and Tmax:
 # Make plots of average percent change in grwoth from regional average growth due to tempearut:
@@ -2601,6 +2599,33 @@ pct.change.plot <- ggplot(pct.change.low.high.MAP, aes(Temperature, pct_change, 
 pct.change.plot
 
 
+pct.change.plot.forest <- ggplot(pct.change.low.high.MAP %>% filter(structure %in% "Forest"), aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() +
+  geom_ribbon(data = pct.change.low.high.MAP %>% filter(structure %in% "Forest"), aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab("% change in growth")+#facet_wrap(~structure, ncol = 1)+
+  scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+
+  scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+
+  scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw()+
+  theme(panel.grid = element_blank(), legend.position = c(0.7, 0.5))+notoprightpanels+ylim(-60, 150)
+
+
+pct.change.plot.forest
+
+
+pct.change.plot.savanna <- ggplot(pct.change.low.high.MAP %>% filter(structure %in% "Savanna"), aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() +
+  geom_ribbon(data = pct.change.low.high.MAP %>% filter(structure %in% "Savanna"), aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab("% change in growth")+#facet_wrap(~structure, ncol = 1)+
+  scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+
+  scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+
+  scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw()+
+  theme(panel.grid = element_blank(), legend.position = c(0.7, 0.5))+notoprightpanels+ylim(-60, 150)
+
+
+pct.change.plot.savanna
+
+# save the pct.change.low.high.MAP so we can just plot it in the paper_figures
+
+
+# save ag.ss.pred.MAP.modonly
 # put altogether in a single figure
 
 png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
@@ -2611,6 +2636,16 @@ png(height = 8.5, width = 5, units = "in", res = 300, "outputs/paper_figures_v3/
 plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(1,1,1), labels = "AUTO") 
 dev.off()
 
+png(height = 11, width = 5, units = "in", res = 300, "outputs/paper_figures_v3/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5_formatted.png")
+plot_grid( boxplot.tmax +notoprightpanels + theme(legend.position = c(0.85, 0.25), axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")) + xlab("Time period"),
+           ag.ss.pred.MAP.modonly.forest+ylim(0, 3.5) +ylab("Predicted \n tree growth (mm)")+theme(legend.position = c(0.85, 0.5),axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")),
+           ag.ss.pred.MAP.modonly.savanna +ylim(0, 3.5)+ylab("Predicted \n tree growth (mm)")+theme(legend.position = c(0.85, 0.5),axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")),
+           pct.change.plot.forest+ylab("% growth change")+ theme(legend.position = c(0.85, 0.5),axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")),
+           pct.change.plot.savanna+ylab("% growth change") + theme(legend.position = c(0.85, 0.5), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")), ncol=1, align = "hv", rel_heights = c(1.5,0.75, 0.75, 0.75, 0.75),
+           labels = c("      a)", " b) Forest", "c) Savanna", " d) Forest", "e) Savanna"),
+           label_fontface = "plain",
+           label_x = 0.15, label_y = 0.99) 
+dev.off()
 
 
 saveRDS(pct.change.low.high.MAP, "/Users/kah/Documents/TreeRings/outputs/data/pct_change_TMAX_precip_scenarios_25yr_fut_v5.rds")
