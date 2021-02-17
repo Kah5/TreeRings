@@ -1288,7 +1288,7 @@ plot.dat.a$class <- row.names(plot.dat.a)
 plot.dat.a$class <- factor(plot.dat.a$class, levels = c(paste0(c( "Past", "Modern"))))
 
 
-a.dots.2.wue <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+theme_bw(base_size = 18)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+xlim(115, 165)+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank())+ xlab(expression(paste("Baseline iWUE")))
+a.dots.2.wue <- ggplot(plot.dat.a, aes(x = a.mean, y = class,  size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+theme_bw(base_size = 18)+coord_flip()+xlim(115, 165)+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank())+ xlab(expression(paste("Baseline iWUE")))
 
 png(width = 5, height = 4, units = "in", res = 300, "outputs/growth_model/iWUE_MAP_TMAX_dbh/param_marginal_distn_bycohort_struct_v3_iwue_random_slopes_cohort.png")
 a.dots.2.wue
@@ -1307,7 +1307,7 @@ plot.dat.b$class <- factor(plot.dat.b$class, levels = c(paste0(c("Past", "Modern
 
 
 
-b.dots.2.wue <- ggplot(plot.dat.b, aes(x = b.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
+b.dots.2.wue <- ggplot(plot.dat.b, aes(x = b.mean, y = class,  size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
   geom_point(alpha = 0.5)+theme_bw(base_size = 18)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank())+
   xlab("Precip effect on iWUE")+geom_vline(xintercept = 0, linetype = "dashed")+xlim(-1,6)
 
@@ -1331,7 +1331,7 @@ plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c("Past",  "Modern"))
 
 
 
-b2.dots.2.wue <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+
+b2.dots.2.wue <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, size = 2))+
   geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+
   theme_bw(base_size = 18)+scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+
   theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank())+ xlab(expression(paste("Tmax effect on iWUE")))+
@@ -1355,7 +1355,7 @@ plot.dat.b3$class <- factor(plot.dat.b3$class, levels = c("Past",  "Modern"))
 
 
 
-b3.dots.2.wue <- ggplot(plot.dat.b3, aes(x = b3.mean, y = class, color = class, size = 2))+
+b3.dots.2.wue <- ggplot(plot.dat.b3, aes(x = b3.mean, y = class, size = 2))+
   geom_errorbarh( xmin = b3.lower, xmax = b3.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+theme_bw(base_size = 18)+
   scale_color_manual(values = c("Past"='blue',"Modern"='red'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank())+
   xlim(-2.1, 4)+ xlab(expression(paste("DBH effect on iWUE")))+geom_vline(xintercept = 0, linetype = "dashed")
@@ -1787,7 +1787,7 @@ plot.dat.a$class <- row.names(plot.dat.a)
 plot.dat.a$class <- factor(plot.dat.a$class, levels = c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna"))))
 
 
-a.dots.2.wue <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+
+a.dots.2.wue <- ggplot(plot.dat.a, aes(x = a.mean, y = class,  size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+
   geom_point(alpha = 0.5)+theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+
   coord_flip()+xlim(90, 165)+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+ xlab(expression(paste("Baseline iWUE")))
 
@@ -1808,7 +1808,7 @@ plot.dat.b$class <- factor(plot.dat.b$class, levels = c(paste0(c("Past-Forest", 
 
 
 
-b.dots.2.wue <- ggplot(plot.dat.b, aes(x = b.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
+b.dots.2.wue <- ggplot(plot.dat.b, aes(x = b.mean, y = class,  size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
   geom_point(alpha = 0.5)+theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
   xlab("Precipitation \n effect on iWUE")+geom_vline(xintercept = 0, linetype = "dashed")+xlim(-4.1,9.7)
 
@@ -1832,7 +1832,7 @@ plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c("Past-Forest", "Modern
 
 
 
-b2.dots.2.wue <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+
+b2.dots.2.wue <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class,  size = 2))+
   geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+
   theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+
   xlab("Maximum Temperature \n effect on iWUE")+
@@ -1857,7 +1857,7 @@ plot.dat.b3$class <- factor(plot.dat.b3$class, levels = paste0(c("Past-Forest", 
 
 
 
-b3.dots.2.wue <- ggplot(plot.dat.b3, aes(x = b3.mean, y = class, color = class, size = 2))+
+b3.dots.2.wue <- ggplot(plot.dat.b3, aes(x = b3.mean, y = class,  size = 2))+
   geom_errorbarh( xmin = b3.lower, xmax = b3.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+theme_bw(base_size = 16)+
   scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
   xlim(-10, 11)+ xlab(expression(paste("DBH effect on iWUE")))+geom_vline(xintercept = 0, linetype = "dashed")
@@ -2003,7 +2003,7 @@ plot.dat.a$class <- row.names(plot.dat.a)
 plot.dat.a$class <- factor(plot.dat.a$class, levels = c(paste0(c("Past-Forest", "Modern-Forest", "Past-Savanna", "Modern-Savanna"))))
 
 
-a.dots.2.d13 <- ggplot(plot.dat.a, aes(x = a.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+
+a.dots.2.d13 <- ggplot(plot.dat.a, aes(x = a.mean, y = class,  size = 2))+geom_errorbarh( xmin = a.lower, xmax = a.upper, size = 2,height = 0)+
   geom_point(alpha = 0.5)+theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+
   coord_flip()+xlim(-26, -22)+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+ xlab(expression(paste("Baseline " ,delta^{13}, "C (\u2030)")))
 
@@ -2024,7 +2024,7 @@ plot.dat.b$class <- factor(plot.dat.b$class, levels = c(paste0(c("Past-Forest", 
 
 
 
-b.dots.2.d13 <- ggplot(plot.dat.b, aes(x = b.mean, y = class, color = class, size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
+b.dots.2.d13 <- ggplot(plot.dat.b, aes(x = b.mean, y = class,  size = 2))+geom_errorbarh( xmin = b.lower, xmax = b.upper, size = 2,height = 0)+
   geom_point(alpha = 0.5)+theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
   xlab(expression(atop("Precipitation" , paste("effect on ",delta^{13}, "C (\u2030)"))))+geom_vline(xintercept = 0, linetype = "dashed")+xlim(-0.65,0.4)
 
@@ -2049,7 +2049,7 @@ plot.dat.b2$class <- factor(plot.dat.b2$class, levels = c("Past-Forest", "Modern
 
 #atop("A long string of text for the purpose", paste("of illustrating my point" [reported]))))
 
-b2.dots.2.d13 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class, color = class, size = 2))+
+b2.dots.2.d13 <- ggplot(plot.dat.b2, aes(x = b2.mean, y = class,  size = 2))+
   geom_errorbarh( xmin = b2.lower, xmax = b2.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+
   theme_bw(base_size = 16)+scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+
   xlab(expression(atop("Maximum Temperature" , paste("effect on ",delta^{13}, "C (\u2030)"))))+
@@ -2074,7 +2074,7 @@ plot.dat.b3$class <- factor(plot.dat.b3$class, levels = paste0(c("Past-Forest", 
 
 
 
-b3.dots.2.d13 <- ggplot(plot.dat.b3, aes(x = b3.mean, y = class, color = class, size = 2))+
+b3.dots.2.d13 <- ggplot(plot.dat.b3, aes(x = b3.mean, y = class,  size = 2))+
   geom_errorbarh( xmin = b3.lower, xmax = b3.upper, size = 2,height = 0)+geom_point(alpha = 0.5)+theme_bw(base_size = 16)+
   scale_color_manual(values = c("Past-Savanna"='#a6611a',"Modern-Savanna"='#dfc27d',"Modern-Forest"='#80cdc1',"Past-Forest"='#018571'))+coord_flip()+theme(legend.position = "none", axis.title.x = element_blank(), panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
   xlim(-1, 2)+ xlab(expression(paste("DBH effect on ",delta^{13}, "C (\u2030)")))+geom_vline(xintercept = 0, linetype = "dashed")
@@ -2088,15 +2088,43 @@ plot_grid(a.dots.2.d13, b.dots.2.d13, b2.dots.2.d13, b3.dots.2.d13, ncol = 1,ali
 dev.off()
 
 
+titled13 <- ggdraw() + 
+  draw_label(
+    expression(paste(delta^{13}, "C (\u2030)")),
+    x = 0.5,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
 
+titleiWUE <- ggdraw() + 
+  draw_label(
+    "iWUE",
+    x = 0.5,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
 
 # plot all dotplots for WUE & d13c side by side
-png(height = 13, width = 7, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/summary_of_d13_iwue_struct_cohort_params_v3.png")
-plot_grid(a.dots.2.d13, a.dots.2.wue,
-          b.dots.2.d13, b.dots.2.wue,
-          b2.dots.2.d13, b2.dots.2.wue,
-          b3.dots.2.d13, b3.dots.2.wue,
-          ncol = 2, align = "hv", labels = "AUTO")
+png(height = 13, width = 7, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/summary_of_d13_iwue_struct_cohort_params_v3_format.png")
+plot_grid(plot_grid(titled13, titleiWUE, ncol = 2),
+  plot_grid(a.dots.2.d13 +xlab("Baseline") + notoprightpanels + theme(plot.title = element_text(hjust = 0.5)), 
+          a.dots.2.wue+xlab("Baseline")+ notoprightpanels +theme(plot.title = element_text(hjust = 0.5)),
+          b.dots.2.d13+xlab("Precipitation effect")+ notoprightpanels, 
+          b.dots.2.wue+xlab("Precipitation effect")+ notoprightpanels,
+          b2.dots.2.d13+xlab("Max. temperature effect")+ notoprightpanels, 
+          b2.dots.2.wue+xlab("Max. temperature effect")+ notoprightpanels,
+          b3.dots.2.d13+xlab("DBH effect")+ notoprightpanels, 
+          b3.dots.2.wue+xlab("DBH effect")+ notoprightpanels,
+          ncol = 2, align = "v",labels = c("a)", "b)", "c)", "d)", "e)","f)", "g)", "h)"),
+          label_x = 0.26, label_y = 0.95),nrow = 2, rel_heights = c(0.05, 1))
 dev.off()
 
 
