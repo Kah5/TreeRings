@@ -2333,3 +2333,518 @@ boxplot.tmax <- ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp.2))+g
   theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank()) +
   scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp 2.6" = "#ffffb2", "rcp 4.5" = "#984ea3", "rcp 6.0" = "#e0f3f8", "rcp 8.5" ="#fc8d59" ))+ylim(20,40)+ylab("Time Period")
 
+
+
+#---------------------------------------------------------------------------------------
+# Make predictions under different potential climates
+#---------------------------------------------------------------------------------------
+samps <- readRDS("outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
+
+int.mcmc <- as.mcmc(samps)
+int.mcmc.mat <- as.matrix(int.mcmc)
+int.mcmc.dat <- data.frame(int.mcmc.mat)
+
+
+
+# need to clean this up but this is the basic idea:
+
+get.predicted.ys <- function(x){
+  int.1 <- matrix(NA, nrow = nrow(int.mcmc.dat), ncol = length(x$T.scaled))
+  # simulate the effect of beta 1 conditional on Tmax
+  for(i in 1:length(x$T.scaled)){
+    # for struct.cohort == 1
+    int.1[,i] <- #int.mcmc.dat[,paste0("beta1.", x[i,"site.num"], ".")]+
+      int.mcmc.dat[,paste0("beta2.", x[i,"struct.cohort.code"], ".")]*x[i,]$MAP.scaled+    
+      int.mcmc.dat[,paste0("beta3.", x[i,"struct.cohort.code"], ".")]*x[i,"DBH.scaled"] + 
+      int.mcmc.dat[,paste0("beta4.", x[i,"struct.cohort.code"], ".")]*x[i,"RWI_1"]  + 
+      int.mcmc.dat[,paste0("beta5.", x[i,"struct.cohort.code"], ".")]*x[i,"RWI_2"] +
+      int.mcmc.dat[,paste0("beta6.", x[i,"struct.cohort.code"], ".")]*x[i,"T.scaled"] + 
+      int.mcmc.dat[,paste0("beta7.", x[i,"struct.cohort.code"], ".")] * (x[i,"MAP.scaled"] *x[i,"T.scaled"])
+    
+    
+  }
+  int.1
+  x$idval <- 1:length(x$T.scaled)
+  # rows are the mcmc values
+  colnames(int.1) <- 1:length(x$T.scaled)
+  test.m <- melt(int.1)
+  colnames(test.m) <- c("MCMC", "idval", "Ypred")
+  predictions <- left_join(test.m, x, by = "idval")
+  predictions $RWI <- exp(predictions $Ypred)
+  predictions 
+}
+
+# forests <- 
+combs <- unique(train.dry.pair[, c("structure","struct.cohort.code", "site", "site.num", "ageclass")])
+combs
+avgs.to.unscale$scaled.25.5 <- (25.5 - avgs.to.unscale$meanT) /avgs.to.unscale$sdT
+
+avgs.to.unscale$scaled.25.5
+avgs.to.unscale$struct.cohort.code <- c(2, 4,1, 3)
+unique(train.dry.pair[,c("struct.cohort", "struct.cohort.code")])
+# get 515 and 975 in each of the struct-cohort scales
+# for each cohord and structure type get the prob.vals predicted for the 4 sites:
+prob.vals.forest.1 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 1,]$scaled.25.5, MAP.scaled = MAP.range, 
+                                  site.num = c(1, 3, 5, 8), struct.cohort.code = c(1))
+prob.vals.forest.1$id <- 1:length(prob.vals.forest.1$T.scaled)
+prob.vals.forest.2 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 2,]$scaled.25.5, MAP.scaled = MAP.range, 
+                                  site.num = c(1, 3, 5, 8), struct.cohort.code = c(2))
+prob.vals.forest.2$id <- 1:length(prob.vals.forest.2$T.scaled)
+
+
+prob.vals.f1 <- merge(prob.vals.forest.1, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
+prob.vals.f1$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
+prob.vals.f1$RWI_1 <- log(mean(train.dry.pair$RWI_1))
+prob.vals.f1$RWI_2 <- log(mean(train.dry.pair$RWI_2))
+
+prob.vals.f2 <- merge(prob.vals.forest.2, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
+prob.vals.f2$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
+prob.vals.f2$RWI_1 <- log(mean(train.dry.pair$RWI_1))
+prob.vals.f2$RWI_2 <- log(mean(train.dry.pair$RWI_2))
+
+
+prob.vals.savanna.3 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 3,]$scaled.25.5, MAP.scaled = MAP.range, 
+                                   site.num = c(2, 4, 6, 7), struct.cohort.code = c(3))
+prob.vals.savanna.3$id <- 1:length(prob.vals.savanna.3$T.scaled)
+
+prob.vals.savanna.4 <- expand.grid(T.scaled = avgs.to.unscale[avgs.to.unscale$struct.cohort.code %in% 4,]$scaled.25.5, MAP.scaled = MAP.range, 
+                                   site.num = c(2, 4, 6, 7), struct.cohort.code = c(4))
+prob.vals.savanna.4$id <- 1:length(prob.vals.savanna.4$T.scaled)
+
+prob.vals.s3 <- merge(prob.vals.savanna.3, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
+prob.vals.s3$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
+prob.vals.s3$RWI_1 <- log(mean(train.dry.pair$RWI_1))
+prob.vals.s3$RWI_2 <- log(mean(train.dry.pair$RWI_2))
+
+prob.vals.s4 <- merge(prob.vals.savanna.4, combs, all.x = TRUE, by = c("site.num", "struct.cohort.code"))
+prob.vals.s4$DBH.scaled <- mean(train.dry.pair$DBH.scaled)
+prob.vals.s4$RWI_1 <- log(mean(train.dry.pair$RWI_1))
+prob.vals.s4$RWI_2 <- log(mean(train.dry.pair$RWI_2))
+
+
+ypred.sav3 <- get.predicted.ys(prob.vals.s3)
+ypred.sav4 <- get.predicted.ys(prob.vals.s4)
+ypred.for1 <- get.predicted.ys(x= prob.vals.f1)
+ypred.for2 <- get.predicted.ys(x= prob.vals.f2)
+
+
+# columns are the different degree-site scenario combinations
+full.pred <- rbind(ypred.for1, ypred.for2,ypred.sav3, ypred.sav4)
+avgs.to.unscale <- full.ghcn %>% dplyr::group_by(ageclass, structure)%>% dplyr::summarise(meanT= mean(meanT), 
+                                                                                          sdT = mean(sd.T), 
+                                                                                          meanMAP = mean(mean.MAP),
+                                                                                          sd.MAP = mean(sd.MAP))
+
+full.pred.2 <- left_join(full.pred, avgs.to.unscale, by = c("ageclass", "structure"))
+# function to reverse the cohort-structure-level groupings
+
+#unscale_function <- function(zVar, myVar){(zVar * sd(myVar)) + mean(myVar)}
+
+# unscale the variables 
+full.pred.2$Tmax <- (full.pred.2$T.scaled * full.pred.2$sdT) + full.pred.2$meanT
+full.pred.2$MAP<- (full.pred.2$MAP.scaled * full.pred.2$sd.MAP) + full.pred.2$meanMAP
+full.pred <- full.pred.2
+site.summary <- full.pred %>% dplyr::group_by(site.num, Tmax, MAP,MAP.scaled, struct.cohort.code) %>% dplyr::summarise(mean = mean(exp(RWI)), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+
+
+
+ageclass.summary <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by(site, ageclass, Tmax, MAP,MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+
+#ggplot(ageclass.summary[ageclass.summary$MAP.scaled == -1.58,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 259.338,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
+#ggplot(ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, y =mean, color = ageclass))+geom_line()+geom_ribbon(data = ageclass.summary[ageclass.summary$MAP == 516.814,], aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site)
+
+
+
+ageclass.only <- full.pred %>% filter(!site %in% c("COR", "PVC"))%>% group_by( ageclass, Tmax, MAP,MAP.scaled) %>% dplyr::summarise(mean = mean(RWI), Ci.low = quantile(exp(Ypred), 0.025),  Ci.high = quantile(exp(Ypred), 0.975))
+
+
+
+
+# make a plot of modern only responses for high and low precipitaiton only:
+modern.hi.low <- ageclass.ss.only %>% filter(MAP.scaled >0 & ageclass %in% "Modern" | MAP.scaled < 0 & ageclass %in% "Modern")
+modern.hi.low$MAP_scenario <- ifelse(modern.hi.low$MAP.scaled >= 0, "975 mm", "515 mm")
+
+ag.ss.pred.MAP.modonly <- ggplot(modern.hi.low, aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+geom_ribbon(data = modern.hi.low, aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+facet_wrap(~structure, ncol = 1)+theme_bw()+theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme()
+
+ag.ss.pred.MAP.modonly.savanna <- ggplot(modern.hi.low %>% filter(structure %in% "Savanna"), aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+
+  geom_ribbon(data = modern.hi.low %>% filter(structure %in% "Savanna"), aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+#+facet_wrap(~structure, ncol = 1)+theme_bw()+
+  theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme_bw()+notoprightpanels+theme(legend.position = c(0.7, 0.5))
+
+ag.ss.pred.MAP.modonly.forest <- ggplot(modern.hi.low %>% filter(structure %in% "Forest"), aes(x = Tmax, y =mean, color = MAP_scenario))+geom_line()+
+  geom_ribbon(data = modern.hi.low %>% filter(structure %in% "Forest"), aes(x = Tmax, ymin = Ci.low, ymax = Ci.high, fill = MAP_scenario), alpha = 0.25, colour = NA)+#+facet_wrap(~structure, ncol = 1)+theme_bw()+
+  theme(panel.grid = element_blank())+ylab("Predicted Tree growth (mm)")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+scale_fill_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+scale_color_manual(values = c("975 mm"='#008837', '515 mm' = "#7b3294"), name = "Precipitation")+theme_bw()+notoprightpanels+theme(legend.position = c(0.7, 0.5))
+
+
+#---------------------------------------------------------------------------------------
+#make the same plots, but with % change in tree growth given MAP and Tmax:
+#---------------------------------------------------------------------------------------
+
+# Make plots of average percent change in grwoth from regional average growth due to tempearut:
+# 1. get range of modern Tmax:
+# 2. Find mean growth response for each site at mean Tmax overall 26.34, with all else constant
+# 3. generate PP response to range of temperatures 21.94 to 31.94
+# 4. Calculate % change between mean growth and 
+
+mod.mean.clim <-
+  test.dry.pair %>% filter(ageclass %in% "Modern" & year > 1950) %>%
+  #group_by(site) %>%
+  dplyr::summarize(
+    mod.mean.Tmax = mean(JUNTmax, na.rm = TRUE),
+    one = mean(JUNTmax, na.rm = TRUE) + 1,
+    two = mean(JUNTmax, na.rm = TRUE) + 2,
+    three = mean(JUNTmax, na.rm = TRUE) + 3,
+    four = mean(JUNTmax, na.rm = TRUE) + 4,
+    five = mean(JUNTmax, na.rm = TRUE) + 5,
+    minusone = mean(JUNTmax, na.rm = TRUE) - 1,
+    minustwo =  mean(JUNTmax, na.rm = TRUE) - 2,
+    minusthree =  mean(JUNTmax, na.rm = TRUE) - 3,
+    minusfour = mean(JUNTmax, na.rm = TRUE) - 4,
+    minusfive =  mean(JUNTmax, na.rm = TRUE) - 5,
+    
+    mod.mean.MAP = mean(MAP.prism, na.rm = TRUE),
+    MAPminus100 = mean(MAP.prism, na.rm = TRUE) -
+      100,
+    MAPminus50 = mean(MAP.prism, na.rm = TRUE) -
+      50,
+    MAPplus50 = mean(MAP.prism, na.rm = TRUE) +
+      50,
+    
+    MAP750 = 750,
+    
+    MAP515 = 516.814,
+    MAP850 = 850,
+    MAP950 = 945.942,
+    MAPplus100 = mean(MAP.prism, na.rm = TRUE) +
+      100
+  )
+
+
+
+
+# get summaries for MAP and Temperature scenarios & join
+MAP.scenarios <- mod.mean.clim %>% dplyr::select(mod.mean.MAP:MAPplus100) %>% gather(MAP.Scenario, MAP, mod.mean.MAP:MAPplus100)
+
+temp.scenarios <- mod.mean.clim %>% dplyr::select( mod.mean.Tmax:minusfive)  %>% gather(Temp.Scenario,Tmax, mod.mean.Tmax:minusfive)
+site.scenarios <- expand.grid(Temp.Scenario = temp.scenarios$Temp.Scenario, MAP.Scenario = MAP.scenarios$MAP.Scenario, site = as.character(unique(test.dry.pair$site)))
+test.MAP.scenarios <- merge(site.scenarios, MAP.scenarios, by = c("MAP.Scenario"))
+all.scen <- merge(test.MAP.scenarios, temp.scenarios, by = "Temp.Scenario", all = TRUE)
+
+# get the scaled values for MAP and TMAX to run through parameters
+
+# expand grid to add structure + cohort class - add 1 diameter, add 1 lag, add 2 lag, then add probe to the model....will need to re-run model
+extras <- expand.grid(RWI_1 = 0.103, 
+                      RWI_2 = 0.103, 
+                      site = unique(all.scen$site), 
+                      DBH.scaled = mean(test.dry.pair$DBH.scaled))
+
+sites.unique <- unique(train.dry.pair[, c("site", "struct.cohort.code", "structure", "ageclass")])
+extras <- merge(extras, sites.unique[, c("site", "struct.cohort.code")], by = "site")
+
+degree.scenario <- merge(all.scen, extras, by = "site", all = TRUE)
+degree.scenario <- merge(degree.scenario, site.num.df, by = "site")
+
+#-----------------Scale the values ------------------------------
+full.ghcn <- train.dry.pair
+avgs.to.unscale <- full.ghcn %>% dplyr::group_by(ageclass, structure, struct.cohort.code)%>% dplyr::summarise(meanT= mean(meanT), 
+                                                                                                              sdT = mean(sd.T), 
+                                                                                                              meanMAP = mean(mean.MAP),
+                                                                                                              sd.MAP = mean(sd.MAP))
+avgs.to.unscale$scaled.515 <- (515 - avgs.to.unscale$meanMAP) /avgs.to.unscale$sd.MAP
+avgs.to.unscale$scaled.975 <- (975 - avgs.to.unscale$meanMAP) /avgs.to.unscale$sd.MAP
+avgs.to.unscale$scaled.25.5 <- (25.5 - avgs.to.unscale$meanT) /avgs.to.unscale$sdT
+
+
+degree.scenario2 <- merge(degree.scenario, avgs.to.unscale, by= c("struct.cohort.code"))
+
+degree.scenario2$MAP.scaled <- (degree.scenario2$MAP - degree.scenario2$meanMAP)/degree.scenario2$sd.MAP
+
+degree.scenario2$T.scaled <- (degree.scenario2$Tmax - degree.scenario2$meanT)/degree.scenario2$sdT
+
+
+degree.scenario <- degree.scenario2
+
+# -------------use estimates of betas to generate estimates for predicted growth:
+meanMAP.sim <- degree.scenario %>% filter( MAP.Scenario == "mod.mean.MAP")
+meanMAP.sim <- degree.scenario
+
+int.mcmc <- as.mcmc(samps)
+int.mcmc.mat <- as.matrix(int.mcmc)
+int.mcmc.dat <- data.frame(int.mcmc.mat)
+
+int.1 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(meanMAP.sim$T.scaled)), nrow = nrow(int.mcmc.dat))
+
+# need to clean this up but this is the basic idea:
+
+
+# use betas to generate pp given a value for site, structure, dbh, rwi1, rwi2, and varying T and MAP:
+for(i in 1:length(meanMAP.sim$T.scaled)){
+  # for struct.cohort == 1
+  int.1[,i] <- int.mcmc.dat[,paste0("beta1.", meanMAP.sim[i,"site.num"], ".")]+
+    int.mcmc.dat[,paste0("beta2.", meanMAP.sim[i,"struct.cohort.code"], ".")]*meanMAP.sim[i,]$MAP.scaled+    
+    int.mcmc.dat[,paste0("beta3.", meanMAP.sim[i,"struct.cohort.code"], ".")]*meanMAP.sim[i,"DBH.scaled"] + 
+    int.mcmc.dat[,paste0("beta4.", meanMAP.sim[i,"struct.cohort.code"], ".")]*meanMAP.sim[i,"RWI_1"]  + 
+    int.mcmc.dat[,paste0("beta5.", meanMAP.sim[i,"struct.cohort.code"], ".")]*meanMAP.sim[i,"RWI_2"] +
+    int.mcmc.dat[,paste0("beta6.", meanMAP.sim[i,"struct.cohort.code"], ".")]*meanMAP.sim[i,"T.scaled"] + 
+    int.mcmc.dat[,paste0("beta7.", meanMAP.sim[i,"struct.cohort.code"], ".")] * (meanMAP.sim[i,"MAP.scaled"] *meanMAP.sim[i,"T.scaled"])
+  
+  
+}
+
+
+# columns are the different degree-site scenario combinations
+meanMAP.sim$idval <- 1:length(meanMAP.sim$Tmax)
+# rows are the mcmc values
+colnames(int.1) <- 1:length(meanMAP.sim$Tmax)
+test.m <- melt(int.1)
+colnames(test.m) <- c("MCMC", "idval", "Ypred")
+full.pred <- left_join(test.m, meanMAP.sim, by = "idval")
+full.pred$RWI <- exp(full.pred$Ypred)
+
+
+
+#  create dfs with RWI values for each map and temp scernario:
+
+past.Temp <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC, RWI, Temp.Scenario, Tmax, MAP) %>%
+  filter(Temp.Scenario %in% "mod.mean.Tmax") %>% dplyr::rename(zero = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,zero)
+
+one <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "one" ) %>% dplyr::rename(one = RWI) %>% dplyr::select( -Temp.Scenario)%>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,one)
+
+two <- full.pred %>%  dplyr::select(site, MAP.Scenario, struct.cohort.code,MCMC, RWI, Temp.Scenario, Tmax, MAP) %>%filter(Temp.Scenario %in% "two" ) %>% dplyr::rename(two = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, two)
+
+three <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "three" ) %>% dplyr::rename(three = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, three)
+
+four <- full.pred %>%  dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>%filter(Temp.Scenario %in% "four" ) %>% dplyr::rename(four = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC,four)
+
+five <-  full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "five" ) %>% dplyr::rename(five = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, five)
+
+minusone <-  full.pred %>%  dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>%filter(Temp.Scenario %in% "minusone" ) %>% dplyr::rename(minusone = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, minusone)
+
+minustwo <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "minustwo" ) %>% dplyr::rename(minustwo = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, minustwo)
+
+minusthree<-  full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "minusthree" ) %>% dplyr::rename(minusthree = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC, minusthree)
+
+minusfour <- full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "minusfour" ) %>% dplyr::rename(minusfour = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code,MCMC, minusfour)
+
+minusfive <-  full.pred %>% dplyr::select(site, MAP.Scenario, struct.cohort.code, MCMC,RWI, Temp.Scenario, Tmax, MAP) %>% filter(Temp.Scenario %in% "minusfive" ) %>% dplyr::rename(minusfive = RWI) %>% dplyr::select( -Temp.Scenario) %>% arrange(site, MAP.Scenario, struct.cohort.code, MCMC, minusfive)
+
+
+newdf <- cbind( past.Temp, one[,c("one")], two[,c("two")], three[,c("three")], four[,c("four")], five[, c("five")], minusone[, c("minusone")], minustwo[, c("minustwo")], minusthree[, c("minusthree")], minusfour[, c("minusfour")], minusfive[, c("minusfive")])       
+colnames(newdf) <- c("site", "MAP.Scenario", "struct.cohort.code","MCMC", "base","Tmax", "MAP", "one", "two", "three", "four", "five", "minusone", "minustwo", "minusthree", "minusfour", "minusfive")
+
+
+# get means and CI for each temperature and MAP scenario:
+
+pct.change.temp <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario, Tmax, MAP)  %>%
+  dplyr::summarise(zero = mean(((base-base)/base)*100, na.rm = TRUE),
+                   one = mean(((one-base)/base)*100, na.rm = TRUE),
+                   two = mean(((two-base)/base)*100, na.rm = TRUE),
+                   three = mean(((three-base)/base)*100, na.rm = TRUE),
+                   four = mean(((four-base)/base)*100, na.rm = TRUE),
+                   five = mean(((five-base)/base)*100, na.rm = TRUE),
+                   minusone = mean(((minusone-base)/base)*100, na.rm = TRUE),
+                   minustwo = mean(((minustwo-base)/base)*100, na.rm = TRUE),
+                   minusthree = mean(((minusthree-base)/base)*100, na.rm = TRUE),
+                   minusfour = mean(((minusfour-base)/base)*100, na.rm = TRUE),
+                   minusfive = mean(((minusfive-base)/base)*100, na.rm = TRUE)
+  ) %>% 
+  gather(key = incT, pct_change, zero:minusfive)
+
+
+pct.change.hi.ci <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario, Tmax, MAP)  %>%
+  dplyr::summarise(zero = quantile(((base-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   one = quantile(((one-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   two = quantile(((two-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   three = quantile(((three-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   four = quantile(((four-base)/base)*100,0.975 , na.rm = TRUE),
+                   five = quantile(((five-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusone = quantile((( minusone-base)/base)*100,0.975 , na.rm = TRUE),
+                   minustwo = quantile((( minustwo-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusthree = quantile((( minusthree-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusfour = quantile((( minusfour-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusfive = quantile((( minusfive-base)/base)*100,0.975 , na.rm = TRUE)
+  ) %>% 
+  gather(key = incT, ci.hi, zero:minusfive)
+
+
+
+pct.change.low.ci <- newdf %>% group_by(site, struct.cohort.code, MAP.Scenario, Tmax, MAP)  %>%
+  dplyr::summarise(zero = quantile(((base-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   one = quantile(((one-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   two = quantile(((two-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   three = quantile(((three-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   four = quantile(((four-base)/base)*100, 0.025 , na.rm = TRUE),
+                   five = quantile(((five-base)/base)*100, 0.025 , na.rm = TRUE),
+                   minusone = quantile((( minusone-base)/base)*100,0.025 , na.rm = TRUE),
+                   minustwo = quantile((( minustwo-base)/base)*100,0.025 , na.rm = TRUE),
+                   minusthree = quantile((( minusthree-base)/base)*100,0.025 , na.rm = TRUE),
+                   minusfour = quantile((( minusfour-base)/base)*100,0.025 , na.rm = TRUE),
+                   minusfive = quantile((( minusfive-base)/base)*100,0.025 , na.rm = TRUE)
+  ) %>% 
+  gather(key = incT, ci.low, zero:minusfive)
+
+
+
+cis <- merge(pct.change.hi.ci, pct.change.low.ci, by = c("site", "incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP") )
+pct.change.temp <- merge(pct.change.temp, cis, by = c("site","incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP")) 
+
+pct.change.temp <- merge(pct.change.temp , sites.unique, by = c("site", "struct.cohort.code"))
+
+
+Tdf <- data.frame(incT = c("minusfive","minusfour", "minusthree", "minustwo", "minusone","zero", "one", "two", "three", "four", "five"), 
+                  deltaT = -5:5)
+
+pct.change.temp <- merge(pct.change.temp, Tdf, by = "incT")
+pct.change.temp$struct.cohort.code <- as.character(pct.change.temp$struct.cohort.code)
+
+locs.sites <- locs %>% filter(code %in% unique(pct.change.temp$site)) %>% arrange(pr30yr)
+pct.change.temp$site <-factor(pct.change.temp$site, levels = c("BON", "GLL1", "GLL2", "GLL3", "ENG", "AVO", "UNC","MOU", "GLA"))
+
+plus100 <- ggplot(pct.change.temp[pct.change.temp$MAP.Scenario %in% "MAPplus100",], aes(deltaT, pct_change, color = ageclass))+geom_point()+geom_line() + geom_ribbon(data = pct.change.temp[pct.change.temp$MAP.Scenario %in% "MAPplus100",], aes(x = deltaT, ymin = ci.low, ymax = ci.hi, fill = ageclass), alpha = 0.25, colour = NA)+facet_wrap(~site, ncol = 9)+geom_hline(yintercept = 0, linetype = "dashed")+ylab("+100mm ANNUAL PRECIPITATION \n % change in growth")+xlab("increase in Tmax (degC)")
+
+
+
+# get regional responses:
+
+
+pct.change.temp.reg <- newdf %>% group_by(struct.cohort.code, MAP.Scenario, Tmax, MAP)  %>%
+  dplyr::summarise(zero = mean(((base-base)/base)*100, na.rm = TRUE),
+                   one = mean(((one-base)/base)*100, na.rm = TRUE),
+                   two = mean(((two-base)/base)*100, na.rm = TRUE),
+                   three = mean(((three-base)/base)*100, na.rm = TRUE),
+                   four = mean(((four-base)/base)*100, na.rm = TRUE),
+                   five = mean(((five-base)/base)*100, na.rm = TRUE),
+                   minusone = mean(((minusone-base)/base)*100, na.rm = TRUE),
+                   minustwo = mean(((minustwo-base)/base)*100, na.rm = TRUE),
+                   minusthree = mean(((minusthree-base)/base)*100, na.rm = TRUE),
+                   minusfour = mean(((minusfour-base)/base)*100, na.rm = TRUE),
+                   minusfive = mean(((minusfive-base)/base)*100, na.rm = TRUE)
+  ) %>% 
+  gather(key = incT, pct_change, zero:minusfive)
+
+
+pct.change.hi.ci.reg <- newdf %>% group_by( struct.cohort.code, MAP.Scenario, Tmax, MAP)  %>%
+  dplyr::summarise(zero = quantile(((base-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   one = quantile(((one-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   two = quantile(((two-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   three = quantile(((three-base)/base)*100, 0.975 ,na.rm = TRUE),
+                   four = quantile(((four-base)/base)*100,0.975 , na.rm = TRUE),
+                   five = quantile(((five-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusone = quantile((( minusone-base)/base)*100,0.975 , na.rm = TRUE),
+                   minustwo = quantile((( minustwo-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusthree = quantile((( minusthree-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusfour = quantile((( minusfour-base)/base)*100,0.975 , na.rm = TRUE),
+                   minusfive = quantile((( minusfive-base)/base)*100,0.975 , na.rm = TRUE)
+  ) %>% 
+  gather(key = incT, ci.hi, zero:minusfive)
+
+
+
+pct.change.low.ci.reg <- newdf %>% group_by( struct.cohort.code, MAP.Scenario, Tmax, MAP)  %>%
+  dplyr::summarise(zero = quantile(((base-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   one = quantile(((one-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   two = quantile(((two-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   three = quantile(((three-base)/base)*100, 0.025 ,na.rm = TRUE),
+                   four = quantile(((four-base)/base)*100, 0.025 , na.rm = TRUE),
+                   five = quantile(((five-base)/base)*100, 0.025 , na.rm = TRUE),
+                   minusone = quantile((( minusone-base)/base)*100,0.025 , na.rm = TRUE),
+                   minustwo = quantile((( minustwo-base)/base)*100,0.025 , na.rm = TRUE),
+                   minusthree = quantile((( minusthree-base)/base)*100,0.025 , na.rm = TRUE),
+                   minusfour = quantile((( minusfour-base)/base)*100,0.025 , na.rm = TRUE),
+                   minusfive = quantile((( minusfive-base)/base)*100,0.025 , na.rm = TRUE)
+  ) %>% 
+  gather(key = incT, ci.low, zero:minusfive)
+
+
+cis <- merge(pct.change.hi.ci.reg, pct.change.low.ci.reg, by = c("incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP") )
+pct.change.temp.reg <- merge(pct.change.temp.reg, cis, by = c("incT", "struct.cohort.code", "MAP.Scenario", "Tmax", "MAP")) 
+
+pct.change.temp.reg <- merge(pct.change.temp.reg , unique(sites.unique[,c("struct.cohort.code", "structure", "ageclass")]), by = c( "struct.cohort.code"))
+
+
+Tdf <- data.frame(incT = c("minusfive","minusfour", "minusthree", "minustwo", "minusone","zero", "one", "two", "three", "four", "five"), 
+                  deltaT = -5:5)
+Tdf$Temperature <- Tdf$deltaT + 26.2
+
+pct.change.temp.reg <- merge(pct.change.temp.reg, Tdf, by = "incT")
+pct.change.temp.reg$struct.cohort.code <- as.character(pct.change.temp.reg$struct.cohort.code)
+
+
+# select only the low and high map values & plot out
+pct.change.low.high.MAP <- pct.change.temp.reg %>% filter(ageclass %in% "Modern" & MAP.Scenario %in% c("MAP950", "MAP515")) 
+
+#1b9e77
+#d95f02
+#7570b3
+
+# plot out pct change in growth estimated:
+pct.change.low.high.MAP$Precipitation <- ifelse(pct.change.low.high.MAP$MAP.Scenario %in% "MAP950", "950 mm",
+                                                ifelse(pct.change.low.high.MAP$MAP.Scenario %in% "MAP515","515 mm", "580 mm (current mean)"))
+
+pct.change.plot <- ggplot(pct.change.low.high.MAP, aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() +
+  geom_ribbon(data = pct.change.low.high.MAP, aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab("% change in growth")+facet_wrap(~structure, ncol = 1)+
+  scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+
+  scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+
+  scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw()+
+  theme(panel.grid = element_blank())
+
+
+pct.change.plot
+
+
+pct.change.plot.forest <- ggplot(pct.change.low.high.MAP %>% filter(structure %in% "Forest"), aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() +
+  geom_ribbon(data = pct.change.low.high.MAP %>% filter(structure %in% "Forest"), aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab("% change in growth")+#facet_wrap(~structure, ncol = 1)+
+  scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+
+  scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+
+  scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw()+
+  theme(panel.grid = element_blank(), legend.position = c(0.7, 0.5))+notoprightpanels+ylim(-60, 150)
+
+
+pct.change.plot.forest
+
+
+pct.change.plot.savanna <- ggplot(pct.change.low.high.MAP %>% filter(structure %in% "Savanna"), aes(Temperature, pct_change, color = Precipitation, linetype = Precipitation))+geom_line() +
+  geom_ribbon(data = pct.change.low.high.MAP %>% filter(structure %in% "Savanna"), aes(x = Temperature, ymin = ci.low, ymax = ci.hi, fill = Precipitation), alpha = 0.25, colour = NA)+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey")+ylab("% change in growth")+#facet_wrap(~structure, ncol = 1)+
+  scale_linetype_manual(values = c("950 mm"= "solid","580 mm (current mean)"="dashed", '515 mm' = "solid"), name = "Precipitation")+
+  scale_color_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+
+  scale_fill_manual(values = c("950 mm"='#008837', '515 mm' = "#7b3294", "580 mm (current mean)" = "#d95f02"), name = "Precipitation")+xlab(expression("June Mean Maximum Temperature (" * degree * "C)"))+xlim(20,40)+theme_bw()+
+  theme(panel.grid = element_blank(), legend.position = c(0.7, 0.5))+notoprightpanels+ylim(-60, 150)
+
+
+pct.change.plot.savanna
+
+# save the pct.change.low.high.MAP so we can just plot it in the paper_figures
+
+
+#-------------------------------------------------------------------------------------
+# put altogether in a single figure
+#-------------------------------------------------------------------------------------
+
+png(height = 8, width = 5, units = "in", res = 300, "outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(1,1,1), labels = "AUTO") 
+dev.off()
+
+png(height = 8.5, width = 5, units = "in", res = 300, "outputs/paper_figures_v3/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5.png")
+plot_grid( boxplot.tmax, ag.ss.pred.MAP.modonly, pct.change.plot, ncol=1, align = "v", rel_heights = c(1,1,1), labels = "AUTO") 
+dev.off()
+
+png(height = 11, width = 5, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/predicted_treegrowth_pct_change_Tmax_modern_only_marginal_fut_climate_boxes_v5_formatted.png")
+plot_grid( boxplot.tmax +notoprightpanels + theme(legend.position = c(0.85, 0.25), axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")) + xlab("Time period"),
+           ag.ss.pred.MAP.modonly.forest+ylim(0, 3.5) +ylab("Predicted \n tree growth (mm)")+theme(legend.position = c(0.85, 0.5),axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")),
+           ag.ss.pred.MAP.modonly.savanna +ylim(0, 3.5)+ylab("Predicted \n tree growth (mm)")+theme(legend.position = c(0.85, 0.5),axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")),
+           pct.change.plot.forest+ylab("% growth change")+ theme(legend.position = c(0.85, 0.5),axis.text.x = element_blank(), axis.title.x = element_blank(), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")),
+           pct.change.plot.savanna+ylab("% growth change") + theme(legend.position = c(0.85, 0.5), legend.text=element_text(size=8), legend.key.size = unit(1, "lines")), ncol=1, align = "hv", rel_heights = c(1.5,0.75, 0.75, 0.75, 0.75),
+           labels = c("      a)", " b) Forest", "c) Savanna", " d) Forest", "e) Savanna"),
+           label_fontface = "plain",
+           label_x = 0.15, label_y = 0.99) 
+dev.off()
+
+
+saveRDS(pct.change.low.high.MAP, "outputs/data/pct_change_TMAX_precip_scenarios_25yr_fut_v5.rds")
+
