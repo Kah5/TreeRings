@@ -729,6 +729,80 @@ cowplot::plot_grid(int.dot.age,
 dev.off()
 
 
+
+#--------------------------- make figure 3 ----------------------------------------------------
+# read in the mcmc samples for all the beta and population level parameters
+samps <- readRDS("outputs/growth_model/cohort_struct_scaled_lag2_reg_cohort_only_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
+
+int.mcmc <- as.mcmc(samps)
+int.mcmc.mat <- as.matrix(int.mcmc)
+int.mcmc.dat <- data.frame(int.mcmc.mat)
+
+
+
+# plot the conditional effect of Temperature across MAP:
+MAP.sim <- seq(min(train.dry.pair$MAP.scaled), max(train.dry.pair$MAP.scaled), by = 0.1)
+
+## Calculate conditional effect of X1 across the range of X2
+#int.mcmc <- as.mcmc(samp.structure.cohort.re[[1]])
+
+int.mcmc.mat <- as.matrix(int.mcmc)
+int.mcmc.dat <- data.frame(int.mcmc.mat)
+
+int.1 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(MAP.sim)), nrow = nrow(int.mcmc.dat))
+int.2 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(MAP.sim)), nrow = nrow(int.mcmc.dat))
+#int.3 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(MAP.sim)), nrow = nrow(int.mcmc.dat))
+#int.4 <- matrix(rep(NA, nrow(int.mcmc.dat)*length(MAP.sim)), nrow = nrow(int.mcmc.dat))
+
+# simulate the effect of beta 1 conditional on Tmax
+for(i in 1:length(MAP.sim)){
+  int.1[, i] <- int.mcmc.dat$beta6.1. + int.mcmc.dat$beta7.1. * MAP.sim[i]
+  int.2[, i] <- int.mcmc.dat$beta6.2. + int.mcmc.dat$beta7.2. * MAP.sim[i]
+  #int.3[, i] <- int.mcmc.dat$beta6.3. + int.mcmc.dat$beta7.3. * MAP.sim[i]
+  #int.4[, i] <- int.mcmc.dat$beta6.4. + int.mcmc.dat$beta7.4. * MAP.sim[i]
+  
+}
+
+## Note: the variance now comes from the posterior, not the vcov matrix
+
+bayes.c.eff.mean1 <- apply(int.1, 2, mean)
+bayes.c.eff.lower1 <- apply(int.1, 2, function(x) quantile(x, probs = c(0.025)))
+bayes.c.eff.upper1 <- apply(int.1, 2, function(x) quantile(x, probs = c(0.975)))
+
+bayes.c.eff.mean2 <- apply(int.2, 2, mean)
+bayes.c.eff.lower2 <- apply(int.2, 2, function(x) quantile(x, probs = c(0.025)))
+bayes.c.eff.upper2 <- apply(int.2, 2, function(x) quantile(x, probs = c(0.975)))
+
+
+
+# summarise all the data -> this is ugly but it does the job
+one<- train.dry.pair %>% filter(struct.cohort.code %in% "1") %>% dplyr::select(MAP.prism)
+two<- train.dry.pair %>% filter(struct.cohort.code %in% "2") %>% dplyr::select(MAP.prism)
+
+
+
+plot.dat1 <- data.frame(MAP.sim,MAP =unscale_function(zVar = MAP.sim, myVar = train.dry.pair$MAP.prism) , mean = bayes.c.eff.mean1, Ci.low = bayes.c.eff.lower1, Ci.high = bayes.c.eff.upper1, cohort = "Modern")
+
+plot.dat2 <- data.frame(MAP.sim, MAP = unscale_function(zVar = MAP.sim, myVar = train.dry.pair$MAP.prism), mean = bayes.c.eff.mean2, Ci.low = bayes.c.eff.lower2, Ci.high = bayes.c.eff.upper2, cohort = "Past")
+
+#plot.dat3 <- data.frame(MAP.sim, MAP = unscale_function(zVar = MAP.sim, myVar = three$MAP.prism) , mean = bayes.c.eff.mean3, Ci.low = bayes.c.eff.lower3, Ci.high = bayes.c.eff.upper3, cohort = "Past-Savanna", structure = "Savanna")
+
+#plot.dat4 <- data.frame(MAP.sim, MAP = unscale_function(zVar = MAP.sim, myVar = four$MAP.prism), mean = bayes.c.eff.mean4, Ci.low = bayes.c.eff.lower4, Ci.high = bayes.c.eff.upper4, cohort = "Modern-Savanna", structure = "Savanna")
+
+
+plot.dat.MAP <- rbind(plot.dat1, plot.dat2)
+plot.dat.MAP$cohort <- as.factor(plot.dat.MAP$cohort)
+
+## Foundation for the plot & line for the posterior mean of the Bayesian conditional effect
+MAP.conditional <- ggplot(plot.dat.MAP, aes(x = MAP, y = mean, color = cohort)) + geom_line( alpha = 0.8, size = 0.5)+ geom_ribbon(aes(ymin = Ci.low, ymax = Ci.high, fill = cohort),  alpha = 0.2, linetype = "blank") + 
+  ylab("Condtional effect of tmax")+xlab("Precipitation (mm)")+scale_color_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b"))+theme_bw(base_size = 18)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = c(0.85,0.15), legend.title = element_blank())+ylim(-0.4, 0.2)+notoprightpanels
+
+MAP.conditional
+
+png(height = 4, width = 4, units = "in", res = 300, "outputs/paper_figures_struct_cohort_scaling/cohort_only_conditional_effect_tmax_fig3.png")
+MAP.conditional
+dev.off()
 # -------------------------read in cohort X structure model samples:
 
 cohort.struct.params <- readRDS("outputs/growth_model/cohort_struct_scaled_lag2_reg_struct_x_cohort_re_t_pr_dry_yrs_site_rs_inter/samps_v5.rds")
@@ -988,10 +1062,10 @@ png(height = 14, width = 10, units = "in", res = 300, "outputs/paper_figures_str
                                                                         "g)", "h)",
                                                                         "i)", "j)",
                                                                         "k)", "l)",
-                                                                        "m)", "n)"), label_x = 0.28, label_y = 0.9)
+                                                                        "m)", "n)"), label_x = 0.28, label_y = 0.9, label_fontface = "plain")
 dev.off()
 #-------------------------------------------------------------------------------------------------
-#                                     Figure 3: 
+#                                     Figure 4: 
 #-------------------------------------------------------------------------------------------------
 # we wannt a figure that plots the change in a () predicted WUE and the change in baseline WUE(b), and then values for predicted tree growth
 
@@ -2124,7 +2198,7 @@ plot_grid(plot_grid(titled13, titleiWUE, ncol = 2),
           b3.dots.2.d13+xlab("DBH effect")+ notoprightpanels, 
           b3.dots.2.wue+xlab("DBH effect")+ notoprightpanels,
           ncol = 2, align = "v",labels = c("a)", "b)", "c)", "d)", "e)","f)", "g)", "h)"),
-          label_x = 0.26, label_y = 0.95),nrow = 2, rel_heights = c(0.05, 1))
+          label_x = 0.26, label_y = 0.95, label_fontface = "plain"),nrow = 2, rel_heights = c(0.05, 1))
 dev.off()
 
 
@@ -2181,4 +2255,81 @@ d13.column <- ggplot(d13C.samples, aes(year, Cor.d13C.suess))+geom_point(size = 
 png(height= 6, width = 6, units ="in", res = 300, "outputs/paper_figures_struct_cohort_scaling/d13_iWUE_raw_data.png")
 plot_grid(d13.column, WUE.column, ncol = 2, labels = "AUTO")
 dev.off()
+
+
+# ----------------------------------------------------------------------------------------------
+# Make figure 5---moving this code from the RWI_bayes_model_struct_cohort_scaled_outputs
+#-----------------------------------------------------------------------------------------------
+# read in future temperatures for the region: rds file contains all of the climate model projections
+June.rcps <- readRDS("data/future_climate_tas_all/future_june_tmax_all_rcp_models_v1.rds")
+
+#@precip.means <- read.csv("outputs/CCESM_rcp8.5_mean_Pr_TMAX_proj_sites.csv")
+
+unique.clim <- unique(train.dry.pair[, c("site", "year", "JUNTmax", "ageclass")])
+
+Jun.rcps.clim.full <- June.rcps[,c("year", "Tmax", "period", "rcp", "site")]
+
+# subset by sites analyzed here:
+Jun.rcps.clim <- Jun.rcps.clim.full %>% filter(site %in% unique(unique.clim$site))
+Jun.rcps.clim$period  <- ifelse(Jun.rcps.clim$year < 2050, "2025-2049",
+                                ifelse(Jun.rcps.clim$year >=2050 & Jun.rcps.clim$year < 2075, "2050-2074", "2075-2099" ))
+
+colnames(Jun.rcps.clim) <- c("year", "value", "fut.class", "rcp", "site")
+
+
+summaries <- Jun.rcps.clim %>% group_by(rcp, fut.class)%>% dplyr::summarise(tmax.mean = mean(value), 
+                                                                            tmax.sd = sd(value), 
+                                                                            min = min(value),
+                                                                            max = max(value))
+
+
+unique.clim$fut.class <- ifelse(unique.clim$year <= 1950, "1895-1950", "1950-2015")
+unique.clim2 <- unique.clim[,c("year", "JUNTmax", "fut.class", "ageclass", "site")]
+colnames(unique.clim2) <- c("year", "value", "fut.class", "rcp",  "site")
+
+
+summaries.past <- unique.clim2 %>% group_by(rcp, fut.class)%>% dplyr::summarise(tmax.mean = mean(value), 
+                                                                                tmax.sd = sd(value))
+
+
+clim.full <- rbind(unique.clim2, Jun.rcps.clim)
+
+# making the dataframe to organize the time periods and rcps
+reclass <- data.frame(class = c(1.5,2.5, 4,4.5,5,5.5, 8,8.5, 9, 9.5,  12, 12.5, 13, 13.5), 
+                      fut.class = c("1895-1950", "1950-2015", 
+                                    "2025-2049","2025-2049","2025-2049","2025-2049",
+                                    "2050-2074","2050-2074","2050-2074","2050-2074",
+                                    "2075-2099","2075-2099","2075-2099","2075-2099" ),
+                      rcp = c("Past", "Modern", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5", "rcp2.6", "rcp4.5", "rcp6.0", "rcp8.5"))
+
+clim.full2 <- merge( reclass,clim.full, by = c("fut.class", "rcp"))
+
+ggplot(clim.full2, aes(x = fut.class, y = value, fill = rcp))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))
+
+
+ggplot(clim.full, aes(value, fill = rcp))+geom_histogram()+facet_wrap(~fut.class)
+
+Future.Tmax.summaries <- clim.full %>% group_by(fut.class, rcp) %>% dplyr::summarise(meanTmax = mean(value, na.rm=TRUE),
+                                                                                     sd = sd(value, na.rm=TRUE),
+                                                                                     Tmax.ci.low = quantile(value, 0.025, na.rm=TRUE),
+                                                                                     Tmax.ci.high = quantile(value, 0.975, na.rm=TRUE))
+
+Future.Tmax.summaries.byfut.class <- clim.full %>% group_by(fut.class) %>% dplyr::summarise(meanTmax = mean(value, na.rm=TRUE),
+                                                                                            sd = sd(value, na.rm=TRUE),
+                                                                                            Tmax.ci.low = quantile(value, 0.025, na.rm=TRUE),
+                                                                                            Tmax.ci.high = quantile(value, 0.975, na.rm=TRUE))
+
+# save summary table to output in the tables script
+saveRDS(Future.Tmax.summaries, "/Users/kah/Documents/TreeRings/outputs/data/Tmax_future_climate_v2.rds")
+clim.full$rcp.2 <- ifelse(clim.full$rcp %in% "rcp26", "rcp 2.6",
+                          ifelse(clim.full$rcp %in% "rcp45", "rcp 4.5",
+                                 ifelse(clim.full$rcp %in% "rcp60","rcp 6.0",
+                                        ifelse(clim.full$rcp %in% "rcp85", "rcp 8.5",
+                                               ifelse(clim.full$rcp %in% "Modern", "Modern", "Past")))))
+
+
+boxplot.tmax <- ggplot(clim.full, aes(x = fut.class, y = value, fill = rcp.2))+geom_boxplot(width = 0.5, outlier.size = 0.05)+coord_flip()+
+  xlab("Time Period")+ylab(expression("June Mean Maximum Temperature (" * degree * "C)"))+ scale_y_continuous(name = "Time Period", breaks = c(1.5, 2.5, 4.5, 8.5, 12.5 ), minor_breaks = NULL,labels = sort(unique(clim.full$fut.class)))+
+  theme_bw()+theme(legend.title = element_blank(), panel.grid = element_blank()) +
+  scale_fill_manual(values = c("Past"='#2166ac', 'Modern' = "#b2182b", "rcp 2.6" = "#ffffb2", "rcp 4.5" = "#984ea3", "rcp 6.0" = "#e0f3f8", "rcp 8.5" ="#fc8d59" ))+ylim(20,40)+ylab("Time Period")
 

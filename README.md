@@ -9,6 +9,9 @@ It also houses a variety of general scripts used to process tree ring widths, gr
 
 # Contents:
 
+# Data used in this manuscript are archived:
+
+
 ### R/manuscript_code:
 Contains R code to run jags bayesian models of tree ring growth  and bayesian models of water use efficiency and &delta;<sup>13</sup>C . Analysis covers 9 sites across the upper midwest US, spanning the savanna-forest boundary.
 
@@ -17,9 +20,10 @@ Contains R code to run jags bayesian models of tree ring growth  and bayesian mo
 - Aggregation of tree ring rwls into a single dataframe, with associated climate data, and back-calculated tree diameter are is conducted in **RW_trends.R** (calls code from **tree_age_agg.R**)
 - Separation of ring width and iWUE data into testing and training datasets conducted in **clean_separate_data.R** (Requires outputs from **RW_trends.R** & **calc_WUE.R**)
 - All bayesian models (including the selected model) explored in this analysis are detailed in **RWI_models.Rmd** 
-- Selected tree ring growth model is run in **RWI_bayes_model.R**
+- Selected tree ring growth model is run in **RWI_bayes_model.R** (run with globally scaled covarate data)
+- Selected tree ring growth model after doing cohort/structure covariate scaling is in **RWI_bayes_model_scaled_struct_cohort.R**
 - Chosen WUE and &delta;<sup>13</sup>C bayesian heiarichical models are in **WUE_bayes_model**
-- Paper figures for the manuscript are generated in **Paper_figures.R**
+- Paper figures for the manuscript are generated in **Paper_figures.R** (global scaling) & **Paper_figures_cohort_struct_scaled.R**
 - Summary tables are generated in **Summary_tables.Rmd**
 - WUE tables are generated in **WUE_d13C_model_tables.Rmd**
 
