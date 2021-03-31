@@ -1,5 +1,8 @@
 # TreeRings
-Tree ring analyses after cofecha crossdating & bayesian models of tree ring growth, Water Use Efficiency, and &delta;<sup>13</sup>C .
+Tree ring analyses after cofecha crossdating & bayesian models of tree ring growth, Water Use Efficiency, and &delta;<sup>13</sup>C as presented in our manuscript in Oecologia  http://link.springer.com/article/10.1007/s00442-021-04892-0. 
+
+## Citation
+Heilman KA, Trouet VM, Belmecheri S, et al (2021) Increased water use efficiency leads to decreased precipitation sensitivity of tree growth, but is offset by high temperatures. Oecologia. https://doi.org/10.1007/s00442-021-04892-0
 
 This repository holds the code used to quantify the effects of climate, tree size, stand strucutre, and CO2 on tree ring growth across the savanna-forest boundary region in the Uppermidwest US. Specifically, we develop bayesian heiarchical models to understand the joint effects of multiple envirmental factors on tree growth across 9 sites in the upper midwest. 
 
